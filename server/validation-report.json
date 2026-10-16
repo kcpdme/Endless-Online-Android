@@ -1,0 +1,82 @@
+{
+  "handshake": {
+    "result": "EO Init accepted",
+    "host": "127.0.0.1",
+    "port": 8078,
+    "client_version": 28,
+    "challenge": 12345,
+    "response": 266403,
+    "challenge_verified": true,
+    "player_id": 1,
+    "client_to_server_multiplier": 6,
+    "server_to_client_multiplier": 11,
+    "request_hex": "11feffffca31fe01011d0101343234323432",
+    "response_hex": "ffff02073e0b0602fef82905",
+    "scope": "Initial handshake only; login, encrypted session, movement and combat are not tested."
+  },
+  "maps_loaded": [
+    "282/282"
+  ],
+  "quests_loaded": [
+    "35/56"
+  ],
+  "parser_errors": [],
+  "incompatible_quest_ids": [],
+  "pub_counts": {
+    "items": 490,
+    "npc types": 302,
+    "spells": 31,
+    "classes": 8
+  },
+  "chest_warnings": {
+    "count": 58,
+    "map_ids": [
+      10,
+      21,
+      68,
+      70,
+      158,
+      199,
+      222,
+      233,
+      234
+    ]
+  },
+  "disabled_quests": [
+    {
+      "id": 17,
+      "reason": "EndWithoutReset references state Reset, but only GoReset is defined. Choosing a redirect requires gameplay review."
+    }
+  ],
+  "repaired_quests": [
+    1,
+    2,
+    4,
+    5,
+    15,
+    17,
+    20,
+    21,
+    23,
+    25,
+    26
+  ],
+  "content_validation_passed": false,
+  "listener_addresses": [
+    "127.0.0.1"
+  ],
+  "sqlite_integrity": "ok",
+  "sqlite_tables": [
+    "accounts",
+    "bans",
+    "characters",
+    "command_audit",
+    "guilds",
+    "reports"
+  ],
+  "binding": "127.0.0.1:8078",
+  "public_listing": false,
+  "shutdown_exit_code": 0,
+  "result": "server_smoke_passed_with_content_gaps",
+  "scope": "Server baseline only. Godot Android client remains offline and does not yet connect."
+}

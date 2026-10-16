@@ -1,0 +1,604 @@
+{
+  "source_pins": {
+    "etheos": {
+      "url": "https://github.com/ethanmoffat/etheos.git",
+      "commit": "d6b6395d5ae28e1b20cd72f33fbf23ba921e7919"
+    },
+    "bcrypt": {
+      "url": "https://github.com/trusch/libbcrypt.git",
+      "commit": "d6523c370de6e724ce4ec703e2449b5b028ea3b1"
+    },
+    "googletest": {
+      "url": "https://github.com/google/googletest.git",
+      "commit": "b514bdc898e2951020cbdca1304b75f5950d1f59"
+    }
+  },
+  "sample": {
+    "url": "https://etheosstorage.blob.core.windows.net/data/sample-data.zip",
+    "sha256": "fad601ce11a4ed8d991b80b1cf31fcba237d01c566b4dc40cabb86b28861cc4e"
+  },
+  "sqlite": {
+    "url": "https://www.sqlite.org/2024/sqlite-amalgamation-3460100.zip",
+    "sha256": "77823cb110929c2bcb0f5d48e4833b5c59a8a6e40cdea3936b99e199dbbe5784"
+  },
+  "nlohmann_json": {
+    "url": "https://raw.githubusercontent.com/nlohmann/json/v3.9.1/single_include/nlohmann/json.hpp",
+    "sha256": "7804b38146921d03374549c9e2a5e3acda097814c43caf2b96a0278e58df26e0"
+  },
+  "numbered_maps": 282,
+  "highest_map_id": 282,
+  "quest_conversion": "Generated .eqf copies with logged conservative legacy-syntax fixes. Original .txt bytes preserved. Real parser validation recorded separately.",
+  "quests": [
+    {
+      "id": 1,
+      "source": "00001.txt",
+      "target": "quests/00001.eqf",
+      "enabled": true,
+      "disabled_reason": null,
+      "source_sha256": "4d6c36c3878dcba358b480a3567370e74034e67fd54c9b2f4f22705a61b5c585",
+      "generated_sha256": "85796e11b1db94bb8de0154c7b8097bdc9d4d23bfc1fa58490767a297ff4766f",
+      "patches": [
+        {
+          "kind": "add_action_keyword",
+          "function": "ShowHint",
+          "line": 61
+        },
+        {
+          "kind": "add_action_keyword",
+          "function": "Reset",
+          "line": 62
+        },
+        {
+          "kind": "add_action_keyword",
+          "function": "End",
+          "line": 214
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "source": "00002.txt",
+      "target": "quests/00002.eqf",
+      "enabled": true,
+      "disabled_reason": null,
+      "source_sha256": "1a0b419a1178caddb55e588cf1a2b22420250f48e3c7843a13dc2ce140b98b7e",
+      "generated_sha256": "ceacf550e3ad9f57aaa3ccf36a4232daa697b09535f5bebce510469f162342a0",
+      "patches": [
+        {
+          "kind": "close_unterminated_string",
+          "before": "\"Here, take it);",
+          "after": "\"Here, take it\");"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "source": "00004.txt",
+      "target": "quests/00004.eqf",
+      "enabled": true,
+      "disabled_reason": null,
+      "source_sha256": "8975abfd856e0b2052b89779a7cddeb29766839fc90d34344f559d1d01dfa7ae",
+      "generated_sha256": "68637d4d46606fb5bb5bcdb53a7824f68794207f7809712cfbafd6c69fa6cfc8",
+      "patches": [
+        {
+          "kind": "add_action_keyword",
+          "function": "Reset",
+          "line": 64
+        },
+        {
+          "kind": "add_action_keyword",
+          "function": "Reset",
+          "line": 70
+        },
+        {
+          "kind": "add_action_keyword",
+          "function": "Reset",
+          "line": 76
+        },
+        {
+          "kind": "add_action_keyword",
+          "function": "Reset",
+          "line": 82
+        },
+        {
+          "kind": "add_action_keyword",
+          "function": "Reset",
+          "line": 88
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "source": "00005.txt",
+      "target": "quests/00005.eqf",
+      "enabled": true,
+      "disabled_reason": null,
+      "source_sha256": "165e5c892a824f62c6d6f8803a8d79dd0ebb0634ed563310379bf091f541eb39",
+      "generated_sha256": "69014c829d945356589ea71940b176fac21707811f70bc485479800fc2868bf7",
+      "patches": [
+        {
+          "kind": "add_action_keyword",
+          "function": "End",
+          "line": 366
+        },
+        {
+          "kind": "add_action_keyword",
+          "function": "End",
+          "line": 379
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "source": "00010.txt",
+      "target": "quests/00010.eqf",
+      "enabled": true,
+      "disabled_reason": null,
+      "source_sha256": "05c16dcff79e1731db5f76ffcbb750dbd3e28384a15f5e9e92116370a6fb5acb",
+      "generated_sha256": "05c16dcff79e1731db5f76ffcbb750dbd3e28384a15f5e9e92116370a6fb5acb",
+      "patches": []
+    },
+    {
+      "id": 15,
+      "source": "00015.txt",
+      "target": "quests/00015.eqf",
+      "enabled": true,
+      "disabled_reason": null,
+      "source_sha256": "afe78654457a67686e55c24cb66cef074f660fcad2a8d30ce2a06357cfea0f6a",
+      "generated_sha256": "27d64fd67acaa926219291e19c62471e9ba5fc1a3ed3653a3e24875b4dcf125a",
+      "patches": [
+        {
+          "kind": "add_action_keyword",
+          "function": "Reset",
+          "line": 44
+        },
+        {
+          "kind": "correct_action_keyword",
+          "function": "RemoveItem",
+          "line": 317
+        }
+      ]
+    },
+    {
+      "id": 17,
+      "source": "00017.txt",
+      "target": "quests_disabled/00017.eqf",
+      "enabled": false,
+      "disabled_reason": "EndWithoutReset references state Reset, but only GoReset is defined. Choosing a redirect requires gameplay review.",
+      "source_sha256": "23d9816de49e5271433d1867bc62eb7928ddce8453a4f4d6f41930c9a5fc67cf",
+      "generated_sha256": "64aeb536b33fa13d2c9b9b2b66aae9bc4671909ceb49cc788932ff71e3b6945a",
+      "patches": [
+        {
+          "kind": "add_action_keyword",
+          "function": "Reset",
+          "line": 118
+        }
+      ]
+    },
+    {
+      "id": 20,
+      "source": "00020.txt",
+      "target": "quests/00020.eqf",
+      "enabled": true,
+      "disabled_reason": null,
+      "source_sha256": "00595e9c79bb8639ffe62bc0982ce18dc2b6991e4cd8209c1e2b290a161fa168",
+      "generated_sha256": "af48d8921071a69fbf4f6e14494e33006f99a5ec4fd945fcbe3b79ff4e8f8de9",
+      "patches": [
+        {
+          "kind": "add_action_keyword",
+          "function": "Reset",
+          "line": 28
+        },
+        {
+          "kind": "correct_action_keyword",
+          "function": "Reset",
+          "line": 132
+        },
+        {
+          "kind": "normalize_state_identifier",
+          "before": "Node1-1",
+          "after": "Node1_1",
+          "references": 2
+        }
+      ]
+    },
+    {
+      "id": 21,
+      "source": "00021.txt",
+      "target": "quests/00021.eqf",
+      "enabled": true,
+      "disabled_reason": null,
+      "source_sha256": "09cd69b7e2bdb8ca20fb061c4164cbdc460440bdb42f8c6289a6676ff3455990",
+      "generated_sha256": "f0fe41cf8ea3ba52223e5abacc2a46836dbcee82000a6700554a8ec3663436a4",
+      "patches": [
+        {
+          "kind": "add_action_keyword",
+          "function": "End",
+          "line": 468
+        }
+      ]
+    },
+    {
+      "id": 23,
+      "source": "00023.txt",
+      "target": "quests/00023.eqf",
+      "enabled": true,
+      "disabled_reason": null,
+      "source_sha256": "4224a391c4ecebf0d4bcf55a6c79f30df8f3507b3725f6adbe6486a5966a01e0",
+      "generated_sha256": "8fa9ac7e81ea52cfe3669c98cc1f31000a045fdbd4906f7dd5f16299d464c975",
+      "patches": [
+        {
+          "kind": "close_unterminated_string",
+          "before": "\"Go to periperi for a reward!)",
+          "after": "\"Go to periperi for a reward!\")"
+        }
+      ]
+    },
+    {
+      "id": 25,
+      "source": "00025.txt",
+      "target": "quests/00025.eqf",
+      "enabled": true,
+      "disabled_reason": null,
+      "source_sha256": "63c65a2138feb45fdde6e3768b623386ffc9bd228ec63d638076bc7e037ec76c",
+      "generated_sha256": "a4421642e78214d3d40f98824a721e59732ffde6196b88aac0734975c0913b05",
+      "patches": [
+        {
+          "kind": "close_unterminated_string",
+          "before": "\"Go to susan for a reward!)",
+          "after": "\"Go to susan for a reward!\")"
+        }
+      ]
+    },
+    {
+      "id": 26,
+      "source": "00026.txt",
+      "target": "quests/00026.eqf",
+      "enabled": true,
+      "disabled_reason": null,
+      "source_sha256": "41701dbe9acf263b4cb56ff0fab7375f231224e9488722ee9274269cc90add98",
+      "generated_sha256": "31ea1437d07067a1144d404d149441485cc1ad94aeacc77051bd17be1b9ff596",
+      "patches": [
+        {
+          "kind": "normalize_state_identifier",
+          "before": "Test1-1",
+          "after": "Test1_1",
+          "references": 2
+        },
+        {
+          "kind": "normalize_state_identifier",
+          "before": "Test10-2",
+          "after": "Test10_2",
+          "references": 3
+        },
+        {
+          "kind": "normalize_state_identifier",
+          "before": "Test10-3",
+          "after": "Test10_3",
+          "references": 2
+        },
+        {
+          "kind": "normalize_state_identifier",
+          "before": "Test2-2",
+          "after": "Test2_2",
+          "references": 2
+        },
+        {
+          "kind": "normalize_state_identifier",
+          "before": "Test3-2",
+          "after": "Test3_2",
+          "references": 2
+        },
+        {
+          "kind": "normalize_state_identifier",
+          "before": "Test4-2",
+          "after": "Test4_2",
+          "references": 2
+        },
+        {
+          "kind": "normalize_state_identifier",
+          "before": "Test5-2",
+          "after": "Test5_2",
+          "references": 2
+        },
+        {
+          "kind": "normalize_state_identifier",
+          "before": "Test5-3",
+          "after": "Test5_3",
+          "references": 2
+        },
+        {
+          "kind": "normalize_state_identifier",
+          "before": "Test6-2",
+          "after": "Test6_2",
+          "references": 3
+        },
+        {
+          "kind": "normalize_state_identifier",
+          "before": "Test6-3",
+          "after": "Test6_3",
+          "references": 2
+        },
+        {
+          "kind": "normalize_state_identifier",
+          "before": "Test7-2",
+          "after": "Test7_2",
+          "references": 3
+        },
+        {
+          "kind": "normalize_state_identifier",
+          "before": "Test7-3",
+          "after": "Test7_3",
+          "references": 2
+        },
+        {
+          "kind": "normalize_state_identifier",
+          "before": "Test8-2",
+          "after": "Test8_2",
+          "references": 3
+        },
+        {
+          "kind": "normalize_state_identifier",
+          "before": "Test8-3",
+          "after": "Test8_3",
+          "references": 2
+        },
+        {
+          "kind": "normalize_state_identifier",
+          "before": "Test9-2",
+          "after": "Test9_2",
+          "references": 3
+        },
+        {
+          "kind": "normalize_state_identifier",
+          "before": "Test9-3",
+          "after": "Test9_3",
+          "references": 2
+        }
+      ]
+    },
+    {
+      "id": 27,
+      "source": "00027.txt",
+      "target": "quests/00027.eqf",
+      "enabled": true,
+      "disabled_reason": null,
+      "source_sha256": "776015e4ce49543f62db294f0f62ce8f662c99197644f9078de88f86dbaaacb4",
+      "generated_sha256": "776015e4ce49543f62db294f0f62ce8f662c99197644f9078de88f86dbaaacb4",
+      "patches": []
+    },
+    {
+      "id": 28,
+      "source": "00028.txt",
+      "target": "quests/00028.eqf",
+      "enabled": true,
+      "disabled_reason": null,
+      "source_sha256": "8f5af7b3b39d816466d2d7a4f2f68c180b2b8dc9036d4c7c847cf45b5195cf7e",
+      "generated_sha256": "8f5af7b3b39d816466d2d7a4f2f68c180b2b8dc9036d4c7c847cf45b5195cf7e",
+      "patches": []
+    },
+    {
+      "id": 29,
+      "source": "00029.txt",
+      "target": "quests/00029.eqf",
+      "enabled": true,
+      "disabled_reason": null,
+      "source_sha256": "d8d61936fd87482cdc16f4c4d62df257d9f5193b09b5cc960b33874a8bc9f51c",
+      "generated_sha256": "d8d61936fd87482cdc16f4c4d62df257d9f5193b09b5cc960b33874a8bc9f51c",
+      "patches": []
+    },
+    {
+      "id": 30,
+      "source": "00030.txt",
+      "target": "quests/00030.eqf",
+      "enabled": true,
+      "disabled_reason": null,
+      "source_sha256": "f4d636a0b993083ef4c928bee5323c574bae1ffe0aec42a42092dc2d93a94912",
+      "generated_sha256": "f4d636a0b993083ef4c928bee5323c574bae1ffe0aec42a42092dc2d93a94912",
+      "patches": []
+    },
+    {
+      "id": 31,
+      "source": "00031.txt",
+      "target": "quests/00031.eqf",
+      "enabled": true,
+      "disabled_reason": null,
+      "source_sha256": "11bf1b21482d13d6554902305a763048e26a2cbfff61be01d23cfb72539870d0",
+      "generated_sha256": "11bf1b21482d13d6554902305a763048e26a2cbfff61be01d23cfb72539870d0",
+      "patches": []
+    },
+    {
+      "id": 32,
+      "source": "00032.txt",
+      "target": "quests/00032.eqf",
+      "enabled": true,
+      "disabled_reason": null,
+      "source_sha256": "8f84e91cce5639b59c9a0a21323c5f3d83a541154ae17cfb8495c01998af6eb6",
+      "generated_sha256": "8f84e91cce5639b59c9a0a21323c5f3d83a541154ae17cfb8495c01998af6eb6",
+      "patches": []
+    },
+    {
+      "id": 33,
+      "source": "00033.txt",
+      "target": "quests/00033.eqf",
+      "enabled": true,
+      "disabled_reason": null,
+      "source_sha256": "592a6e554a2898df18307aa3fa68d104b86dd59096e2a84b4a26d4891eafbfad",
+      "generated_sha256": "592a6e554a2898df18307aa3fa68d104b86dd59096e2a84b4a26d4891eafbfad",
+      "patches": []
+    },
+    {
+      "id": 34,
+      "source": "00034.txt",
+      "target": "quests/00034.eqf",
+      "enabled": true,
+      "disabled_reason": null,
+      "source_sha256": "6933a187a241a7847064e747846ae71456be501f2a0b0d34a9210f169cb57b08",
+      "generated_sha256": "6933a187a241a7847064e747846ae71456be501f2a0b0d34a9210f169cb57b08",
+      "patches": []
+    },
+    {
+      "id": 35,
+      "source": "00035.txt",
+      "target": "quests/00035.eqf",
+      "enabled": true,
+      "disabled_reason": null,
+      "source_sha256": "eacbf0108094b281a6bcbeef7f25b7142e691fc78809e6960496bba4f5e15913",
+      "generated_sha256": "eacbf0108094b281a6bcbeef7f25b7142e691fc78809e6960496bba4f5e15913",
+      "patches": []
+    },
+    {
+      "id": 36,
+      "source": "00036.txt",
+      "target": "quests/00036.eqf",
+      "enabled": true,
+      "disabled_reason": null,
+      "source_sha256": "43fd93cdaec827f14f31c06432cf721d06d5bafcbc0d8c0216ea8783c09d0380",
+      "generated_sha256": "43fd93cdaec827f14f31c06432cf721d06d5bafcbc0d8c0216ea8783c09d0380",
+      "patches": []
+    },
+    {
+      "id": 37,
+      "source": "00037.txt",
+      "target": "quests/00037.eqf",
+      "enabled": true,
+      "disabled_reason": null,
+      "source_sha256": "f73faf99775f7bfe9ccfcb57a428f53fafc64c9ac1fd69d4ad57f78e8d0e1b0d",
+      "generated_sha256": "f73faf99775f7bfe9ccfcb57a428f53fafc64c9ac1fd69d4ad57f78e8d0e1b0d",
+      "patches": []
+    },
+    {
+      "id": 38,
+      "source": "00038.txt",
+      "target": "quests/00038.eqf",
+      "enabled": true,
+      "disabled_reason": null,
+      "source_sha256": "acc846a07d8ceacd29d2b781267afa1bb711b5a9d4d5e19b1ac855d82756ef2a",
+      "generated_sha256": "acc846a07d8ceacd29d2b781267afa1bb711b5a9d4d5e19b1ac855d82756ef2a",
+      "patches": []
+    },
+    {
+      "id": 39,
+      "source": "00039.txt",
+      "target": "quests/00039.eqf",
+      "enabled": true,
+      "disabled_reason": null,
+      "source_sha256": "a32d6e079094daebca2fbbe8da89498b93909e827f05041f303d8b151a761b46",
+      "generated_sha256": "a32d6e079094daebca2fbbe8da89498b93909e827f05041f303d8b151a761b46",
+      "patches": []
+    },
+    {
+      "id": 40,
+      "source": "00040.txt",
+      "target": "quests/00040.eqf",
+      "enabled": true,
+      "disabled_reason": null,
+      "source_sha256": "613d57fc470164629e08cc029b163aca6fd3582fcb453e2234f4d70b413f22f9",
+      "generated_sha256": "613d57fc470164629e08cc029b163aca6fd3582fcb453e2234f4d70b413f22f9",
+      "patches": []
+    },
+    {
+      "id": 41,
+      "source": "00041.txt",
+      "target": "quests/00041.eqf",
+      "enabled": true,
+      "disabled_reason": null,
+      "source_sha256": "ee96fcb400e656bc1193dee1bd3ede910d680d5eb42603e797091f3eb7784454",
+      "generated_sha256": "ee96fcb400e656bc1193dee1bd3ede910d680d5eb42603e797091f3eb7784454",
+      "patches": []
+    },
+    {
+      "id": 43,
+      "source": "00043.txt",
+      "target": "quests/00043.eqf",
+      "enabled": true,
+      "disabled_reason": null,
+      "source_sha256": "ae6ad99b7506d25d18782db2c5b8a88e75ce415372d306c02185536945361bcf",
+      "generated_sha256": "ae6ad99b7506d25d18782db2c5b8a88e75ce415372d306c02185536945361bcf",
+      "patches": []
+    },
+    {
+      "id": 44,
+      "source": "00044.txt",
+      "target": "quests/00044.eqf",
+      "enabled": true,
+      "disabled_reason": null,
+      "source_sha256": "c8d1098e4bc2d00a19620bd5f69c3494ae31ddfbc3993fb11f281f38c8d8e9b7",
+      "generated_sha256": "c8d1098e4bc2d00a19620bd5f69c3494ae31ddfbc3993fb11f281f38c8d8e9b7",
+      "patches": []
+    },
+    {
+      "id": 45,
+      "source": "00045.txt",
+      "target": "quests/00045.eqf",
+      "enabled": true,
+      "disabled_reason": null,
+      "source_sha256": "be849b2f03c52ae599184c40e1b4136b5b74fd2d6fced9a47f3653eef1292093",
+      "generated_sha256": "be849b2f03c52ae599184c40e1b4136b5b74fd2d6fced9a47f3653eef1292093",
+      "patches": []
+    },
+    {
+      "id": 46,
+      "source": "00046.txt",
+      "target": "quests/00046.eqf",
+      "enabled": true,
+      "disabled_reason": null,
+      "source_sha256": "34b894fa96320c86442abc5e47ccaa7c35779e29f73f0243aaaf4d70e345d570",
+      "generated_sha256": "34b894fa96320c86442abc5e47ccaa7c35779e29f73f0243aaaf4d70e345d570",
+      "patches": []
+    },
+    {
+      "id": 48,
+      "source": "00048.txt",
+      "target": "quests/00048.eqf",
+      "enabled": true,
+      "disabled_reason": null,
+      "source_sha256": "a55c6042988c78c20e54e5490093737c3cb0b9f98cae1a534b93fdf63196ba4e",
+      "generated_sha256": "a55c6042988c78c20e54e5490093737c3cb0b9f98cae1a534b93fdf63196ba4e",
+      "patches": []
+    },
+    {
+      "id": 49,
+      "source": "00049.txt",
+      "target": "quests/00049.eqf",
+      "enabled": true,
+      "disabled_reason": null,
+      "source_sha256": "09d0d181885a8ed6234cdbd1b306dde617c3590cbe45541c44d5af4a6d73e4ed",
+      "generated_sha256": "09d0d181885a8ed6234cdbd1b306dde617c3590cbe45541c44d5af4a6d73e4ed",
+      "patches": []
+    },
+    {
+      "id": 50,
+      "source": "00050.txt",
+      "target": "quests/00050.eqf",
+      "enabled": true,
+      "disabled_reason": null,
+      "source_sha256": "ee94a1a82e1c3cf95cd4c2f9b4c54b6821e0ae314de33e5f5503fc58036505fc",
+      "generated_sha256": "ee94a1a82e1c3cf95cd4c2f9b4c54b6821e0ae314de33e5f5503fc58036505fc",
+      "patches": []
+    },
+    {
+      "id": 51,
+      "source": "00051.txt",
+      "target": "quests/00051.eqf",
+      "enabled": true,
+      "disabled_reason": null,
+      "source_sha256": "8f8a7cf6a3b9c39d1fde181f454eb86076037202f968bf1669bb0a3b0a1b50da",
+      "generated_sha256": "8f8a7cf6a3b9c39d1fde181f454eb86076037202f968bf1669bb0a3b0a1b50da",
+      "patches": []
+    },
+    {
+      "id": 56,
+      "source": "00056.txt",
+      "target": "quests/00056.eqf",
+      "enabled": true,
+      "disabled_reason": null,
+      "source_sha256": "73400b9ac1bdaf5f1292cfc39e240cd1db1a338e7863ec7357b51ca2fe5c7171",
+      "generated_sha256": "73400b9ac1bdaf5f1292cfc39e240cd1db1a338e7863ec7357b51ca2fe5c7171",
+      "patches": []
+    }
+  ],
+  "binding": "127.0.0.1:8078",
+  "database": "SQLite",
+  "rights": "Reference content only; redistribution/publication permissions unresolved."
+}

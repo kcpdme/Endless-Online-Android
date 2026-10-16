@@ -1,0 +1,1096 @@
+extends Node2D
+## First playable local slice; EO networking is deliberately a separate milestone.
+
+const Joystick = preload("res://scripts/joystick.gd")
+const ClassicPaperdoll = preload("res://scripts/classic_paperdoll.gd")
+const HudIconButton = preload("res://scripts/hud_icon_button.gd")
+const WeaponButton = preload("res://scripts/weapon_button.gd")
+const WoodGrain = preload("res://scripts/wood_grain.gd")
+const ATTACK_COOLDOWN: float = 0.90
+const ATTACK_SWING_DURATION: float = 0.26
+const SAVE_PATH: String = "user://aster_vale_save.json"
+const TILE: Vector2 = Vector2(64.0, 32.0)
+const GOLD: Color = Color("e9bd71")
+const INK: Color = Color("111e23")
+const TEXT: Color = Color("eef1df")
+const MUTED: Color = Color("aabbb2")
+const DIRECTIONS: Array[Vector2i] = [Vector2i(0, 1), Vector2i(1, 0), Vector2i(0, -1), Vector2i(-1, 0)]
+
+var world: Dictionary = {}
+var manifest: Dictionary = {}
+var graphics: Dictionary = {}
+var textures: Dictionary = {}
+var ground: Dictionary = {}
+var blocked: Dictionary = {}
+var decorations: Array[Dictionary] = []
+var route: Array[Vector2i] = []
+var hero: Dictionary = {}
+var monster: Dictionary = {}
+var joystick: Joystick
+var paperdoll: ClassicPaperdoll
+var character_panel: Control
+var equipment_detail: Label
+var remove_button: Button
+var bag_button: HudIconButton
+var character_button: HudIconButton
+var attack_touch_id: int = -1
+var owned_touches: Dictionary = {}
+var hero_equipped: Dictionary = {}
+var bag_slots: Array[Button] = []
+var equipment_slots: Dictionary = {}
+var selected_item: String = "weapon"
+var item_title: Label
+var inventory_summary: Label
+var step_origin_tile: Vector2i = Vector2i.ZERO
+var step_duration: float = 0.24
+var touch_move_id: int = -1
+var joystick_pointer_offset: Vector2 = Vector2.ZERO
+var player_tile: Vector2i = Vector2i.ZERO
+var player_world: Vector2 = Vector2.ZERO
+var step_from: Vector2 = Vector2.ZERO
+var step_to: Vector2 = Vector2.ZERO
+var moving: bool = false
+var step_progress: float = 0.0
+var facing: String = "south"
+var animation_clock: float = 0.0
+var attack_clock: float = 0.0
+var swing_clock: float = 0.0
+var stick: Vector2 = Vector2.ZERO
+var camera: Camera2D
+var started: bool = false
+var content_ready: bool = false
+var kills: int = 0
+var coins: int = 0
+var has_blade: bool = false
+var equipped: bool = false
+var armor_equipped: bool = true
+var boots_equipped: bool = true
+var enemy_tile: Vector2i = Vector2i.ZERO
+var enemy_health: int = 3
+var enemy_respawn: float = 0.0
+var loot_tile: Vector2i = Vector2i.ZERO
+var loot_visible: bool = false
+var time_alive: float = 0.0
+var hit_flash: float = 0.0
+var damage_numbers: Array[Dictionary] = []
+var ui: CanvasLayer
+var welcome: Control
+var inventory: Control
+var quest_label: Label
+var coin_label: Label
+var toast_label: Label
+var location_label: Label
+var health_label: Label
+var inventory_detail: Label
+var equip_button: Button
+var attack_button: WeaponButton
+var toast_time: float = 0.0
+var waypoint: Vector2i = Vector2i(-1, -1)
+var menu: Control
+var started_from_save: bool = false
+var debug_snapshot_time: float = -1.0
+
+func _ready() -> void:
+	DisplayServer.window_set_min_size(Vector2i(960, 540))
+	camera = Camera2D.new()
+	camera.zoom = Vector2(1.65, 1.65)
+	camera.position_smoothing_enabled = true
+	camera.position_smoothing_speed = 8.0
+	add_child(camera)
+	_load_content()
+	_build_ui()
+	if content_ready:
+		_load_save()
+		player_world = tile_position(player_tile)
+		camera.position = player_world
+		_place_enemy()
+		_refresh_ui()
+		_show_welcome()
+	else:
+		_show_content_error()
+	for argument: String in OS.get_cmdline_user_args():
+		if argument == "--play":
+			_begin_play()
+		if argument.begins_with("--screenshot-after="):
+			debug_snapshot_time = float(argument.get_slice("=", 1))
+
+func _load_content() -> void:
+	if not FileAccess.file_exists("res://content/world.json") or not FileAccess.file_exists("res://content/manifest.json"):
+		return
+	var parsed_world: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://content/world.json"))
+	var parsed_manifest: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://content/manifest.json"))
+	if not parsed_world is Dictionary or not parsed_manifest is Dictionary:
+		return
+	world = parsed_world as Dictionary
+	manifest = parsed_manifest as Dictionary
+	graphics = manifest.get("graphics", {}) as Dictionary
+	var spawn: Array = world.get("spawn", [10, 10]) as Array
+	player_tile = Vector2i(int(spawn[0]), int(spawn[1]))
+	for cell: Array in world.get("blocked", []):
+		blocked[Vector2i(int(cell[0]), int(cell[1]))] = true
+	var layers: Dictionary = world.get("layers", {}) as Dictionary
+	for entry: Dictionary in layers.get("ground", []):
+		ground[Vector2i(int(entry.x), int(entry.y))] = int(entry.id)
+	var layer_gfx: Dictionary = manifest.get("layer_gfx", {"objects": 4, "overlay": 5, "walls_right": 6, "walls_down": 6, "wall_top": 3, "shadow": 22, "overlay2": 5, "roof": 7}) as Dictionary
+	for layer: String in layer_gfx:
+		if layer == "ground": continue
+		for entry: Dictionary in layers.get(layer, []):
+			if int(entry.id) <= 0: continue
+			decorations.append({"tile": Vector2i(int(entry.x), int(entry.y)), "id": int(entry.id), "gfx": int(layer_gfx[layer]), "layer": layer})
+	decorations.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return depth(a.tile) < depth(b.tile))
+	var characters: Dictionary = manifest.get("characters", {}) as Dictionary
+	hero = characters.get("hero", {}) as Dictionary
+	monster = characters.get("monster", {}) as Dictionary
+	hero_equipped = characters.get("hero_equipped", {}) as Dictionary
+	content_ready = not graphics.is_empty() and int(world.get("width", 0)) > 0
+
+func _texture(path: String) -> Texture2D:
+	if textures.has(path):
+		return textures[path] as Texture2D
+	if not ResourceLoader.exists(path):
+		return null
+	var result: Texture2D = load(path) as Texture2D
+	textures[path] = result
+	return result
+
+func _graphic(gfx: int, graphic_id: int) -> Texture2D:
+	var key: String = "%d:%d" % [gfx, graphic_id]
+	if not graphics.has(key):
+		return null
+	return _texture(str((graphics[key] as Dictionary).get("path", "")))
+
+func tile_position(tile: Vector2i) -> Vector2:
+	return Vector2(float(tile.x - tile.y) * 32.0, float(tile.x + tile.y) * 16.0 + 16.0)
+
+func depth(tile: Vector2i) -> int:
+	return (tile.x + tile.y) * 1000 + tile.x
+
+func _world_tile(point: Vector2) -> Vector2i:
+	var p: Vector2 = point - Vector2(0, 16)
+	return Vector2i(roundi(p.x / 64.0 + p.y / 32.0), roundi(p.y / 32.0 - p.x / 64.0))
+
+func _walkable(tile: Vector2i) -> bool:
+	return tile.x >= 0 and tile.y >= 0 and tile.x < int(world.get("width", 0)) and tile.y < int(world.get("height", 0)) and not blocked.has(tile) and int(ground.get(tile, int(world.get("fill_tile", 0)))) > 0
+
+func _process(delta: float) -> void:
+	time_alive += delta
+	animation_clock += delta
+	attack_clock = maxf(0.0, attack_clock - delta)
+	swing_clock = maxf(0.0, swing_clock - delta)
+	if attack_button != null: attack_button.cooldown_fraction = attack_clock / ATTACK_COOLDOWN
+	hit_flash = maxf(0.0, hit_flash - delta)
+	if debug_snapshot_time > 0.0 and time_alive > debug_snapshot_time:
+		debug_snapshot_time = -1.0
+		var snapshot: Image = get_viewport().get_texture().get_image()
+		snapshot.save_png("user://prototype-screenshot.png")
+		print("Screenshot saved: ", ProjectSettings.globalize_path("user://prototype-screenshot.png"))
+	if not started:
+		queue_redraw()
+		return
+	if toast_time > 0.0:
+		toast_time -= delta
+		toast_label.visible = toast_time > 0.0
+	if enemy_health <= 0 and not loot_visible:
+		enemy_respawn -= delta
+		if enemy_respawn <= 0.0:
+			enemy_health = 3
+			_place_enemy()
+	if not _modal_open():
+		if attack_touch_id != -1 and attack_clock <= 0.0 and enemy_health > 0:
+			_attack()
+		if moving:
+			step_progress = minf(1.0, step_progress + delta / step_duration)
+			player_world = step_from.lerp(step_to, step_progress)
+			if step_progress >= 1.0:
+				moving = false
+				_collect_loot()
+				_save_progress()
+		else:
+			var direction: Vector2i = _input_direction()
+			if direction != Vector2i.ZERO:
+				route.clear()
+				waypoint = Vector2i(-1, -1)
+				_step(direction)
+			elif not route.is_empty():
+				var next_tile: Vector2i = route.pop_front()
+				_step(next_tile - player_tile)
+	camera.position = player_world
+	for i: int in range(damage_numbers.size() - 1, -1, -1):
+		var number: Dictionary = damage_numbers[i]
+		number.time = float(number.time) - delta
+		if float(number.time) <= 0.0:
+			damage_numbers.remove_at(i)
+	queue_redraw()
+
+func _input_direction() -> Vector2i:
+	var input: Vector2 = stick
+	if Input.is_physical_key_pressed(KEY_W) or Input.is_physical_key_pressed(KEY_UP):
+		input.y -= 1.0
+	if Input.is_physical_key_pressed(KEY_S) or Input.is_physical_key_pressed(KEY_DOWN):
+		input.y += 1.0
+	if Input.is_physical_key_pressed(KEY_A) or Input.is_physical_key_pressed(KEY_LEFT):
+		input.x -= 1.0
+	if Input.is_physical_key_pressed(KEY_D) or Input.is_physical_key_pressed(KEY_RIGHT):
+		input.x += 1.0
+	return _screen_direction(input)
+
+func _screen_direction(input: Vector2) -> Vector2i:
+	if input.length_squared() < 0.035: return Vector2i.ZERO
+	# Eight screen directions mapped through the diamond grid, clockwise from right.
+	var sectors: Array[Vector2i] = [Vector2i(1, -1), Vector2i(1, 0), Vector2i(1, 1), Vector2i(0, 1), Vector2i(-1, 1), Vector2i(-1, 0), Vector2i(-1, -1), Vector2i(0, -1)]
+	var sector: int = posmod(roundi(input.angle() / (PI / 4.0)), 8)
+	return sectors[sector]
+
+func _can_step(origin: Vector2i, direction: Vector2i) -> bool:
+	if not _walkable(origin + direction): return false
+	if direction.x != 0 and direction.y != 0:
+		return _walkable(origin + Vector2i(direction.x, 0)) and _walkable(origin + Vector2i(0, direction.y))
+	return true
+
+func _step(direction: Vector2i) -> void:
+	if direction == Vector2i.ZERO: return
+	facing = _direction_name(direction)
+	var target: Vector2i = player_tile + direction
+	if not _can_step(player_tile, direction):
+		route.clear()
+		return
+	step_origin_tile = player_tile
+	step_from = player_world
+	step_to = tile_position(target)
+	step_duration = maxf(0.10, step_from.distance_to(step_to) / 150.0)
+	player_tile = target
+	step_progress = 0.0
+	moving = true
+
+func _cancel_movement() -> void:
+	stick = Vector2.ZERO
+	touch_move_id = -1
+	route.clear()
+	waypoint = Vector2i(-1, -1)
+	if moving:
+		# Stop at the exact rendered point. Only the logical/save tile selects the nearest endpoint.
+		if step_progress < 0.5: player_tile = step_origin_tile
+		moving = false
+		step_progress = 0.0
+		if content_ready and started: _save_progress()
+	if joystick != null: joystick.reset()
+
+func _joystick_zone() -> Rect2:
+	var viewport_size: Vector2 = get_viewport_rect().size
+	return Rect2(Vector2(12, viewport_size.y - 234), Vector2(244, 222))
+
+func _joystick_begin(pointer: Vector2, pointer_id: int) -> void:
+	_cancel_movement()
+	touch_move_id = pointer_id
+	var bounds: Vector2 = get_viewport_rect().size
+	var center: Vector2 = Vector2(clampf(pointer.x, 90.0, 185.0), clampf(pointer.y, bounds.y - 150.0, bounds.y - 90.0))
+	joystick.begin(center)
+	joystick_pointer_offset = center - pointer
+	stick = Vector2.ZERO
+
+func _modal_open() -> bool:
+	return (inventory != null and inventory.visible) or (menu != null and menu.visible) or (character_panel != null and character_panel.visible)
+
+func _begin_attack(pointer_id: int) -> void:
+	if enemy_health > 0:
+		attack_touch_id = pointer_id
+		attack_button.holding = true
+	_attack()
+
+func _release_attack() -> void:
+	attack_touch_id = -1
+	if attack_button != null: attack_button.holding = false
+
+func _cancel_controls() -> void:
+	_release_attack()
+	_cancel_movement()
+
+
+func _direction_name(direction: Vector2i) -> String:
+	if direction.x > 0: return "east"
+	if direction.x < 0: return "west"
+	if direction.y < 0: return "north"
+	return "south"
+
+func _input(event: InputEvent) -> void:
+	# Own native controls suppress their separately generated mouse events, including
+	# HUD presses that open a modal. A release can never become a second action.
+	if event is InputEventMouseButton and event.device == InputEvent.DEVICE_ID_EMULATION:
+		var native_control: bool = started and not _modal_open() and (attack_button.contains_point(event.position) or bag_button.contains_point(event.position) or character_button.contains_point(event.position) or _joystick_zone().has_point(event.position))
+		# Godot may synthesize the mouse press before delivering its native touch.
+		if native_control or not owned_touches.is_empty():
+			get_viewport().set_input_as_handled()
+			return
+	if event is InputEventScreenTouch and not event.pressed:
+		var owned: bool = owned_touches.has(event.index)
+		if event.index == attack_touch_id: _release_attack()
+		if event.index == touch_move_id: _cancel_movement()
+		if owned:
+			owned_touches.erase(event.index)
+			get_viewport().set_input_as_handled()
+			return
+	if event is InputEventMouseButton and not event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		if attack_touch_id == -2:
+			_release_attack()
+			get_viewport().set_input_as_handled()
+			return
+		if touch_move_id == -2:
+			_cancel_movement()
+			get_viewport().set_input_as_handled()
+			return
+	if not started or _modal_open(): return
+	if event is InputEventScreenTouch and event.pressed:
+		if attack_button.contains_point(event.position):
+			owned_touches[event.index] = true
+			if attack_touch_id == -1: _begin_attack(event.index)
+			get_viewport().set_input_as_handled()
+			return
+		if bag_button.contains_point(event.position):
+			owned_touches[event.index] = true
+			_toggle_inventory()
+			get_viewport().set_input_as_handled()
+			return
+		if character_button.contains_point(event.position):
+			owned_touches[event.index] = true
+			_toggle_paperdoll()
+			get_viewport().set_input_as_handled()
+			return
+		if touch_move_id == -1 and _joystick_zone().has_point(event.position):
+			owned_touches[event.index] = true
+			_joystick_begin(event.position, event.index)
+			get_viewport().set_input_as_handled()
+			return
+	if event is InputEventScreenDrag:
+		if event.index == attack_touch_id:
+			if not attack_button.contains_point(event.position): _release_attack()
+		elif event.index == touch_move_id:
+			stick = joystick.update_pointer(event.position + joystick_pointer_offset)
+		if owned_touches.has(event.index):
+			get_viewport().set_input_as_handled()
+			return
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		if attack_button.contains_point(event.position):
+			_begin_attack(-2)
+			get_viewport().set_input_as_handled()
+			return
+		if touch_move_id == -1 and _joystick_zone().has_point(event.position):
+			_joystick_begin(event.position, -2)
+			get_viewport().set_input_as_handled()
+	if event is InputEventMouseMotion:
+		if attack_touch_id == -2 and not attack_button.contains_point(event.position): _release_attack()
+		if touch_move_id == -2:
+			stick = joystick.update_pointer(event.position + joystick_pointer_offset)
+			get_viewport().set_input_as_handled()
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_ESCAPE:
+			if inventory.visible: inventory.hide()
+			elif character_panel.visible: character_panel.hide()
+			elif started: menu.visible = not menu.visible
+		if not started: return
+		if event.keycode == KEY_SPACE: _attack()
+		if event.keycode == KEY_I: _toggle_inventory()
+		if event.keycode == KEY_C: _toggle_paperdoll()
+		if event.keycode == KEY_E: _collect_loot(true)
+	if not started or _modal_open():
+		return
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		var clicked: Vector2i = _world_tile(get_global_mouse_position())
+		if loot_visible and clicked == loot_tile:
+			if _distance(player_tile, loot_tile) <= 1: _collect_loot(true)
+			else: _request_path(loot_tile)
+		elif enemy_health > 0 and _distance(clicked, enemy_tile) <= 1 and _distance(player_tile, enemy_tile) <= 1:
+			_attack()
+		else:
+			_request_path(clicked)
+	if event is InputEventMagnifyGesture:
+		camera.zoom = (camera.zoom * event.factor).clamp(Vector2(1.0, 1.0), Vector2(2.5, 2.5))
+
+func _request_path(target: Vector2i) -> void:
+	if not _walkable(target):
+		_toast("That way is blocked. Tap a clear tile.")
+		return
+	# Breadth-first search is bounded to this small imported map; no diagonal corner cutting.
+	var frontier: Array[Vector2i] = [player_tile]
+	var came_from: Dictionary = {player_tile: player_tile}
+	var index: int = 0
+	while index < frontier.size() and index < 15000:
+		var current: Vector2i = frontier[index]
+		index += 1
+		if current == target: break
+		for direction: Vector2i in DIRECTIONS:
+			var next_tile: Vector2i = current + direction
+			if _walkable(next_tile) and not came_from.has(next_tile):
+				came_from[next_tile] = current
+				frontier.append(next_tile)
+	if not came_from.has(target):
+		_toast("No clear path to that tile.")
+		return
+	route.clear()
+	var cursor: Vector2i = target
+	while cursor != player_tile:
+		route.push_front(cursor)
+		cursor = came_from[cursor] as Vector2i
+	waypoint = target
+
+func _distance(a: Vector2i, b: Vector2i) -> int:
+	return absi(a.x - b.x) + absi(a.y - b.y)
+
+func _place_enemy() -> void:
+	var candidates: Array[Vector2i] = [Vector2i(2, 0), Vector2i(0, 2), Vector2i(-2, 0), Vector2i(0, -2), Vector2i(1, 0), Vector2i(0, 1)]
+	for offset: Vector2i in candidates:
+		if _walkable(player_tile + offset):
+			enemy_tile = player_tile + offset
+			return
+	enemy_tile = player_tile
+
+func _attack() -> void:
+	if not started or _modal_open():
+		return
+	if enemy_health <= 0:
+		_collect_loot(true)
+		return
+	if attack_clock > 0.0: return
+	attack_clock = ATTACK_COOLDOWN
+	swing_clock = ATTACK_SWING_DURATION
+	animation_clock = 0.0
+	_play_sound("attack")
+	if _distance(player_tile, enemy_tile) > 1:
+		_toast("Get closer to the training slime, then strike.")
+		return
+	facing = _direction_name(enemy_tile - player_tile)
+	var damage: int = 2 if equipped else 1
+	enemy_health = maxi(0, enemy_health - damage)
+	hit_flash = 0.18
+	damage_numbers.append({"position": tile_position(enemy_tile) + Vector2(0, -44), "value": str(damage), "time": 0.8})
+	if enemy_health == 0:
+		kills += 1
+		loot_visible = true
+		loot_tile = enemy_tile
+		enemy_respawn = 6.0
+		_toast("Slime defeated! Walk over the glowing loot to collect.")
+	_refresh_ui()
+	_save_progress()
+
+func _collect_loot(force: bool = false) -> void:
+	if not loot_visible or _distance(player_tile, loot_tile) > (1 if force else 0):
+		return
+	loot_visible = false
+	_play_sound("pickup")
+	coins += 5
+	if not has_blade:
+		has_blade = true
+		_toast("Found a Wayfarer blade + 5 coins. Open your bag to equip it.")
+	else:
+		_toast("Collected 5 coins.")
+	_refresh_ui()
+	_save_progress()
+
+func _draw() -> void:
+	if not content_ready: return
+	var half_view: Vector2 = get_viewport_rect().size / camera.zoom / 2.0 + Vector2(160, 240)
+	var visible_rect: Rect2 = Rect2(camera.position - half_view, half_view * 2.0)
+	var width: int = int(world.get("width", 0))
+	var height: int = int(world.get("height", 0))
+	var fill_id: int = int(world.get("fill_tile", 0))
+	for y: int in range(height):
+		for x: int in range(width):
+			var tile: Vector2i = Vector2i(x, y)
+			var position: Vector2 = tile_position(tile)
+			if not visible_rect.has_point(position): continue
+			var graphic_id: int = int(ground.get(tile, fill_id))
+			if graphic_id > 0:
+				var texture: Texture2D = _graphic(3, graphic_id)
+				if texture != null:
+					var frame_width: float = float(texture.get_width()) / 4.0 if texture.get_width() >= 128 else float(texture.get_width())
+					var frame_index: int = int(time_alive * 4.0) % 4 if texture.get_width() >= 128 else 0
+					draw_texture_rect_region(texture, Rect2(position - Vector2(32, 16), Vector2(frame_width, texture.get_height())), Rect2(Vector2(frame_index * frame_width, 0), Vector2(frame_width, texture.get_height())))
+	if started and waypoint.x >= 0 and not route.is_empty():
+		_draw_diamond(tile_position(waypoint), Color(0.92, 0.75, 0.44, 0.6))
+	var entities: Array[Dictionary] = []
+	for decoration: Dictionary in decorations:
+		var at: Vector2 = tile_position(decoration.tile)
+		if not visible_rect.has_point(at): continue
+		if str(decoration.layer) == "overlay2": continue
+		entities.append({"kind": "decoration", "data": decoration, "sort": depth(decoration.tile) * 100 + _layer_rank(str(decoration.layer))})
+	entities.append({"kind": "player", "sort": depth(_world_tile(player_world)) * 100 + 30})
+	if enemy_health > 0: entities.append({"kind": "enemy", "sort": depth(enemy_tile) * 100 + 70})
+	if loot_visible: entities.append({"kind": "loot", "sort": depth(loot_tile) * 100 + 0})
+	entities.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return int(a.sort) < int(b.sort))
+	for entity: Dictionary in entities:
+		match str(entity.kind):
+			"decoration": _draw_decoration(entity.data as Dictionary)
+			"player": _draw_player()
+			"enemy": _draw_enemy()
+			"loot": _draw_loot()
+	for decoration: Dictionary in decorations:
+		if str(decoration.layer) == "overlay2" and visible_rect.has_point(tile_position(decoration.tile)): _draw_decoration(decoration)
+	for number: Dictionary in damage_numbers:
+		var at: Vector2 = number.position as Vector2
+		at.y -= (0.8 - float(number.time)) * 28.0
+		draw_string(ThemeDB.fallback_font, at, str(number.value), HORIZONTAL_ALIGNMENT_CENTER, 18, 18, GOLD)
+
+func _draw_diamond(center: Vector2, color: Color) -> void:
+	var points: PackedVector2Array = PackedVector2Array([center + Vector2(0, -15), center + Vector2(30, 0), center + Vector2(0, 15), center + Vector2(-30, 0), center + Vector2(0, -15)])
+	draw_polyline(points, color, 1.4, true)
+
+func _draw_decoration(entry: Dictionary) -> void:
+	var texture: Texture2D = _graphic(int(entry.gfx), int(entry.id))
+	if texture == null: return
+	var at: Vector2 = tile_position(entry.tile)
+	var size: Vector2 = texture.get_size()
+	var color: Color = Color.WHITE
+	var layer: String = str(entry.layer)
+	var animated: bool = (int(entry.gfx) == 3 and size.x >= 128) or (int(entry.gfx) == 6 and size.x > 68)
+	var frame_index: int = int(time_alive * 4.0) % 4 if animated else 0
+	if animated: size.x /= 4.0
+	var offset: Vector2 = Vector2(-2.0 - size.x / 2.0, 14.0 - size.y)
+	if layer == "walls_down": offset = Vector2(-32.0, 15.0 - size.y)
+	if layer == "walls_right": offset = Vector2(0.0, 15.0 - size.y)
+	if layer == "roof": offset = Vector2(-32.0, -80.0)
+	if layer == "wall_top": offset = Vector2(-32.0, -48.0)
+	if layer == "shadow":
+		offset = Vector2(-56.0, -28.0)
+		color.a = 0.20
+	draw_texture_rect_region(texture, Rect2(at + offset, size), Rect2(Vector2(frame_index * size.x, 0), size), color)
+
+func _frame(character: Dictionary, direction: String, state: String) -> Dictionary:
+	var group: Dictionary = character.get(state, character.get("frames", {})) as Dictionary
+	var raw: Variant = group.get(direction, group.get("south", []))
+	if raw is Dictionary: return raw as Dictionary
+	if raw is Array and not (raw as Array).is_empty():
+		var frames: Array = raw as Array
+		var frame_index: int = int(animation_clock * 9.0) % frames.size() if moving else 0
+		if state == "attack": frame_index = mini(int((1.0 - swing_clock / ATTACK_SWING_DURATION) * frames.size()), frames.size() - 1)
+		return frames[frame_index] as Dictionary
+	return {}
+
+func _draw_character_frame(character: Dictionary, at: Vector2, direction: String, state: String, tint: Color = Color.WHITE) -> bool:
+	var frame: Dictionary = _frame(character, direction, state)
+	if frame.is_empty(): return false
+	var texture: Texture2D = _texture(str(frame.get("path", "")))
+	if texture == null: return false
+	var dimensions: Array = frame.get("region", [0, 0, texture.get_width(), texture.get_height()]) as Array
+	var region: Rect2 = Rect2(float(dimensions[0]), float(dimensions[1]), float(dimensions[2]), float(dimensions[3]))
+	var raw_offset: Array = frame.get("offset", [0, 0]) as Array
+	var offset: Vector2 = Vector2(float(raw_offset[0]), float(raw_offset[1]))
+	draw_texture_rect_region(texture, Rect2(at + offset - Vector2(region.size.x / 2.0, region.size.y), region.size), region, tint)
+	return true
+
+func _draw_player() -> void:
+	draw_set_transform(player_world, 0.0, Vector2(1.0, 0.40))
+	draw_circle(Vector2.ZERO, 10.0, Color(0, 0, 0, 0.30))
+	draw_set_transform(Vector2.ZERO)
+	var state: String = "attack" if swing_clock > 0.0 else ("frames" if moving else "idle")
+	if not _draw_character_frame(_active_hero(), player_world, facing, state):
+		# Explicitly identified placeholder if the optional character conversion is unavailable.
+		draw_circle(player_world + Vector2(0, -18), 9, Color("82bfa2"))
+		draw_circle(player_world + Vector2(0, -32), 6, GOLD)
+	if swing_clock > 0.0:
+		var aim: Vector2 = (tile_position(enemy_tile) - player_world).normalized()
+		draw_arc(player_world + Vector2(0, -15), 25.0, aim.angle() - 0.75, aim.angle() + 0.75, 12, Color(1.0, 0.86, 0.56, swing_clock / ATTACK_SWING_DURATION), 2.0, true)
+
+func _draw_enemy() -> void:
+	var at: Vector2 = tile_position(enemy_tile)
+	_draw_diamond(at, Color(0.62, 0.82, 0.63, 0.45))
+	var lift: float = sin(time_alive * 2.7) * 3.0
+	var rendered: bool = _draw_character_frame(monster, at, "south", "idle", Color("ffd596") if hit_flash > 0 else Color.WHITE)
+	if not rendered:
+		draw_circle(at + Vector2(0, -20 + lift), 16, Color(0.47, 0.84, 0.64, 0.10))
+		draw_circle(at + Vector2(0, -20 + lift), 10, Color("ffd596") if hit_flash > 0 else Color("98d7a0"))
+		draw_circle(at + Vector2(-3, -22 + lift), 1.4, INK)
+		draw_circle(at + Vector2(3, -22 + lift), 1.4, INK)
+	draw_line(at + Vector2(-13, -40), at + Vector2(13, -40), Color("243631"), 3)
+	draw_line(at + Vector2(-13, -40), at + Vector2(-13 + 26.0 * float(enemy_health) / 3.0, -40), Color("98d7a0"), 3)
+	draw_string(ThemeDB.fallback_font, at + Vector2(-35, -47), "Training slime", HORIZONTAL_ALIGNMENT_LEFT, -1, 10, TEXT)
+
+func _draw_loot() -> void:
+	var at: Vector2 = tile_position(loot_tile)
+	draw_circle(at + Vector2(0, -5), 12 + sin(time_alive * 4.0) * 2.0, Color(0.91, 0.74, 0.44, 0.15))
+	draw_colored_polygon(PackedVector2Array([at + Vector2(0, -18), at + Vector2(6, -10), at + Vector2(0, -3), at + Vector2(-6, -10)]), GOLD)
+	draw_line(at + Vector2(0, -22), at + Vector2(0, -32), Color(GOLD, 0.5), 1.0)
+	var key: String = str(manifest.get("sample_item_graphic", ""))
+	if graphics.has(key):
+		var texture: Texture2D = _texture(str((graphics[key] as Dictionary).get("path", "")))
+		if texture != null: draw_texture(texture, at - texture.get_size() / 2.0)
+
+func _style(color: Color, border: Color = Color("344743"), radius: int = 16) -> StyleBoxFlat:
+	var style: StyleBoxFlat = StyleBoxFlat.new()
+	style.bg_color = color
+	style.border_color = border
+	style.set_border_width_all(1)
+	style.set_corner_radius_all(radius)
+	style.content_margin_left = 18.0
+	style.content_margin_right = 18.0
+	style.content_margin_top = 12.0
+	style.content_margin_bottom = 12.0
+	return style
+
+func _panel(parent: Node, position: Vector2, size: Vector2, color: Color = Color(0.055, 0.10, 0.11, 0.94)) -> Panel:
+	var panel: Panel = Panel.new()
+	panel.position = position
+	panel.size = size
+	panel.add_theme_stylebox_override("panel", _style(color))
+	parent.add_child(panel)
+	return panel
+
+func _label(parent: Node, value: String, position: Vector2, font_size: int = 18, color: Color = TEXT) -> Label:
+	var label: Label = Label.new()
+	label.text = value
+	label.position = position
+	label.add_theme_font_size_override("font_size", font_size)
+	label.add_theme_color_override("font_color", color)
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	parent.add_child(label)
+	return label
+
+func _button(parent: Node, value: String, position: Vector2, size: Vector2, callback: Callable, primary: bool = false) -> Button:
+	var button: Button = Button.new()
+	button.position = position
+	button.size = size
+	button.text = value
+	button.focus_mode = Control.FOCUS_NONE
+	button.add_theme_font_size_override("font_size", 20)
+	button.add_theme_color_override("font_color", INK if primary else TEXT)
+	button.add_theme_color_override("font_hover_color", INK if primary else TEXT)
+	button.add_theme_color_override("font_pressed_color", INK if primary else TEXT)
+	button.add_theme_stylebox_override("normal", _style(GOLD if primary else Color("1c3234"), Color("e2ba77") if primary else Color("47615b"), 14))
+	button.add_theme_stylebox_override("hover", _style(Color("f5cc89") if primary else Color("294641"), GOLD, 14))
+	button.add_theme_stylebox_override("pressed", _style(Color("c39a57") if primary else Color("405d4a"), GOLD, 14))
+	button.pressed.connect(callback)
+	parent.add_child(button)
+	return button
+
+func _build_ui() -> void:
+	ui = CanvasLayer.new()
+	add_child(ui)
+	var root: Control = Control.new()
+	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ui.add_child(root)
+	var header: Panel = _panel(root, Vector2(24, 22), Vector2(340, 78))
+	_label(header, "ASTER VALE", Vector2(20, 10), 25, GOLD)
+	location_label = _label(header, "Aeven  /  The first steps", Vector2(20, 44), 16, MUTED)
+	var quest: Panel = _panel(root, Vector2(24, 114), Vector2(325, 127))
+	_label(quest, "WAYFARER’S FIRST STEPS", Vector2(18, 15), 14, GOLD)
+	quest_label = _label(quest, "", Vector2(18, 43), 18)
+	_label(quest, "Practice safely. Your progress saves here.", Vector2(18, 95), 13, MUTED)
+	coin_label = _label(root, "", Vector2(389, 34), 19, GOLD)
+	var menu_button: Button = _button(root, "☰", Vector2(-80, 24), Vector2(56, 54), func() -> void: menu.visible = not menu.visible)
+	menu_button.set_anchors_preset(Control.PRESET_TOP_RIGHT, true)
+	character_button = HudIconButton.new()
+	character_button.kind = "person"
+	character_button.position = Vector2(-176, 24)
+	character_button.size = Vector2(68, 68)
+	character_button.tooltip_text = "Character equipment"
+	character_button.pressed.connect(_toggle_paperdoll)
+	root.add_child(character_button)
+	character_button.set_anchors_preset(Control.PRESET_TOP_RIGHT, true)
+	joystick = Joystick.new()
+	root.add_child(joystick)
+	joystick.resting_position = Vector2(32, -188)
+	joystick.reset()
+	var bottom_hint: Label = _label(root, "Drag to move  ·  Release to stop" if OS.has_feature("mobile") else "Tap ground to explore  ·  WASD / arrows to move", Vector2(228, -55), 16, TEXT)
+	bottom_hint.set_anchors_preset(Control.PRESET_BOTTOM_LEFT, true)
+	bag_button = HudIconButton.new()
+	bag_button.kind = "bag"
+	bag_button.position = Vector2(-286, -100)
+	bag_button.size = Vector2(76, 76)
+	bag_button.tooltip_text = "Inventory bag"
+	bag_button.pressed.connect(_toggle_inventory)
+	root.add_child(bag_button)
+	bag_button.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT, true)
+	attack_button = WeaponButton.new()
+	attack_button.position = Vector2(-188, -188)
+	attack_button.size = Vector2(164, 164)
+	root.add_child(attack_button)
+	attack_button.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT, true)
+	# Native touch dispatch attacks immediately; synthesized mouse release must not attack again.
+	attack_button.action_mode = BaseButton.ACTION_MODE_BUTTON_PRESS
+	health_label = _label(root, "Training slime • no player damage", Vector2(-348, -220), 14, MUTED)
+	health_label.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT, true)
+	toast_label = _label(root, "", Vector2(-320, -126), 17, TEXT)
+	toast_label.set_anchors_preset(Control.PRESET_CENTER_BOTTOM, true)
+	toast_label.size = Vector2(640, 62)
+	toast_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	toast_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	toast_label.add_theme_color_override("font_shadow_color", Color.BLACK)
+	toast_label.add_theme_constant_override("shadow_outline_size", 6)
+	toast_label.hide()
+	_build_welcome(root)
+	_build_inventory(root)
+	_build_paperdoll(root)
+	_build_menu(root)
+
+func _modal(parent: Node, size: Vector2) -> Control:
+	var curtain: ColorRect = ColorRect.new()
+	curtain.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	curtain.color = Color(0.02, 0.055, 0.065, 0.72)
+	parent.add_child(curtain)
+	var panel: Panel = _panel(curtain, -size / 2.0, size, Color("12272a"))
+	panel.set_anchors_preset(Control.PRESET_CENTER, true)
+	curtain.visibility_changed.connect(func() -> void:
+		if curtain.visible: _cancel_controls()
+	)
+	return curtain
+
+func _build_welcome(parent: Node) -> void:
+	welcome = _modal(parent, Vector2(600, 436))
+	var card: Control = welcome.get_child(0) as Control
+	_label(card, "AN ENDLESS KIND OF ADVENTURE", Vector2(34, 30), 14, GOLD)
+	_label(card, "Aster Vale", Vector2(30, 65), 48)
+	var description: Label = _label(card, "A familiar world. A new beginning.\nExplore Aeven, face a training slime,\nand equip your first blade.", Vector2(34, 139), 21, MUTED)
+	description.add_theme_constant_override("line_spacing", 7)
+	_label(card, "YOUR ADVENTURE BEGINS HERE", Vector2(34, 255), 14, GOLD)
+	_label(card, "Hold the weapon to attack. Drag the joystick to move.\nBag for items; character icon for equipment." if OS.has_feature("mobile") else "WASD / arrows to move. Hold the weapon to attack.\nI for your bag. C for your character.", Vector2(34, 283), 16, TEXT)
+	var play: Button = _button(card, "Enter the vale   →", Vector2(34, 354), Vector2(532, 58), _begin_play, true)
+	play.name = "PlayButton"
+
+func _show_welcome() -> void:
+	welcome.show()
+	var play: Button = welcome.get_child(0).get_node("PlayButton") as Button
+	if started_from_save: play.text = "Continue your journey   →"
+
+func _begin_play() -> void:
+	if not content_ready: return
+	started = true
+	welcome.hide()
+	_toast("Follow the slime nearby. Tap adjacent ground, then the weapon button.")
+
+func _item_info(kind: String) -> Dictionary:
+	var data: Dictionary = manifest.get("starter_equipment", {}) as Dictionary
+	var fallback: Dictionary = {"weapon": {"name": "Wayfarer blade", "icon": str(manifest.get("sample_item_icon", ""))}, "armor": {"name": "Starter armor", "icon": ""}, "boots": {"name": "Starter boots", "icon": ""}}
+	return data.get(kind, fallback.get(kind, {})) as Dictionary
+
+func _item_name(kind: String) -> String:
+	return str(_item_info(kind).get("name", "Equipment"))
+
+func _item_texture(kind: String) -> Texture2D:
+	var key: String = str(_item_info(kind).get("icon", ""))
+	if graphics.has(key): return _texture(str((graphics[key] as Dictionary).get("path", "")))
+	return null
+
+func _is_equipped(kind: String) -> bool:
+	match kind:
+		"weapon": return equipped
+		"armor": return armor_equipped
+		"boots": return boots_equipped
+	return false
+
+func _owns_item(kind: String) -> bool:
+	return has_blade if kind == "weapon" else kind == "armor" or kind == "boots"
+
+func _select_item(kind: String) -> void:
+	selected_item = kind
+	_refresh_ui()
+
+func _build_inventory(parent: Node) -> void:
+	inventory = _modal(parent, Vector2(840, 626))
+	var card: Control = inventory.get_child(0) as Control
+	_wood_card(card)
+	_label(card, "YOUR BELONGINGS", Vector2(28, 18), 13, GOLD)
+	_label(card, "Wayfarer’s bag", Vector2(26, 42), 30)
+	_button(card, "×", Vector2(756, 18), Vector2(56, 52), func() -> void: inventory.hide())
+	inventory_summary = _label(card, "", Vector2(28, 79), 15, MUTED)
+	var bag: Panel = _panel(card, Vector2(26, 108), Vector2(788, 326), Color("51381f"))
+	bag.add_theme_stylebox_override("panel", _wood_style(Color("51381f"), Color("bf9555"), 3))
+	for index: int in range(24):
+		var column: int = index % 6
+		var row: int = index / 6
+		var slot: Button = _button(bag, "", Vector2(16 + column * 126, 17 + row * 76), Vector2(114, 66), func() -> void:
+			var kinds: Array[String] = ["weapon", "armor", "boots"]
+			if index < kinds.size() and _owns_item(kinds[index]) and not _is_equipped(kinds[index]): _select_item(kinds[index])
+		)
+		slot.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		slot.expand_icon = true
+		slot.add_theme_constant_override("icon_max_width", 46)
+		slot.tooltip_text = "Empty slot"
+		bag_slots.append(slot)
+	var detail: Panel = _panel(card, Vector2(26, 446), Vector2(788, 100), Color("644424"))
+	detail.add_theme_stylebox_override("panel", _wood_style(Color("644424"), Color("bf9555"), 3))
+	item_title = _label(detail, "", Vector2(16, 8), 22)
+	inventory_detail = _label(detail, "", Vector2(16, 39), 16, MUTED)
+	equip_button = _button(card, "", Vector2(26, 558), Vector2(788, 46), func() -> void:
+		if _owns_item(selected_item) and not _is_equipped(selected_item): _toggle_equip()
+	, true)
+	_inventory_theme(card)
+	inventory.hide()
+
+func _wood_card(card: Control) -> void:
+	card.add_theme_stylebox_override("panel", _wood_style(Color("886034"), Color("39230f"), 5))
+	var grain: Control = WoodGrain.new()
+	card.add_child(grain)
+	grain.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+
+func _build_paperdoll(parent: Node) -> void:
+	character_panel = _modal(parent, Vector2(840, 680))
+	var card: Control = character_panel.get_child(0) as Control
+	_wood_card(card)
+	_label(card, "CHARACTER", Vector2(40, 8), 16, GOLD)
+	paperdoll = ClassicPaperdoll.new()
+	paperdoll.game = self
+	paperdoll.position = Vector2(40, 34)
+	paperdoll.size = Vector2(380, 290)
+	paperdoll.scale = Vector2(2, 2)
+	paperdoll.equipment_selected.connect(_select_item)
+	paperdoll.close_requested.connect(func() -> void: character_panel.hide())
+	card.add_child(paperdoll)
+	equipment_slots = paperdoll.slots
+	equipment_detail = _label(card, "Select worn equipment to inspect it.", Vector2(40, 628), 17, TEXT)
+	remove_button = _button(card, "Remove", Vector2(520, 625), Vector2(280, 42), func() -> void:
+		if _owns_item(selected_item) and _is_equipped(selected_item): _toggle_equip()
+	)
+	remove_button.add_theme_stylebox_override("normal", _wood_style(Color("d5a35c"), Color("f2cf8a")))
+	remove_button.add_theme_stylebox_override("hover", _wood_style(Color("e4b873"), Color("f2cf8a")))
+	remove_button.add_theme_stylebox_override("pressed", _wood_style(Color("b07a3e"), Color("f2cf8a")))
+	remove_button.add_theme_stylebox_override("disabled", _wood_style(Color("51381f"), Color("87633c")))
+	remove_button.add_theme_color_override("font_color", Color("31200e"))
+	character_panel.hide()
+
+func _wood_style(color: Color, border: Color = Color("a97d43"), width: int = 2) -> StyleBoxFlat:
+	var style: StyleBoxFlat = _style(color, border, 5)
+	style.set_border_width_all(width)
+	return style
+
+func _inventory_theme(parent: Node) -> void:
+	for child: Node in parent.get_children():
+		if child is Label:
+			var label: Label = child as Label
+			label.add_theme_color_override("font_color", Color("f4e3bb"))
+			label.add_theme_color_override("font_shadow_color", Color(0.15, 0.08, 0.02, 0.70))
+			label.add_theme_constant_override("shadow_offset_y", 1)
+		if child is Button:
+			var button: Button = child as Button
+			button.add_theme_stylebox_override("normal", _wood_style(Color("75512b")))
+			button.add_theme_stylebox_override("hover", _wood_style(Color("936a37"), Color("e2bc73")))
+			button.add_theme_stylebox_override("pressed", _wood_style(Color("493018"), Color("f1cf8c")))
+			button.add_theme_stylebox_override("disabled", _wood_style(Color("51381f"), Color("87633c")))
+			button.add_theme_color_override("font_color", Color("f4e3bb"))
+			button.add_theme_color_override("font_hover_color", Color("fff0c9"))
+			button.add_theme_color_override("font_pressed_color", Color("fff0c9"))
+			button.add_theme_color_override("font_disabled_color", Color("ad8e5d"))
+		_inventory_theme(child)
+	if parent == inventory.get_child(0):
+		equip_button.add_theme_stylebox_override("normal", _wood_style(Color("d5a35c"), Color("f2cf8a")))
+		equip_button.add_theme_stylebox_override("hover", _wood_style(Color("e4b873"), Color("f2cf8a")))
+		equip_button.add_theme_stylebox_override("pressed", _wood_style(Color("b07a3e"), Color("f2cf8a")))
+		for state: String in ["font_color", "font_hover_color", "font_pressed_color"]:
+			equip_button.add_theme_color_override(state, Color("31200e"))
+
+func _toggle_inventory() -> void:
+	if not started: return
+	var opening: bool = not inventory.visible
+	menu.hide()
+	character_panel.hide()
+	inventory.visible = opening
+	_cancel_controls()
+	if opening:
+		selected_item = ""
+		for kind: String in ["weapon", "armor", "boots"]:
+			if _owns_item(kind) and not _is_equipped(kind):
+				selected_item = kind
+				break
+	_refresh_ui()
+
+func _toggle_paperdoll() -> void:
+	if not started: return
+	var opening: bool = not character_panel.visible
+	menu.hide()
+	inventory.hide()
+	character_panel.visible = opening
+	_cancel_controls()
+	if opening:
+		selected_item = ""
+		for kind: String in ["weapon", "armor", "boots"]:
+			if _is_equipped(kind):
+				selected_item = kind
+				break
+	_refresh_ui()
+
+func _toggle_equip() -> void:
+	if not _owns_item(selected_item): return
+	match selected_item:
+		"weapon": equipped = not equipped
+		"armor": armor_equipped = not armor_equipped
+		"boots": boots_equipped = not boots_equipped
+	_refresh_ui()
+	_save_progress()
+	_toast("%s %s." % [_item_name(selected_item), "equipped" if _is_equipped(selected_item) else "returned to your bag"])
+
+func _build_menu(parent: Node) -> void:
+	menu = _modal(parent, Vector2(540, 432))
+	var card: Control = menu.get_child(0) as Control
+	_label(card, "ASTER VALE", Vector2(30, 28), 14, GOLD)
+	_label(card, "A moment’s rest", Vector2(28, 61), 32)
+	_label(card, "Your journey is saved automatically.\nTake a breath, then return to explore.", Vector2(30, 120), 17, MUTED)
+	_button(card, "Return to the vale", Vector2(30, 218), Vector2(480, 58), func() -> void: menu.hide(), true)
+	_button(card, "Reset journey", Vector2(30, 291), Vector2(480, 54), _confirm_reset)
+	_button(card, "Welcome screen", Vector2(30, 356), Vector2(480, 48), func() -> void:
+		menu.hide()
+		started = false
+		_show_welcome()
+	)
+	menu.hide()
+
+func _confirm_reset() -> void:
+	var dialog: ConfirmationDialog = ConfirmationDialog.new()
+	dialog.title = "Reset this journey?"
+	dialog.dialog_text = "This removes the saved position, coins, blade, and training progress on this device."
+	dialog.ok_button_text = "Reset progress"
+	dialog.min_size = Vector2i(520, 160)
+	add_child(dialog)
+	dialog.confirmed.connect(func() -> void:
+		_reset_progress()
+		dialog.queue_free()
+	)
+	dialog.canceled.connect(dialog.queue_free)
+	dialog.popup_centered()
+
+func _reset_progress() -> void:
+	_cancel_controls()
+	owned_touches.clear()
+	attack_clock = 0.0
+	swing_clock = 0.0
+	kills = 0
+	coins = 0
+	has_blade = false
+	equipped = false
+	armor_equipped = true
+	boots_equipped = true
+	selected_item = "weapon"
+	loot_visible = false
+	enemy_health = 3
+	var spawn: Array = world.get("spawn", [40, 40]) as Array
+	player_tile = Vector2i(int(spawn[0]), int(spawn[1]))
+	player_world = tile_position(player_tile)
+	moving = false
+	route.clear()
+	stick = Vector2.ZERO
+	_place_enemy()
+	menu.hide()
+	_refresh_ui()
+	_save_progress()
+	_toast("A fresh start. Your journey begins here.")
+
+func _refresh_ui() -> void:
+	if quest_label == null: return
+	if not has_blade:
+		quest_label.text = "1. Defeat the training slime\n2. Collect its glowing drop" if kills == 0 else "1. Slime defeated  ✓\n2. Collect its glowing drop"
+	elif not equipped:
+		quest_label.text = "1. First blade found  ✓\n2. Open your bag and equip it"
+	else:
+		quest_label.text = "First steps complete  ✓\nExplore Aeven at your own pace"
+	coin_label.text = "◈  %d coins" % coins
+	location_label.text = "%s  /  %d, %d" % [str(world.get("name", "Aeven")), player_tile.x, player_tile.y]
+	if inventory_detail != null:
+		var worn: bool = _is_equipped(selected_item)
+		var owned: bool = _owns_item(selected_item)
+		item_title.text = _item_name(selected_item) if owned else "Your bag"
+		var detail: String = "2 damage per strike" if selected_item == "weapon" else "Starting outfit • changes your appearance"
+		inventory_detail.text = "In your bag  ·  " + detail + "\nSelect an item, then equip it."
+		if not owned:
+			inventory_detail.text = "No item selected.\nRemove worn equipment from your character to store it here."
+		elif worn:
+			inventory_detail.text = "Equipped on your character.\nOpen the character icon to remove it."
+		equip_button.disabled = not owned or worn
+		equip_button.text = "Equip " + _item_name(selected_item) if owned and not worn else "Select an item from your bag"
+		inventory_summary.text = "%d coins  ·  24 bag slots" % coins
+		var kinds: Array[String] = ["weapon", "armor", "boots"]
+		for index: int in range(bag_slots.size()):
+			var slot: Button = bag_slots[index]
+			slot.icon = null
+			slot.text = ""
+			slot.tooltip_text = "Empty slot"
+			if index < kinds.size() and _owns_item(kinds[index]) and not _is_equipped(kinds[index]):
+				var kind: String = kinds[index]
+				slot.icon = _item_texture(kind)
+				slot.tooltip_text = _item_name(kind)
+				if slot.icon == null: slot.text = kind.substr(0, 1).to_upper()
+			var chosen: bool = index < kinds.size() and selected_item == kinds[index] and _owns_item(kinds[index]) and not _is_equipped(kinds[index])
+			slot.add_theme_stylebox_override("normal", _wood_style(Color("936a37") if chosen else Color("6b4927"), Color("edce87") if chosen else Color("a97d43")))
+	if paperdoll != null:
+		paperdoll.refresh(selected_item)
+		if equipment_detail != null:
+			var worn: bool = _owns_item(selected_item) and _is_equipped(selected_item)
+			equipment_detail.text = _item_name(selected_item) + "  ·  Equipped" if worn else ("Empty " + selected_item + " slot" if not selected_item.is_empty() else "Select equipment to inspect it.")
+			remove_button.disabled = not worn
+			remove_button.text = "Remove " + _item_name(selected_item) if worn else "Empty slot"
+
+	if attack_button != null:
+		attack_button.weapon = _item_texture("weapon") if equipped else null
+		attack_button.collecting = loot_visible
+		attack_button.tooltip_text = "Collect loot" if loot_visible else ("Attack with " + _item_name("weapon") if equipped else "Unarmed attack")
+		attack_button.queue_redraw()
+
+func _toast(value: String) -> void:
+	if toast_label == null: return
+	toast_label.text = value
+	toast_label.show()
+	toast_time = 5.5
+
+func _save_progress() -> void:
+	var state: Dictionary = {"version": 1, "map_id": int(world.get("id", 5)), "position": [player_tile.x, player_tile.y], "kills": kills, "coins": coins, "has_blade": has_blade, "equipped": equipped, "armor_equipped": armor_equipped, "boots_equipped": boots_equipped}
+	var file: FileAccess = FileAccess.open(SAVE_PATH, FileAccess.WRITE)
+	if file != null: file.store_string(JSON.stringify(state))
+	_refresh_ui()
+
+func _load_save() -> void:
+	if not FileAccess.file_exists(SAVE_PATH): return
+	var raw: Variant = JSON.parse_string(FileAccess.get_file_as_string(SAVE_PATH))
+	if not raw is Dictionary: return
+	var state: Dictionary = raw as Dictionary
+	if int(state.get("version", 0)) != 1 or int(state.get("map_id", -1)) != int(world.get("id", 5)): return
+	var pos: Array = state.get("position", [player_tile.x, player_tile.y]) as Array
+	if pos.size() == 2:
+		var saved_tile: Vector2i = Vector2i(int(pos[0]), int(pos[1]))
+		if _walkable(saved_tile): player_tile = saved_tile
+	kills = maxi(0, int(state.get("kills", 0)))
+	coins = maxi(0, int(state.get("coins", 0)))
+	has_blade = bool(state.get("has_blade", false))
+	equipped = bool(state.get("equipped", false)) and has_blade
+	# Version1 saves predate outfit toggles: preserve their original worn appearance.
+	armor_equipped = bool(state.get("armor_equipped", true))
+	boots_equipped = bool(state.get("boots_equipped", true))
+	started_from_save = true
+
+func _show_content_error() -> void:
+	welcome.show()
+	var card: Control = welcome.get_child(0) as Control
+	for child: Node in card.get_children(): child.queue_free()
+	_label(card, "Content import required", Vector2(30, 45), 30, GOLD)
+	_label(card, "The map or graphic manifest could not be loaded.\nRun the documented content importer, then reopen.\nExpected: content/world.json and manifest.json.", Vector2(30, 120), 19, TEXT)
+	push_error("Aster Vale content unavailable. Run tools/import_content.py.")
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_APPLICATION_FOCUS_OUT or what == NOTIFICATION_APPLICATION_PAUSED:
+		if content_ready:
+			_cancel_controls()
+			owned_touches.clear()
+	if what == NOTIFICATION_APPLICATION_PAUSED or what == NOTIFICATION_WM_CLOSE_REQUEST:
+		if content_ready and started: _save_progress()
+
+func _play_sound(sound_id: String) -> void:
+	var sounds: Dictionary = manifest.get("sounds", {}) as Dictionary
+	if not sounds.has(sound_id): return
+	var source: Dictionary = sounds[sound_id] as Dictionary
+	var path: String = str(source.get("path", ""))
+	if not ResourceLoader.exists(path): return
+	var stream: AudioStream = load(path) as AudioStream
+	if stream == null: return
+	var player: AudioStreamPlayer = AudioStreamPlayer.new()
+	player.stream = stream
+	player.volume_db = -10.0
+	add_child(player)
+	player.finished.connect(player.queue_free)
+	player.play()
+
+func _active_hero() -> Dictionary:
+	var characters: Dictionary = manifest.get("characters", {}) as Dictionary
+	var variants: Dictionary = characters.get("hero_variants", {}) as Dictionary
+	var key: String = "a%d_b%d_w%d" % [int(armor_equipped), int(boots_equipped), int(equipped)]
+	if variants.has(key): return variants[key] as Dictionary
+	return hero_equipped if equipped and not hero_equipped.is_empty() else hero
+
+func _layer_rank(layer: String) -> int:
+	return int({"shadow": 10, "objects": 20, "walls_down": 40, "walls_right": 50, "overlay": 60, "roof": 80, "wall_top": 90, "overlay2": 99}.get(layer, 20))

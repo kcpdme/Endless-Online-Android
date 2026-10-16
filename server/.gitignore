@@ -1,0 +1,7 @@
+.local/
+.state-path
+*.sdb
+*.sdb-*
+*.log
+world.bak.json
+__pycache__/
