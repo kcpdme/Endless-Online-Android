@@ -23,6 +23,8 @@ The Android build defaults to **`wss://eo.kcpd.top/ws`**. Create an account and 
 
 The world pack now includes all **282 maps**, 3,945 original warp records and their graphics. Walking into a valid exit changes the rendered map only after the real server completes its warp handshake. Doors open through native EO requests; keys and level restrictions remain server-controlled. Eight malformed legacy warp destinations on map 47 are blocked rather than sending a player outside a map. NPC shops, quests, chat, trading, spells, full character customization and additional equipment appearances remain future work.
 
+Version 0.7 uses 400 ms walking animations with a 420 ms input cadence, bounded local prediction and server reconciliation. Nearby characters interpolate and animate between server updates. Movement never waits for a full map refresh.
+
 The bag always displays Gold, including zero. Repeated offline training drops add Daggers to a stack; equipping one reduces the stored stack by one. Online quantities come from actual server inventory and pickup acknowledgements. Wide Android screens show more of the world, with controls anchored inside the device safe area.
 
 ## Run a local server
@@ -35,7 +37,7 @@ python3 scripts/dev_online.py --device YOUR_ADB_DEVICE_SERIAL
 
 The launcher reuses running local services or starts them, and adds `adb reverse tcp:8079 tcp:8079` for the selected phone. For the local server, change the hosted address to `127.0.0.1` and use port `8079`. Create your own account, create a character, select it and enter Aeven. Passwords are not stored on the device. New characters receive a server-owned Dagger, Soldier Plate and Blue Boots in their bag; equip them from the bag and remove them through the paperdoll. Accounts, inventory and online position belong to the real server database. Offline progress stays in a separate device save.
 
-The adapter translates newline-delimited JSON into genuine encrypted EO v28 sessions; each client owns an independent native session. Movement and visible entities come from real server refresh replies. This development route needs the computer, server, adapter and ADB connection to remain available. The optional WebSocket bridge also permits `ws://` and `wss://` addresses. Browser exports require WebSocket transport; raw TCP is unavailable in a browser.
+The adapter translates newline-delimited JSON into genuine encrypted EO v28 sessions; each client owns an independent native session. Movement animates immediately, with native Walk replies confirming inputs in the background. Nearby players, NPCs and ground items arrive as compact streamed changes; full refreshes are reserved for correction and idle recovery. This development route needs the computer, server, adapter and ADB connection to remain available. The optional WebSocket bridge also permits `ws://` and `wss://` addresses. Browser exports require WebSocket transport; raw TCP is unavailable in a browser.
 
 Server NPCs and drops replace the offline training slime online. Combat and equipment use server requests and acknowledgements.
 

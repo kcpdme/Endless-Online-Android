@@ -66,7 +66,7 @@ func _run() -> void:
 	if not _require(controller.character_box.visible and not controller.auth_box.visible, "Canceling character selection must retain its still-live authenticated session"): return
 	controller.character_list.select(0)
 	controller._enter_selected()
-	if not _require(await _wait_until(func() -> bool: return controller.active and not controller.player.is_empty()), "Real Welcome/world entry failed: " + controller.last_error): return
+	if not _require(await _wait_until(func() -> bool: return controller.active and controller.streaming and not controller.player.is_empty()), "Real Welcome/world entry failed: " + controller.last_error): return
 	if not _require(game.online_mode and int(controller.player.map_id) == 5, "Online character must enter the actually imported map5"): return
 	if OS.get_environment("ASTER_VALE_TEST_WARP") != "1" and not _require(not controller.npcs.is_empty(), "Expected real server NPCs in the map snapshot"): return
 	if OS.get_environment("ASTER_VALE_TEST_WARP") == "1":
@@ -85,9 +85,10 @@ func _run() -> void:
 	var step: Vector2i = Vector2i(1, 0)
 	if not game._can_step(before, step): step = Vector2i(0, 1)
 	controller.request_step(step)
+	if not _require(game.player_tile == before + step and game.moving, "Prediction must begin synchronously before any server reply"): return
 	if not _require(await _wait_until(func() -> bool: return not controller.waiting_for_walk and game.player_tile != before), "Real authoritative server movement was not confirmed"): return
 	if not _require(game.player_tile == before + step, "Accepted server coordinate does not match the requested tile"): return
-	if not _require(await _wait_until(func() -> bool: return controller.session.is_idle()), "Live connection stalled before equipment"): return
+	if not _require(await _wait_until(func() -> bool: return controller.session.is_idle() and controller.pending_inputs.is_empty()), "Live connection stalled before equipment"): return
 	game._select_item("item:21")
 	controller.equipment_request("item:21")
 	if not _require(await _wait_until(func() -> bool: return controller.is_equipped("weapon")), "Real weapon equip was not acknowledged: " + controller.last_error): return

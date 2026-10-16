@@ -1,5 +1,31 @@
 # Validation scope
 
+Version 0.7 is signed, verified for 16-KiB ZIP alignment and installed on the
+physical Galaxy S23 Ultra. Its existing offline save is byte-for-byte identical
+before and after updating. The same APK passes hosted WSS login/world entry on
+an Android 15 emulator; held touch-joystick movement from (40,40) to (44,40)
+is confirmed again through a native server reconnect. Offline save bytes remain
+unchanged during hosted play.
+
+Version 0.7 movement changes pass real local and public WSS scene tests,
+including immediate prediction, native confirmation, equipment and offline-save
+isolation. `streaming-v07-test.json` records live peer/NPC pushes, corrections,
+bounded network-jitter bursts and map negotiation using fresh dev accounts.
+`MOVEMENT.md` explains the original-code comparison and measured regression.
+
+```sh
+/path/to/Godot --headless --path client --script res://tests/movement.gd
+python3 server/test_streaming.py --state-dir /path/to/server-state --deps-dir /path/to/websocket-deps
+ASTER_VALE_TEST_HOST=wss://eo.kcpd.top/ws python3 scripts/test_online.py --godot /path/to/Godot
+```
+
+The prediction regression simulates outstanding inputs and verifies that matching
+ACKs and metadata updates preserve animation, rejected steps reconcile, and
+nearby movement interpolates independently of the local character. The live
+streaming test stages only newly-created dev characters in its local database;
+never point its database setup at unrelated characters. Legacy nonstreaming
+WebSocket map-travel tests also pass against the updated adapter.
+
 Version 0.6 uses Godot 4.7.2. The Android APK was signed, checked for
 16-KiB ZIP alignment, installed on an Android 15 emulator and updated on a
 physical Galaxy S23 Ultra running Android 16. The physical device's existing

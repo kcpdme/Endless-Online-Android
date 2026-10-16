@@ -625,19 +625,19 @@ func _draw_decoration(entry: Dictionary) -> void:
 		color.a = 0.20
 	draw_texture_rect_region(texture, Rect2(at + offset, size), Rect2(Vector2(frame_index * size.x, 0), size), color)
 
-func _frame(character: Dictionary, direction: String, state: String) -> Dictionary:
+func _frame(character: Dictionary, direction: String, state: String, phase: float = -1.0) -> Dictionary:
 	var group: Dictionary = character.get(state, character.get("frames", {})) as Dictionary
 	var raw: Variant = group.get(direction, group.get("south", []))
 	if raw is Dictionary: return raw as Dictionary
 	if raw is Array and not (raw as Array).is_empty():
 		var frames: Array = raw as Array
-		var frame_index: int = int(animation_clock * 9.0) % frames.size() if (moving and state != "idle") or bool(character.get("animate_idle", false)) else 0
+		var frame_index: int = int((phase if phase >= 0.0 else animation_clock) * 9.0) % frames.size() if phase >= 0.0 or (moving and state != "idle") or bool(character.get("animate_idle", false)) else 0
 		if state == "attack": frame_index = mini(int((1.0 - swing_clock / ATTACK_SWING_DURATION) * frames.size()), frames.size() - 1)
 		return frames[frame_index] as Dictionary
 	return {}
 
-func _draw_character_frame(character: Dictionary, at: Vector2, direction: String, state: String, tint: Color = Color.WHITE) -> bool:
-	var frame: Dictionary = _frame(character, direction, state)
+func _draw_character_frame(character: Dictionary, at: Vector2, direction: String, state: String, tint: Color = Color.WHITE, phase: float = -1.0) -> bool:
+	var frame: Dictionary = _frame(character, direction, state, phase)
 	if frame.is_empty(): return false
 	var texture: Texture2D = _texture(str(frame.get("path", "")))
 	if texture == null: return false

@@ -1,17 +1,24 @@
 #!/usr/bin/env python3
 """Loopback JSON-lines development adapter to real EO v28 sessions. Never a mock server."""
 import argparse, collections, json, select, socket, socketserver, time, threading
-from eo_session import EOError,Session
+from eo_session import EOError
+from live_session import LiveSession as Session
 
 class Handler(socketserver.StreamRequestHandler):
     def handle(self):
-        self.session=None;self.request.settimeout(8);buffer=b'';recent=collections.deque()
+        self.session=None;self.streaming=False;self.request.settimeout(8);self.request.setsockopt(socket.IPPROTO_TCP,socket.TCP_NODELAY,1);buffer=b'';recent=collections.deque();last_push=0.0
         try:
             while True:
                 if b'\n' not in buffer:
                     readers=[self.request]+([self.session.sock] if self.session and self.session.sock else [])
-                    ready,_,_=select.select(readers,[],[],1)
-                    if self.session and self.session.sock in ready:self.session.pump()
+                    ready,_,_=select.select(readers,[],[],0.05 if self.streaming else 1)
+                    if self.session and self.session.sock in ready:
+                        self.session.pump()
+                        for _ in range(31):
+                            if not select.select([self.session.sock],[],[],0)[0]:break
+                            self.session.pump()
+                    if self.streaming and self.session and self.session.dirty and not self.session.warp and time.monotonic()-last_push>=0.045:
+                        self.write_message({'event':'world','ok':True,'data':self.session.world_update()});last_push=time.monotonic()
                     if self.request not in ready:continue
                     block=self.request.recv(8192)
                     if not block:return
@@ -33,16 +40,21 @@ class Handler(socketserver.StreamRequestHandler):
                     result={'id':request.get('id'),'op':request.get('op'),'ok':True,'data':data}
                 except (EOError,ValueError,KeyError,TypeError,TimeoutError,OSError,RuntimeError) as exc:
                     result={'id':request.get('id'),'op':request.get('op'),'ok':False,'error':str(exc) if isinstance(exc,EOError) else 'Request failed; check fields or reconnect to the local server.'}
-                self.request.sendall((json.dumps(result,separators=(',',':'))+'\n').encode('utf-8'))
+                self.write_message(result)
         except (OSError,ValueError,RuntimeError):pass
         finally:
             if self.session:self.session.close()
+    def write_message(self,message):
+        self.request.sendall((json.dumps(message,separators=(',',':'))+'\n').encode('utf-8'))
     def execute(self,r):
         op=r.get('op')
         if op=='connect':
             if self.session:self.session.close()
             self.session=Session(*self.server.eo_address)
             return {'connected':True,'protocol':'EO v28','server':'etheos','authenticated':False}
+        if op=='stream':
+            if not self.session or not self.session.state:raise EOError('Enter a character before enabling movement streaming')
+            self.streaming=bool(r.get('enabled',True));return {'enabled':self.streaming,'movement_seconds':0.42}
         if op=='disconnect':
             if self.session:self.session.close();self.session=None
             return {'connected':False}
@@ -52,6 +64,7 @@ class Handler(socketserver.StreamRequestHandler):
         if op=='login':return s.login(str(r['username']),str(r['password']))
         if op=='create_character':return s.create_character(str(r['name']),int(r.get('gender',1)),int(r.get('hairstyle',1)),int(r.get('haircolor',0)),int(r.get('race',0)))
         if op=='enter':s.enter(int(r['character_id']));return s.snapshot()
+        if op=='move':return s.move(int(r['direction']),int(r['input_seq']),int(r['map_id']),int(r['x']),int(r['y']),bool(r.get('open_door',False)))
         if op=='refresh':s.refresh();return s.snapshot()
         if op=='walk':s.walk(int(r['direction']),bool(r.get('open_door',False)));return s.snapshot()
         if op=='attack':s.attack(r.get('direction'));return s.snapshot()

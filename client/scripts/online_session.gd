@@ -125,6 +125,7 @@ func _poll_websocket(delta: float) -> void:
 func _mark_connected() -> void:
 	connecting = false
 	connected = true
+	if not websocket_mode: peer.set_no_delay(true)
 	transport_connected.emit()
 
 func _consume_message(line: String) -> bool:
@@ -143,3 +144,8 @@ func _fail(reason: String) -> void:
 
 func is_idle() -> bool:
 	return pending.is_empty()
+
+func has_blocking_requests() -> bool:
+	for record: Variant in pending.values():
+		if str(record.get("op", "")) != "move": return true
+	return false

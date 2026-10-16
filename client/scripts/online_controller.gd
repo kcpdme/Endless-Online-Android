@@ -17,6 +17,14 @@ var character_box: Control
 var selected_characters: Array[Dictionary] = []
 var active: bool = false
 var waiting_for_walk: bool = false
+const MOVE_SECONDS: float = 0.42
+const MAX_PREDICTIONS: int = 4
+var streaming: bool = false
+var transition_pending: bool = false
+var next_input_seq: int = 0
+var confirmed_input_seq: int = 0
+var pending_inputs: Array[Dictionary] = []
+var remote_motion: Dictionary = {}
 var refresh_clock: float = 0.0
 var walk_clock: float = 0.0
 var desired_auth: String = "login"
@@ -154,7 +162,12 @@ func _on_message(message: Dictionary) -> void:
 		var reason: String = str(message.get("error", "The server refused this request."))
 		_set_status(reason)
 		game._toast(reason)
-		if operation == "walk": game.route.clear()
+		if operation in ["walk", "move"]:
+			# A transport rejection is not an authoritative position; recover from the world.
+			pending_inputs.clear()
+			transition_pending = false
+			game._cancel_controls()
+			session.request("refresh")
 		return
 	var data: Dictionary = message.get("data", {}) as Dictionary
 	match operation:
@@ -169,10 +182,11 @@ func _on_message(message: Dictionary) -> void:
 			_show_characters(data.get("characters", []) as Array)
 		"enter":
 			_enter_world(data)
-		"walk":
-			waiting_for_walk = false
-			_apply_snapshot(data)
-		"refresh", "snapshot", "attack", "pickup", "equip", "unequip":
+		"stream":
+			streaming = bool(data.get("enabled", false))
+		"move":
+			pass # Receipt only. The subsequent native Walk_Reply confirms acceptance.
+		"world", "refresh", "snapshot", "attack", "pickup", "equip", "unequip":
 			_apply_snapshot(data)
 		"disconnect":
 			_on_closed("Disconnected from the world.")
@@ -220,13 +234,17 @@ func _enter_world(data: Dictionary) -> void:
 	game.started = true
 	game.enemy_health = 0
 	game.loot_visible = false
+	_reset_movement()
 	_apply_snapshot(data, true)
 	if not active: return
+	session.request("stream", {"enabled": true})
 	server_label.show()
 	_set_status("Connected to your world.")
 	game._toast("You have entered your online world.")
 
 func _apply_snapshot(data: Dictionary, entering: bool = false) -> void:
+	for raw: Variant in data.get("events", []):
+		if raw is Dictionary and str(raw.get("kind", "")) == "map_transition": entering = true
 	if data.has("player"):
 		player = data.player as Dictionary
 		var map_id: int = int(player.get("map_id", player.get("map", 5)))
@@ -248,28 +266,49 @@ func _apply_snapshot(data: Dictionary, entering: bool = false) -> void:
 			drops.clear()
 
 		var tile: Vector2i = Vector2i(int(player.get("x", 40)), int(player.get("y", 40)))
-		game.facing = _facing(player.get("direction", 0))
 		if entering:
+			pending_inputs.clear()
+			remote_motion.clear()
+			waiting_for_walk = false
+			transition_pending = false
+			game.facing = _facing(player.get("direction", 0))
 			game.player_tile = tile
 			game.player_world = game.tile_position(tile)
 			game.moving = false
 			game.camera.position = game.player_world
 			game.camera.reset_smoothing()
-		elif tile != game.player_tile:
-			game.step_origin_tile = game.player_tile
-			game.step_from = game.player_world
-			game.step_to = game.tile_position(tile)
-			game.player_tile = tile
-			game.step_progress = 0.0
-			game.step_duration = maxf(0.12, game.step_from.distance_to(game.step_to) / 150.0)
-			game.moving = true
+		elif bool(data.get("position_update", false)):
+			var confirmed: int = int(data.get("position_seq", 0))
+			confirmed_input_seq = confirmed
+			while not pending_inputs.is_empty() and int(pending_inputs[0].seq) <= confirmed:
+				pending_inputs.pop_front()
+			# Replay inputs still in flight on the authoritative coordinate.
+			for input: Dictionary in pending_inputs:
+				tile += input.direction as Vector2i
+			waiting_for_walk = not pending_inputs.is_empty()
+			if not waiting_for_walk: transition_pending = false
+			if tile != game.player_tile:
+				game.route.clear()
+				_start_step(tile, _facing(player.get("direction", 0)))
 		_sync_inventory()
 	if data.has("players"): players = _dict_array(data.players)
+	else: players = _merge_updates(players, data.get("players_upsert", []), data.get("players_remove", []), "player_id")
 	if data.has("npcs"): npcs = _dict_array(data.npcs)
+	else: npcs = _merge_updates(npcs, data.get("npcs_upsert", []), data.get("npcs_remove", []), "index")
 	if data.has("items"): drops = _dict_array(data.items)
+	else: drops = _merge_updates(drops, data.get("items_upsert", []), data.get("items_remove", []), "uid")
+	_track_entities("player", players, "player_id")
+	_track_entities("npc", npcs, "index")
 	_process_events(data.get("events", []) as Array)
 	game._refresh_ui()
 	server_label.text = "● Connected  ·  %d nearby" % nearby_count()
+
+func _merge_updates(rows: Array[Dictionary], changed: Array, removed: Array, key: String) -> Array[Dictionary]:
+	var merged: Dictionary = {}
+	for row: Dictionary in rows:
+		if not removed.has(row.get(key)): merged[row.get(key)] = row
+	for row: Dictionary in _dict_array(changed): merged[row.get(key)] = row
+	return _dict_array(merged.values())
 
 func _dict_array(value: Variant) -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
@@ -299,18 +338,22 @@ func _process(delta: float) -> void:
 	warp_notice_clock = maxf(0.0, warp_notice_clock - delta)
 	walk_clock = maxf(0.0, walk_clock - delta)
 	refresh_clock += delta
-	if refresh_clock >= 0.6 and session.connected and session.is_idle() and not waiting_for_walk:
+	# World packets drive updates. An idle-only safety refresh never competes with walking.
+	if refresh_clock >= 10.0 and session.connected and session.is_idle() and pending_inputs.is_empty() and not game.moving and game.stick == Vector2.ZERO and game.route.is_empty():
 		refresh_clock = 0.0
 		session.request("refresh")
+	if not pending_inputs.is_empty() and Time.get_ticks_msec() - int(pending_inputs[0].sent_at) > 15000:
+		session._fail("Movement confirmation timed out. Please reconnect.")
 
 func request_step(direction: Vector2i) -> void:
-	if not active or waiting_for_walk or walk_clock > 0.0 or not session.is_idle(): return
+	if not can_issue_walk(): return
 	var single: Vector2i = direction
 	if direction.x != 0 and direction.y != 0:
 		diagonal_toggle = not diagonal_toggle
 		single = Vector2i(direction.x, 0) if diagonal_toggle else Vector2i(0, direction.y)
 	var target: Vector2i = game.player_tile + single
 	var fields: Dictionary = {"direction": _direction(game._direction_name(single))}
+	var passage: bool = false
 	for warp: Dictionary in game.world.get("warps", []):
 		if Vector2i(int(warp.x), int(warp.y)) != target: continue
 		var destination: Array = warp.get("destination", []) as Array
@@ -321,17 +364,49 @@ func request_step(direction: Vector2i) -> void:
 				game._toast("This passage is unavailable.")
 				warp_notice_clock = 3.0
 			return
+		passage = true
 		if int(warp.get("door", 0)) > 0: fields["open_door"] = true
 		break
 	if not game._can_step(game.player_tile, single):
 		game.route.clear()
 		return
+	next_input_seq += 1
+	fields.merge({"input_seq": next_input_seq, "map_id": int(game.world.id), "x": target.x, "y": target.y})
+	if session.request("move", fields) < 0: return
+	pending_inputs.append({"seq": next_input_seq, "direction": single, "sent_at": Time.get_ticks_msec()})
 	waiting_for_walk = true
-	walk_clock = 0.44
-	session.request("walk", fields)
+	transition_pending = passage
+	walk_clock = MOVE_SECONDS
+	refresh_clock = 0.0
+	_start_step(target, game._direction_name(single))
+
+func _start_step(tile: Vector2i, direction: String) -> void:
+	game.step_origin_tile = game.player_tile
+	game.step_from = game.player_world
+	game.step_to = game.tile_position(tile)
+	game.player_tile = tile
+	game.step_progress = 0.0
+	game.step_duration = 0.40
+	game.facing = direction
+	game.animation_clock = 0.0
+	game.moving = true
+
+func _reset_movement() -> void:
+	streaming = false
+	waiting_for_walk = false
+	transition_pending = false
+	next_input_seq = 0
+	confirmed_input_seq = 0
+	pending_inputs.clear()
+	remote_motion.clear()
+	walk_clock = 0.0
+	refresh_clock = 0.0
+
+func _action_ready() -> bool:
+	return active and pending_inputs.is_empty() and not transition_pending and session.is_idle()
 
 func request_attack() -> bool:
-	if not active or not session.is_idle(): return false
+	if not _action_ready(): return false
 	return session.request("attack", {"direction": _direction(game.facing)}) >= 0
 
 func _direction(value: String) -> int:
@@ -343,7 +418,7 @@ func _facing(value: Variant) -> String:
 
 func _on_closed(reason: String) -> void:
 	active = false
-	waiting_for_walk = false
+	_reset_movement()
 	game._cancel_controls()
 	if game.online_mode:
 		game.started = false
@@ -359,7 +434,7 @@ func _on_closed(reason: String) -> void:
 func leave_for_offline() -> void:
 	active = false
 	session.close()
-	waiting_for_walk = false
+	_reset_movement()
 	game._cancel_controls()
 	game.load_map(offline_map_id)
 	for raw: Variant in offline_state:
@@ -371,6 +446,26 @@ func leave_for_offline() -> void:
 	game.enemy_health = 3
 	game.loot_visible = false
 	game._refresh_ui()
+
+func _track_entities(kind: String, rows: Array[Dictionary], id_field: String) -> void:
+	var seen: Dictionary = {}
+	var now: float = Time.get_ticks_msec() / 1000.0
+	for record: Dictionary in rows:
+		var key: String = kind + ":" + str(record.get(id_field, -1))
+		seen[key] = true
+		var target: Vector2 = game.tile_position(Vector2i(int(record.get("x", 0)), int(record.get("y", 0))))
+		if not remote_motion.has(key):
+			remote_motion[key] = {"from": target, "to": target, "start": now - MOVE_SECONDS}
+		elif remote_motion[key].to != target:
+			remote_motion[key] = {"from": _remote_position(key, target), "to": target, "start": now}
+	for key: Variant in remote_motion.keys():
+		if str(key).begins_with(kind + ":") and not seen.has(key): remote_motion.erase(key)
+
+func _remote_position(key: String, fallback: Vector2) -> Vector2:
+	if not remote_motion.has(key): return fallback
+	var motion: Dictionary = remote_motion[key]
+	var fraction: float = clampf((Time.get_ticks_msec() / 1000.0 - float(motion.start)) / MOVE_SECONDS, 0.0, 1.0)
+	return (motion.from as Vector2).lerp(motion.to as Vector2, fraction)
 
 func entities() -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
@@ -391,6 +486,11 @@ func draw_entity(entity: Dictionary) -> void:
 	var record: Dictionary = entity.data as Dictionary
 	var tile: Vector2i = Vector2i(int(record.get("x", 0)), int(record.get("y", 0)))
 	var at: Vector2 = game.tile_position(tile)
+	var key: String = ("npc:" + str(record.get("index", -1))) if str(entity.kind) == "online_npc" else ("player:" + str(record.get("player_id", -1)))
+	var motion: Dictionary = remote_motion.get(key, {}) as Dictionary
+	var phase: float = Time.get_ticks_msec() / 1000.0 - float(motion.get("start", 0.0))
+	var state: String = "frames" if not motion.is_empty() and phase < MOVE_SECONDS and motion.from != motion.to else "idle"
+	at = _remote_position(key, at)
 	var direction: String = _facing(record.get("direction", 0))
 	var half_view: Vector2 = game.get_viewport_rect().size / game.camera.zoom / 2.0 + Vector2(160, 240)
 	if not Rect2(game.camera.position - half_view, half_view * 2.0).has_point(at): return
@@ -401,12 +501,12 @@ func draw_entity(entity: Dictionary) -> void:
 		var characters: Dictionary = game.manifest.get("characters", {}) as Dictionary
 		var npc_graphics: Dictionary = characters.get("npcs", {}) as Dictionary
 		var graphic: Dictionary = npc_graphics.get(str(int(info.get("graphic", 0))), {}) as Dictionary
-		if not graphic.is_empty(): game._draw_character_frame(graphic, at, direction, "idle")
+		if not graphic.is_empty(): game._draw_character_frame(graphic, at, direction, state, Color.WHITE, phase if state == "frames" else -1.0)
 		else: game.draw_circle(at + Vector2(0, -12), 5.0, Color("e7bd70"))
 		game.draw_string(ThemeDB.fallback_font, at + Vector2(-32, -32 - int((graphic.get("render_metadata", {}) as Dictionary).get("name_label_offset", 34))), str(info.get("name", "NPC %s" % npc_id)), HORIZONTAL_ALIGNMENT_LEFT, -1, 10, game.TEXT)
 	elif str(entity.kind) == "online_player":
 		var graphic: Dictionary = character_graphic(record)
-		if not graphic.is_empty(): game._draw_character_frame(graphic, at, direction, "idle")
+		if not graphic.is_empty(): game._draw_character_frame(graphic, at, direction, state, Color.WHITE, phase if state == "frames" else -1.0)
 		else:
 			game.draw_circle(at + Vector2(0, -12), 7.0, Color("a6cec0"))
 			game.draw_string(ThemeDB.fallback_font, at + Vector2(-32, -42), "Appearance pending", HORIZONTAL_ALIGNMENT_LEFT, -1, 9, game.MUTED)
@@ -475,7 +575,7 @@ func select_bag_item(index: int) -> void:
 	game._select_item("item:%d" % int(items[index].get("id", 0)))
 
 func equipment_request(kind: String) -> void:
-	if not active or not owns_item(kind) or not session.is_idle(): return
+	if not _action_ready() or not owns_item(kind): return
 	if is_equipped(kind):
 		var slot: String = kind
 		if kind.begins_with("item:"):
@@ -487,7 +587,7 @@ func equipment_request(kind: String) -> void:
 		session.request("equip", {"item_id": item_id(kind)})
 
 func map_click(tile: Vector2i) -> void:
-	if not session.is_idle(): return
+	if not _action_ready(): return
 	for drop: Dictionary in drops:
 		if Vector2i(int(drop.get("x", 0)), int(drop.get("y", 0))) == tile and game._distance(game.player_tile, tile) <= 1:
 			session.request("pickup", {"uid": int(drop.get("uid", 0))})
@@ -501,7 +601,7 @@ func map_click(tile: Vector2i) -> void:
 	game._request_path(tile)
 
 func collect_nearby() -> void:
-	if not active or not session.is_idle(): return
+	if not _action_ready(): return
 	for drop: Dictionary in drops:
 		var tile: Vector2i = Vector2i(int(drop.get("x", 0)), int(drop.get("y", 0)))
 		if game._distance(game.player_tile, tile) <= 1:
@@ -585,4 +685,4 @@ func _slot_name(kind: String) -> String:
 	return str({"hat": "head", "shield": "offhand"}.get(kind, kind))
 
 func can_issue_walk() -> bool:
-	return active and not waiting_for_walk and walk_clock <= 0.0 and session.is_idle()
+	return active and streaming and not transition_pending and walk_clock <= 0.0 and pending_inputs.size() < MAX_PREDICTIONS and not session.has_blocking_requests()

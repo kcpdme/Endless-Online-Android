@@ -38,5 +38,6 @@ func _run() -> void:
 	game.started = false
 	game.queue_free()
 	await process_frame
+	await process_frame
 	print("WORLD SMOKE PASS: zero-value coins, stacked daggers, equipment quantities, persistence, real map geometry switching, wide-screen HUD")
 	quit(0)

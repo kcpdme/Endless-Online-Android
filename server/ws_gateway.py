@@ -8,32 +8,49 @@ class Transport:
     def __init__(self,address):self.address=address;self.slots=threading.BoundedSemaphore(12)
     def handle(self,websocket):
         if not self.slots.acquire(blocking=False):websocket.close(code=1013,reason='Server is full; retry later');return
-        connection=None
+        connection=None;reader_thread=None;stopped=threading.Event()
         try:
-            connection=socket.create_connection(self.address,timeout=15);connection.settimeout(20);pending=b''
-            while True:
-                message=websocket.recv()
+            connection=socket.create_connection(self.address,timeout=15);connection.settimeout(1)
+            connection.setsockopt(socket.IPPROTO_TCP,socket.TCP_NODELAY,1)
+            def receive_backend():
+                pending=b''
+                try:
+                    while not stopped.is_set():
+                        try:chunk=connection.recv(65536)
+                        except socket.timeout:continue
+                        if not chunk:break
+                        pending+=chunk
+                        if len(pending)>4*1024*1024:break
+                        while b'\n' in pending:
+                            reply,pending=pending.split(b'\n',1);websocket.send(reply.decode('utf-8'))
+                except Exception:pass
+                finally:
+                    stopped.set()
+                    try:websocket.close(code=1011,reason='EO session ended; reconnect')
+                    except Exception:pass
+            reader_thread=threading.Thread(target=receive_backend,daemon=True);reader_thread.start()
+            while not stopped.is_set():
+                try:message=websocket.recv(timeout=1)
+                except TimeoutError:continue
                 if not isinstance(message,str):websocket.close(code=1003,reason='Send JSON text messages');return
                 try:
-                    # Canonicalize into exactly one TCP line; reject non-finite JSON numbers.
                     obj=json.loads(message,parse_constant=lambda _:(_ for _ in ()).throw(ValueError('Invalid JSON number')))
                     encoded=json.dumps(obj,separators=(',',':'),allow_nan=False).encode('utf-8')+b'\n'
                 except (ValueError,TypeError):
                     websocket.send(json.dumps({'id':None,'op':None,'ok':False,'error':'Send one valid JSON request per message.'}));continue
                 if len(encoded)>65536:websocket.close(code=1009,reason='Request exceeds64KiB');return
                 connection.sendall(encoded)
-                while b'\n' not in pending:
-                    chunk=connection.recv(65536)
-                    if not chunk:websocket.close(code=1011,reason='EO session ended; reconnect');return
-                    pending+=chunk
-                    if len(pending)>4*1024*1024:websocket.close(code=1009,reason='Snapshot exceeds4MiB');return
-                reply,pending=pending.split(b'\n',1);websocket.send(reply.decode('utf-8'))
         except Exception:
             # No traceback, frames, credentials or request bodies in service logs.
             try:websocket.close(code=1011,reason='Connection ended; reconnect')
             except Exception:pass
         finally:
-            if connection:connection.close()
+            stopped.set()
+            if connection:
+                try:connection.shutdown(socket.SHUT_RDWR)
+                except OSError:pass
+                connection.close()
+            if reader_thread:reader_thread.join(timeout=2)
             self.slots.release()
 
 def main():
