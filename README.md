@@ -21,7 +21,7 @@ The offline exploration mode remains available alongside hosted online play. It 
 
 The Android build defaults to **`wss://eo.kcpd.top/ws`**. Create an account and character to play on the hosted world without ADB or a running development computer. The server runs on AWS behind Caddy HTTPS and proxied Cloudflare DNS. Accounts and progress on this hosted world are separate from the local development server and offline journey. See [hosting and maintenance](deploy/README.md).
 
-The world pack now includes all **282 maps**, 3,945 original warp records and their graphics. Walking into a valid exit changes the rendered map only after the real server completes its warp handshake. Doors open through native EO requests; keys and level restrictions remain server-controlled. Eight malformed legacy warp destinations on map 47 are blocked rather than sending a player outside a map. Quests, chat, trading, spells, bank/guild services, full character customization and additional equipment appearances remain future work.
+The world pack now includes all **282 maps**, 3,945 original warp records and their graphics. Walking into a valid exit changes the rendered map only after the real server completes its warp handshake. Doors open through native EO requests; keys and level restrictions remain server-controlled. Eight malformed legacy warp destinations on map 47 are blocked rather than sending a player outside a map. Gold banking, item lockers, equipment inspection, player trading and nearby/global/private chat now use the original native server flows. Tap a banker, a nearby locker, or another player to interact. The mobile HUD uses HP hearts and blue TP orbs with a dynamic floating joystick. Quests, spells, guild/party controls, full character customization and additional equipment appearances remain future work.
 
 Version 0.10 fixes mid-step joystick release, moving-NPC rejection races and the extra walk-ACK wait before attacking. Movement and nearby actors use streamed native events with no periodic full-world refresh. A nearby **Pick up** button names the drop; native pickup acknowledgement updates its bag icon and corner quantity. An enlarged joystick captures dragging outside its circle and prevents accidental map taps. Fighting NPCs show a small, temporary health strip using native remaining-HP percentages. The HUD uses original Gold artwork. Broadsword, Ancient Sword, Battle Axe, Dragon Blade, Dark Katana and Ultima Blade have original four-direction character animations as well as bag icons.
 
@@ -103,7 +103,7 @@ Set `EO_DATA_DIR` for real-data importer tests if the source archives are elsewh
 
 ## Next milestone
 
-Add the remaining NPC services, quests, chat and trading, and audit the remaining legacy world-data errors. Add character customization and additional layered appearance combinations, reconnect/resume behavior, production account protection and capacity/abuse monitoring. The current online slice is an implementation foundation, not a complete MMO.
+Add the remaining NPC/guild/party services and quests, and audit the remaining legacy world-data errors. Add character customization and additional layered appearance combinations, reconnect/resume behavior, production account protection and capacity/abuse monitoring. The current online slice is an implementation foundation, not a complete MMO.
 
 ## Content rights
 

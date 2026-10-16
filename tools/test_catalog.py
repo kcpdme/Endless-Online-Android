@@ -72,6 +72,15 @@ class RuntimeCatalogTests(unittest.TestCase):
             metadata=self.manifest['graphics'][row['ground']]
             self.assertTrue((CONTENT/metadata['path'].removeprefix('res://content/')).is_file())
 
+    def test_npc_head_bounds_match_original_visible_pixels(self):
+        for npc in self.manifest['characters']['npcs'].values():
+            for direction in ('south','east','north','west'):
+                frames=npc['idle'][direction]
+                for frame in frames if isinstance(frames,list) else [frames]:
+                    with Image.open(CONTENT/frame['path'].removeprefix('res://content/')) as image:
+                        x,y,right,bottom=image.getbbox()
+                        self.assertEqual(frame['visible_bounds'],[x,y,right-x,bottom-y])
+
     def test_added_weapons_have_original_distinct_four_direction_appearances(self):
         variants=self.manifest['characters']['weapon_variants']
         self.assertEqual(len(variants),len(WEAPON_APPEARANCE_ITEMS)*4)

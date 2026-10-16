@@ -1,5 +1,9 @@
 extends Button
 ## Circular translucent hit target with an independently opaque, drawn HUD icon.
+var unread: bool = false:
+	set(value):
+		unread = value
+		queue_redraw()
 var kind: String = "bag":
 	set(value):
 		kind = value
@@ -16,7 +20,7 @@ func _ready() -> void:
 	button_down.connect(queue_redraw)
 	button_up.connect(queue_redraw)
 	resized.connect(queue_redraw)
-	tooltip_text = "Bag" if kind == "bag" else "Character equipment"
+	tooltip_text = {"bag": "Inventory bag", "person": "Character equipment", "chat": "Chat"}.get(kind, "")
 
 func _has_point(point: Vector2) -> bool:
 	var radius: float = minf(size.x, size.y) * 0.5
@@ -38,7 +42,12 @@ func _draw() -> void:
 	var ink: Color = Color("20312e")
 	var light: Color = Color("f2e8c7")
 	var gold: Color = Color("e7bd70")
-	if kind == "person":
+	if kind == "chat":
+		var bubble: PackedVector2Array = PackedVector2Array([Vector2(-17, -13), Vector2(17, -13), Vector2(17, 10), Vector2(-2, 10), Vector2(-12, 18), Vector2(-9, 10), Vector2(-17, 10)])
+		draw_colored_polygon(bubble, light)
+		for x: int in [-9, 0, 9]: draw_circle(Vector2(x, -1), 2.2, ink)
+		if unread: draw_circle(Vector2(18, -17), 5.5, Color("ef6872"))
+	elif kind == "person":
 		draw_circle(Vector2(0, -10), 8.0, ink)
 		draw_circle(Vector2(0, -11), 7.0, light)
 		var shoulders: PackedVector2Array = PackedVector2Array([Vector2(-15, 16), Vector2(-14, 9), Vector2(-9, 3), Vector2(-5, 0), Vector2(5, 0), Vector2(9, 3), Vector2(14, 9), Vector2(15, 16)])

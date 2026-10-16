@@ -1,0 +1,521 @@
+# Endless Online Android: session handoff
+
+This file is the starting point for the next session. Read current Git status,
+recent commits and the relevant code before editing; runtime state can change
+after this document was written. Keep this file current when behavior or
+deployment changes materially.
+
+## Goal and current product
+
+The user is building their **own game and server**, inspired by classic Endless
+Online, with original-style maps, movement, equipment, inventory, combat and
+shops adapted for Android. This is not a client for somebody else's public EO
+server. The project is called **Endless Online Android** on GitHub; the app's
+current working title/package are **Aster Vale** / `io.astervale.prototype`.
+Godot 4.7.2, typed GDScript and 2D isometric rendering are sufficient. A Unity/3D
+rewrite and a larger server have not been needed for the measured regressions.
+
+Baseline before this update: commit `8c9e541`, APK 0.10.0/code 10. The current
+build is 0.11.0/code 11. It adds native bank/lockers, player inspection and
+trading, local/global/private chat, a dynamic joystick, and the heart/TP HUD,
+as well as placing NPC names near visible heads and fixing observer equipment/
+attack animation updates. Check `git log` and the version in
+`scripts/build.py` for the actual latest release. Earlier important commits are
+`0bf3458` (original shops/loot/stats) and `bf18ba5` (combat/stats/respawn).
+
+## Paths, repository and delivery
+
+- Canonical checkout: `/home/kc/workspace/Endless online` — quote the space.
+- Remote: `git@github.com:kcpdme/Endless-Online-Android.git`, branch `main`.
+- Original task folder: `/home/kc/Documents/Codex/2026-10-16/cr`.
+- Its `outputs/aster-vale` and `work` links lead into the canonical checkout.
+- User download files go in `/home/kc/Documents/Codex/2026-10-16/cr/outputs`.
+- Exported APK in the repo: `builds/aster-vale-debug.apk` (ignored).
+- Download naming: `endless-online-android-vVERSION.apk`, matching source ZIP
+  and SHA256SUMS text. Source ZIP uses `git archive` and excludes private assets.
+- Use public commit email `239019296+kcpdme@users.noreply.github.com` when
+  committing. Fetch/check divergence before pushing; do not force-push.
+
+`reference/`, `work/`, generated `client/content/`, builds, databases, signing
+keys, downloaded archives and private device/test files are ignored. Do not
+stage them. Original EO content has unresolved redistribution rights; source
+availability does not establish rights to publish the original artwork/maps.
+The user already has the development resources locally.
+
+## Resource and toolchain inventory
+
+- `reference/gfx.zip` and `reference/trunk-305-EODelta.zip`, with provenance
+  `.metadata.json` files; extracted supplied material is under `reference/extracted`.
+- Original Windows client/reference archives and downloaded development sources
+  are also retained in ignored `reference/` / `work/`; inspect rather than
+  redownload them. Do not execute old supplied binaries.
+- `work/EndlessClient`: Ethan Moffat's open-source reference client, pinned
+  around `d4764cb8b1bad6501c33f38a596d80d3d79c47bb`.
+- `work/server-build/source`: pinned etheos source
+  `d6b6395d5ae28e1b20cd72f33fbf23ba921e7919`, with our maintained password patch.
+- `work/server-build/{build,deps,runtime,python}`: native build, dependencies,
+  local runtime/SQLite/private config, and pinned WebSocket Python dependencies.
+- Godot executable:
+  `work/toolchain/godot/Godot_v4.7.2-stable_linux.x86_64`.
+- Android SDK: `/home/kc/Android/Sdk`; use its `platform-tools/adb`, not an older
+  PATH adb which can restart the daemon and disconnect wireless devices.
+- Build tools: `/home/kc/Android/Sdk/build-tools/36.0.0`.
+- CMake available under `/home/kc/Android/Sdk/cmake/3.22.1/bin/cmake`.
+- Toolchain/export templates/debug keystore are under `work/toolchain`.
+  Keep the existing signing key so installing an update preserves app data.
+
+## Architecture and authority
+
+Android Godot client → trusted TLS WebSocket → Cloudflare/Caddy → Python
+WebSocket bridge → independent Python EO session adapter → real C++ etheos
+world → persistent SQLite. This is a genuine EO v28 integration, not a mocked
+world. Each connected client owns its own encrypted native EO connection.
+
+- `client/scripts/main.gd`: world, local character, controls, bag and common UI.
+- `online_controller.gd`: login, native-backed state, prediction/reconciliation,
+  peer rendering, interaction, equipment and inventory UI.
+- `online_session.gd`: JSON TCP or WS/WSS transport; normal TLS verification.
+- `server/eo_session.py`: native packet framing/codec, login/Welcome, inventory.
+- `live_session.py`: asynchronous movement/attacks/collection and compact deltas.
+- `eo_stats.py`: exact native stats/combat parsing; `economy.py`: native shops.
+- `services.py`: original Bank, Locker, Paperdoll, Trade and Talk flows.
+- `services_window.gd`: storage/trade/inspection UI and separate read-only
+  original paperdoll. `chat_window.gd`: channels, whispers and bounded log.
+- `vitals_hud.gd`: five fractional HP hearts and five TP orbs.
+- `gateway.py`: JSON operations, session lifetime and native event pumping.
+- `auth_sessions.py`: in-memory, single-use previous-session proofs.
+- `ws_gateway.py`: full-duplex WebSocket/TCP bridge, bounded buffers/clients.
+
+The server owns movement acceptance, combat, HP, Gold, inventory, quantities,
+equipment, drops and map transitions. Item catalogs describe requirements and
+art; they do not grant ownership. Never invent successful pickups or equipment
+changes before a native acknowledgement. Offline progress is a separate device
+save and must never receive online state or credentials.
+
+## Hosting and operational commands
+
+Public endpoint: `wss://eo.kcpd.top/ws`; health: `https://eo.kcpd.top/healthz`.
+The existing AWS host uses Caddy and proxied Cloudflare DNS; Caddy routes only
+`/ws` and `/healthz` to the bridge. Do not expose native EO or JSON ports.
+
+SSH alias: `AwsHosting`, user `admin`. The alias's old default key was missing;
+the working local key is `/home/kc/workspace/VPSKeys/kcpdnew.pem`. Use:
+
+```sh
+ssh -o BatchMode=yes -o IdentitiesOnly=yes \
+  -i /home/kc/workspace/VPSKeys/kcpdnew.pem AwsHosting
+```
+
+The dedicated service user/group is `astervale`.
+
+- `/opt/aster-vale/runtime`: world binary, game data, `database.sdb`, and private
+  `config.local.ini` / persistent PasswordSalt.
+- `/opt/aster-vale/app/server`: adapter source.
+- `/opt/aster-vale/python`: verified WebSocket dependency, currently 17.2.
+- `/opt/aster-vale/backups`: private deployment/database backups.
+- `aster-vale-world`: `127.0.0.1:8078`.
+- `aster-vale-gateway`: `127.0.0.1:8079`.
+- `aster-vale-websocket`: `127.0.0.1:8180`.
+
+```sh
+sudo systemctl is-active aster-vale-world aster-vale-gateway aster-vale-websocket
+sudo journalctl -u aster-vale-world -n 40
+curl -fsS http://127.0.0.1:8180/healthz
+```
+
+Back up reviewed adapter files before replacing them. Restart gateway and
+WebSocket for adapter updates; this briefly disconnects players but preserves
+their native progress. An adapter update does **not** need a world restart.
+Back up SQLite with its backup API or stop the world before copying it. Never
+replace the hosted database/config with a local test fixture or regenerate its
+salt. A native binary change needs a controlled world stop/restart and private
+backup. Preserve current ownership and systemd hardening. Host measurements
+were lightly loaded; extra CPU/RAM would not fix serialized protocol waits.
+
+Local tests typically use world 8078, gateway **8182**, WebSocket **8183**.
+Check listeners/processes first and reuse suitable existing services; do not
+assume old PID numbers still identify the same process. Example commands:
+
+```sh
+python3 server/run.py
+python3 server/gateway.py --port 8182
+python3 server/ws_gateway.py --port 8183 --tcp-port 8182 --deps-dir work/server-build/python
+```
+
+## Important regressions and their fixes
+
+### Movement and attack cadence
+
+The original-style protocol does **not** refresh the full world every step.
+Old adapter/client versions waited for sleeps, Refresh and round trips before
+animation. See `docs/MOVEMENT.md` for the original-code comparison and measured
+before/after behavior. Reference EndlessClient is open source; do not describe
+it as decompilation of the proprietary Windows executable.
+
+Current movement starts locally, uses a 400 ms tile animation and roughly
+420 ms input cadence, and allows four bounded predictions. Native Walk_Reply
+confirms inputs; only acknowledged inputs are discarded. Replay the outstanding
+directions when reconciling. NPCs/peers interpolate independently. There is no
+periodic full-world Refresh timer. Real rejection/death/warp still corrects.
+
+Releasing online movement clears future input and finishes the already-committed
+tile; freezing halfway caused later snaps. Offline release still stops directly.
+True correction/disconnect/death uses `_cancel_controls(true)`.
+
+Original client NPC collision remains local. Native etheos player Walk checks
+terrain and player occupancy. A second adapter NPC check used a newer moving-rat
+position to reject a step already predicted by the client; it was removed.
+Do not reintroduce this race. Static NPC tiles still block client movement.
+
+An attack after the visual walk completes does not wait for an additional Walk
+ACK. Reliable native action order preserves Walk→Attack. Attacks repeat around
+520 ms, matching the native 500 ms cooldown, rather than the offline 900 ms rate.
+
+Native Attack uses direction + timestamp. Differences below 48 ticks are refused;
+differences at least 60 force the previous native facing. The adapter advances
+50 ticks per streamed attack, 42 per walk. Start the session counter at **0**,
+not the former arbitrary 1000: otherwise the very first attack after login can
+face the wrong way. Native Timestamp begins unset. Do not add a Face wait to
+every swing to mask this; it adds a native queue slot.
+
+### Inventory, drops and shops
+
+Gold item **1** always occupies the first bag slot, including amount zero.
+Stored quantities appear in the top-right corner. Original Gold icon is GFX23:70;
+original ground coin piles are 269/271/273/275/277 at amounts 0/2/100/10000/100000.
+Do not replace these with a diamond glyph or fabricated currency artwork.
+
+Rat Tail is item **249**. A named Pick up control works within native Manhattan
+distance two. Walking onto a drop also collects. Pickup intent survives movement
+and its ACK. `collect` returns immediately; native Item_Get updates inventory
+and emits success. A failed protected/overweight pickup expires as a feedback
+event instead of blocking the native packet pump. Native NPC drop protection is
+30 seconds; player drops have a separate protection interval (five seconds in
+the test runtime). Other players' reserved drops stay unavailable.
+
+Packet layout pitfalls: Item_Add is item2/uid2/amount3/x1/y1; Walk_Reply ground
+items are uid2/item2/x1/y1/amount3. Item_Get uses the native UID, not item ID.
+Partial pickup subtracts only the acknowledged amount.
+
+Original per-NPC economy was imported: 48 trade/craft records and 152 NPC drop
+entries. Shop Bob Buy/Sell and Cyndi Craft pass native and scene tests. Prices,
+ingredients and random drop chances remain original. Shop operations require
+opening the nearby keeper and invalidate on movement/warp. Bank/locker,
+inspection/trade and chat are implemented in v0.11. Guild/quest and other NPC
+services remain unfinished; do not claim every NPC works.
+
+### Equipment and multiplayer appearance
+
+Original native Equip silently refuses an occupied slot. The client implements
+a one-tap replacement as **Remove → native ACK → Add**. It checks level, class,
+gender, attributes, cursed gear and obvious two-handed conflicts first. Old gear
+returns to the bag, with exact native quantities. Do not send both packets before
+Remove is acknowledged or invent an atomic inventory result. Error text now
+explains native refusal instead of only saying acknowledgement timed out.
+
+Snapshot appearance order is **B000A0HSW**: boots index0, armor4, hat6, shield7,
+weapon8. Character-selection order is BAHSW. Avatar_Agree (family23/action5,
+slot1) instead has **BAHWS**, five two-byte graphics after player2/slot1/sound1.
+Decode into indices **0,4,6,8,7**. Ignoring this packet left observers displaying
+the weapon a player wore when they entered view, rather than the current gear.
+
+Peer attacks are family11/action8: player2/direction1. Forward the event, update
+the peer's persistent facing, and start a 360 ms two-frame weapon animation.
+Render from the attack's direction, not a stale walking direction. The current
+client uses `peer_attacks` and the shared `entity_animation()` render path.
+No full-world refresh is necessary for either equipment or attack animation.
+
+Current composed player art covers male gender1/race0/hair1/color0, starter
+armor/boots graphics 0/1 and these weapons: Dagger21 (doll4), Broadsword19 (14),
+Ancient Sword22 (19), Battle Axe32 (18), Dragon Blade37 (3), Dark Katana38 (12),
+Ultima Blade281 (33). Eight starter variants remain under `hero_variants`;
+24 additional combinations are under `weapon_variants`, keyed `aA_bB_gGRAPHIC`.
+Long weapons use 192×192 transparent canvases so their art is not clipped.
+Unsupported appearances still show an explicit fallback; they need more layer
+composition rather than substituting a random item sprite.
+
+### NPC names, health and character stats
+
+NPC export includes per-frame `visible_bounds`, computed from original opaque
+pixels after mirroring. The client positions names over the visible standing
+head using region dimensions and the original frame offset. It centers the text
+by measured width; it does not add the old fixed `-32-name_label_offset` gap.
+Idle labels sit five pixels above the art. While fighting, a five-pixel HP strip
+fits between head and name. Standing geometry keeps labels stable during swings.
+
+Battle strips use native remaining HP percentage, appear on engagement/damage,
+expire after eight seconds without combat, and clear on death/map change.
+Character HP/TP, damage flash, native retaliation/death and Aeven respawn work.
+The original Stats panel is GFX2:34. INT/WIS field order differs between Welcome
+and equipment packets; preserve their explicit decoder orders. Item details show
+native bonuses, requirements, weight and quantity.
+
+### Mobile controls and login
+
+The translucent floating stick has radius110 and a 364×322 activation area.
+Its pointer stays captured outside the circle, and another non-HUD touch cannot
+accidentally pathfind the map. Attack, bag, person and nearby Pick up remain
+usable with a second finger. Native touch ownership suppresses duplicate
+emulated mouse actions. Android Back closes the top modal first.
+
+Login code **5** is already logged in, often a dead Wi-Fi session while moving
+to mobile data, not evidence of broken mobile TLS/firewalls. The gateway issues
+a random in-memory, account-bound single-use reconnect proof; valid proof can
+retire only that same prior session. New native login still verifies the password.
+Tokens/passwords are not saved on the device. WS ping interval/timeout are 5/8
+seconds, and code5 retries are bounded. Carrier networking still adds real latency;
+do not claim controlled injected delay represents every mobile network.
+
+## Password hashing recovery: do not regress
+
+Earlier setup used a 64-character persistent PasswordSalt. Native version2
+prepended salt + account name + password before bcrypt, which consumes only
+72 input bytes. Some account names therefore caused the entire password to be
+ignored. A negative login test reproduced this. It was **our setup interacting
+with the legacy hash scheme**, not proof that mobile internet rejects passwords.
+
+Maintained patch: `server/patches/etheos-password-v3.patch`. Setup applies it to
+the pinned native source. Version3 hashes the full salted input to 64 printable
+SHA-256 hex characters before bcrypt with random per-hash salt/work factor12.
+Hosted/local secure config: `PasswordCurrentVersion = 3`,
+`RejectLegacyBcrypt = yes`. Preserve the original private runtime salt.
+
+Legacy vulnerable hashes require operator recovery (code7). Do **not** migrate
+them based on a supposedly successful old login, enable legacy verification to
+avoid a reset, or run an unpatched binary against a version3 database.
+`server/reset_password.py` prompts privately or generates a mode-0600 file,
+backs up SQLite and verifies character rows did not change. It uses the native
+`runtime/native-auth` helper; `native-auth --self-test` checks truncation/rejection.
+The operator helper requires 8–25 printable ASCII characters; native ordinary
+registration has its separately configured password limits. Do not weaken the
+hash scheme for an explicitly requested short test password.
+
+Never put user passwords, reconnect tokens, DB hashes, salts, Cloudflare tokens
+or SSH/signing key contents in this public file or repository. Private operator
+profile notes live in ignored `work/session-handoff-private.json`. Previously
+generated private login files are in the task outputs directory with mode0600.
+Look up those files privately instead of printing them or resetting accounts
+again. Manually funded real/test profiles must not be reused as integration
+fixtures or overwritten by a local database.
+
+## Bank, lockers, player interaction and chat (v0.11)
+
+Use the original pinned reference, rather than inventing a parallel economy:
+`EndlessClient/Dialogs/{BankAccountDialog,LockerDialog,TradeDialog}.cs`,
+`EOLib/Domain/Interact/Bank/BankActions.cs`, `Domain/Map/LockerActions.cs`,
+`Domain/Trade/TradeActions.cs`, `Domain/Chat/ChatActions.cs`, and matching native
+`handlers/{Bank,Locker,Paperdoll,Trade,Talk,Global}.cpp`. UI is adapted for touch;
+the original male paperdoll background/slot regions and item art are reused.
+
+`services.py` initializes per-connection bank/locker/trade/request state. Its
+snapshots and compact world deltas explicitly include these keys, including
+`null` to close a window. All inventory changes follow native acknowledgements.
+Bank/locker contexts clear on movement or warp. Storage, equipment, shops and
+pickups are blocked during a trade, including the native Bank_Take path that
+lacks its own trading guard. Moving/attacking during a trade is rejected until
+Cancel, so walking cannot leave the adapter with a stale active trade.
+
+- Bank NPC type9: Open36/13 NPC index2; response bankGold4/token3/upgrades1.
+  Deposit36/7 and withdraw36/9 use amount4 plus token3. Reply36/3 carries exact
+  bagGold4/bankGold4. Locker expansion37/11 returns bagGold4/upgrades1.
+  Capacity/cost use read-only native config settings (25 base slots, +5 per
+  upgrade, 1000 base Gold/+1000 step in the supplied runtime), not DB grants.
+- Lockers are map tile spec16. Tap their actual tall object or their tile;
+  approach within one Manhattan tile. Open37/13 x1/y1; full contents are
+  item2/amount3 pairs. Deposit37/7 x1/y1/item2/amount3; reply37/3 includes exact
+  remaining bag amount4 and native weight/maxweight. Withdraw37/9 x1/y1/item2
+  takes the whole stack (limited by CanHoldItem), acknowledged37/27 amount3.
+  Gold is banked through the NPC rather than stored as a locker item.
+- Inspect another visible player via Paperdoll30/1 PID2. Reply30/3 has six
+  break strings, PID2/class1/gender1/unknown1 and 15 equipped itemIDs2.
+  Parse into a separate inspection record. Never call the self-only paperdoll
+  parser or overwrite your own equipment when inspecting another player.
+- Trade32/1 sends byte0 + PID2; incoming includes raw trailing requester name.
+  Accept32/2 byte1 + requesterPID2. Open32/13 starts both dialogs. Add32/7
+  item2/amount4; remove32/4 item2. Offer updates32/3 or32/17 contain ownerPID2,
+  item2/amount4 pairs and byte255 delimiters for both players. Any offer change
+  resets both approvals. Agree32/5 uses one byte. Own status is32/16; peer
+  status32/5 contains the receiver's PID in this pinned server, so treat it as
+  peer agreement instead of attributing it by the misleading ID.
+- Only completion32/10 transfers local inventory quantities; decode by group
+  PID, not group order. Weights use native read-only EIF definitions, as the
+  reference client does. Cancel32/14 and peer disconnect close the trade without
+  transferring items. Tests verify completion and persistence after reconnect.
+  Native requires both players to offer something before the second approval
+  completes. This adapter limits each offer to five distinct item types because
+  the pinned world's Trade_Remove wrongly refuses removal above five; quantities
+  remain stackable. Lore items are refused. No Python database trading exists.
+- Native Talk18 sends Nearby action21, Global15, Whisper20 (recipient break
+  string followed by message). Incoming Nearby8 has PID2 + raw message; Global15
+  and Whisper20 have two break strings. Server23 is raw text, Reply3 is a missing
+  recipient, Spec16 means muted. Sender echo is local, matching EndlessClient;
+  it is not proof of delivery when native mute/jail rules drop a message.
+  Log is bounded to150 messages in RAM, cleared on character entry, never saved
+  with credentials or an offline profile. Native protocol text is Latin-1;
+  unsupported Unicode gets a clear error. Input is 1–128 printable characters,
+  rate limited to one message per0.7 seconds. Nearby messages also show a short
+  speech bubble; new incoming messages mark the opaque chat icon with a dot.
+
+Client dialogs use actual native state. The bank is a compact wooden card;
+locker and trade screens show bag items and stored/offered quantities; inspecting
+shows the original paperdoll and item bonuses without modifying your gear.
+A tap on another player's rendered body requests inspection once your current
+step is confirmed. Trade and Whisper actions are on that player's dialog.
+
+The gameplay HUD hides the title, player/location coordinates, map name, nearby
+player/NPC counts and Gold. Gold remains visible as item1 in the bag and in bank,
+shop, trade and Stats dialogs. `CharacterStats.vitals` is a custom Control with
+five fractional red hearts and five blue TP orbs; HP/TP numeric totals are in
+Stats. An idle joystick is invisible. Touch down anywhere in the larger lower
+left activation area centers it exactly at the thumb, and long drags slide the
+base while retaining pointer ownership. Release clears input and hides the
+stick; online movement still finishes its committed tile (never stop a rendered
+sprite between native tiles). Multi-touch attack and modal/focus cancellation
+remain covered by gameplay tests.
+
+Test details and pitfalls:
+- `server/test_services.py`: fresh two-client WS→EO native bank/upgrade/locker,
+  inspect, all three chat channels, trade reset/complete/cancel and relog.
+  Passed locally and through public WSS on the deployed adapter.
+- `server/test_services_ui.py`: actual Godot scene and two real native sessions;
+  taps the bank/locker/player, exercises dialogs, checks exact inventory, local
+  speech bubbles and whispers. `--screenshots work/v11-screens` uses desktop
+  rendering for visual QA; private screenshots include only dev fixtures.
+- Moving banker NPCs can wander away from their initial map spawn. Integration
+  fixtures must approach the banker's live coordinates rather than assuming
+  the NPC remains beside a fixture staged at2,2. Do not restart production or
+  alter NPC data to make a test pass. Local world restarts for isolated QA reset
+  local NPC positions without deleting the DB; they do not affect production.
+- Locker targeting once reused NPC index0 and replaced its selected coordinates.
+  A locker interaction must skip NPC lookup and retain its own x/y.
+- Center-anchored dialogs must change `offset_top/bottom`, not set `position`
+  to a negative half-size after anchoring: that moves them off screen. UI tests
+  and screenshot inspection cover bank/trade bounds.
+
+## Content status and known gaps
+
+There are 282 imported server maps, 3,945 original warp records, 490 items,
+302 NPC definitions and 158 world NPC graphic sets. Valid map changes follow
+the native warp handshake before swapping rendered geometry. Eight malformed
+map47 destinations are guarded. Map relog coordinates are not guaranteed safe
+spawn locations. Source graphic171 has blank standing art; do not silently
+replace its species with invented artwork.
+
+The sample quest archive contains 36 numeric sources; 35 parse after conservative
+logged `.eqf` conversion. Quest17 is isolated because of a missing target state;
+native output 35/56 includes permitted numeric ID gaps. Original text bytes and
+conversion provenance are preserved. Some chest/map data remain inconsistent.
+Quest gameplay, guild/party controls, spells, self-service recovery, more appearance
+combinations, abuse monitoring and real capacity testing are future work.
+
+## Build, verify and install
+
+```sh
+python3 scripts/build.py android --toolchain work/toolchain
+/home/kc/Android/Sdk/build-tools/36.0.0/apksigner verify builds/aster-vale-debug.apk
+/home/kc/Android/Sdk/build-tools/36.0.0/zipalign -c -P 16 4 builds/aster-vale-debug.apk
+```
+
+The build imports resources, checks Godot script errors (Godot can exit0 despite
+script errors), then exports/signs with the existing key. API24+, ARM64/x86_64,
+immersive full-screen; wide screens show extra world instead of letterboxing.
+`export/android/shutdown_adb_on_exit = false` avoids killing wireless ADB.
+
+Physical device is Galaxy S23 Ultra/SM_S918B, Android16. Wireless port changes:
+
+```sh
+/home/kc/Android/Sdk/platform-tools/adb mdns services
+/home/kc/Android/Sdk/platform-tools/adb connect IP:PORT
+```
+
+Before `adb install --no-incremental -r`, force-stop and privately read the
+existing `files/aster_vale_save.json` through `adb exec-out run-as
+io.astervale.prototype`. Compare the raw bytes after installing. **Never
+uninstall to fix an install error**; that would delete the offline save. Do not
+print the save. Ignored `work/install_v10.py` demonstrates the successful check;
+adapt version/device port rather than assuming it is current. Launch component:
+`io.astervale.prototype/com.godot.game.GodotAppLauncher`.
+
+Tests use temporary XDG data/config roots and fresh `dev...` accounts. Native
+character selection IDs are session-specific: **after relogin find the character
+by name in that login's returned list**. Reusing a fixture's previous ID causes
+a silent Welcome refusal/acknowledgement timeout. Never stage a human character
+for a test. Keep fixture JSON mode0600 and outside committed source.
+
+```sh
+python3 -m unittest discover -s tools -v
+python3 -m unittest discover -s server -p test_live_state.py -v
+python3 scripts/test_client.py --godot work/toolchain/godot/Godot_v4.7.2-stable_linux.x86_64
+python3 scripts/test_client.py --world --godot work/toolchain/godot/Godot_v4.7.2-stable_linux.x86_64
+work/toolchain/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path client --script res://tests/movement.gd
+work/toolchain/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path client --script res://tests/network_regressions.gd
+python3 server/test_reconnect.py --deps-dir work/server-build/python
+python3 server/test_weapons.py --godot work/toolchain/godot/Godot_v4.7.2-stable_linux.x86_64
+python3 server/test_peer_visuals.py --godot work/toolchain/godot/Godot_v4.7.2-stable_linux.x86_64 --report work/peer-visuals.json
+```
+
+Peer visual integration uses two independent real native sessions, changes
+weapons after the observer has already entered, checks native equip/removal
+updates and both rendered attack frames in four directions without observer
+Refresh. `--fixture-file` and `--url` allow the same test through public WSS,
+using freshly provisioned dev fixtures on the hosted world.
+
+Other meaningful integrations: `test_streaming.py` (ACK/peer pushes/warps/jitter),
+`test_combat.py` (real outgoing/incoming damage, stats and native respawn),
+`test_economy.py` (Bob/Cyndi, quantities, protection/persistence),
+`test_kill_loot.py` (actual random Rat Tail drop), and `test_mobile_flow.py`
+(real scene native touch/pickup/bag under injected delay). Run appropriate tests
+for the change; do not repeatedly rerun unrelated lengthy suites after passing.
+
+`latency_proxy.py` is loopback-only and pipelines delay rather than serially
+sleeping each RPC. Controlled tests at 120±80 ms per direction completed eight
+touch steps/pickup with no correction/Refresh; 300±150 ms tests chased/killed a
+real Rat while attacking before Walk ACK. Do not run movement fixtures on the
+same coordinates simultaneously: genuine player collision can fail an otherwise
+valid isolated test. Stop temporary proxies/emulators after finishing; keep the
+hosted world running.
+
+Sanitized results are in `docs/*report.json` and `docs/TESTING.md`. Raw logs,
+credentials, phone screenshots and save hashes remain private/ignored. Add
+meaningful regressions for protocol bugs instead of tests which merely restate
+implementation. Verify an observer's actual render state, not only an attacker
+RPC saying it was sent.
+
+## Reference explanations
+
+- `docs/MOVEMENT.md` and `server/ONLINE.md`: original-source and packet details.
+- [Client prediction and reconciliation](https://www.gabrielgambetta.com/client-side-prediction-server-reconciliation.html).
+- [Entity interpolation](https://www.gabrielgambetta.com/entity-interpolation.html).
+- [Snapshot interpolation](https://gafferongames.com/post/snapshot_interpolation/).
+- [Password storage guidance](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html).
+- `tools/README.md`, `docs/REFERENCE_IMPORT.md`, `THIRD_PARTY.md`: content
+  provenance, import commands and license boundaries.
+
+The user prefers autonomous implementation, testing and installation, with
+concise progress updates and concrete results. Existing authorization covers
+these requested fixes, deploying them and reinstalling the update. Ask only
+for genuinely missing information; do not repeatedly reconfirm reversible work.
+
+
+## v0.11 final delivery notes
+
+The native adapter changes are deployed to the existing AWS/Cloudflare/Caddy
+endpoint. All three hosted services remain active. Deployment backs up adapter
+source and restarts only gateway/WebSocket services; the production native world,
+existing account database and password salt are preserved. Fresh dev fixtures
+are the only test DB staging. Public WSS tests pass bank/locker/inspection/trade,
+all three chat channels and persistence; the actual Godot observer sees eight
+weapon swings across two weapons/four directions. Sixteen Python state tests,
+24 content tests and the Godot gameplay/movement/network regressions pass.
+Actual Godot service dialogs and rendered screenshots were also checked.
+
+Install using the existing signing key and `adb install --no-incremental -r`.
+The Galaxy S23 Ultra wireless link was paired and installation succeeded with
+identical save bytes. A stalled first transfer (~0.5 Mbps) recovered after
+restarting the SDK adb daemon; the same APK then transferred at roughly90 Mbps.
+Use the discovered mDNS serial rather than accumulating duplicate manual IP
+transports. Current identity is `adb-RZCW40X8YZZ-lFn1cg._adb-tls-connect._tcp`;
+its IP/port can change. Never uninstall to solve a transfer issue. Private
+install logs/save backup/hash evidence are under ignored `work/v11-phone-*`.
+The final APK must match the SHA256 in the final install report, not a prior
+intermediate v0.11 export. Source ZIP is made from the final committed HEAD.

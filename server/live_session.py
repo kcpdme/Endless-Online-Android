@@ -12,10 +12,12 @@ from eo_session import Session, Reader, EOError, number
 
 
 from economy import EconomyMixin
+from services import ServicesMixin
 
 
-class LiveSession(EconomyMixin, Session):
+class LiveSession(ServicesMixin, EconomyMixin, Session):
     def __init__(self,*args):
+        self.init_services()
         self.pending_moves=deque();self.position_seq=0;self.last_input_seq=0
         self.pending_pickups={};self.drop_guards={}
         self.metrics=dict(moves=0,walk_acks=0,refreshes=0,corrections=0,collects=0,pickups=0)
@@ -27,6 +29,7 @@ class LiveSession(EconomyMixin, Session):
         direction=int(direction);seq=int(seq);x=int(x);y=int(y)
         if direction not in range(4) or not self.state or not self.state.get('self'):raise EOError('Enter the world before moving')
         if self.warp:raise EOError('Wait for the map transition')
+        if self.trade:raise EOError('Close the trade before moving')
         if self.stats.get('dead'):return {'sent':False,'input_seq':seq,'dead':True}
         if seq<=self.last_input_seq:raise EOError('Movement sequence is stale')
         if len(self.pending_moves)>=4:raise EOError('Wait for outstanding movement')
@@ -34,7 +37,7 @@ class LiveSession(EconomyMixin, Session):
         if not(0<=x<=251 and 0<=y<=251):raise EOError('Movement destination is outside protocol bounds')
         # Bound the queue; the native server enforces its 400 ms cadence. Network jitter
         # may deliver valid, evenly spaced client inputs in a burst. Never sleep here.
-        now=time.monotonic();self.shop=None
+        now=time.monotonic();self.shop=None;self.bank=None;self.locker=None
         if open_door:self.send(34,13,number(x,1)+number(y,1))
         # Match original etheos: NPC occupancy is checked by the client before
         # prediction. Rechecking a moving NPC here rejects an already-predicted
@@ -72,6 +75,7 @@ class LiveSession(EconomyMixin, Session):
     def strike(self,direction):
         direction=int(direction)
         if direction not in range(4) or not self.state:raise EOError('Enter the world before attacking')
+        if self.trade:raise EOError('Close the trade before attacking')
         if self.warp or self.stats.get('dead'):return {'sent':False,'dead':True}
         # Native TCP/action queue preserves Walk -> Attack order; a delayed walk
         # acknowledgement must not add another round trip before an attack.
@@ -108,7 +112,7 @@ class LiveSession(EconomyMixin, Session):
         handled=super().control_packet(f,a,p)
         if handled and (f,a)==(19,5):
             if self.pending_moves:self.position_seq=self.pending_moves[-1]['seq']
-            self.shop=None;self.pending_pickups.clear();self.drop_guards.clear()
+            self.shop=None;self.bank=None;self.locker=None;self.trade=None;self.trade_request=None;self.pending_pickups.clear();self.drop_guards.clear()
             self.pending_moves.clear();self.expect_walk_refresh=False;self.position_update=True;self.correction=True;self.dirty=True
             if was_dead:self.events[-1]['reason']='death_respawn'
             self.stats['dead']=False
@@ -134,6 +138,7 @@ class LiveSession(EconomyMixin, Session):
 
     def apply_event(self,f,a,p):
         super().apply_event(f,a,p)
+        self.apply_service_packet(f,a,p)
         if not self.state:return
         r=Reader(p)
         if (f,a)==(25,3):
@@ -167,6 +172,24 @@ class LiveSession(EconomyMixin, Session):
             if row['player_id']!=self.player_id:self._upsert('characters','player_id',row)
         elif (f,a)==(23,4):
             pid=r.num(2);self.state['characters']=[c for c in self.state['characters'] if c['player_id']!=pid];self.dirty=True
+        elif (f,a)==(23,5):
+            # Avatar_Agree uses BAHWS, unlike snapshot B000A0HSW. Observers
+            # must update equipment immediately after another player changes it.
+            pid=r.num(2);slot=r.num();r.num()
+            row=next((c for c in self.state['characters'] if c['player_id']==pid),None)
+            if row:
+                if slot==1 and len(r.rest())>=10:
+                    graphics=list(row.get('equipment_graphics',[0]*9))
+                    for index in (0,4,6,8,7):graphics[index]=r.num(2)
+                    row['equipment_graphics']=graphics
+                elif slot==2 and len(r.rest())>=2:row.update(hairstyle=r.num(),haircolor=r.num())
+                elif slot==3 and r.rest():row['haircolor']=r.num()
+                self.dirty=True
+        elif (f,a)==(11,8):
+            pid=r.num(2);direction=r.num()
+            row=next((c for c in self.state['characters'] if c['player_id']==pid),None)
+            if row:row['direction']=direction
+            self.dirty=True
         elif (f,a)==(29,3):
             count=r.num();r.take(1)
             for _ in range(count):self._upsert('characters','player_id',self._character(r))
@@ -213,6 +236,7 @@ class LiveSession(EconomyMixin, Session):
     def snapshot(self):
         data=super().snapshot()
         data['shop']=self.shop
+        data.update(bank=self.bank,locker=self.locker,trade=self.trade,trade_request=self.trade_request)
         data.update(position_update=self.position_update,position_seq=self.position_seq,correction=self.correction)
         self.dirty=False;self.position_update=False;self.correction=False
         self.sent_state=deepcopy(data)
@@ -224,6 +248,8 @@ class LiveSession(EconomyMixin, Session):
         if not before or before['map_id']!=data['map_id'] or any(e.get('kind')=='map_transition' for e in data['events']):return data
         # Compact entity changes, like native EO: never resend the full visible world per step.
         update={k:data[k] for k in ('map_id','position_update','position_seq','correction','events')}
+        for key in ('bank','locker','trade','trade_request'):
+            if data.get(key)!=before.get(key):update[key]=data.get(key)
         if data['player']!=before['player'] or data['position_update']:update['player']=data['player']
         for collection,key in [('players','player_id'),('npcs','index'),('items','uid')]:
             old={r[key]:r for r in before[collection]};new={r[key]:r for r in data[collection]}

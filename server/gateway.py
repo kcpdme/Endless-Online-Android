@@ -75,6 +75,7 @@ class Handler(socketserver.StreamRequestHandler):
             return {'connected':False}
         s=self.session
         if not s:raise EOError('Connect to the local server first')
+        if s.trade and op in ('walk','attack','spend_stat'):raise EOError('Close the trade before acting')
         if op=='register':return s.register(str(r['username']),str(r['password']))
         if op=='login':
             username=str(r['username']).strip().lower()
@@ -95,7 +96,16 @@ class Handler(socketserver.StreamRequestHandler):
         if op=='collect':return s.collect(int(r['uid']))
         if op=='diagnostics':return dict(s.metrics)
         if op=='pickup':return s.pickup(int(r['uid']))
-        if op in ('equip','unequip'):s.equip(int(r['item_id']),op=='unequip',int(r.get('subloc',0)));return s.snapshot()
+        if op in ('equip','unequip'):
+            s._standing();s.equip(int(r['item_id']),op=='unequip',int(r.get('subloc',0)));return s.snapshot()
+        if op=='bank_upgrade':return s.bank_upgrade()
+        if op=='bank_open':return s.bank_open(int(r['npc_index']))
+        if op in ('bank_deposit','bank_withdraw'):return s.bank_change(op=='bank_withdraw',int(r['amount']))
+        if op=='locker_open':return s.locker_open(int(r['x']),int(r['y']))
+        if op in ('locker_deposit','locker_withdraw'):return s.locker_change(op=='locker_withdraw',int(r['item_id']),int(r.get('amount',1)))
+        if op=='chat_send':return s.chat_send(str(r['channel']),str(r['message']),str(r.get('target','')))
+        if op=='inspect_player':return s.inspect_player(int(r['player_id']))
+        if isinstance(op,str) and op.startswith('trade_'):return s.trade_action(op.removeprefix('trade_'),int(r.get('player_id',0)),int(r.get('item_id',0)),int(r.get('amount',0)),bool(r.get('agree',True)))
         raise EOError('Unsupported gateway operation')
 class Server(socketserver.ThreadingTCPServer):
     allow_reuse_address=True;daemon_threads=True

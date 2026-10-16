@@ -1,0 +1,12 @@
+{
+  "database_reset": false,
+  "transport": "WebSocket -> gateway -> original native EO handlers",
+  "native_other_player_paperdoll_15_slots": true,
+  "gold_bank_native_deposit_withdraw_locker_upgrade": true,
+  "native_locker_deposit_stack_withdraw_inventory_and_weight": true,
+  "native_local_global_private_chat_two_clients": true,
+  "two_sided_native_trade_offer_change_resets_approvals_and_atomic_exchange": true,
+  "cancel_does_not_transfer_items": true,
+  "bank_locker_trade_persist_after_relogin": true,
+  "result": "passed"
+}

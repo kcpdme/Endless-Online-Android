@@ -54,6 +54,27 @@ func _run() -> void:
 	game.online._process_events([{"kind": "npc_killed", "npc_index": 42, "damage": 5}])
 	check(not game.online.npc_health.has(42), "Killed NPC must not retain health on its next spawn")
 	check((game.hud_root.get_node("GoldIcon") as TextureRect).texture != null, "Gold HUD must use original item artwork")
+	# Names follow opaque standing art; attack poses must not move labels away.
+	var npc_graphics: Dictionary = (game.manifest.characters as Dictionary).npcs as Dictionary
+	for id: String in ["2", "35", "54"]:
+		var graphic: Dictionary = npc_graphics[id] as Dictionary
+		var layout: Dictionary = game.online.npc_name_layout(graphic, "south", false)
+		check(is_equal_approx((layout.head as Vector2).y - (layout.name as Vector2).y, 5.0), "NPC name must sit five pixels above visible head")
+		var battle: Dictionary = game.online.npc_name_layout(graphic, "south", true)
+		check((battle.health as Rect2).end.y < (layout.head as Vector2).y, "Battle strip must fit above head without hiding the name")
+	# A peer's actual native attack direction drives both swing frames, even
+	# when the previously-rendered movement direction differs.
+	var peer: Dictionary = {"player_id": 200, "direction": 0, "gender": 1, "race": 0, "hairstyle": 1, "haircolor": 0, "equipment_graphics": [1,0,0,0,1,0,0,0,33]}
+	game.online.players.assign([peer])
+	game.online._process_events([{"kind": "peer_attack", "player_id": 200, "direction": 2}])
+	var animation: Dictionary = game.online.entity_animation("online_player", peer)
+	check(animation.state == "attack" and animation.direction == "north" and int(peer.direction) == 2, "Peer swing must use native attack facing immediately")
+	var appearance: Dictionary = game.online.character_graphic(peer)
+	var first: Dictionary = game._frame(appearance, str(animation.direction), "attack", 0.01)
+	var second: Dictionary = game._frame(appearance, str(animation.direction), "attack", 0.20)
+	check(not appearance.is_empty() and first.get("path") != second.get("path"), "Observer must render both original weapon attack frames")
+	game.online.peer_attacks[200].until = Time.get_ticks_msec() / 1000.0 - 1.0
+	check(game.online.entity_animation("online_player", peer).state == "idle", "Peer animation must finish rather than freeze in an attack pose")
 	game.online_mode = false
 	game.started = false
 	game.queue_free()

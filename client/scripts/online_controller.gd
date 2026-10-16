@@ -5,6 +5,8 @@ var game: Node
 var session: OnlineSession
 var panel: Control
 var status_label: Label
+var chat_bubbles: Dictionary = {}
+var trade: Dictionary = {}
 var server_label: Label
 var host_field: LineEdit
 var port_field: SpinBox
@@ -23,6 +25,7 @@ var streaming: bool = false
 var recovering: bool = false
 var defeated: bool = false
 var npc_attack_until: Dictionary = {}
+var peer_attacks: Dictionary = {}
 var npc_health: Dictionary = {}
 var transition_pending: bool = false
 var next_input_seq: int = 0
@@ -195,6 +198,7 @@ func _on_message(message: Dictionary) -> void:
 		if operation == "collect": pickup_pending.clear()
 		if operation in ["equip", "unequip"]: pending_equip.clear()
 		if game.shop_ui != null: game.shop_ui.refresh()
+		if game.services_ui != null: game.services_ui.refresh()
 		if operation in ["walk", "move"]:
 			# A transport rejection is not an authoritative position; recover from the world.
 			pending_inputs.clear()
@@ -233,8 +237,13 @@ func _on_message(message: Dictionary) -> void:
 				if int((player.get("equipment", {}) as Dictionary).get(str(replacement.slot), 0)) == 0:
 					session.request("equip", {"item_id": int(replacement.item_id), "subloc": int(replacement.subloc)})
 				else: game._toast("The worn item could not be removed. Your replacement remains in the bag.")
-		"world", "refresh", "snapshot", "attack", "pickup", "equip", "spend_stat", "shop_buy", "shop_sell", "shop_craft":
+		"world", "refresh", "snapshot", "attack", "pickup", "equip", "spend_stat", "shop_buy", "shop_sell", "shop_craft", "bank_deposit", "bank_withdraw", "bank_upgrade", "locker_deposit", "locker_withdraw", "trade_request", "trade_accept", "trade_decline", "trade_add", "trade_remove", "trade_agree", "trade_cancel", "chat_send":
 			_apply_snapshot(data)
+		"inspect_player":
+			game.services_ui.open("inspect", data)
+		"bank_open", "locker_open":
+			_apply_snapshot(data)
+			game.services_ui.open("bank" if operation == "bank_open" else "locker", data.get("bank" if operation == "bank_open" else "locker", {}) as Dictionary)
 		"shop_open":
 			_apply_snapshot(data)
 			game.shop_ui.open(data.get("shop", {}) as Dictionary)
@@ -271,6 +280,7 @@ func _create_character() -> void:
 	session.request("create_character", {"name": name, "gender": 1, "hairstyle": 1, "haircolor": 0, "race": 0})
 
 func _enter_world(data: Dictionary) -> void:
+	game.chat_ui.clear()
 	if not game.online_mode:
 		offline_state = {}
 		offline_map_id = int(game.world.get("id", 5))
@@ -288,7 +298,7 @@ func _enter_world(data: Dictionary) -> void:
 	_apply_snapshot(data, true)
 	if not active: return
 	session.request("stream", {"enabled": true})
-	server_label.show()
+	server_label.hide()
 	_set_status("Connected to your world.")
 	game._toast("You have entered your online world.")
 
@@ -323,11 +333,15 @@ func _apply_snapshot(data: Dictionary, entering: bool = false) -> void:
 			pickup_pending.clear()
 			drop_permissions.clear()
 			game.shop_ui.close()
+			game.services_ui.panel.hide()
+			trade.clear()
 			pending_inputs.clear()
 			recovering = false
 			confirmed_input_seq = int(data.get("position_seq", confirmed_input_seq))
 			remote_motion.clear()
 			npc_attack_until.clear()
+			peer_attacks.clear()
+			chat_bubbles.clear()
 			npc_health.clear()
 			waiting_for_walk = false
 			transition_pending = false
@@ -370,6 +384,9 @@ func _apply_snapshot(data: Dictionary, entering: bool = false) -> void:
 	_process_events(data.get("events", []) as Array)
 	game._refresh_ui()
 	game.shop_ui.refresh()
+	if data.has("trade"): trade = data.trade as Dictionary if data.trade is Dictionary else {}
+	game.services_ui.receive(data)
+	game.services_ui.refresh()
 	server_label.text = "● Connected  ·  %d nearby" % nearby_count()
 
 func _merge_updates(rows: Array[Dictionary], changed: Array, removed: Array, key: String) -> Array[Dictionary]:
@@ -402,7 +419,7 @@ func _sync_inventory() -> void:
 
 func _process(delta: float) -> void:
 	if server_label != null:
-		server_label.visible = active and game.started and not game._modal_open() and not game.welcome.visible
+		server_label.visible = false
 	if login_retry_at > 0 and Time.get_ticks_msec() >= login_retry_at:
 		login_retry_at = 0
 		if panel.visible and not active: _authenticate("login", true)
@@ -475,6 +492,7 @@ func _reset_movement() -> void:
 	recovering = false
 	defeated = false
 	npc_attack_until.clear()
+	peer_attacks.clear()
 	waiting_for_walk = false
 	transition_pending = false
 	next_input_seq = 0
@@ -596,23 +614,41 @@ func entities() -> Array[Dictionary]:
 		result.append({"kind": "online_item", "data": record, "sort": game.depth(tile) * 100})
 	return result
 
+func entity_animation(kind: String, record: Dictionary) -> Dictionary:
+	var key: String = ("npc:" + str(record.get("index", -1))) if kind == "online_npc" else ("player:" + str(record.get("player_id", -1)))
+	var motion: Dictionary = remote_motion.get(key, {}) as Dictionary
+	var now: float = Time.get_ticks_msec() / 1000.0
+	var phase: float = now - float(motion.get("start", 0.0))
+	var state: String = "frames" if not motion.is_empty() and phase < MOVE_SECONDS and motion.from != motion.to else "idle"
+	var direction: String = _facing(record.get("direction", 0))
+	if kind == "online_npc" and float(npc_attack_until.get(int(record.get("index", -1)), 0.0)) > now:
+		state = "attack"
+		phase = 0.36 - (float(npc_attack_until[int(record.index)]) - now)
+	var attack: Dictionary = peer_attacks.get(int(record.get("player_id", -1)), {}) as Dictionary
+	if kind == "online_player" and float(attack.get("until", 0.0)) > now:
+		state = "attack"
+		phase = 0.36 - (float(attack.until) - now)
+		direction = _facing(attack.direction)
+	return {"key": key, "state": state, "phase": phase, "direction": direction}
+
+func npc_name_layout(graphic: Dictionary, direction: String, fighting: bool) -> Dictionary:
+	# Use the original visible standing art, including its render offset. This
+	# keeps names close to heads and stable while a walking/attack pose changes.
+	var frame: Dictionary = game._frame(graphic, direction, "idle", 0.0)
+	var region: Array = frame.get("region", [0, 0, 20, 24]) as Array
+	var offset: Array = frame.get("offset", [0, 0]) as Array
+	var visible: Array = frame.get("visible_bounds", [0, 0, region[2], region[3]]) as Array
+	var head: Vector2 = Vector2(float(offset[0]) - float(region[2]) / 2.0 + float(visible[0]) + float(visible[2]) / 2.0, float(offset[1]) - float(region[3]) + float(visible[1]))
+	return {"head": head, "name": head + Vector2(0, -13 if fighting else -5), "health": Rect2(head + Vector2(-17, -8), Vector2(34, 5))}
+
 func draw_entity(entity: Dictionary) -> void:
 	var record: Dictionary = entity.data as Dictionary
 	var tile: Vector2i = Vector2i(int(record.get("x", 0)), int(record.get("y", 0)))
-	var at: Vector2 = game.tile_position(tile)
-	var key: String = ("npc:" + str(record.get("index", -1))) if str(entity.kind) == "online_npc" else ("player:" + str(record.get("player_id", -1)))
-	var motion: Dictionary = remote_motion.get(key, {}) as Dictionary
-	var phase: float = Time.get_ticks_msec() / 1000.0 - float(motion.get("start", 0.0))
-	var state: String = "frames" if not motion.is_empty() and phase < MOVE_SECONDS and motion.from != motion.to else "idle"
-	if str(entity.kind) == "online_npc" and float(npc_attack_until.get(int(record.get("index", -1)), 0.0)) > Time.get_ticks_msec() / 1000.0:
-		state = "attack"
-		phase = 0.36 - (float(npc_attack_until[int(record.index)]) - Time.get_ticks_msec() / 1000.0)
-	if str(entity.kind) == "online_player" and float(npc_attack_until.get(key, 0.0)) > Time.get_ticks_msec() / 1000.0:
-		state = "attack"
-		phase = 0.36 - (float(npc_attack_until[key]) - Time.get_ticks_msec() / 1000.0)
-		record.direction = _direction(_facing(record.get("direction", 0)))
-	at = _remote_position(key, at)
-	var direction: String = _facing(record.get("direction", 0))
+	var animation: Dictionary = entity_animation(str(entity.kind), record)
+	var at: Vector2 = _remote_position(str(animation.key), game.tile_position(tile))
+	var direction: String = str(animation.direction)
+	var state: String = str(animation.state)
+	var phase: float = float(animation.phase)
 	var half_view: Vector2 = game.get_viewport_rect().size / game.camera.zoom / 2.0 + Vector2(160, 240)
 	if not Rect2(game.camera.position - half_view, half_view * 2.0).has_point(at): return
 	if str(entity.kind) == "online_npc":
@@ -624,11 +660,14 @@ func draw_entity(entity: Dictionary) -> void:
 		var graphic: Dictionary = npc_graphics.get(str(int(info.get("graphic", 0))), {}) as Dictionary
 		if not graphic.is_empty(): game._draw_character_frame(graphic, at, direction, state, Color.WHITE, phase if state in ["frames", "attack"] else -1.0)
 		else: game.draw_circle(at + Vector2(0, -12), 5.0, Color("e7bd70"))
-		var label_y: float = -32.0 - float((graphic.get("render_metadata", {}) as Dictionary).get("name_label_offset", 34))
-		game.draw_string(ThemeDB.fallback_font, at + Vector2(-32, label_y), str(info.get("name", "NPC %s" % npc_id)), HORIZONTAL_ALIGNMENT_LEFT, -1, 10, game.TEXT)
 		var health: float = npc_health_fraction(int(record.get("index", -1)))
+		var layout: Dictionary = npc_name_layout(graphic, direction, health >= 0.0)
+		var name: String = str(info.get("name", "NPC %s" % npc_id))
+		var text_width: float = ThemeDB.fallback_font.get_string_size(name, HORIZONTAL_ALIGNMENT_LEFT, -1, 10).x
+		game.draw_string(ThemeDB.fallback_font, at + (layout.name as Vector2) - Vector2(text_width / 2.0, 0), name, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, game.TEXT)
 		if health >= 0.0:
-			var strip: Rect2 = Rect2(at + Vector2(-17, label_y + 4), Vector2(34, 5))
+			var strip: Rect2 = layout.health as Rect2
+			strip.position += at
 			game.draw_rect(strip.grow(1), Color("121b18"))
 			game.draw_rect(strip, Color("50322e"))
 			game.draw_rect(Rect2(strip.position, Vector2(strip.size.x * health, strip.size.y)), Color("a6cb6f") if health > 0.3 else Color("dc6855"))
@@ -639,6 +678,7 @@ func draw_entity(entity: Dictionary) -> void:
 			game.draw_circle(at + Vector2(0, -12), 7.0, Color("a6cec0"))
 			game.draw_string(ThemeDB.fallback_font, at + Vector2(-32, -42), "Appearance pending", HORIZONTAL_ALIGNMENT_LEFT, -1, 9, game.MUTED)
 		game.draw_string(ThemeDB.fallback_font, at + Vector2(-28, -66), str(record.get("name", "Player")), HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color("b9e2c5"))
+		draw_chat_bubble(int(record.get("player_id", 0)), at)
 	elif str(entity.kind) == "online_item":
 		var definitions: Dictionary = catalog.get("items", {}) as Dictionary
 		var info: Dictionary = definitions.get(str(int(record.get("id", 0))), {}) as Dictionary
@@ -648,6 +688,25 @@ func draw_entity(entity: Dictionary) -> void:
 				if int(record.get("amount", 0)) >= int(threshold.get("minimum_amount", 0)): ground_key = str(threshold.get("ground", ground_key))
 		var texture: Texture2D = _catalog_texture(ground_key)
 		if texture != null: game.draw_texture(texture, at - texture.get_size() / 2.0)
+
+func draw_chat_bubble(pid: int, at: Vector2) -> void:
+	var bubble: Dictionary = chat_bubbles.get(pid, {}) as Dictionary
+	if bubble.is_empty() or Time.get_ticks_msec() >= int(bubble.until): return
+	var lines: Array[String] = []
+	var line: String = ""
+	for word: String in str(bubble.text).split(" "):
+		if line.length() + word.length() > 29 and not line.is_empty():
+			lines.append(line)
+			line = ""
+		line += (" " if not line.is_empty() else "") + word
+	if not line.is_empty(): lines.append(line)
+	if lines.size() > 3: lines = lines.slice(0, 3); lines[2] += "…"
+	var width: float = 50.0
+	for text: String in lines: width = maxf(width, ThemeDB.fallback_font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 10).x + 14.0)
+	var rectangle: Rect2 = Rect2(at + Vector2(-width / 2.0, -86 - lines.size() * 13), Vector2(width, lines.size() * 13 + 8))
+	var style: StyleBoxFlat = game._style(Color(0.06, 0.08, 0.10, 0.9), Color("d7cfae"), 5)
+	game.draw_style_box(style, rectangle)
+	for i: int in range(lines.size()): game.draw_string(ThemeDB.fallback_font, rectangle.position + Vector2(7, 13 + i * 13), lines[i], HORIZONTAL_ALIGNMENT_LEFT, -1, 10, game.TEXT)
 
 func _catalog_texture(key: String) -> Texture2D:
 	var graphics: Dictionary = game.graphics as Dictionary
@@ -785,6 +844,21 @@ func map_target(point: Vector2, fallback: Vector2i) -> Vector2i:
 		var at: Vector2 = _remote_position("npc:%d" % int(npc.index), game.tile_position(tile))
 		var rectangle: Rect2 = Rect2(at + Vector2(float(offset[0]), float(offset[1])) - Vector2(dimensions.x / 2.0, dimensions.y), dimensions)
 		if rectangle.grow(5.0).has_point(point): return tile
+	# Match the visible locker object, including its tall front above its tile.
+	for spec: Dictionary in game.world.get("tile_specs", []):
+		if int(spec.get("spec", -1)) != 16: continue
+		var tile: Vector2i = Vector2i(int(spec.x), int(spec.y))
+		for decoration: Dictionary in game.decorations:
+			if decoration.tile != tile or str(decoration.layer) != "objects": continue
+			var texture: Texture2D = game._graphic(int(decoration.gfx), int(decoration.id))
+			if texture == null: continue
+			var size: Vector2 = texture.get_size()
+			if Rect2(game.tile_position(tile) + Vector2(-2.0 - size.x / 2.0, 14.0 - size.y), size).grow(4.0).has_point(point): return tile
+	for peer: Dictionary in players:
+		if int(peer.get("player_id", 0)) == int(player.get("player_id", 0)): continue
+		var tile: Vector2i = Vector2i(int(peer.x), int(peer.y))
+		var at: Vector2 = _remote_position("player:%d" % int(peer.player_id), game.tile_position(tile))
+		if Rect2(at - Vector2(24, 66), Vector2(48, 72)).has_point(point): return tile
 	return fallback
 
 func map_click(tile: Vector2i) -> void:
@@ -795,12 +869,23 @@ func map_click(tile: Vector2i) -> void:
 			interaction = {"kind": "drop", "id": int(drop.uid)}
 			_approach(tile, 2)
 			return
+	for peer: Dictionary in players:
+		if int(peer.get("player_id", 0)) == int(player.get("player_id", 0)): continue
+		if Vector2i(int(peer.x), int(peer.y)) == tile:
+			game._cancel_controls()
+			interaction = {"kind": "player", "id": int(peer.player_id)}
+			return
+	for spec: Dictionary in game.world.get("tile_specs", []):
+		if int(spec.get("spec", -1)) == 16 and Vector2i(int(spec.x), int(spec.y)) == tile:
+			interaction = {"kind": "locker", "id": 0, "x": tile.x, "y": tile.y}
+			_approach(tile, 1)
+			return
 	for npc: Dictionary in npcs:
 		if Vector2i(int(npc.x), int(npc.y)) != tile: continue
 		var info: Dictionary = (catalog.get("npcs", {}) as Dictionary).get(str(int(npc.id)), {}) as Dictionary
 		var type: int = int(info.get("type", -1))
-		if type == 6:
-			interaction = {"kind": "shop", "id": int(npc.index)}
+		if type in [6, 9]:
+			interaction = {"kind": "bank" if type == 9 else "shop", "id": int(npc.index)}
 			_approach(tile, 2)
 		elif type in [1, 2, 3]:
 			if game._distance(game.player_tile, tile) == 1:
@@ -835,16 +920,22 @@ func _process_interaction() -> void:
 		return
 	if game.moving or not game.route.is_empty() or not _action_ready() or game._modal_open(): return
 	if not interaction.is_empty():
-		var target: Dictionary = {}
-		for row: Dictionary in (drops if str(interaction.kind) == "drop" else npcs):
+		if str(interaction.kind) == "player":
+			session.request("inspect_player", {"player_id": int(interaction.id)})
+			interaction.clear()
+			return
+		var target: Dictionary = interaction if str(interaction.kind) == "locker" else {}
+		for row: Dictionary in ([] if str(interaction.kind) == "locker" else (drops if str(interaction.kind) == "drop" else npcs)):
 			if int(row.get("uid" if str(interaction.kind) == "drop" else "index", -1)) == int(interaction.id): target = row
 		if not target.is_empty():
 			var tile: Vector2i = Vector2i(int(target.x), int(target.y))
-			if game._distance(game.player_tile, tile) > 2:
-				_approach(tile, 2)
+			var distance: int = 1 if str(interaction.kind) == "locker" else 2
+			if game._distance(game.player_tile, tile) > distance:
+				_approach(tile, distance)
 				return
 			if str(interaction.kind) == "drop": _pickup(int(interaction.id))
-			else: session.request("shop_open", {"npc_index": int(interaction.id)})
+			elif str(interaction.kind) == "locker": session.request("locker_open", {"x": int(target.x), "y": int(target.y)})
+			else: session.request("bank_open" if str(interaction.kind) == "bank" else "shop_open", {"npc_index": int(interaction.id)})
 		interaction.clear()
 		collect_pending = false
 	elif collect_pending:
@@ -990,7 +1081,11 @@ func _process_events(events: Array) -> void:
 				var health: Dictionary = npc_health.get(index, {"percent": 100}) as Dictionary
 				health["until"] = Time.get_ticks_msec() + 8000
 				npc_health[index] = health
-		if kind == "peer_attack": npc_attack_until["player:" + str(int(event.get("player_id", -1)))] = Time.get_ticks_msec() / 1000.0 + 0.36
+		if kind == "peer_attack":
+			var pid: int = int(event.get("player_id", -1))
+			peer_attacks[pid] = {"until": Time.get_ticks_msec() / 1000.0 + 0.36, "direction": int(event.get("direction", 0))}
+			for peer: Dictionary in players:
+				if int(peer.get("player_id", -2)) == pid: peer.direction = int(event.get("direction", 0))
 		if kind == "player_damage":
 			game.player_hit_flash = 0.22
 			game.damage_numbers.append({"position": game.player_world + Vector2(0, -62), "value": "-%d" % int(event.get("damage", 0)) if int(event.get("damage", 0)) > 0 else "Miss", "time": 0.85, "player_hit": true})
@@ -1022,6 +1117,11 @@ func _process_events(events: Array) -> void:
 			pickup_pending.erase(int(event.get("uid", 0)))
 			game._play_sound("pickup")
 			game._toast("Picked up %s ×%d." % [str(item_info("item:%d" % int(event.get("item_id", 0))).get("name", "Item")), int(event.get("amount", 0))])
+		if kind == "chat":
+			game.chat_ui.receive(event)
+			if str(event.get("channel", "")) == "local" and int(event.get("player_id", 0)) > 0:
+				chat_bubbles[int(event.player_id)] = {"text": str(event.get("message", "")), "until": Time.get_ticks_msec() + 5500}
+		if kind in ["trade_sent", "trade_complete", "trade_cancelled"]: game._toast(str(event.get("message", "")))
 		if kind == "pickup_failed":
 			pickup_pending.erase(int(event.get("uid", 0)))
 			game._toast(str(event.get("message", "The server refused this pickup.")))

@@ -107,8 +107,10 @@ def export_npc(graphic,definition_name,image,out):
                     frame=standing[fallback]
                     npc['pose_fallbacks'].append({'state':state,'direction':direction,'frame':index,'blank_source_graphic_id':base+offset,'fallback_source_graphic_id':base+fallback})
                 if flip:frame=ImageOps.mirror(frame)
+                left,top,right,bottom=frame.getbbox()
                 name=f'characters/npc{graphic}_{direction}_{state}_{index}.png';frame.save(out/name)
                 frames.append({'path':'res://content/'+name,'region':[0,0,frame.width,frame.height],'offset':npc_frame_offset(metadata,direction,'idle' if fallback else state,0 if fallback else index),
+                               'visible_bounds':[left,top,right-left,bottom-top],
                                'source_graphic_id':base+offset,**({'fallback_source_graphic_id':base+fallback} if fallback else {})})
             npc[state][direction]=frames[0] if state=='idle' and len(frames)==1 else frames
     return npc

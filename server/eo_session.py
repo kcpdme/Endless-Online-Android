@@ -45,7 +45,9 @@ class Session:
     def __init__(self,host='127.0.0.1',port=8078):
         self.sock=socket.create_connection((host,port),timeout=8);self.sock.settimeout(8)
         self.encode_multi=0;self.decode_multi=0;self.seq_start=0;self.counter=1;self.character_id=None;self.state=None;self.characters=[];self.events=[]
-        self.stats={};self.timestamp=1000;self.last_walk=0;self.last_attack=0;self.warp=None;self.map_content={}
+        # Native Timestamp starts unset. The first 50-tick attack must remain
+        # below the 60-tick threshold that forces the previous facing.
+        self.stats={};self.timestamp=0;self.last_walk=0;self.last_attack=0;self.warp=None;self.map_content={}
         challenge=12345;payload=b'\xff\xff'+number(challenge,3)+b''.join(number(n,1) for n in [0,0,28,0,0])+str(secrets.randbelow(1000000000)+1).encode('ascii')
         self.sock.sendall(number(len(payload),2)+payload)
         init=self.receive_raw()

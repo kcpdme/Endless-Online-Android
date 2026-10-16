@@ -10,6 +10,7 @@ func _ready() -> void:
 	size = Vector2(radius * 2.0, radius * 2.0)
 
 func _draw() -> void:
+	if not active: return
 	var center: Vector2 = Vector2.ONE * radius
 	var opacity: float = 0.85 if active else 0.70
 	draw_circle(center, radius, Color(0.04, 0.10, 0.11, 0.21 * opacity))
@@ -30,6 +31,11 @@ func begin(center: Vector2) -> void:
 
 func update_pointer(pointer: Vector2) -> Vector2:
 	var displacement: Vector2 = pointer - (global_position + Vector2.ONE * radius)
+	# Slide the base with a long drag, retaining a maximum thumb travel of 84 px.
+	if displacement.length() > 84.0:
+		var shift: Vector2 = displacement - displacement.normalized() * 84.0
+		position += shift
+		displacement = displacement.normalized() * 84.0
 	vector = (displacement / 84.0).limit_length(1.0)
 	queue_redraw()
 	return vector if displacement.length() > 16.0 else Vector2.ZERO

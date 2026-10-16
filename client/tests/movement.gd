@@ -73,7 +73,7 @@ func _run() -> void:
 	me.stats = {"dead": true, "strength": 2, "intelligence": 3, "wisdom": 7, "agility": 5, "constitution": 6, "charisma": 9, "stat_points": 2}
 	c._apply_snapshot({"player": me, "events": [{"kind": "player_damage", "npc_index": 1, "damage": 3, "dead": true}]})
 	check(c.defeated and not c.can_issue_walk() and not c.request_attack() and not game.moving, "Death must stop movement/attacks during delayed native respawn")
-	check(game.stats_ui.hp_bar.value == 0 and not game.damage_numbers.is_empty(), "Real damage must update visible health and hit feedback")
+	check(game.stats_ui.vitals.hp == 0 and not game.damage_numbers.is_empty(), "Real damage must update visible health and hit feedback")
 	check(game.stats_ui.values[1].text == "3" and game.stats_ui.values[2].text == "7", "Stats screen must preserve distinct INT and WIS values")
 	game.stats_ui.show_stats()
 	check(game._modal_open(), "Stats must be a touch-safe modal")

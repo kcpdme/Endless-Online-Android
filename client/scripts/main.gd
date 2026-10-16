@@ -90,6 +90,9 @@ var welcome: Control
 var inventory: Control
 var quest_hint: Label
 var quest_label: Label
+var chat_ui: RefCounted
+var chat_button: Button
+var services_ui: RefCounted
 var coin_label: Label
 var toast_label: Label
 var location_label: Label
@@ -341,19 +344,17 @@ func _cancel_movement(force_stop: bool = false) -> void:
 
 func _joystick_zone() -> Rect2:
 	var bounds: Rect2 = _hud_bounds()
-	return Rect2(bounds.position + Vector2(12, bounds.size.y - 334), Vector2(364, 322))
+	return Rect2(bounds.position + Vector2(12, bounds.size.y - minf(432.0, bounds.size.y * 0.64)), Vector2(minf(560.0, bounds.size.x * 0.43), minf(420.0, bounds.size.y * 0.62)))
 
 func _joystick_begin(pointer: Vector2, pointer_id: int) -> void:
 	_cancel_movement()
 	touch_move_id = pointer_id
-	var bounds: Rect2 = _hud_bounds()
-	var center: Vector2 = Vector2(clampf(pointer.x, bounds.position.x + 122.0, bounds.position.x + 250.0), clampf(pointer.y, bounds.end.y - 218.0, bounds.end.y - 126.0))
-	joystick.begin(center)
-	joystick_pointer_offset = center - pointer
+	joystick.begin(pointer)
+	joystick_pointer_offset = Vector2.ZERO
 	stick = Vector2.ZERO
 
 func _modal_open() -> bool:
-	return (online != null and online.panel != null and online.panel.visible) or (inventory != null and inventory.visible) or (menu != null and menu.visible) or (character_panel != null and character_panel.visible) or (stats_ui != null and stats_ui.is_open()) or (shop_ui != null and shop_ui.panel.visible)
+	return (online != null and online.panel != null and online.panel.visible) or (inventory != null and inventory.visible) or (menu != null and menu.visible) or (character_panel != null and character_panel.visible) or (stats_ui != null and stats_ui.is_open()) or (shop_ui != null and shop_ui.panel.visible) or (services_ui != null and services_ui.panel.visible) or (chat_ui != null and chat_ui.panel.visible)
 
 func _begin_attack(pointer_id: int) -> void:
 	if online_mode: route.clear()
@@ -381,7 +382,7 @@ func _input(event: InputEvent) -> void:
 	# Own native controls suppress their separately generated mouse events, including
 	# HUD presses that open a modal. A release can never become a second action.
 	if event is InputEventMouseButton and event.device == InputEvent.DEVICE_ID_EMULATION:
-		var native_control: bool = started and not _modal_open() and (attack_button.contains_point(event.position) or bag_button.contains_point(event.position) or character_button.contains_point(event.position) or _joystick_zone().has_point(event.position) or (online_mode and online.loot_button.visible and online.loot_button.get_global_rect().has_point(event.position)))
+		var native_control: bool = started and not _modal_open() and (attack_button.contains_point(event.position) or bag_button.contains_point(event.position) or chat_button.contains_point(event.position) or character_button.contains_point(event.position) or _joystick_zone().has_point(event.position) or (online_mode and online.loot_button.visible and online.loot_button.get_global_rect().has_point(event.position)))
 		# Godot may synthesize the mouse press before delivering its native touch.
 		if native_control or not owned_touches.is_empty():
 			get_viewport().set_input_as_handled()
@@ -418,6 +419,11 @@ func _input(event: InputEvent) -> void:
 		if bag_button.contains_point(event.position):
 			owned_touches[event.index] = true
 			_toggle_inventory()
+			get_viewport().set_input_as_handled()
+			return
+		if chat_button.contains_point(event.position):
+			owned_touches[event.index] = true
+			chat_ui.open()
 			get_viewport().set_input_as_handled()
 			return
 		if character_button.contains_point(event.position):
@@ -684,6 +690,8 @@ func _draw_player() -> void:
 			aim = (tile_position(player_tile + (directions.get(facing, Vector2i(0, 1)) as Vector2i)) - tile_position(player_tile)).normalized()
 		draw_arc(player_world + Vector2(0, -15), 25.0, aim.angle() - 0.75, aim.angle() + 0.75, 12, Color(1.0, 0.86, 0.56, swing_clock / ATTACK_SWING_DURATION), 2.0, true)
 
+	if online_mode: online.draw_chat_bubble(int(online.player.get("player_id", 0)), player_world)
+
 func _draw_enemy() -> void:
 	var at: Vector2 = tile_position(enemy_tile)
 	_draw_diamond(at, Color(0.62, 0.82, 0.63, 0.45))
@@ -766,10 +774,12 @@ func _build_ui() -> void:
 	var header: Panel = _panel(root, Vector2(24, 22), Vector2(340, 78))
 	_label(header, "ASTER VALE", Vector2(20, 10), 25, GOLD)
 	location_label = _label(header, "Aeven  /  The first steps", Vector2(20, 44), 16, MUTED)
+	header.hide()
 	var quest: Panel = _panel(root, Vector2(24, 114), Vector2(325, 127))
 	_label(quest, "WAYFARER’S FIRST STEPS", Vector2(18, 15), 14, GOLD)
 	quest_label = _label(quest, "", Vector2(18, 43), 18)
 	quest_hint = _label(quest, "Practice safely. Your progress saves here.", Vector2(18, 95), 13, MUTED)
+	quest.hide()
 	var coin_icon: TextureRect = TextureRect.new()
 	coin_icon.name = "GoldIcon"
 	coin_icon.texture = _item_texture("coins")
@@ -779,7 +789,9 @@ func _build_ui() -> void:
 	coin_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	coin_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(coin_icon)
+	coin_icon.hide()
 	coin_label = _label(root, "", Vector2(429, 34), 19, GOLD)
+	coin_label.hide()
 	var menu_button: Button = _button(root, "☰", Vector2(-80, 24), Vector2(56, 54), func() -> void: menu.visible = not menu.visible)
 	menu_button.set_anchors_preset(Control.PRESET_TOP_RIGHT, true)
 	character_button = HudIconButton.new()
@@ -795,6 +807,7 @@ func _build_ui() -> void:
 	joystick.resting_position = Vector2(32, -252)
 	joystick.reset()
 	var bottom_hint: Label = _label(root, "Drag to move  ·  Release to stop" if OS.has_feature("mobile") else "Tap ground to explore  ·  WASD / arrows to move", Vector2(228, -55), 16, TEXT)
+	bottom_hint.hide()
 	bottom_hint.set_anchors_preset(Control.PRESET_BOTTOM_LEFT, true)
 	bag_button = HudIconButton.new()
 	bag_button.kind = "bag"
@@ -812,6 +825,7 @@ func _build_ui() -> void:
 	# Native touch dispatch attacks immediately; synthesized mouse release must not attack again.
 	attack_button.action_mode = BaseButton.ACTION_MODE_BUTTON_PRESS
 	health_label = _label(root, "Training slime • no player damage", Vector2(-348, -220), 14, MUTED)
+	health_label.hide()
 	health_label.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT, true)
 	toast_label = _label(root, "", Vector2(-320, -126), 17, TEXT)
 	toast_label.set_anchors_preset(Control.PRESET_CENTER_BOTTOM, true)
@@ -825,11 +839,15 @@ func _build_ui() -> void:
 	_build_inventory(root)
 	shop_ui = ShopWindow.new()
 	shop_ui.build(self, root)
+	services_ui = preload("res://scripts/services_window.gd").new()
+	services_ui.build(self, root)
 	_build_paperdoll(root)
 	stats_ui = CharacterStats.new()
 	stats_ui.build(self, root)
 	_build_menu(root)
 	online.build_ui(root)
+	chat_ui = preload("res://scripts/chat_window.gd").new()
+	chat_ui.build(self, root)
 
 func _modal(parent: Node, size: Vector2) -> Control:
 	var curtain: ColorRect = ColorRect.new()
@@ -1122,7 +1140,7 @@ func _refresh_ui() -> void:
 		if stats_ui != null: stats_ui.refresh()
 		online.refresh_game_ui()
 		return
-	health_label.visible = true
+	health_label.visible = false
 	health_label.text = "Training slime • no player damage"
 	quest_hint.text = "Practice safely. Your progress saves here."
 	if not has_blade:
@@ -1227,6 +1245,10 @@ func _handle_back() -> void:
 		online._close_panel()
 	elif stats_ui != null and stats_ui.is_open():
 		stats_ui.hide()
+	elif chat_ui != null and chat_ui.panel.visible:
+		chat_ui.close()
+	elif services_ui != null and services_ui.panel.visible:
+		services_ui.close()
 	elif shop_ui != null and shop_ui.panel.visible:
 		shop_ui.close()
 	elif inventory.visible:

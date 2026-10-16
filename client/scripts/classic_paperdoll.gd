@@ -4,6 +4,7 @@ extends Control
 signal equipment_selected(kind: String)
 signal close_requested
 
+var inspection: Dictionary = {}
 var game: Node
 var slots: Dictionary = {}
 var selected_kind: String = ""
@@ -91,9 +92,11 @@ func refresh(kind: String) -> void:
 	for raw_kind: Variant in slots:
 		var slot_kind: String = str(raw_kind)
 		var button: Button = slots[slot_kind] as Button
-		var worn: bool = game != null and bool(game.call("_is_equipped", slot_kind))
-		button.icon = game.call("_item_texture", slot_kind) as Texture2D if worn else null
+		var item_id: int = int((inspection.get("equipment", {}) as Dictionary).get(game.online._slot_name(slot_kind), 0)) if not inspection.is_empty() else 0
+		var item_kind: String = "item:%d" % item_id if not inspection.is_empty() else slot_kind
+		var worn: bool = item_id > 0 if not inspection.is_empty() else (game != null and bool(game.call("_is_equipped", slot_kind)))
+		button.icon = game.call("_item_texture", item_kind) as Texture2D if worn else null
 		button.text = ""
-		button.tooltip_text = str(game.call("_item_name", slot_kind)) if worn else "Empty " + slot_kind + " slot"
+		button.tooltip_text = str(game.call("_item_name", item_kind)) if worn else "Empty " + slot_kind + " slot"
 		button.add_theme_stylebox_override("normal", _outline(slot_kind == selected_kind))
 	queue_redraw()

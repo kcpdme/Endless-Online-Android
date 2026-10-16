@@ -167,6 +167,41 @@ Godot scene passed a public WSS Aeven/map4 round trip with rendered geometry and
 server coordinates agreeing. Native Aeven Store door entry/return also passed.
 The inventory/world smoke verifies zero-value Gold, three stacked Daggers,
 wearing/removing one, quantity persistence and wide-screen HUD anchors. Eight
-malformed legacy map47 destinations are guarded. Native shops and hosted WSS are implemented in the later milestones above. Quests, bank/guild services, chat, trading, spells and additional appearance combinations remain unfinished. Nearby entities use streamed positions with interpolation and movement animation. Server quest/chest content gaps remain recorded
+malformed legacy map47 destinations are guarded. Native shops and hosted WSS are implemented in the later milestones above. Quests, guild/party controls, spells and additional appearance combinations remain unfinished. Bank/lockers, player inspection/trade and chat are covered by the v0.11 tests below. Nearby entities use streamed positions with interpolation and movement animation. Server quest/chest content gaps remain recorded
 in `server/VALIDATION.md`. Private credentials, device saves, generated assets,
 compiled APKs and screenshots are excluded from the public source repository.
+
+
+## v0.11: native services, chat, mobile HUD and peer animation
+
+The pinned original Bank/Locker/Paperdoll/Trade/Talk handlers and corresponding
+EndlessClient actions/dialogs were checked before implementing the protocol.
+`server/services.py` changes Gold/items only from native replies. Trade offer
+changes reset both approvals, completion applies both native inventory deltas,
+and cancellation never transfers items. Native storage is guarded while trading.
+
+Validation uses newly provisioned dev accounts; no operator characters, database
+resets, password salts or production world restarts are used:
+
+- 16 server state regressions cover movement/collection, observer equipment,
+  first-attack facing, storage restrictions, exact locker quantity replies,
+  trade resets/completion/cancel, inspection isolation and original chat formats.
+- 24 real-content importer/catalog tests pass, including opaque NPC frame bounds.
+- Godot gameplay, movement and network regressions pass. Dynamic joystick tests
+  check exact touch origin, sliding base, retained pointer, release and multitouch.
+- Two native clients through local WS and public WSS pass bank deposit/withdraw,
+  locker expansion, item deposit/whole-stack withdrawal, 15-slot inspection,
+  nearby/global/private chat, trade completion/cancellation and persistence.
+- Actual Godot dialogs pass bank/locker/player tap, deposit/withdraw, native trade
+  offer/accept and exact bag deltas, chat log/bubble/whisper, original inspection
+  without overwriting self equipment, hidden old HUD and visible heart/TP vitals.
+  Rendered screenshots were reviewed for dialog bounds and layout.
+- A separate real Godot observer verifies equipment changes and both weapon
+  swing frames for Dagger/Ultima in all four directions, without observer Refresh.
+  Both local and deployed public WSS tests pass.
+
+Sanitized evidence: `docs/services-v11-local-report.json`,
+`docs/services-v11-public-report.json`, `docs/services-v11-ui-report.json`,
+`docs/peer-visuals-v11-public-report.json`. Runtime fixtures and raw screenshots
+remain ignored. `learnings.md` records native packet layouts, codec restrictions,
+trade limits, fixture pitfalls, deployment and device handoff details.

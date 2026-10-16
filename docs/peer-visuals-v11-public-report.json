@@ -1,0 +1,13 @@
+{
+  "directions_per_weapon": 4,
+  "native_attack_direction_used": true,
+  "observed_two_frame_weapon_swings": 8,
+  "observer_equipment_updates_without_refresh": true,
+  "observer_weapon_removal_updates": true,
+  "result": "passed",
+  "two_independent_native_sessions": true,
+  "weapons": [
+    21,
+    281
+  ]
+}

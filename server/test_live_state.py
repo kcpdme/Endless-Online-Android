@@ -2,11 +2,12 @@
 import time, unittest
 from collections import deque
 from copy import deepcopy
-from eo_session import EOError,number
+from eo_session import EOError,number,Reader
 from live_session import LiveSession
 
 def fixture():
     s=LiveSession.__new__(LiveSession)
+    s.init_services()
     s.pending_moves=deque();s.position_seq=0;s.last_input_seq=0;s.pending_pickups={};s.drop_guards={}
     s.metrics=dict(moves=0,walk_acks=0,refreshes=0,corrections=0,collects=0,pickups=0)
     s.dirty=False;s.position_update=False;s.correction=False;s.expect_walk_refresh=False;s.sent_state=None
@@ -16,6 +17,23 @@ def fixture():
     return s
 
 class StreamStateTests(unittest.TestCase):
+    def test_first_attack_timestamp_honors_requested_facing_without_face_wait(self):
+        s=fixture();s.timestamp=0;s.strike(2)
+        self.assertEqual(len(s.sent),1)
+        r=Reader(s.sent[0][2]);self.assertEqual(r.num(),2);self.assertEqual(r.num(3),50)
+    def test_peer_equipment_push_uses_bahws_order_without_refresh(self):
+        s=fixture();s.state['characters']=[dict(player_id=200,equipment_graphics=[0]*9,direction=0)]
+        s.apply_event(23,5,number(200,2)+number(1,1)+number(0,1)+b''.join(number(i,2) for i in [1,1,0,33,0]))
+        self.assertEqual(s.state['characters'][0]['equipment_graphics'],[1,0,0,0,1,0,0,0,33])
+        self.assertTrue(s.dirty);self.assertFalse(s.sent)
+        s.apply_event(23,5,number(200,2)+number(1,1)+number(0,1)+b''.join(number(i,2) for i in [1,1,0,0,0]))
+        self.assertEqual(s.state['characters'][0]['equipment_graphics'][8],0)
+    def test_peer_attack_preserves_event_and_updates_facing(self):
+        s=fixture();s.state['characters']=[dict(player_id=200,direction=0)]
+        s.apply_event(11,8,number(200,2)+number(2,1))
+        self.assertEqual(s.state['characters'][0]['direction'],2)
+        self.assertEqual(s.events[-1]['kind'],'peer_attack');self.assertEqual(s.events[-1]['direction'],2)
+        self.assertTrue(s.dirty)
     def test_moving_npc_race_uses_original_native_walk_instead_of_synthetic_rejection(self):
         s=fixture();s.state['npcs']=[dict(index=1,id=2,x=41,y=40)]
         result=s.move(3,1,5,41,40)

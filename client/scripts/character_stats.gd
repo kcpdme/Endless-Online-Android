@@ -14,20 +14,12 @@ var classic_fields: Dictionary = {}
 var values: Array[Label] = []
 var add_buttons: Array[Button] = []
 var vitals: Control
-var hp_bar: ProgressBar
-var tp_bar: ProgressBar
-var hp_text: Label
-var tp_text: Label
-var level_text: Label
 
 func build(owner_game: Node, parent: Control) -> void:
 	game = owner_game
-	vitals = game._panel(parent, Vector2(389, 96), Vector2(300, 92))
-	hp_bar = _bar(Vector2(14, 12), Color("b0473e"))
-	tp_bar = _bar(Vector2(14, 39), Color("447bba"))
-	hp_text = game._label(vitals, "", Vector2(22, 11), 16)
-	tp_text = game._label(vitals, "", Vector2(22, 38), 16)
-	level_text = game._label(vitals, "", Vector2(14, 67), 14, game.GOLD)
+	vitals = preload("res://scripts/vitals_hud.gd").new()
+	vitals.position = Vector2(28, 20)
+	parent.add_child(vitals)
 	vitals.hide()
 	panel = game._modal(parent, Vector2(1050, 478))
 	var card: Control = panel.get_child(0) as Control
@@ -96,18 +88,6 @@ func hide() -> void:
 	panel.hide()
 	item_panel.hide()
 
-func _bar(at: Vector2, color: Color) -> ProgressBar:
-	var bar: ProgressBar = ProgressBar.new()
-	bar.position = at
-	bar.size = Vector2(272, 24)
-	bar.show_percentage = false
-	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var fill: StyleBoxFlat = StyleBoxFlat.new()
-	fill.bg_color = color
-	bar.add_theme_stylebox_override("fill", fill)
-	vitals.add_child(bar)
-	return bar
-
 func show_stats() -> void:
 	if not game.online_mode:
 		game._toast("Character stats belong to your online character.")
@@ -145,13 +125,7 @@ func refresh() -> void:
 	var max_hp: int = maxi(1, int(p.get("max_hp", 1)))
 	var tp: int = int(p.get("tp", 0))
 	var max_tp: int = maxi(1, int(p.get("max_tp", 1)))
-	hp_bar.max_value = max_hp
-	hp_bar.value = hp
-	tp_bar.max_value = max_tp
-	tp_bar.value = tp
-	hp_text.text = "HP  %d / %d" % [hp, max_hp]
-	tp_text.text = "TP  %d / %d" % [tp, max_tp]
-	level_text.text = "Level %d  ·  EXP %d" % [int(p.get("level", 0)), int(stats.get("experience", 0))]
+	vitals.update_vitals(hp, max_hp, tp, max_tp)
 	var classes: Dictionary = game.online.catalog.get("classes", {}) as Dictionary
 	var profession: Dictionary = classes.get(str(int(stats.get("class_id", 0))), {}) as Dictionary
 	summary.text = "%s  ·  Level %d  ·  %s" % [str(p.get("name", "Player")), int(p.get("level", 0)), str(profession.get("name", "–"))]
