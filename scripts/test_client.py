@@ -13,6 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--godot', default=shutil.which('godot'))
+    parser.add_argument('--world', action='store_true', help='Run map, stack quantities and wide-screen checks')
     args = parser.parse_args()
     if not args.godot:
         parser.error('Pass --godot /path/to/Godot executable, or put godot on PATH.')
@@ -21,7 +22,7 @@ def main():
         try:
             result = subprocess.run(
                 [args.godot, '--headless', '--path', str(ROOT / 'client'),
-                 '--script', 'res://tests/gameplay_smoke.gd'],
+                 '--script', 'res://tests/world_smoke.gd' if args.world else 'res://tests/gameplay_smoke.gd'],
                 env=env, capture_output=True, text=True, timeout=90)
         except subprocess.TimeoutExpired as error:
             for chunk in (error.stdout, error.stderr):
@@ -31,7 +32,8 @@ def main():
         output = result.stdout + result.stderr
         print(output, end='')
         # Godot assertions may report failure without a nonzero process exit.
-        if (result.returncode or 'GAMEPLAY SMOKE PASS:' not in output
+        marker = 'WORLD SMOKE PASS:' if args.world else 'GAMEPLAY SMOKE PASS:'
+        if (result.returncode or marker not in output
                 or 'SCRIPT ERROR:' in output or 'ERROR:' in output):
             raise SystemExit('Gameplay smoke failed; real player saves were untouched.')
 

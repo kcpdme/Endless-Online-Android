@@ -50,6 +50,8 @@ func _run() -> void:
 	var offline_position: Vector2i = game.player_tile
 	var offline_coins: int = game.coins
 	controller.show_login()
+	if not OS.get_environment("ASTER_VALE_TEST_HOST").is_empty(): controller.host_field.text = OS.get_environment("ASTER_VALE_TEST_HOST")
+	if not OS.get_environment("ASTER_VALE_TEST_PORT").is_empty(): controller.port_field.value = int(OS.get_environment("ASTER_VALE_TEST_PORT"))
 	var provided: bool = not OS.get_environment("ASTER_VALE_TEST_USERNAME").is_empty()
 	controller.username_field.text = OS.get_environment("ASTER_VALE_TEST_USERNAME") if provided else "av" + _letters(10)
 	controller.password_field.text = OS.get_environment("ASTER_VALE_TEST_PASSWORD") if provided else "Dev" + _letters(8) + "42"
@@ -66,7 +68,12 @@ func _run() -> void:
 	controller._enter_selected()
 	if not _require(await _wait_until(func() -> bool: return controller.active and not controller.player.is_empty()), "Real Welcome/world entry failed: " + controller.last_error): return
 	if not _require(game.online_mode and int(controller.player.map_id) == 5, "Online character must enter the actually imported map5"): return
-	if not _require(not controller.npcs.is_empty(), "Expected real server NPCs in the map snapshot"): return
+	if OS.get_environment("ASTER_VALE_TEST_WARP") != "1" and not _require(not controller.npcs.is_empty(), "Expected real server NPCs in the map snapshot"): return
+	if OS.get_environment("ASTER_VALE_TEST_WARP") == "1":
+		if not _require(game.player_tile == Vector2i(33, 1), "Warp fixture must begin beside Aeven's real north exit"): return
+		if not await _travel(game, controller, Vector2i(0, -1), 4, Vector2i(19, 47)): return
+		if not await _travel(game, controller, Vector2i(0, 1), 5, Vector2i(33, 1)): return
+		print("LIVE MAP ROUNDTRIP PASS: Aeven -> map4 -> Aeven, server and rendered geometry agree")
 	game._toggle_inventory()
 	controller._process(0.01)
 	if not _require(not controller.server_label.visible, "Connection status must not overprint inventory"): return
@@ -111,3 +118,9 @@ func _restore_save() -> void:
 	else:
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 	fixture_written = false
+
+func _travel(game: Node, controller: Node, step: Vector2i, map_id: int, tile: Vector2i) -> bool:
+	if not _require(await _wait_until(func() -> bool: return controller.can_issue_walk()), "Server stalled before map travel"): return false
+	controller.request_step(step)
+	if not _require(await _wait_until(func() -> bool: return int(game.world.id) == map_id and game.player_tile == tile and not controller.waiting_for_walk), "Server/rendered map transition failed: " + controller.last_error): return false
+	return _require(game.player_world == game.tile_position(tile) and not game.moving, "Map arrival must snap the camera/player to the confirmed destination")

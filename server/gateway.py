@@ -53,7 +53,7 @@ class Handler(socketserver.StreamRequestHandler):
         if op=='create_character':return s.create_character(str(r['name']),int(r.get('gender',1)),int(r.get('hairstyle',1)),int(r.get('haircolor',0)),int(r.get('race',0)))
         if op=='enter':s.enter(int(r['character_id']));return s.snapshot()
         if op=='refresh':s.refresh();return s.snapshot()
-        if op=='walk':s.walk(int(r['direction']));return s.snapshot()
+        if op=='walk':s.walk(int(r['direction']),bool(r.get('open_door',False)));return s.snapshot()
         if op=='attack':s.attack(r.get('direction'));return s.snapshot()
         if op=='pickup':s.pickup(int(r['uid']));return s.snapshot()
         if op in ('equip','unequip'):s.equip(int(r['item_id']),op=='unequip',int(r.get('subloc',0)));return s.snapshot()

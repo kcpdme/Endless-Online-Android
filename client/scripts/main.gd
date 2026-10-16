@@ -19,12 +19,15 @@ const DIRECTIONS: Array[Vector2i] = [Vector2i(0, 1), Vector2i(1, 0), Vector2i(0,
 
 var online: OnlineController
 var online_mode: bool = false
+var hud_root: Control
+var dagger_count: int = 0
 var world: Dictionary = {}
 var manifest: Dictionary = {}
 var graphics: Dictionary = {}
 var textures: Dictionary = {}
 var ground: Dictionary = {}
 var blocked: Dictionary = {}
+var server_blocked: Dictionary = {}
 var decorations: Array[Dictionary] = []
 var route: Array[Vector2i] = []
 var hero: Dictionary = {}
@@ -108,6 +111,8 @@ func _ready() -> void:
 	online.game = self
 	add_child(online)
 	_build_ui()
+	get_viewport().size_changed.connect(_layout_safe_area)
+	_layout_safe_area()
 	if content_ready:
 		_load_save()
 		player_world = tile_position(player_tile)
@@ -130,13 +135,54 @@ func _load_content() -> void:
 	var parsed_manifest: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://content/manifest.json"))
 	if not parsed_world is Dictionary or not parsed_manifest is Dictionary:
 		return
-	world = parsed_world as Dictionary
 	manifest = parsed_manifest as Dictionary
 	graphics = manifest.get("graphics", {}) as Dictionary
+	var characters: Dictionary = manifest.get("characters", {}) as Dictionary
+	hero = characters.get("hero", {}) as Dictionary
+	monster = characters.get("monster", {}) as Dictionary
+	hero_equipped = characters.get("hero_equipped", {}) as Dictionary
+	_configure_world(parsed_world as Dictionary)
 	var spawn: Array = world.get("spawn", [10, 10]) as Array
 	player_tile = Vector2i(int(spawn[0]), int(spawn[1]))
+	content_ready = not graphics.is_empty() and int(world.get("width", 0)) > 0
+
+func map_path(map_id: int) -> String:
+	if online != null:
+		var maps: Dictionary = online.catalog.get("maps", {}) as Dictionary
+		var info: Dictionary = maps.get(str(map_id), {}) as Dictionary
+		if not str(info.get("path", "")).is_empty(): return str(info.path)
+	var paths: Dictionary = manifest.get("map_paths", {}) as Dictionary
+	if paths.has(str(map_id)): return str(paths[str(map_id)])
+	if map_id == 5: return "res://content/world.json"
+	return ""
+
+func load_map(map_id: int) -> bool:
+	if int(world.get("id", -1)) == map_id: return true
+	var path: String = map_path(map_id)
+	if path.is_empty() or not FileAccess.file_exists(path): return false
+	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
+	if not parsed is Dictionary: return false
+	var data: Dictionary = parsed as Dictionary
+	if int(data.get("id", -1)) != map_id or int(data.get("width", 0)) <= 0: return false
+	_cancel_controls()
+	textures.clear()
+	_configure_world(data)
+	damage_numbers.clear()
+	queue_redraw()
+	return true
+
+func _configure_world(data: Dictionary) -> void:
+	world = data
+	ground.clear()
+	blocked.clear()
+	server_blocked.clear()
+	decorations.clear()
+	route.clear()
+	waypoint = Vector2i(-1, -1)
 	for cell: Array in world.get("blocked", []):
 		blocked[Vector2i(int(cell[0]), int(cell[1]))] = true
+	for cell: Array in world.get("server_blocked", world.get("blocked", [])):
+		server_blocked[Vector2i(int(cell[0]), int(cell[1]))] = true
 	var layers: Dictionary = world.get("layers", {}) as Dictionary
 	for entry: Dictionary in layers.get("ground", []):
 		ground[Vector2i(int(entry.x), int(entry.y))] = int(entry.id)
@@ -147,11 +193,6 @@ func _load_content() -> void:
 			if int(entry.id) <= 0: continue
 			decorations.append({"tile": Vector2i(int(entry.x), int(entry.y)), "id": int(entry.id), "gfx": int(layer_gfx[layer]), "layer": layer})
 	decorations.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return depth(a.tile) < depth(b.tile))
-	var characters: Dictionary = manifest.get("characters", {}) as Dictionary
-	hero = characters.get("hero", {}) as Dictionary
-	monster = characters.get("monster", {}) as Dictionary
-	hero_equipped = characters.get("hero_equipped", {}) as Dictionary
-	content_ready = not graphics.is_empty() and int(world.get("width", 0)) > 0
 
 func _texture(path: String) -> Texture2D:
 	if textures.has(path):
@@ -179,7 +220,9 @@ func _world_tile(point: Vector2) -> Vector2i:
 	return Vector2i(roundi(p.x / 64.0 + p.y / 32.0), roundi(p.y / 32.0 - p.x / 64.0))
 
 func _walkable(tile: Vector2i) -> bool:
-	return tile.x >= 0 and tile.y >= 0 and tile.x < int(world.get("width", 0)) and tile.y < int(world.get("height", 0)) and not blocked.has(tile) and int(ground.get(tile, int(world.get("fill_tile", 0)))) > 0
+	if tile.x < 0 or tile.y < 0 or tile.x >= int(world.get("width", 0)) or tile.y >= int(world.get("height", 0)): return false
+	if online_mode: return not server_blocked.has(tile)
+	return not blocked.has(tile) and int(ground.get(tile, int(world.get("fill_tile", 0)))) > 0
 
 func _process(delta: float) -> void:
 	time_alive += delta
@@ -288,14 +331,14 @@ func _cancel_movement() -> void:
 	if joystick != null: joystick.reset()
 
 func _joystick_zone() -> Rect2:
-	var viewport_size: Vector2 = get_viewport_rect().size
-	return Rect2(Vector2(12, viewport_size.y - 234), Vector2(244, 222))
+	var bounds: Rect2 = _hud_bounds()
+	return Rect2(bounds.position + Vector2(12, bounds.size.y - 234), Vector2(244, 222))
 
 func _joystick_begin(pointer: Vector2, pointer_id: int) -> void:
 	_cancel_movement()
 	touch_move_id = pointer_id
-	var bounds: Vector2 = get_viewport_rect().size
-	var center: Vector2 = Vector2(clampf(pointer.x, 90.0, 185.0), clampf(pointer.y, bounds.y - 150.0, bounds.y - 90.0))
+	var bounds: Rect2 = _hud_bounds()
+	var center: Vector2 = Vector2(clampf(pointer.x, bounds.position.x + 90.0, bounds.position.x + 185.0), clampf(pointer.y, bounds.end.y - 150.0, bounds.end.y - 90.0))
 	joystick.begin(center)
 	joystick_pointer_offset = center - pointer
 	stick = Vector2.ZERO
@@ -503,11 +546,9 @@ func _collect_loot(force: bool = false) -> void:
 	loot_visible = false
 	_play_sound("pickup")
 	coins += 5
-	if not has_blade:
-		has_blade = true
-		_toast("Found a Wayfarer blade + 5 coins. Open your bag to equip it.")
-	else:
-		_toast("Collected 5 coins.")
+	dagger_count = maxi(dagger_count, 1 if has_blade else 0) + 1
+	has_blade = true
+	_toast("Collected a Dagger + 5 coins. Daggers owned: %d." % dagger_count)
 	_refresh_ui()
 	_save_progress()
 
@@ -537,7 +578,9 @@ func _draw() -> void:
 		var at: Vector2 = tile_position(decoration.tile)
 		if not visible_rect.has_point(at): continue
 		if str(decoration.layer) == "overlay2": continue
-		entities.append({"kind": "decoration", "data": decoration, "sort": depth(decoration.tile) * 100 + _layer_rank(str(decoration.layer))})
+		var sort_tile: Vector2i = decoration.tile as Vector2i
+		if str(decoration.layer) == "roof" and sort_tile.y + 1 < height: sort_tile.y += 1
+		entities.append({"kind": "decoration", "data": decoration, "sort": depth(sort_tile) * 100 + _layer_rank(str(decoration.layer))})
 	entities.append({"kind": "player", "sort": depth(_world_tile(player_world)) * 100 + 30})
 	if online_mode:
 		entities.append_array(online.entities())
@@ -588,7 +631,7 @@ func _frame(character: Dictionary, direction: String, state: String) -> Dictiona
 	if raw is Dictionary: return raw as Dictionary
 	if raw is Array and not (raw as Array).is_empty():
 		var frames: Array = raw as Array
-		var frame_index: int = int(animation_clock * 9.0) % frames.size() if moving else 0
+		var frame_index: int = int(animation_clock * 9.0) % frames.size() if (moving and state != "idle") or bool(character.get("animate_idle", false)) else 0
 		if state == "attack": frame_index = mini(int((1.0 - swing_clock / ATTACK_SWING_DURATION) * frames.size()), frames.size() - 1)
 		return frames[frame_index] as Dictionary
 	return {}
@@ -696,6 +739,7 @@ func _build_ui() -> void:
 	ui = CanvasLayer.new()
 	add_child(ui)
 	var root: Control = Control.new()
+	hud_root = root
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	ui.add_child(root)
@@ -794,6 +838,7 @@ func _begin_play() -> void:
 
 func _item_info(kind: String) -> Dictionary:
 	if online_mode: return online.item_info(kind)
+	if kind == "coins": return {"name": "Gold", "icon": "23:70", "type": 2}
 	var data: Dictionary = manifest.get("starter_equipment", {}) as Dictionary
 	var fallback: Dictionary = {"weapon": {"name": "Wayfarer blade", "icon": str(manifest.get("sample_item_icon", ""))}, "armor": {"name": "Starter armor", "icon": ""}, "boots": {"name": "Starter boots", "icon": ""}}
 	return data.get(kind, fallback.get(kind, {})) as Dictionary
@@ -816,7 +861,8 @@ func _is_equipped(kind: String) -> bool:
 
 func _owns_item(kind: String) -> bool:
 	if online_mode: return online.owns_item(kind)
-	return has_blade if kind == "weapon" else kind == "armor" or kind == "boots"
+	if kind == "coins": return true
+	return dagger_count > 0 or has_blade if kind == "weapon" else kind == "armor" or kind == "boots"
 
 func _select_item(kind: String) -> void:
 	selected_item = kind
@@ -839,8 +885,9 @@ func _build_inventory(parent: Node) -> void:
 			if online_mode:
 				online.select_bag_item(index)
 				return
-			var kinds: Array[String] = ["weapon", "armor", "boots"]
-			if index < kinds.size() and _owns_item(kinds[index]) and not _is_equipped(kinds[index]): _select_item(kinds[index])
+			var kinds: Array[String] = ["coins", "weapon", "armor", "boots"]
+			if index < kinds.size() and _offline_bag_amount(kinds[index]) > 0: _select_item(kinds[index])
+			elif index == 0: _select_item("coins")
 		)
 		slot.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		slot.expand_icon = true
@@ -949,6 +996,7 @@ func _toggle_paperdoll() -> void:
 	_refresh_ui()
 
 func _toggle_equip() -> void:
+	if selected_item == "coins": return
 	if online_mode:
 		online.equipment_request(selected_item)
 		return
@@ -1000,6 +1048,7 @@ func _reset_progress() -> void:
 	swing_clock = 0.0
 	kills = 0
 	coins = 0
+	dagger_count = 0
 	has_blade = false
 	equipped = false
 	armor_equipped = true
@@ -1040,25 +1089,29 @@ func _refresh_ui() -> void:
 		item_title.text = _item_name(selected_item) if owned else "Your bag"
 		var detail: String = "2 damage per strike" if selected_item == "weapon" else "Starting outfit • changes your appearance"
 		inventory_detail.text = "In your bag  ·  " + detail + "\nSelect an item, then equip it."
+		if selected_item == "coins": inventory_detail.text = "%d gold coins" % coins
 		if not owned:
 			inventory_detail.text = "No item selected.\nRemove worn equipment from your character to store it here."
 		elif worn:
 			inventory_detail.text = "Equipped on your character.\nOpen the character icon to remove it."
-		equip_button.disabled = not owned or worn
+		if selected_item == "weapon":
+			inventory_detail.text = "%d in your bag  ·  %d equipped\n2 damage per strike" % [_offline_bag_amount("weapon"), 1 if equipped else 0]
+		equip_button.disabled = not owned or worn or selected_item == "coins"
 		equip_button.text = "Equip " + _item_name(selected_item) if owned and not worn else "Select an item from your bag"
 		inventory_summary.text = "%d coins  ·  24 bag slots" % coins
-		var kinds: Array[String] = ["weapon", "armor", "boots"]
+		var kinds: Array[String] = ["coins", "weapon", "armor", "boots"]
 		for index: int in range(bag_slots.size()):
 			var slot: Button = bag_slots[index]
 			slot.icon = null
 			slot.text = ""
 			slot.tooltip_text = "Empty slot"
-			if index < kinds.size() and _owns_item(kinds[index]) and not _is_equipped(kinds[index]):
+			if index < kinds.size() and (index == 0 or _offline_bag_amount(kinds[index]) > 0):
 				var kind: String = kinds[index]
 				slot.icon = _item_texture(kind)
 				slot.tooltip_text = _item_name(kind)
-				if slot.icon == null: slot.text = kind.substr(0, 1).to_upper()
-			var chosen: bool = index < kinds.size() and selected_item == kinds[index] and _owns_item(kinds[index]) and not _is_equipped(kinds[index])
+				if kind == "coins" or kind == "weapon": slot.text = str(_offline_bag_amount(kind))
+				elif slot.icon == null: slot.text = kind.substr(0, 1).to_upper()
+			var chosen: bool = index < kinds.size() and selected_item == kinds[index] and (index == 0 or _offline_bag_amount(kinds[index]) > 0)
 			slot.add_theme_stylebox_override("normal", _wood_style(Color("936a37") if chosen else Color("6b4927"), Color("edce87") if chosen else Color("a97d43")))
 	if paperdoll != null:
 		paperdoll.refresh(selected_item)
@@ -1082,7 +1135,7 @@ func _toast(value: String) -> void:
 
 func _save_progress() -> void:
 	if online_mode: return
-	var state: Dictionary = {"version": 1, "map_id": int(world.get("id", 5)), "position": [player_tile.x, player_tile.y], "kills": kills, "coins": coins, "has_blade": has_blade, "equipped": equipped, "armor_equipped": armor_equipped, "boots_equipped": boots_equipped}
+	var state: Dictionary = {"version": 1, "map_id": int(world.get("id", 5)), "position": [player_tile.x, player_tile.y], "kills": kills, "coins": coins, "has_blade": has_blade, "dagger_count": maxi(dagger_count, 1 if has_blade else 0), "equipped": equipped, "armor_equipped": armor_equipped, "boots_equipped": boots_equipped}
 	var file: FileAccess = FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if file != null: file.store_string(JSON.stringify(state))
 	_refresh_ui()
@@ -1099,7 +1152,8 @@ func _load_save() -> void:
 		if _walkable(saved_tile): player_tile = saved_tile
 	kills = maxi(0, int(state.get("kills", 0)))
 	coins = maxi(0, int(state.get("coins", 0)))
-	has_blade = bool(state.get("has_blade", false))
+	dagger_count = maxi(0, int(state.get("dagger_count", 1 if bool(state.get("has_blade", false)) else 0)))
+	has_blade = dagger_count > 0
 	equipped = bool(state.get("equipped", false)) and has_blade
 	# Version1 saves predate outfit toggles: preserve their original worn appearance.
 	armor_equipped = bool(state.get("armor_equipped", true))
@@ -1165,3 +1219,31 @@ func _active_hero() -> Dictionary:
 
 func _layer_rank(layer: String) -> int:
 	return int({"shadow": 10, "objects": 20, "walls_down": 40, "walls_right": 50, "overlay": 60, "roof": 80, "wall_top": 90, "overlay2": 99}.get(layer, 20))
+
+func _offline_bag_amount(kind: String) -> int:
+	match kind:
+		"coins": return coins
+		"weapon": return maxi(0, maxi(dagger_count, 1 if has_blade else 0) - (1 if equipped else 0))
+		"armor": return 0 if armor_equipped else 1
+		"boots": return 0 if boots_equipped else 1
+	return 0
+
+func _hud_bounds() -> Rect2:
+	return hud_root.get_global_rect() if hud_root != null else get_viewport_rect()
+
+func _layout_safe_area() -> void:
+	if hud_root == null: return
+	hud_root.offset_left = 0.0
+	hud_root.offset_top = 0.0
+	hud_root.offset_right = 0.0
+	hud_root.offset_bottom = 0.0
+	if OS.has_feature("mobile"):
+		var safe: Rect2i = DisplayServer.get_display_safe_area()
+		var pixels: Vector2i = get_window().size
+		if safe.size.x > 0 and safe.size.y > 0 and pixels.x > 0 and pixels.y > 0:
+			var ratio: Vector2 = get_viewport_rect().size / Vector2(pixels)
+			hud_root.offset_left = maxf(0.0, float(safe.position.x)) * ratio.x
+			hud_root.offset_top = maxf(0.0, float(safe.position.y)) * ratio.y
+			hud_root.offset_right = -maxf(0.0, float(pixels.x - safe.end.x)) * ratio.x
+			hud_root.offset_bottom = -maxf(0.0, float(pixels.y - safe.end.y)) * ratio.y
+	if joystick != null and not joystick.active: joystick.reset()

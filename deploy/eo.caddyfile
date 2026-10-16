@@ -1,0 +1,8 @@
+eo.kcpd.top {
+    tls {
+        dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+    }
+    @game path /ws /healthz
+    reverse_proxy @game 127.0.0.1:8180
+    respond / "Endless Online Android development server. Connect with the game app." 200
+}

@@ -41,17 +41,19 @@ class RuntimeCatalogTests(unittest.TestCase):
         for spawn in selected['npc_spawns']:
             definition=self.catalog['npcs'][str(spawn['id'])]
             self.assertIn(str(definition['graphic']),self.manifest['characters']['npcs'])
-        self.assertEqual(len(self.manifest['characters']['npcs']),11)
-    def test_all11_npc_offsets_match_reference_formulas(self):
+        self.assertEqual(len(self.manifest['characters']['npcs']),158)
+    def test_all_world_npc_offsets_match_reference_formulas(self):
         npcs=self.manifest['characters']['npcs']
-        self.assertEqual(set(map(int,npcs)),set(NPC_RENDER_METADATA))
+        self.assertTrue(set(map(int,npcs)).issubset(set(NPC_RENDER_METADATA)))
         for graphic,npc in npcs.items():
             metadata=NPC_RENDER_METADATA[int(graphic)]
             for direction in ['south','west','north','east']:
-                self.assertEqual(npc['idle'][direction]['offset'],npc_frame_offset(metadata,direction,'idle',0))
+                idle=npc['idle'][direction]
+                idle_frames=idle if isinstance(idle,list) else [idle]
+                for index,frame in enumerate(idle_frames):self.assertEqual(frame['offset'],npc_frame_offset(metadata,direction,'idle',0 if frame.get('fallback_source_graphic_id') else index))
                 for state in ['frames','attack']:
                     for index,frame in enumerate(npc[state][direction]):
-                        self.assertEqual(frame['offset'],npc_frame_offset(metadata,direction,state,index))
+                        self.assertEqual(frame['offset'],npc_frame_offset(metadata,direction,'idle' if frame.get('fallback_source_graphic_id') else state,0 if frame.get('fallback_source_graphic_id') else index))
         # Independently calculated reference fixtures cover directional signs,
         # 23px baseline, and special second attack offsets for the city guards.
         guard=npcs['35']
@@ -69,8 +71,38 @@ class RuntimeCatalogTests(unittest.TestCase):
             metadata=self.manifest['graphics'][row['ground']]
             self.assertTrue((CONTENT/metadata['path'].removeprefix('res://content/')).is_file())
 
+    def test_all282_map_geometry_paths_and_graphics_resolve(self):
+        for map_id,record in self.catalog['maps'].items():
+            path=CONTENT/record['path'].removeprefix('res://content/')
+            self.assertTrue(path.exists())
+            world=json.loads(path.read_text())
+            self.assertEqual((world['id'],world['name'],world['width'],world['height']),
+                             (int(map_id),record['name'],record['width'],record['height']))
+            for layer,entries in world['layers'].items():
+                gfx=self.manifest['layer_gfx'][layer]
+                for entry in entries:
+                    if entry['id']:self.assertIn(f'{gfx}:{entry["id"]}',self.manifest['graphics'])
+            if world['fill_tile']:self.assertIn(f'3:{world["fill_tile"]}',self.manifest['graphics'])
+            self.assertIn('relog',world);self.assertIn('server_blocked',world)
+    def test_actual_aeven_north_transition_and_return_fixture(self):
+        world5=json.loads((CONTENT/'maps/00005.json').read_text())
+        world4=json.loads((CONTENT/'maps/00004.json').read_text())
+        outbound=next(w for w in world5['warps'] if (w['x'],w['y'])==(33,0))
+        inbound=next(w for w in world4['warps'] if (w['x'],w['y'])==(19,48))
+        self.assertEqual((outbound['map'],outbound['destination'],outbound['level'],outbound['door']),(4,[19,47],0,0))
+        self.assertEqual((inbound['map'],inbound['destination']),(5,[33,1]))
+        self.assertNotIn([19,47],world4['server_blocked'])
+        self.assertNotIn([33,1],world5['server_blocked'])
+    def test_world_validation_preserves_known_legacy_bad_warps(self):
+        validation=self.catalog['world_validation']
+        self.assertEqual(validation['warp_count'],3945)
+        self.assertEqual(len(validation['reachable_from_start_ignoring_level_and_doors']),228)
+        self.assertEqual(len(validation['unreachable_from_start']),54)
+        self.assertEqual(len(validation['invalid_warps']),8)
+        self.assertTrue(all(row['source_map']==47 for row in validation['invalid_warps']))
+
     def test_every_catalog_item_icon_and_ground_sprite_is_exported(self):
-        self.assertEqual(self.catalog['missing_graphics'],[])
+        self.assertEqual([r['npc_graphic'] for r in self.catalog['missing_graphics']],[171])
         for item in self.catalog['items'].values():
             if not item['graphic']:continue
             for role in ['icon','ground']:

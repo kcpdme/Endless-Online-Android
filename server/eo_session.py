@@ -4,7 +4,7 @@
 Contracts derived from pinned etheos handlers and MIT eolib-dotnet codec documentation.
 No credentials or raw account/login payloads are logged.
 """
-import secrets, socket, time
+import hashlib, secrets, socket, time
 from handshake import encode as number, decode as read_number, read_exact
 
 def multiples(data, multi):
@@ -40,7 +40,7 @@ class Session:
     def __init__(self,host='127.0.0.1',port=8078):
         self.sock=socket.create_connection((host,port),timeout=8);self.sock.settimeout(8)
         self.encode_multi=0;self.decode_multi=0;self.seq_start=0;self.counter=1;self.character_id=None;self.state=None;self.characters=[];self.events=[]
-        self.timestamp=1000;self.last_walk=0;self.last_attack=0
+        self.timestamp=1000;self.last_walk=0;self.last_attack=0;self.warp=None;self.map_content={}
         challenge=12345;payload=b'\xff\xff'+number(challenge,3)+b''.join(number(n,1) for n in [0,0,28,0,0])+str(secrets.randbelow(1000000000)+1).encode('ascii')
         self.sock.sendall(number(len(payload),2)+payload)
         init=self.receive_raw()
@@ -61,17 +61,49 @@ class Session:
         if len(data)<2:raise EOError('EO frame lacks packet identifier')
         return data[1],data[0],data[2:]
     def wait(self,family,action,timeout=8):
-        deadline=time.monotonic()+timeout
+        deadline=time.monotonic()+timeout;candidate=None
         while time.monotonic()<deadline:
             self.sock.settimeout(max(0.1,deadline-time.monotonic()))
             try:f,a,p=self.receive()
             except socket.timeout:raise EOError(f'No server acknowledgement for EO {family}/{action}; action may have been rejected')
             finally:self.sock.settimeout(8)
-            if (f,a)==(1,8):
-                r=Reader(p);self.seq_start=r.num(2)-r.num();self.send(1,240,b'k');continue
-            self.apply_event(f,a,p)
-            if (f,a)==(family,action):return p
+            handled=self.control_packet(f,a,p)
+            if not handled:
+                self.apply_event(f,a,p)
+                if (f,a)==(family,action):candidate=p
+            if candidate is not None and self.warp is None:return candidate
         raise EOError(f'Timed out waiting for EO {family}/{action}')
+    def control_packet(self,f,a,p):
+        if (f,a)==(1,8):
+            r=Reader(p);self.seq_start=r.num(2)-r.num();self.send(1,240,b'k');return True
+        if (f,a)==(19,1):
+            r=Reader(p);kind=r.num();map_id=r.num(2)
+            self.warp={'kind':kind,'map_id':map_id,'from_map':getattr(self,'map_id',None)}
+            if kind==2:
+                self.warp.update(rid=r.take(4),size=r.num(3),stage='download')
+                # Request the authoritative map even if the client ships an imported copy.
+                self.send(19,9)
+            elif kind==1:
+                self.warp.update(x=r.num(),y=r.num(),stage='accept')
+                self.send(19,2,number(map_id,2))
+            else:raise EOError('Unknown EO warp type')
+            return True
+        if (f,a)==(255,255) and self.warp and self.warp.get('stage')=='download':
+            data=p[1:]
+            if data[:3]!=b'EMF' or len(data)!=self.warp['size'] or data[3:7]!=self.warp['rid']:
+                raise EOError('Authoritative map download did not match the advertised map identity')
+            self.map_content[self.warp['map_id']]={'bytes':len(data),'sha256':hashlib.sha256(data).hexdigest(),'rid':data[3:7].hex()}
+            self.warp['stage']='accept';self.send(19,2,number(self.warp['map_id'],2));return True
+        if (f,a)==(19,5):
+            if not self.warp:raise EOError('Unexpected warp completion')
+            r=Reader(p);r.num();map_id=r.num(2);animation=r.num()
+            if map_id!=self.warp['map_id']:raise EOError('Warp completion map identity mismatch')
+            self.map_id=map_id;state=self.parse_snapshot(r)
+            if self.state:state.update({k:self.state[k] for k in ['inventory','spells','character_id','player_id','online'] if k in self.state})
+            self.state=state
+            self.events.append({'kind':'map_transition','from_map':self.warp['from_map'],'map_id':map_id,'map_content':self.map_content.get(map_id),'animation':animation})
+            self.warp=None;return True
+        return False
     def register(self,username,password):
         self.send(2,1,username.encode('ascii'));reply=self.wait(2,3)
         if not reply.endswith(b'OK') or len(reply)!=5:raise EOError('Account unavailable or rejected')
@@ -129,13 +161,15 @@ class Session:
         self.send(25,1);state=self.parse_snapshot(Reader(self.wait(25,3)))
         if self.state:state.update({k:self.state[k] for k in ['inventory','spells','character_id','player_id','online'] if k in self.state})
         self.state=state;return state
-    def walk(self,direction):
+    def walk(self,direction,open_door=False):
         direction=int(direction)
         if direction not in range(4):raise EOError('EO movement must be one cardinal tile (0 down,1 left,2 up,3 right)')
         if not self.state or not self.state.get('self'):raise EOError('Enter a character before movement')
         wait=0.43-(time.monotonic()-self.last_walk)
         if wait>0:time.sleep(wait)
         self.timestamp+=40;me=self.state['self'];dx,dy=[(0,1),(-1,0),(0,-1),(1,0)][direction]
+        if open_door:
+            self.send(34,13,number(me['x']+dx,1)+number(me['y']+dy,1));time.sleep(0.08)
         self.send(6,8,number(direction,1)+number(self.timestamp,3)+number(me['x']+dx,1)+number(me['y']+dy,1));self.last_walk=time.monotonic()
         time.sleep(0.07);return self.refresh()
     def attack(self,direction=None):
@@ -161,7 +195,11 @@ class Session:
         self.wait(30,4 if remove else 5,timeout=2);self.paperdoll();return self.refresh()
     def apply_event(self,f,a,p):
         event={'family':f,'action':a,'bytes':len(p)}
-        if (f,a)==(14,24):
+        if (f,a)==(34,14):
+            event.update(kind='door_locked',key_number=Reader(p).num())
+        elif (f,a)==(34,13):
+            r=Reader(p);event.update(kind='door_open',x=r.num(),y=r.num(2))
+        elif (f,a)==(14,24):
             r=Reader(p);item=r.num(2);amount=r.num(3);remaining=r.num(4);uid=r.num(2)
             self.inventory=[i for i in self.inventory if i['id']!=item]
             if remaining:self.inventory.append({'id':item,'amount':remaining})
@@ -199,9 +237,7 @@ class Session:
 
     def pump(self):
         f,a,p=self.receive()
-        if (f,a)==(1,8):
-            r=Reader(p);self.seq_start=r.num(2)-r.num();self.send(1,240,b'k')
-        else:self.apply_event(f,a,p)
+        if not self.control_packet(f,a,p):self.apply_event(f,a,p)
 
     def drop(self,item_id,amount=1):
         self.send(14,24,number(int(item_id),2)+number(int(amount),3)+b'\xff\xff')

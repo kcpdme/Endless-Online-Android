@@ -17,7 +17,8 @@ def main():
     if not args.godot:
         parser.error('Pass --godot /path/to/Godot executable.')
     with tempfile.TemporaryDirectory(prefix='aster-vale-online-') as temporary:
-        env = dict(os.environ, XDG_DATA_HOME=temporary, XDG_CONFIG_HOME=temporary)
+        env = dict(os.environ, XDG_DATA_HOME=temporary, XDG_CONFIG_HOME=temporary,
+                   ASTER_VALE_TEST_HOST=os.environ.get("ASTER_VALE_TEST_HOST", "127.0.0.1"))
         try:
             result = subprocess.run(
                 [args.godot, '--headless', '--path', str(ROOT / 'client'),

@@ -44,7 +44,7 @@ Snapshots contain `online`, `map_id`, `player`, `players`, `npcs`, `items`, and 
 
 Events use a `kind` discriminator. `npc_damage` contains `player_id`, `npc_index`, `damage`, and `hp_percent`; `npc_killed` contains the NPC index, damage and an optional nonzero `drop` record. `pickup`, `equip`, and `unequip` are generated only from their corresponding server acknowledgements. Other packets are recorded only as family/action/length metadata. Server refresh snapshots remain the authority for entity presence and positions.
 
-The gateway drains unsolicited packets and answers sequence-update pings while idle. Active clients should request refresh periodically (the Godot slice polls around every 0.6 seconds). Map transitions/content downloading are not implemented; the current Godot slice blocks Aeven warp tiles and closes if an unexpected map arrives.
+The gateway drains unsolicited packets and answers sequence-update pings while idle. Active clients should request refresh periodically (the Godot slice polls around every 0.6 seconds). The adapter implements Warp Request/Take/Accept/Agree, verifies downloaded EMF size and RID, and returns server-confirmed map transitions. The client loads matching imported geometry on demand. Walk accepts optional `open_door: true`; this sends a native Door_Open request for the adjacent destination before walking. Locked doors still require the real key. See `warp-validation-report.json` and `door-validation-report.json`.
 
 ## Integration evidence
 
@@ -72,3 +72,16 @@ It creates only `dev`-prefixed accounts and characters and never resets the data
 The user-supplied `trunk 305 EODelta` archive is a historical EOSERV-derived server fork whose changelog identifies version 5.5. Its software license is zlib-style and credits the EOSERV team. It adds pets, rebirth, event/config systems, overlays/underlays, arena and PK features, and spike behavior. It contains only three map files (IDs 0–2), four PUB files and two quest files; it is not a complete replacement for the current 282-map foundation. Its preserved executables, private database/configuration and logs are not included in source deliverables or used as executable dependencies. Software permission does not establish publication rights for original game artwork or game data.
 
 The modern pinned etheos remains the runtime. Legacy feature ideas can be evaluated later through small explicit ports with source attribution and current security review.
+
+## Secure WebSocket transport
+
+`bootstrap_ws.py` verifies the pinned websockets 17.2 pure-Python wheel before installing into isolated local state. Python 3.11+ is required.
+
+```sh
+python3 server/bootstrap_ws.py --target /path/to/server-state/python
+python3 server/ws_gateway.py --deps-dir /path/to/server-state/python --port 8081
+```
+
+This bridges WebSocket text messages on `/ws` to the existing TCP gateway. `/healthz` checks gateway reachability. Bindings stay loopback; Caddy terminates trusted public TLS. The hosted endpoint is `wss://eo.kcpd.top/ws`; its bridge uses private port8180 because8081 already belongs to another application. See `deploy/README.md`. No TLS verification bypass is used.
+
+Public WSS was tested with the actual Godot scene: login, character entry, rendered Aeven/map4 round trip, inventory/equipment and offline-save isolation.

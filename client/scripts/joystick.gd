@@ -23,7 +23,7 @@ func _draw() -> void:
 
 func begin(center: Vector2) -> void:
 	set_anchors_preset(Control.PRESET_TOP_LEFT, true)
-	position = center - Vector2.ONE * radius
+	position = get_parent().get_global_transform_with_canvas().affine_inverse() * center - Vector2.ONE * radius
 	active = true
 	vector = Vector2.ZERO
 	queue_redraw()
@@ -38,5 +38,5 @@ func reset() -> void:
 	active = false
 	vector = Vector2.ZERO
 	set_anchors_preset(Control.PRESET_TOP_LEFT, true)
-	position = Vector2(resting_position.x, get_viewport_rect().size.y + resting_position.y)
+	position = Vector2(resting_position.x, (get_parent() as Control).size.y + resting_position.y)
 	queue_redraw()

@@ -1,0 +1,65 @@
+{
+  "result": "passed",
+  "runtime": "actual pinned etheos over native EO v28",
+  "database_reset": false,
+  "fixture_setup": "Only the newly created dev-prefixed test character was placed one tile from a real exit while offline.",
+  "outbound": {
+    "source": [
+      5,
+      33,
+      1
+    ],
+    "step_direction": 2,
+    "warp_tile": [
+      33,
+      0
+    ],
+    "destination": [
+      4,
+      19,
+      47
+    ],
+    "authoritative_snapshot": true,
+    "map_download": {
+      "bytes": 5752,
+      "sha256": "ae41c60f6789d90b3170c860cc8fd386ed66e7851eadcb6abf2ee0e4a7cfc67b",
+      "rid": "049a9ad3"
+    }
+  },
+  "reconnect": {
+    "sqlite_position_persisted": [
+      4,
+      19,
+      47
+    ],
+    "welcome_resumed": [
+      4,
+      19,
+      47
+    ]
+  },
+  "return": {
+    "step_direction": 0,
+    "warp_tile": [
+      19,
+      48
+    ],
+    "destination": [
+      5,
+      33,
+      1
+    ],
+    "authoritative_snapshot": true,
+    "map_download": {
+      "bytes": 22914,
+      "sha256": "bfe982f14cfed423a73dd3813658a14c3e2bb0749e0d1d4e2ce66c0b975b9673",
+      "rid": "f9124db1"
+    }
+  },
+  "final_sqlite_position": [
+    5,
+    33,
+    1
+  ],
+  "limitations": "Geometry/rendering validation is separate; level/key requirements remain enforced by the server."
+}

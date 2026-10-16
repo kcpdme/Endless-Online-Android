@@ -1,0 +1,34 @@
+{
+  "result": "passed",
+  "transport": "Real WebSocket -> existing JSON TCP gateway -> native EO v28 -> actual etheos",
+  "malformed_array_rejected": true,
+  "account_login_character_welcome": true,
+  "outbound": [
+    5,
+    33,
+    1,
+    4,
+    19,
+    47
+  ],
+  "map_download_verified": {
+    "bytes": 5752,
+    "sha256": "ae41c60f6789d90b3170c860cc8fd386ed66e7851eadcb6abf2ee0e4a7cfc67b",
+    "rid": "049a9ad3"
+  },
+  "reconnect_resumed_map": 4,
+  "return": [
+    4,
+    19,
+    47,
+    5,
+    33,
+    1
+  ],
+  "return_download_verified": {
+    "bytes": 22914,
+    "sha256": "bfe982f14cfed423a73dd3813658a14c3e2bb0749e0d1d4e2ce66c0b975b9673",
+    "rid": "f9124db1"
+  },
+  "tls": "Local test used ws; public wss must terminate at a trusted TLS reverse proxy. No TLS verification bypass is configured."
+}

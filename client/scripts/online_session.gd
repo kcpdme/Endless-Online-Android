@@ -1,10 +1,14 @@
 extends Node
-## JSON-lines transport to the local adapter. Adapter owns one real encrypted EO session.
+## TCP JSON-lines for local development, or ws/wss JSON messages through the world gateway.
+## Every gateway connection owns one real encrypted EO session. TLS uses normal certificate checks.
 signal transport_connected
 signal message_received(message: Dictionary)
 signal transport_closed(reason: String)
 
+const MAX_RESPONSE_BYTES: int = 4 * 1024 * 1024
 var peer: StreamPeerTCP = StreamPeerTCP.new()
+var websocket: WebSocketPeer = WebSocketPeer.new()
+var websocket_mode: bool = false
 var receive_buffer: PackedByteArray = PackedByteArray()
 var connecting: bool = false
 var connected: bool = false
@@ -14,8 +18,16 @@ var pending: Dictionary = {}
 
 func open(host: String, port: int) -> Error:
 	close()
-	peer = StreamPeerTCP.new()
-	var error: Error = peer.connect_to_host(host, port)
+	websocket_mode = host.begins_with("ws://") or host.begins_with("wss://")
+	var error: Error = OK
+	if websocket_mode:
+		websocket = WebSocketPeer.new()
+		websocket.inbound_buffer_size = MAX_RESPONSE_BYTES
+		websocket.outbound_buffer_size = 64 * 1024
+		error = websocket.connect_to_url(host)
+	else:
+		peer = StreamPeerTCP.new()
+		error = peer.connect_to_host(host, port)
 	if error != OK: return error
 	connecting = true
 	deadline = 0.0
@@ -23,6 +35,9 @@ func open(host: String, port: int) -> Error:
 
 func close() -> void:
 	peer.disconnect_from_host()
+	if websocket.get_ready_state() != WebSocketPeer.STATE_CLOSED:
+		websocket.close()
+		websocket.poll()
 	connecting = false
 	connected = false
 	receive_buffer.clear()
@@ -34,7 +49,11 @@ func request(operation: String, fields: Dictionary = {}) -> int:
 	var message: Dictionary = fields.duplicate(true)
 	message["id"] = serial
 	message["op"] = operation
-	var error: Error = peer.put_data((JSON.stringify(message) + "\n").to_utf8_buffer())
+	var encoded: String = JSON.stringify(message)
+	if encoded.to_utf8_buffer().size() > 64 * 1024:
+		_fail("This request exceeds the connection limit.")
+		return -1
+	var error: Error = websocket.send_text(encoded) if websocket_mode else peer.put_data((encoded + "\n").to_utf8_buffer())
 	if error != OK:
 		_fail("Connection write failed.")
 		return -1
@@ -49,14 +68,15 @@ func _process(delta: float) -> void:
 		if float(record.age) > 20.0:
 			_fail("The game server did not answer in time. Please reconnect.")
 			return
+	if websocket_mode:
+		_poll_websocket(delta)
+		return
 	peer.poll()
 	var status: int = peer.get_status()
 	if connecting:
 		deadline += delta
 		if status == StreamPeerTCP.STATUS_CONNECTED:
-			connecting = false
-			connected = true
-			transport_connected.emit()
+			_mark_connected()
 		elif status == StreamPeerTCP.STATUS_ERROR or deadline > 10.0:
 			_fail("Could not reach the game server. Check its address and connection.")
 			return
@@ -70,7 +90,7 @@ func _process(delta: float) -> void:
 		_fail("The server connection could not be read.")
 		return
 	receive_buffer.append_array(result[1] as PackedByteArray)
-	if receive_buffer.size() > 4 * 1024 * 1024:
+	if receive_buffer.size() > MAX_RESPONSE_BYTES:
 		_fail("The server sent an oversized response.")
 		return
 	while true:
@@ -78,13 +98,44 @@ func _process(delta: float) -> void:
 		if newline < 0: break
 		var line: String = receive_buffer.slice(0, newline).get_string_from_utf8()
 		receive_buffer = receive_buffer.slice(newline + 1)
-		var parsed: Variant = JSON.parse_string(line)
-		if not parsed is Dictionary:
-			_fail("The server response was invalid.")
+		if not _consume_message(line): return
+
+func _poll_websocket(delta: float) -> void:
+	websocket.poll()
+	var state: int = websocket.get_ready_state()
+	if connecting:
+		deadline += delta
+		if state == WebSocketPeer.STATE_OPEN: _mark_connected()
+		elif state == WebSocketPeer.STATE_CLOSED or deadline > 10.0:
+			_fail("Could not reach the game server securely. Check its address and connection.")
 			return
-		var message: Dictionary = parsed as Dictionary
-		pending.erase(int(message.get("id", -1)))
-		message_received.emit(message)
+	elif state != WebSocketPeer.STATE_OPEN:
+		_fail("The game server disconnected.")
+		return
+	while websocket.get_available_packet_count() > 0:
+		var packet: PackedByteArray = websocket.get_packet()
+		if websocket.get_packet_error() != OK or not websocket.was_string_packet():
+			_fail("The game server sent an invalid message.")
+			return
+		if packet.size() > MAX_RESPONSE_BYTES:
+			_fail("The server sent an oversized response.")
+			return
+		if not _consume_message(packet.get_string_from_utf8()): return
+
+func _mark_connected() -> void:
+	connecting = false
+	connected = true
+	transport_connected.emit()
+
+func _consume_message(line: String) -> bool:
+	var parsed: Variant = JSON.parse_string(line)
+	if not parsed is Dictionary:
+		_fail("The server response was invalid.")
+		return false
+	var message: Dictionary = parsed as Dictionary
+	pending.erase(int(message.get("id", -1)))
+	message_received.emit(message)
+	return true
 
 func _fail(reason: String) -> void:
 	close()

@@ -8,7 +8,7 @@ This public repository contains source code, content import tools, build scripts
 
 After importing content and building, install `builds/aster-vale-debug.apk` on an Android device (Android 7 / API 24 or later). This development build includes ARM64 and x86_64. Open **Aster Vale**, then choose **Explore offline** or **Play online**. The build is signed with a development key, not configured for Google Play release.
 
-The offline exploration mode remains available alongside the new local online mode. It includes the imported 87×87 Aeven map, animated character, collision and pathfinding, a floating circular touch joystick, a training slime, attacks, loot, a separate wooden bag and original EO equipment paperdoll, sound effects and saved local progress. Character appearances are composed from the original layers during import and selected when equipment changes. The blade changes attack damage; the starter outfit and boots provide appearance changes in this slice.
+The offline exploration mode remains available alongside hosted online play. It includes the imported 87×87 Aeven map, animated character, collision and pathfinding, a floating circular touch joystick, a training slime, attacks, loot, a separate wooden bag and original EO equipment paperdoll, sound effects and saved local progress. Character appearances are composed from the original layers during import and selected when equipment changes. The blade changes attack damage; the starter outfit and boots provide appearance changes in this slice.
 
 - Drag in the lower-left area to use the translucent circular joystick. Releasing it stops movement and clears queued movement. Tap clear ground elsewhere to walk to a destination.
 - Move beside the training slime and press/hold the enlarged circular **weapon icon**. Attacks repeat every 0.9 seconds; the rim shows recovery without fading the weapon. Release, slide off, or open a screen to stop. With no weapon equipped, the icon shows a fist. The slime does not damage you in this first slice.
@@ -17,7 +17,15 @@ The offline exploration mode remains available alongside the new local online mo
 - Progress saves locally. The menu includes a confirmed reset.
 - Desktop controls: WASD/arrows, hold the mouse on the weapon icon to repeat attacks, Space for one attack, I for bag, C for paperdoll, E to collect, Escape to close a screen or open the menu.
 
-## Play on your local server
+## Play online
+
+The Android build defaults to **`wss://eo.kcpd.top/ws`**. Create an account and character to play on the hosted world without ADB or a running development computer. The server runs on AWS behind Caddy HTTPS and proxied Cloudflare DNS. Accounts and progress on this hosted world are separate from the local development server and offline journey. See [hosting and maintenance](deploy/README.md).
+
+The world pack now includes all **282 maps**, 3,945 original warp records and their graphics. Walking into a valid exit changes the rendered map only after the real server completes its warp handshake. Doors open through native EO requests; keys and level restrictions remain server-controlled. Eight malformed legacy warp destinations on map 47 are blocked rather than sending a player outside a map. NPC shops, quests, chat, trading, spells, full character customization and additional equipment appearances remain future work.
+
+The bag always displays Gold, including zero. Repeated offline training drops add Daggers to a stack; equipping one reduces the stored stack by one. Online quantities come from actual server inventory and pickup acknowledgements. Wide Android screens show more of the world, with controls anchored inside the device safe area.
+
+## Run a local server
 
 After server setup and content import, start both the real server and its local protocol adapter:
 
@@ -25,11 +33,11 @@ After server setup and content import, start both the real server and its local 
 python3 scripts/dev_online.py --device YOUR_ADB_DEVICE_SERIAL
 ```
 
-The launcher reuses running local services or starts them, and adds `adb reverse tcp:8079 tcp:8079` for the selected phone. In **Play online**, keep the address `127.0.0.1` and port `8079`. Create your own account, create a character, select it and enter Aeven. Passwords are not stored on the device. New characters receive a server-owned Dagger, Soldier Plate and Blue Boots in their bag; equip them from the bag and remove them through the paperdoll. Accounts, inventory and online position belong to the real server database. Offline progress stays in a separate device save.
+The launcher reuses running local services or starts them, and adds `adb reverse tcp:8079 tcp:8079` for the selected phone. For the local server, change the hosted address to `127.0.0.1` and use port `8079`. Create your own account, create a character, select it and enter Aeven. Passwords are not stored on the device. New characters receive a server-owned Dagger, Soldier Plate and Blue Boots in their bag; equip them from the bag and remove them through the paperdoll. Accounts, inventory and online position belong to the real server database. Offline progress stays in a separate device save.
 
-The adapter translates newline-delimited JSON into genuine encrypted EO v28 sessions; each client owns an independent native session. Movement and visible entities come from real server refresh replies. This development route needs the computer, server, adapter and ADB connection to remain available. Public hosting and transport security beyond the local ADB route require a later deployment milestone. The web preview does not support this raw TCP online connection.
+The adapter translates newline-delimited JSON into genuine encrypted EO v28 sessions; each client owns an independent native session. Movement and visible entities come from real server refresh replies. This development route needs the computer, server, adapter and ADB connection to remain available. The optional WebSocket bridge also permits `ws://` and `wss://` addresses. Browser exports require WebSocket transport; raw TCP is unavailable in a browser.
 
-Only Aeven has client map geometry in this slice. Other-map transitions, shops, quests, trading, spells, full character customization and the remaining appearance combinations are not implemented. Server NPCs and drops replace the offline training slime online. Combat and equipment use server requests and acknowledgements.
+Server NPCs and drops replace the offline training slime online. Combat and equipment use server requests and acknowledgements.
 
 ## Open and build
 
@@ -81,7 +89,7 @@ Set `EO_DATA_DIR` for real-data importer tests if the source archives are elsewh
 
 ## Next milestone
 
-Expand the client map import and implement native warp/content negotiation, then NPC interaction, shops, quests and trading. Add character customization and additional layered appearance combinations, reconnect/resume behavior, production account protection and a secure hosted transport. The current local online slice is an implementation foundation, not a complete MMO.
+Add NPC interaction, shops, quests, chat and trading, and audit the remaining legacy world-data errors. Add character customization and additional layered appearance combinations, reconnect/resume behavior, production account protection and capacity/abuse monitoring. The current online slice is an implementation foundation, not a complete MMO.
 
 ## Content rights
 

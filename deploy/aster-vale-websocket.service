@@ -1,0 +1,24 @@
+[Unit]
+Description=Aster Vale WebSocket transport
+After=network.target aster-vale-gateway.service
+Requires=aster-vale-gateway.service
+[Service]
+User=astervale
+Group=astervale
+WorkingDirectory=/opt/aster-vale/app/server
+ExecStart=/usr/bin/python3 /opt/aster-vale/app/server/ws_gateway.py --port 8180 --deps-dir /opt/aster-vale/python --origin https://eo.kcpd.top
+Restart=on-failure
+RestartSec=3
+KillSignal=SIGINT
+TimeoutStopSec=20
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+MemoryMax=160M
+TasksMax=96
+UMask=0077
+[Install]
+WantedBy=multi-user.target

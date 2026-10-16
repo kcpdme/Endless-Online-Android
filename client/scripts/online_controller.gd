@@ -21,6 +21,7 @@ var refresh_clock: float = 0.0
 var walk_clock: float = 0.0
 var desired_auth: String = "login"
 var offline_state: Dictionary = {}
+var offline_map_id: int = 5
 var player: Dictionary = {}
 var players: Array[Dictionary] = []
 var npcs: Array[Dictionary] = []
@@ -50,14 +51,19 @@ func build_ui(parent: Control) -> void:
 	game._label(card, "YOUR OWN ONLINE WORLD", Vector2(30, 20), 13, game.GOLD)
 	game._label(card, "Play online", Vector2(28, 49), 34)
 	game._button(card, "×", Vector2(674, 20), Vector2(56, 52), _close_panel)
-	game._label(card, "Server", Vector2(30, 105), 15, game.MUTED)
-	host_field = _field(card, "127.0.0.1", Vector2(30, 130), Vector2(530, 48))
+	game._label(card, "Server address", Vector2(30, 105), 15, game.MUTED)
+	host_field = _field(card, "wss://eo.kcpd.top/ws", Vector2(30, 130), Vector2(530, 48))
+	host_field.placeholder_text = "Server hostname or wss://…/ws"
+	host_field.text_changed.connect(func(value: String) -> void:
+		if port_field != null: port_field.editable = not (value.begins_with("ws://") or value.begins_with("wss://"))
+	)
 	port_field = SpinBox.new()
 	port_field.position = Vector2(574, 130)
 	port_field.size = Vector2(156, 48)
 	port_field.min_value = 1
 	port_field.max_value = 65535
 	port_field.value = 8079
+	port_field.editable = false
 	card.add_child(port_field)
 	auth_box = Control.new()
 	auth_box.position = Vector2(30, 200)
@@ -90,7 +96,7 @@ func build_ui(parent: Control) -> void:
 	status_label = game._label(card, "Connect to your world or create a new account.", Vector2(30, 479), 17, game.TEXT)
 	status_label.size = Vector2(700, 61)
 	status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	game._label(card, "Local development server connection. Offline progress stays separate.", Vector2(30, 553), 14, game.MUTED)
+	game._label(card, "Offline progress stays separate from your online characters.", Vector2(30, 553), 14, game.MUTED)
 	panel.hide()
 	server_label = game._label(parent, "", Vector2(390, 67), 15, game.MUTED)
 	server_label.hide()
@@ -203,7 +209,8 @@ func _create_character() -> void:
 func _enter_world(data: Dictionary) -> void:
 	if not game.online_mode:
 		offline_state = {}
-		for key: String in ["player_tile", "player_world", "coins", "kills", "has_blade", "equipped", "armor_equipped", "boots_equipped"]:
+		offline_map_id = int(game.world.get("id", 5))
+		for key: String in ["player_tile", "player_world", "coins", "kills", "dagger_count", "has_blade", "equipped", "armor_equipped", "boots_equipped"]:
 			offline_state[key] = game.get(key)
 	game.online_mode = true
 	active = true
@@ -224,16 +231,22 @@ func _apply_snapshot(data: Dictionary, entering: bool = false) -> void:
 		player = data.player as Dictionary
 		var map_id: int = int(player.get("map_id", player.get("map", 5)))
 		if map_id != int(game.world.get("id", 5)):
-			active = false
-			game._cancel_controls()
-			game.started = false
-			panel.show()
-			session.close()
-			server_label.hide()
-			auth_box.show()
-			character_box.hide()
-			_set_status("Map %d is not yet imported. Reconnect with a character in Aeven or continue offline." % map_id)
-			return
+			if not game.load_map(map_id):
+				active = false
+				game._cancel_controls()
+				game.started = false
+				panel.show()
+				session.close()
+				server_label.hide()
+				auth_box.show()
+				character_box.hide()
+				_set_status("The content for map %d could not be loaded. Reconnect after installing its content pack." % map_id)
+				return
+			entering = true
+			players.clear()
+			npcs.clear()
+			drops.clear()
+
 		var tile: Vector2i = Vector2i(int(player.get("x", 40)), int(player.get("y", 40)))
 		game.facing = _facing(player.get("direction", 0))
 		if entering:
@@ -270,10 +283,13 @@ func _sync_inventory() -> void:
 	game.equipped = int(equipment.get("weapon", 0)) > 0
 	game.armor_equipped = int(equipment.get("armor", 0)) > 0
 	game.boots_equipped = int(equipment.get("boots", 0)) > 0
-	game.has_blade = game.equipped
+	game.has_blade = int(equipment.get("weapon", 0)) == 21
+	game.dagger_count = 1 if int(equipment.get("weapon", 0)) == 21 else 0
 	game.coins = int(player.get("gold", player.get("coins", 0)))
 	for entry: Dictionary in _dict_array(player.get("inventory", [])):
-		if int(entry.get("id", 0)) == 21: game.has_blade = true
+		if int(entry.get("id", 0)) == 21:
+			game.has_blade = true
+			game.dagger_count += int(entry.get("amount", 0))
 		if int(entry.get("id", 0)) == 1: game.coins = int(entry.get("amount", 0))
 
 func _process(delta: float) -> void:
@@ -293,19 +309,26 @@ func request_step(direction: Vector2i) -> void:
 	if direction.x != 0 and direction.y != 0:
 		diagonal_toggle = not diagonal_toggle
 		single = Vector2i(direction.x, 0) if diagonal_toggle else Vector2i(0, direction.y)
+	var target: Vector2i = game.player_tile + single
+	var fields: Dictionary = {"direction": _direction(game._direction_name(single))}
 	for warp: Dictionary in game.world.get("warps", []):
-		if Vector2i(int(warp.get("x", -1)), int(warp.get("y", -1))) == game.player_tile + single:
+		if Vector2i(int(warp.x), int(warp.y)) != target: continue
+		var destination: Array = warp.get("destination", []) as Array
+		var map_info: Dictionary = (catalog.get("maps", {}) as Dictionary).get(str(int(warp.get("map", 0))), {}) as Dictionary
+		if destination.size() != 2 or map_info.is_empty() or int(destination[0]) < 0 or int(destination[1]) < 0 or int(destination[0]) >= int(map_info.get("width", 0)) or int(destination[1]) >= int(map_info.get("height", 0)):
 			game.route.clear()
 			if warp_notice_clock <= 0.0:
-				game._toast("This exit leads beyond the currently imported area.")
+				game._toast("This passage is unavailable.")
 				warp_notice_clock = 3.0
 			return
+		if int(warp.get("door", 0)) > 0: fields["open_door"] = true
+		break
 	if not game._can_step(game.player_tile, single):
 		game.route.clear()
 		return
 	waiting_for_walk = true
 	walk_clock = 0.44
-	session.request("walk", {"direction": _direction(game._direction_name(single))})
+	session.request("walk", fields)
 
 func request_attack() -> bool:
 	if not active or not session.is_idle(): return false
@@ -338,6 +361,7 @@ func leave_for_offline() -> void:
 	session.close()
 	waiting_for_walk = false
 	game._cancel_controls()
+	game.load_map(offline_map_id)
 	for raw: Variant in offline_state:
 		game.set(str(raw), offline_state[raw])
 	offline_state.clear()
@@ -368,6 +392,8 @@ func draw_entity(entity: Dictionary) -> void:
 	var tile: Vector2i = Vector2i(int(record.get("x", 0)), int(record.get("y", 0)))
 	var at: Vector2 = game.tile_position(tile)
 	var direction: String = _facing(record.get("direction", 0))
+	var half_view: Vector2 = game.get_viewport_rect().size / game.camera.zoom / 2.0 + Vector2(160, 240)
+	if not Rect2(game.camera.position - half_view, half_view * 2.0).has_point(at): return
 	if str(entity.kind) == "online_npc":
 		var npc_id: String = str(int(record.get("id", 0)))
 		var definitions: Dictionary = catalog.get("npcs", {}) as Dictionary
@@ -401,7 +427,18 @@ func _catalog_texture(key: String) -> Texture2D:
 	return game._texture(str((graphics[key] as Dictionary).get("path", "")))
 
 func inventory_items() -> Array[Dictionary]:
-	return _dict_array(player.get("inventory", []))
+	# Gold always occupies the first bag slot, even if the real balance is zero.
+	var totals: Dictionary = {}
+	var order: Array[int] = []
+	for item: Dictionary in _dict_array(player.get("inventory", [])):
+		var id: int = int(item.get("id", 0))
+		if id <= 0: continue
+		if not totals.has(id): order.append(id)
+		totals[id] = int(totals.get(id, 0)) + maxi(0, int(item.get("amount", 0)))
+	var result: Array[Dictionary] = [{"id": 1, "amount": int(totals.get(1, game.coins))}]
+	for id: int in order:
+		if id != 1 and int(totals[id]) > 0: result.append({"id": id, "amount": int(totals[id])})
+	return result
 
 func item_id(kind: String) -> int:
 	if kind.begins_with("item:"): return int(kind.get_slice(":", 1))
@@ -424,6 +461,7 @@ func is_equipped(kind: String) -> bool:
 func owns_item(kind: String) -> bool:
 	var id: int = item_id(kind)
 	if id <= 0: return false
+	if id == 1: return true
 	if is_equipped(kind): return true
 	for item: Dictionary in inventory_items():
 		if int(item.get("id", 0)) == id: return true
@@ -471,7 +509,7 @@ func collect_nearby() -> void:
 			return
 
 func refresh_game_ui() -> void:
-	game.quest_label.text = "Online world  ·  Aeven\n%d nearby players  ·  %d NPCs" % [nearby_count(), npcs.size()]
+	game.quest_label.text = "%s\n%d nearby players  ·  %d NPCs" % [str(game.world.get("name", "Area %s" % str(player.get("map_id", "")))), nearby_count(), npcs.size()]
 	game.quest_hint.text = "Progress is saved by your server."
 	game.coin_label.text = "◈  %d coins" % game.coins
 	game.location_label.text = "%s  /  %d, %d" % [str(player.get("name", "Player")), game.player_tile.x, game.player_tile.y]
@@ -489,7 +527,7 @@ func refresh_game_ui() -> void:
 			var info: Dictionary = item_info(kind)
 			slot.icon = _catalog_texture(str(info.get("icon", "")))
 			slot.tooltip_text = str(info.get("name", "Item"))
-			if int(item.get("amount", 1)) > 1: slot.text = str(int(item.amount))
+			if int(item.get("id", 0)) == 1 or int(item.get("amount", 1)) > 1: slot.text = str(int(item.amount))
 	var selected: String = str(game.selected_item)
 	var info: Dictionary = item_info(selected)
 	var worn: bool = is_equipped(selected)
@@ -505,7 +543,7 @@ func refresh_game_ui() -> void:
 	game.paperdoll.refresh(selected)
 	if game.paperdoll.information_labels.size() >= 2:
 		game.paperdoll.information_labels[0].text = str(player.get("name", "Player"))
-		game.paperdoll.information_labels[1].text = "Aeven"
+		game.paperdoll.information_labels[1].text = str(game.world.get("name", ""))
 	game.equipment_detail.text = str(info.get("name", "Empty " + selected + " slot"))
 	game.remove_button.disabled = not worn
 	game.remove_button.text = "Remove " + str(info.get("name", "item")) if worn else "Empty slot"
@@ -535,6 +573,7 @@ func _process_events(events: Array) -> void:
 		if not raw is Dictionary: continue
 		var event: Dictionary = raw as Dictionary
 		var kind: String = str(event.get("kind", event.get("type", event.get("event", ""))))
+		if kind == "door_locked": game._toast("This door needs a key.")
 		if kind in ["npc_damage", "npc_killed"]:
 			for npc: Dictionary in npcs:
 				if int(npc.get("index", -1)) == int(event.get("npc_index", -2)):

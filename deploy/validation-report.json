@@ -1,0 +1,30 @@
+{
+  "result": "passed",
+  "endpoint": "wss://eo.kcpd.top/ws",
+  "public_health": "https://eo.kcpd.top/healthz",
+  "deployment": "existing AwsHosting host, Caddy, proxied Cloudflare DNS",
+  "native_listeners": [
+    "127.0.0.1:8078",
+    "127.0.0.1:8079",
+    "127.0.0.1:8180"
+  ],
+  "services": [
+    "aster-vale-world",
+    "aster-vale-gateway",
+    "aster-vale-websocket"
+  ],
+  "normal_tls_validation": true,
+  "direct_caddy_tls_validation": true,
+  "real_godot_public_wss_flow": [
+    "login",
+    "character Welcome",
+    "Aeven -> map4 -> Aeven",
+    "equipment",
+    "offline-save isolation"
+  ],
+  "database": "fresh hosted world; local database and salt not copied",
+  "capacity": 12,
+  "original_caddy_configuration": "preserved with backup and a separate import",
+  "physical_android_wss_login_and_world_entry": true,
+  "physical_android_neighbor_map_rendered": 4
+}
