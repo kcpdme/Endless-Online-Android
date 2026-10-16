@@ -10,6 +10,7 @@ var item_kind: String = ""
 var summary: Label
 var details: Label
 var points: Label
+var classic_fields: Dictionary = {}
 var values: Array[Label] = []
 var add_buttons: Array[Button] = []
 var vitals: Control
@@ -28,22 +29,44 @@ func build(owner_game: Node, parent: Control) -> void:
 	tp_text = game._label(vitals, "", Vector2(22, 38), 16)
 	level_text = game._label(vitals, "", Vector2(14, 67), 14, game.GOLD)
 	vitals.hide()
-	panel = game._modal(parent, Vector2(840, 650))
+	panel = game._modal(parent, Vector2(1050, 478))
 	var card: Control = panel.get_child(0) as Control
 	game._wood_card(card)
-	game._label(card, "CHARACTER STATS", Vector2(36, 22), 28, game.GOLD)
-	game._button(card, "×", Vector2(750, 18), Vector2(54, 48), func() -> void: panel.hide())
-	summary = game._label(card, "", Vector2(36, 76), 20)
-	points = game._label(card, "", Vector2(36, 126), 17, game.GOLD)
+	game._label(card, "CHARACTER STATS", Vector2(40, 22), 28, game.GOLD)
+	game._button(card, "×", Vector2(954, 18), Vector2(54, 48), func() -> void: panel.hide())
+	summary = game._label(card, "", Vector2(40, 72), 19)
+	var art: TextureRect = TextureRect.new()
+	if ResourceLoader.exists("res://content/ui/classic_34.png"): art.texture = load("res://content/ui/classic_34.png") as Texture2D
+	art.position = Vector2(40, 118)
+	art.size = Vector2(970, 238)
+	art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	card.add_child(art)
 	for index: int in range(ATTRIBUTES.size()):
-		var key: String = ATTRIBUTES[index]
-		game._label(card, key.capitalize(), Vector2(36, 179 + index * 54), 20)
-		values.append(game._label(card, "", Vector2(255, 179 + index * 54), 22))
+		var value: Label = game._label(card, "", Vector2(140, 130 + index * 36), 20)
+		value.size = Vector2(104, 28)
+		value.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		values.append(value)
 		var stat_id: int = index + 1
-		add_buttons.append(game._button(card, "+", Vector2(326, 171 + index * 54), Vector2(52, 46), func() -> void: game.online.spend_stat(stat_id)))
-	details = game._label(card, "", Vector2(438, 175), 18)
-	details.size = Vector2(370, 360)
-	game._label(card, "Equipment bonuses are included in these totals.\nSpend earned points using + beside an attribute.", Vector2(36, 559), 17, game.MUTED)
+		var increase: Button = game._button(card, "+", Vector2(252, 130 + index * 36), Vector2(38, 30), func() -> void: game.online.spend_stat(stat_id))
+		increase.add_theme_font_size_override("font_size", 16)
+		for state: String in ["normal", "hover", "pressed", "disabled"]:
+			var style: StyleBoxFlat = game._wood_style(Color("75512b"))
+			style.content_margin_left = 2.0
+			style.content_margin_right = 2.0
+			style.content_margin_top = 2.0
+			style.content_margin_bottom = 2.0
+			increase.add_theme_stylebox_override(state, style)
+		add_buttons.append(increase)
+	var field_rows: Dictionary = {"hp": [356, 130, 144], "tp": [356, 166, 144], "damage": [356, 202, 144], "accuracy": [356, 238, 144], "armor": [356, 274, 144], "evade": [356, 310, 144], "name": [600, 130, 290], "guild": [600, 166, 386], "level": [946, 130, 40], "weight": [600, 202, 122], "stat_points": [600, 238, 122], "skill_points": [600, 274, 122], "element": [600, 310, 122], "gold": [798, 202, 188], "experience": [798, 238, 188], "tnl": [798, 274, 188], "karma": [798, 310, 188]}
+	for key: String in field_rows:
+		var rect: Array = field_rows[key]
+		var label: Label = game._label(card, "", Vector2(float(rect[0]), float(rect[1])), 20)
+		label.size = Vector2(float(rect[2]), 28)
+		label.clip_text = true
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		classic_fields[key] = label
+	points = game._label(card, "", Vector2(40, 380), 18, game.GOLD)
+	details = game._label(card, "Equipment bonuses are included. Use + to spend earned stat points.", Vector2(40, 420), 17, game.MUTED)
 	panel.hide()
 	item_panel = game._modal(parent, Vector2(840, 650))
 	var item_card: Control = item_panel.get_child(0) as Control
@@ -110,6 +133,11 @@ func refresh() -> void:
 		if int(item.get("class_requirement", 0)) > 0:
 			var item_class: Dictionary = (game.online.catalog.get("classes", {}) as Dictionary).get(str(int(item.class_requirement)), {}) as Dictionary
 			requirements.append(str(item_class.get("name", "Class %d" % int(item.class_requirement))))
+		var quantity: int = 0
+		for entry: Dictionary in game.online.inventory_items():
+			if int(entry.id) == game.online.item_id(item_kind): quantity = int(entry.amount)
+		item_heading.text += "  ×%d" % quantity if item_kind.begins_with("item:") else "  ·  Equipped"
+		if int(item.get("type", -1)) == 12: requirements.append("Female" if int(item.get("gender", 0)) == 0 else "Male")
 		item_body.text = "Damage  %d–%d                 Armor  +%d\n\nAccuracy  +%d                   Evade  +%d\n\nHP  +%d                              TP  +%d\n\n%s\n\nWeight  %d\n\nRequirements\n%s" % [int(item.get("min_damage", 0)), int(item.get("max_damage", 0)), int(item.get("armor", 0)), int(item.get("accuracy", 0)), int(item.get("evade", 0)), int(item.get("hp", 0)), int(item.get("tp", 0)), "   ·   ".join(bonuses), int(item.get("weight", 0)), "   ·   ".join(requirements) if not requirements.is_empty() else "None"]
 	var p: Dictionary = game.online.player
 	var stats: Dictionary = p.get("stats", {}) as Dictionary
@@ -126,9 +154,14 @@ func refresh() -> void:
 	level_text.text = "Level %d  ·  EXP %d" % [int(p.get("level", 0)), int(stats.get("experience", 0))]
 	var classes: Dictionary = game.online.catalog.get("classes", {}) as Dictionary
 	var profession: Dictionary = classes.get(str(int(stats.get("class_id", 0))), {}) as Dictionary
-	summary.text = "%s  ·  Level %d  ·  %s\nHP %d / %d      TP %d / %d      EXP %d" % [str(p.get("name", "Player")), int(p.get("level", 0)), str(profession.get("name", "–")), hp, max_hp, tp, max_tp, int(stats.get("experience", 0))]
-	points.text = "Stat points: %d     Skill points: %d" % [int(stats.get("stat_points", 0)), int(stats.get("skill_points", 0))]
+	summary.text = "%s  ·  Level %d  ·  %s" % [str(p.get("name", "Player")), int(p.get("level", 0)), str(profession.get("name", "–"))]
+	points.text = "Stat points: %d     Skill points: %d     Max SP: %d" % [int(stats.get("stat_points", 0)), int(stats.get("skill_points", 0)), int(stats.get("max_sp", 0))]
 	for index: int in range(ATTRIBUTES.size()):
 		values[index].text = str(int(stats.get(ATTRIBUTES[index], 0)))
 		add_buttons[index].disabled = int(stats.get("stat_points", 0)) <= 0 or not game.online._action_ready()
-	details.text = "Damage      %d–%d\n\nAccuracy     %d\n\nEvade          %d\n\nArmor          %d\n\nMax SP        %d\n\nWeight        %d / %d\n\nKarma          %d" % [int(stats.get("min_damage", 0)), int(stats.get("max_damage", 0)), int(stats.get("accuracy", 0)), int(stats.get("evade", 0)), int(stats.get("armor", 0)), int(stats.get("max_sp", 0)), int(stats.get("weight", 0)), int(stats.get("max_weight", 0)), int(stats.get("karma", 0))]
+	var fields: Dictionary = {"hp": "%d / %d" % [hp, max_hp], "tp": "%d / %d" % [tp, max_tp], "damage": "%d–%d" % [int(stats.get("min_damage", 0)), int(stats.get("max_damage", 0))], "name": str(p.get("name", "")), "guild": str(stats.get("guild", "")), "level": str(int(p.get("level", 0))), "weight": "%d / %d" % [int(stats.get("weight", 0)), int(stats.get("max_weight", 0))], "gold": str(game.coins), "element": "—", "tnl": "—"}
+	for key: String in ["accuracy", "armor", "evade", "stat_points", "skill_points", "experience", "karma"]: fields[key] = str(int(stats.get(key, 0)))
+	# Original level table: next level cubed * 133.1; display remaining EXP.
+	var next_level: int = int(p.get("level", 0)) + 1
+	fields["tnl"] = str(maxi(0, int(round(pow(next_level, 3) * 133.1)) - int(stats.get("experience", 0))))
+	for key: String in classic_fields: (classic_fields[key] as Label).text = str(fields.get(key, ""))

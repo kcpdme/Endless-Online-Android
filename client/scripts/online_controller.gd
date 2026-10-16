@@ -42,6 +42,9 @@ var diagonal_toggle: bool = false
 var warp_notice_clock: float = 0.0
 var catalog: Dictionary = {}
 var request_operations: Dictionary = {}
+var interaction: Dictionary = {}
+var collect_pending: bool = false
+var loot_attempt_after: Dictionary = {}
 
 func _ready() -> void:
 	session = OnlineSession.new()
@@ -165,6 +168,8 @@ func _on_message(message: Dictionary) -> void:
 		var reason: String = str(message.get("error", "The server refused this request."))
 		_set_status(reason)
 		game._toast(reason)
+		if operation == "shop_open": interaction.clear()
+		if game.shop_ui != null: game.shop_ui.refresh()
 		if operation in ["walk", "move"]:
 			# A transport rejection is not an authoritative position; recover from the world.
 			pending_inputs.clear()
@@ -189,8 +194,11 @@ func _on_message(message: Dictionary) -> void:
 			streaming = bool(data.get("enabled", false))
 		"move", "strike":
 			pass # Receipt only. The subsequent native Walk_Reply confirms acceptance.
-		"world", "refresh", "snapshot", "attack", "pickup", "equip", "unequip", "spend_stat":
+		"world", "refresh", "snapshot", "attack", "pickup", "equip", "unequip", "spend_stat", "shop_buy", "shop_sell", "shop_craft":
 			_apply_snapshot(data)
+		"shop_open":
+			_apply_snapshot(data)
+			game.shop_ui.open(data.get("shop", {}) as Dictionary)
 		"disconnect":
 			_on_closed("Disconnected from the world.")
 
@@ -271,6 +279,9 @@ func _apply_snapshot(data: Dictionary, entering: bool = false) -> void:
 
 		var tile: Vector2i = Vector2i(int(player.get("x", 40)), int(player.get("y", 40)))
 		if entering:
+			interaction.clear()
+			collect_pending = false
+			game.shop_ui.close()
 			pending_inputs.clear()
 			recovering = false
 			confirmed_input_seq = int(data.get("position_seq", confirmed_input_seq))
@@ -314,6 +325,7 @@ func _apply_snapshot(data: Dictionary, entering: bool = false) -> void:
 	_track_entities("npc", npcs, "index")
 	_process_events(data.get("events", []) as Array)
 	game._refresh_ui()
+	game.shop_ui.refresh()
 	server_label.text = "● Connected  ·  %d nearby" % nearby_count()
 
 func _merge_updates(rows: Array[Dictionary], changed: Array, removed: Array, key: String) -> Array[Dictionary]:
@@ -348,6 +360,7 @@ func _process(delta: float) -> void:
 	if server_label != null:
 		server_label.visible = active and game.started and not game._modal_open() and not game.welcome.visible
 	if not active: return
+	_process_interaction()
 	warp_notice_clock = maxf(0.0, warp_notice_clock - delta)
 	walk_clock = maxf(0.0, walk_clock - delta)
 	refresh_clock += delta
@@ -632,34 +645,96 @@ func equipment_request(kind: String) -> void:
 	else:
 		session.request("equip", {"item_id": item_id(kind)})
 
+func map_target(point: Vector2, fallback: Vector2i) -> Vector2i:
+	# The original client tests sprite rectangles. A tap on Bob's head must talk
+	# to Bob, rather than pathfinding to the tile behind his feet.
+	var ordered: Array[Dictionary] = npcs.duplicate()
+	ordered.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return game.depth(Vector2i(int(a.x), int(a.y))) > game.depth(Vector2i(int(b.x), int(b.y))))
+	for npc: Dictionary in ordered:
+		var tile: Vector2i = Vector2i(int(npc.x), int(npc.y))
+		var info: Dictionary = (catalog.get("npcs", {}) as Dictionary).get(str(int(npc.id)), {}) as Dictionary
+		var character: Dictionary = ((game.manifest.get("characters", {}) as Dictionary).get("npcs", {}) as Dictionary).get(str(int(info.get("graphic", 0))), {}) as Dictionary
+		var frame: Dictionary = game._frame(character, _facing(npc.get("direction", 0)), "idle")
+		var region: Array = frame.get("region", [0, 0, 30, 54]) as Array
+		var offset: Array = frame.get("offset", [0, 0]) as Array
+		var dimensions: Vector2 = Vector2(float(region[2]), float(region[3]))
+		var at: Vector2 = _remote_position("npc:%d" % int(npc.index), game.tile_position(tile))
+		var rectangle: Rect2 = Rect2(at + Vector2(float(offset[0]), float(offset[1])) - Vector2(dimensions.x / 2.0, dimensions.y), dimensions)
+		if rectangle.grow(5.0).has_point(point): return tile
+	return fallback
+
 func map_click(tile: Vector2i) -> void:
-	if not _action_ready(): return
+	if not active or defeated or recovering or transition_pending: return
+	interaction.clear()
 	for drop: Dictionary in drops:
-		if Vector2i(int(drop.get("x", 0)), int(drop.get("y", 0))) == tile and game._distance(game.player_tile, tile) <= 1:
-			session.request("pickup", {"uid": int(drop.get("uid", 0))})
+		if Vector2i(int(drop.x), int(drop.y)) == tile:
+			interaction = {"kind": "drop", "id": int(drop.uid)}
+			_approach(tile, 2)
 			return
 	for npc: Dictionary in npcs:
-		var npc_tile: Vector2i = Vector2i(int(npc.get("x", 0)), int(npc.get("y", 0)))
-		if npc_tile == tile:
+		if Vector2i(int(npc.x), int(npc.y)) != tile: continue
+		var info: Dictionary = (catalog.get("npcs", {}) as Dictionary).get(str(int(npc.id)), {}) as Dictionary
+		var type: int = int(info.get("type", -1))
+		if type == 6:
+			interaction = {"kind": "shop", "id": int(npc.index)}
+			_approach(tile, 2)
+		elif type in [1, 2, 3]:
 			if game._distance(game.player_tile, tile) == 1:
-				game.facing = game._direction_name(npc_tile - game.player_tile)
+				game.facing = game._direction_name(tile - game.player_tile)
 				game._attack()
-			else:
-				var choices: Array[Vector2i] = []
-				for offset: Vector2i in game.DIRECTIONS:
-					if game._walkable(tile + offset): choices.append(tile + offset)
-				choices.sort_custom(func(a: Vector2i, b: Vector2i) -> bool: return game._distance(game.player_tile, a) < game._distance(game.player_tile, b))
-				if not choices.is_empty(): game._request_path(choices[0])
-			return
+			else: _approach(tile, 1)
+		else: game._toast("%s: this NPC service is not available yet." % str(info.get("name", "NPC")))
+		return
 	game._request_path(tile)
 
+func _approach(tile: Vector2i, distance: int) -> void:
+	game.route.clear()
+	if game._distance(game.player_tile, tile) <= distance: return
+	var choices: Array[Vector2i] = []
+	for dx: int in range(-distance, distance + 1):
+		for dy: int in range(-distance, distance + 1):
+			var candidate: Vector2i = tile + Vector2i(dx, dy)
+			if absi(dx) + absi(dy) > 0 and absi(dx) + absi(dy) <= distance and game._walkable(candidate): choices.append(candidate)
+	choices.sort_custom(func(a: Vector2i, b: Vector2i) -> bool: return game._distance(game.player_tile, a) < game._distance(game.player_tile, b))
+	for choice: Vector2i in choices:
+		game._request_path(choice)
+		if not game.route.is_empty(): return
+	interaction.clear()
+
+func _process_interaction() -> void:
+	if game.stick != Vector2.ZERO or defeated:
+		interaction.clear()
+		collect_pending = false
+		return
+	if game.moving or not game.route.is_empty() or not _action_ready() or game._modal_open(): return
+	if not interaction.is_empty():
+		var target: Dictionary = {}
+		for row: Dictionary in (drops if str(interaction.kind) == "drop" else npcs):
+			if int(row.get("uid" if str(interaction.kind) == "drop" else "index", -1)) == int(interaction.id): target = row
+		if not target.is_empty():
+			var tile: Vector2i = Vector2i(int(target.x), int(target.y))
+			if game._distance(game.player_tile, tile) > 2:
+				_approach(tile, 2)
+				return
+			if str(interaction.kind) == "drop": _pickup(int(interaction.id))
+			else: session.request("shop_open", {"npc_index": int(interaction.id)})
+		interaction.clear()
+		collect_pending = false
+	elif collect_pending:
+		collect_pending = false
+		for drop: Dictionary in drops:
+			var tile: Vector2i = Vector2i(int(drop.x), int(drop.y))
+			if game._distance(game.player_tile, tile) <= 1 and Time.get_ticks_msec() >= int(loot_attempt_after.get(int(drop.uid), 0)):
+				_pickup(int(drop.uid))
+				return
+
+func _pickup(uid: int) -> void:
+	loot_attempt_after[uid] = Time.get_ticks_msec() + 5000
+	session.request("pickup", {"uid": uid})
+
 func collect_nearby() -> void:
-	if not _action_ready(): return
-	for drop: Dictionary in drops:
-		var tile: Vector2i = Vector2i(int(drop.get("x", 0)), int(drop.get("y", 0)))
-		if game._distance(game.player_tile, tile) <= 1:
-			session.request("pickup", {"uid": int(drop.get("uid", 0))})
-			return
+	# Movement animation may finish before Walk_Reply. Keep this intent until confirmed.
+	collect_pending = true
 
 func refresh_game_ui() -> void:
 	game.quest_label.text = "%s\n%d nearby players  ·  %d NPCs" % [str(game.world.get("name", "Area %s" % str(player.get("map_id", "")))), nearby_count(), npcs.size()]
@@ -674,6 +749,7 @@ func refresh_game_ui() -> void:
 		var slot: Button = game.bag_slots[index] as Button
 		slot.icon = null
 		slot.text = ""
+		(slot.get_node("Quantity") as Label).text = ""
 		slot.tooltip_text = "Empty slot"
 		if index < items.size():
 			var item: Dictionary = items[index]
@@ -681,7 +757,7 @@ func refresh_game_ui() -> void:
 			var info: Dictionary = item_info(kind)
 			slot.icon = _catalog_texture(str(info.get("icon", "")))
 			slot.tooltip_text = str(info.get("name", "Item"))
-			if int(item.get("id", 0)) == 1 or int(item.get("amount", 1)) > 1: slot.text = str(int(item.amount))
+			if int(item.get("id", 0)) == 1 or int(item.get("amount", 1)) > 1: (slot.get_node("Quantity") as Label).text = str(int(item.amount))
 	var selected: String = str(game.selected_item)
 	var info: Dictionary = item_info(selected)
 	var worn: bool = is_equipped(selected)

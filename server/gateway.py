@@ -70,7 +70,9 @@ class Handler(socketserver.StreamRequestHandler):
         if op=='strike':return s.strike(int(r['direction']))
         if op=='spend_stat':return s.spend_stat(int(r['stat_id']))
         if op=='attack':s.attack(r.get('direction'));return s.snapshot()
-        if op=='pickup':s.pickup(int(r['uid']));return s.snapshot()
+        if op=='shop_open':return s.shop_open(int(r['npc_index']))
+        if op in ('shop_buy','shop_sell','shop_craft'):return s.shop_trade(op.removeprefix('shop_'),int(r['item_id']),int(r.get('amount',1)))
+        if op=='pickup':return s.pickup(int(r['uid']))
         if op in ('equip','unequip'):s.equip(int(r['item_id']),op=='unequip',int(r.get('subloc',0)));return s.snapshot()
         raise EOError('Unsupported gateway operation')
 class Server(socketserver.ThreadingTCPServer):

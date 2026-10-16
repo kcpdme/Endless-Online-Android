@@ -11,7 +11,10 @@ import time
 from eo_session import Session, Reader, EOError, number
 
 
-class LiveSession(Session):
+from economy import EconomyMixin
+
+
+class LiveSession(EconomyMixin, Session):
     def __init__(self,*args):
         self.pending_moves=deque();self.position_seq=0;self.last_input_seq=0
         self.dirty=False;self.position_update=False;self.correction=False;self.expect_walk_refresh=False;self.sent_state=None
@@ -29,7 +32,7 @@ class LiveSession(Session):
         if not(0<=x<=251 and 0<=y<=251):raise EOError('Movement destination is outside protocol bounds')
         # Bound the queue; the native server enforces its 400 ms cadence. Network jitter
         # may deliver valid, evenly spaced client inputs in a burst. Never sleep here.
-        now=time.monotonic()
+        now=time.monotonic();self.shop=None
         if open_door:self.send(34,13,number(x,1)+number(y,1))
         move=dict(seq=seq,x=x,y=y,direction=direction)
         origin=[self.state['self']['x'],self.state['self']['y']]
@@ -91,6 +94,7 @@ class LiveSession(Session):
         handled=super().control_packet(f,a,p)
         if handled and (f,a)==(19,5):
             if self.pending_moves:self.position_seq=self.pending_moves[-1]['seq']
+            self.shop=None
             self.pending_moves.clear();self.expect_walk_refresh=False;self.position_update=True;self.correction=True;self.dirty=True
             if was_dead:self.events[-1]['reason']='death_respawn'
             self.stats['dead']=False
@@ -167,11 +171,15 @@ class LiveSession(Session):
             if drop['uid'] and drop['amount']:self._upsert('items','uid',dict(drop))
             self.dirty=True
         elif (f,a)==(14,7):
-            self._upsert('items','uid',dict(uid=r.num(2),id=r.num(2),x=r.num(),y=r.num(),amount=r.num(3)))
+            item_id=r.num(2);uid=r.num(2);amount=r.num(3)
+            self._upsert('items','uid',dict(uid=uid,id=item_id,amount=amount,x=r.num(),y=r.num()))
         elif (f,a)==(14,4):
             uid=r.num(2);self.state['items']=[i for i in self.state['items'] if i['uid']!=uid];self.dirty=True
         elif (f,a)==(14,27):
-            uid=r.num(2);self.state['items']=[i for i in self.state['items'] if i['uid']!=uid];self.dirty=True
+            uid=r.num(2);r.num(2);taken=r.num(3)
+            for item in self.state['items']:
+                if item['uid']==uid:item['amount']=max(0,item['amount']-taken)
+            self.state['items']=[i for i in self.state['items'] if i['amount']>0];self.dirty=True
         elif (f,a)==(7,8):
             pid=r.num(2);direction=r.num()
             row=next((c for c in self.state['characters'] if c['player_id']==pid),None)
@@ -181,6 +189,7 @@ class LiveSession(Session):
 
     def snapshot(self):
         data=super().snapshot()
+        data['shop']=self.shop
         data.update(position_update=self.position_update,position_seq=self.position_seq,correction=self.correction)
         self.dirty=False;self.position_update=False;self.correction=False
         self.sent_state=deepcopy(data)

@@ -21,7 +21,9 @@ The offline exploration mode remains available alongside hosted online play. It 
 
 The Android build defaults to **`wss://eo.kcpd.top/ws`**. Create an account and character to play on the hosted world without ADB or a running development computer. The server runs on AWS behind Caddy HTTPS and proxied Cloudflare DNS. Accounts and progress on this hosted world are separate from the local development server and offline journey. See [hosting and maintenance](deploy/README.md).
 
-The world pack now includes all **282 maps**, 3,945 original warp records and their graphics. Walking into a valid exit changes the rendered map only after the real server completes its warp handshake. Doors open through native EO requests; keys and level restrictions remain server-controlled. Eight malformed legacy warp destinations on map 47 are blocked rather than sending a player outside a map. NPC shops, quests, chat, trading, spells, full character customization and additional equipment appearances remain future work.
+The world pack now includes all **282 maps**, 3,945 original warp records and their graphics. Walking into a valid exit changes the rendered map only after the real server completes its warp handshake. Doors open through native EO requests; keys and level restrictions remain server-controlled. Eight malformed legacy warp destinations on map 47 are blocked rather than sending a player outside a map. Quests, chat, trading, spells, bank/guild services, full character customization and additional equipment appearances remain future work.
+
+Version 0.9 adds native **Buy / Sell / Craft** shops using the supplied original per-NPC prices and recipes. Tap a shopkeeper’s sprite to approach and talk; the shop shows your gold, held quantities, prices and recipe ingredients. Ground-item packets now use the correct native field order, tapped loot waits for movement confirmation, and pickup uses native ownership, distance and weight checks. Bag stack quantities appear at the top right without shifting the item icon. **Person → Stats** uses original graphic 2:34 with the original attribute/combat/character layout, including Gold, EXP and EXP to next level; item details include bonuses, requirements and bag quantity. Other NPC services show an explicit unavailable message.
 
 Version 0.8 adds solid NPC collision, held attacks about every 0.52 seconds online, visible HP/TP and incoming hits, and a clear death/respawn sequence. Open **Person → Stats** for the six original attributes, server-calculated combat totals, experience and earned stat points. Select equipment and choose **Details** to inspect its original bonuses and requirements. Stat spending, combat and equipment totals are authoritative server operations.
 
@@ -42,6 +44,10 @@ The launcher reuses running local services or starts them, and adds `adb reverse
 The adapter translates newline-delimited JSON into genuine encrypted EO v28 sessions; each client owns an independent native session. Movement animates immediately, with native Walk replies confirming inputs in the background. Nearby players, NPCs and ground items arrive as compact streamed changes; full refreshes are reserved for correction and idle recovery. This development route needs the computer, server, adapter and ADB connection to remain available. The optional WebSocket bridge also permits `ws://` and `wss://` addresses. Browser exports require WebSocket transport; raw TCP is unavailable in a browser.
 
 Server NPCs and drops replace the offline training slime online. Combat and equipment use server requests and acknowledgements.
+
+## Local workspace
+
+The current checkout is `/home/kc/workspace/Endless online`. All supplied archives and extracted resources are under `reference/`; earlier downloaded clients, sources, toolchains, Android test state and the native runtime are under `work/`. Both directories are ignored by Git. Compatibility symlinks at the previous task paths preserve existing artifact links and cached build paths.
 
 ## Open and build
 
@@ -93,7 +99,7 @@ Set `EO_DATA_DIR` for real-data importer tests if the source archives are elsewh
 
 ## Next milestone
 
-Add NPC interaction, shops, quests, chat and trading, and audit the remaining legacy world-data errors. Add character customization and additional layered appearance combinations, reconnect/resume behavior, production account protection and capacity/abuse monitoring. The current online slice is an implementation foundation, not a complete MMO.
+Add the remaining NPC services, quests, chat and trading, and audit the remaining legacy world-data errors. Add character customization and additional layered appearance combinations, reconnect/resume behavior, production account protection and capacity/abuse monitoring. The current online slice is an implementation foundation, not a complete MMO.
 
 ## Content rights
 

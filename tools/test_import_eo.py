@@ -14,7 +14,7 @@ import wave
 from PIL import Image
 from import_eo import decode_number, decode_string, parse_emf, PEBitmaps, read_member, safe_spawn, canonical_wav, parse_eif
 
-ROOT=Path(__file__).resolve().parents[3]
+ROOT=Path(__file__).resolve().parents[1]
 DOWNLOADS=Path(os.environ.get('EO_DATA_DIR',str(ROOT/'work/eoserv-crawl/downloads')))
 CONTENT=Path(__file__).resolve().parents[1]/'client/content'
 

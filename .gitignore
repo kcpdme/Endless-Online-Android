@@ -34,3 +34,7 @@ server/.build/
 *.rar
 *.7z
 *.tpz
+
+# Local downloaded sources, server runtime, private fixtures and signing/build cache.
+/work/
+/artifacts/

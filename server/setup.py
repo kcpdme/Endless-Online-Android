@@ -34,6 +34,7 @@ def main():
     p.add_argument('--state-dir', type=pathlib.Path, default=ROOT / '.local')
     p.add_argument('--sample-zip', type=pathlib.Path, help='Use already downloaded archive; SHA256 still verified')
     p.add_argument('--cmake', default=os.environ.get('CMAKE', shutil.which('cmake')))
+    p.add_argument('--economy-data',type=pathlib.Path,help='Supplied original data directory containing shops.ini and drops.ini')
     p.add_argument('--jobs', type=int, default=2)
     a = p.parse_args()
     if not a.cmake:
@@ -113,6 +114,9 @@ WorldDumpFile = ./world.bak.json
     local.chmod(0o600)
     from configure_gameplay import configure
     configure(runtime)
+    if a.economy_data:
+        from import_economy import install
+        install(runtime,a.economy_data)
     # Avoid loading SQL Server defaults at all (SQLite-only build).
     (runtime / 'config/database.ini').write_text('INCLUDE = ./config/database/sqlite.ini\nInstallSQL = ./install.sql\nAutoCreateDatabase = no\nDBPassFile =\nDBAuthType = sql\n')
     shutil.copy2(build / 'etheos', runtime / 'etheos')

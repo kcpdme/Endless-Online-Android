@@ -1,5 +1,38 @@
 # Validation scope
 
+Version 0.9 restores the supplied original Version-1 per-NPC shop catalogue
+(48 trade/craft records) and 152 NPC drop-table entries. The public runtime was
+backed up before the change; existing accounts, inventory and PasswordSalt were
+preserved. Actual hosted native tests passed Shop Bob grocery Buy/Sell, Cyndi
+Craft, quantities, insufficient/oversized transaction guards, protected pickup,
+observer add/remove packets and persistence after relogin. A hosted kill test
+collected one actual Rat Tail (item 249) after 17 native kills using unchanged
+random drop rates; only the fresh dev fixture's attributes were staged.
+
+The actual Godot scene passed the same shop flow over public WSS, including
+sprite targeting, approach to the keeper, Buy/Sell/Craft acknowledgements,
+Android Back, Gold corner badges, original stats-panel values and Dagger EIF
+bonuses/stack quantity. Local source checks passed 22 parser/catalog tests,
+world/quantity/layout and gameplay smoke checks, movement/collision/combat/stats
+regressions and native economy/kill-loot integration. Public WSS login, movement,
+equipment and offline-save isolation also passed. APK version 0.9.0 is signed,
+16-KiB ZIP-aligned and installed on the Galaxy S23 Ultra with its offline save
+preserved byte for byte. Generated assets, downloaded archives, private test
+credentials and runtime databases remain ignored by Git.
+
+Reproduce native economy tests against an already-running local runtime with:
+
+```sh
+python3 server/test_economy.py --state-dir work/server-build
+python3 server/test_kill_loot.py --state-dir work/server-build
+```
+
+`client/tests/economy_live.gd` additionally requires a fresh isolated dev fixture
+in map 193 with `1,1000;258,4;` in inventory and the three
+`ASTER_VALE_TEST_HOST`, `ASTER_VALE_TEST_USERNAME`, `ASTER_VALE_TEST_PASSWORD`
+environment variables. Use temporary XDG user-data/config directories. Never
+stage or reuse a human player's character for these tests.
+
 Version 0.8 adds real NPC collision, nonblocking 520 ms attacks, health/TP bars,
 hit/death feedback, valid Aeven respawn, character attributes/stat allocation,
 and original item bonuses/requirements. `server/test_combat.py` verifies real
@@ -102,9 +135,6 @@ Godot scene passed a public WSS Aeven/map4 round trip with rendered geometry and
 server coordinates agreeing. Native Aeven Store door entry/return also passed.
 The inventory/world smoke verifies zero-value Gold, three stacked Daggers,
 wearing/removing one, quantity persistence and wide-screen HUD anchors. Eight
-malformed legacy map47 destinations are guarded. NPC shops,
-quests, chat, trading, spells, additional appearance combinations and production
-hosting remain outside this milestone. Nearby entity frames currently use idle
-sprites between polled positions. Server quest/chest content gaps remain recorded
+malformed legacy map47 destinations are guarded. Native shops and hosted WSS are implemented in the later milestones above. Quests, bank/guild services, chat, trading, spells and additional appearance combinations remain unfinished. Nearby entities use streamed positions with interpolation and movement animation. Server quest/chest content gaps remain recorded
 in `server/VALIDATION.md`. Private credentials, device saves, generated assets,
 compiled APKs and screenshots are excluded from the public source repository.

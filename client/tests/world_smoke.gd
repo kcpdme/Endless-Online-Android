@@ -12,7 +12,7 @@ func _run() -> void:
 	game._reset_progress()
 	game._begin_play()
 	game._toggle_inventory()
-	assert(game.bag_slots[0].icon != null and game.bag_slots[0].text == "0", "Gold remains visible at zero")
+	assert(game.bag_slots[0].icon != null and (game.bag_slots[0].get_node("Quantity") as Label).text == "0", "Gold remains visible at zero")
 	game.inventory.hide()
 	for index: int in range(3):
 		game.loot_visible = true
@@ -20,12 +20,12 @@ func _run() -> void:
 		game._collect_loot(true)
 	assert(game.dagger_count == 3 and game.coins == 15, "Three separate pickups stack three daggers and fifteen coins")
 	game._toggle_inventory()
-	assert(game.bag_slots[0].text == "15" and game.bag_slots[1].text == "3", "Bag displays actual gold and dagger amounts")
+	assert((game.bag_slots[0].get_node("Quantity") as Label).text == "15" and (game.bag_slots[1].get_node("Quantity") as Label).text == "3", "Bag displays actual gold and dagger amounts")
 	game._select_item("weapon")
 	game._toggle_equip()
-	assert(game.equipped and game.bag_slots[1].text == "2", "Worn dagger is separate from the two stored daggers")
+	assert(game.equipped and (game.bag_slots[1].get_node("Quantity") as Label).text == "2", "Worn dagger is separate from the two stored daggers")
 	game._toggle_equip()
-	assert(not game.equipped and game.bag_slots[1].text == "3", "Removing equipment returns one dagger to its stack")
+	assert(not game.equipped and (game.bag_slots[1].get_node("Quantity") as Label).text == "3", "Removing equipment returns one dagger to its stack")
 	game._save_progress()
 	game.dagger_count = 0
 	game._load_save()

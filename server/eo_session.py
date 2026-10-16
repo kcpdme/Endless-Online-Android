@@ -206,6 +206,8 @@ class Session:
             event.update(kind='drop',uid=uid,item_id=item,amount=amount)
         elif (f,a)==(14,27):
             r=Reader(p);uid=r.num(2);item=r.num(2);amount=r.num(3);self.inventory_add(item,amount)
+            if len(r.rest())>=2:
+                self.weight=r.num();self.max_weight=r.num();self.stats.update(weight=self.weight,max_weight=self.max_weight)
             event.update(kind='pickup',uid=uid,item_id=item,amount=amount)
         elif f==30 and a in (4,5):
             r=Reader(p);r.take(14);item=r.num(2)

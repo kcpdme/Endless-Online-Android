@@ -3,6 +3,7 @@ extends Node2D
 
 const OnlineController = preload("res://scripts/online_controller.gd")
 const Joystick = preload("res://scripts/joystick.gd")
+const ShopWindow = preload("res://scripts/shop_window.gd")
 const ClassicPaperdoll = preload("res://scripts/classic_paperdoll.gd")
 const HudIconButton = preload("res://scripts/hud_icon_button.gd")
 const WeaponButton = preload("res://scripts/weapon_button.gd")
@@ -35,6 +36,7 @@ var route: Array[Vector2i] = []
 var hero: Dictionary = {}
 var monster: Dictionary = {}
 var joystick: Joystick
+var shop_ui: ShopWindow
 var paperdoll: ClassicPaperdoll
 var stats_ui: CharacterStats
 var player_hit_flash: float = 0.0
@@ -351,7 +353,7 @@ func _joystick_begin(pointer: Vector2, pointer_id: int) -> void:
 	stick = Vector2.ZERO
 
 func _modal_open() -> bool:
-	return (online != null and online.panel != null and online.panel.visible) or (inventory != null and inventory.visible) or (menu != null and menu.visible) or (character_panel != null and character_panel.visible) or (stats_ui != null and stats_ui.is_open())
+	return (online != null and online.panel != null and online.panel.visible) or (inventory != null and inventory.visible) or (menu != null and menu.visible) or (character_panel != null and character_panel.visible) or (stats_ui != null and stats_ui.is_open()) or (shop_ui != null and shop_ui.panel.visible)
 
 func _begin_attack(pointer_id: int) -> void:
 	if online_mode: route.clear()
@@ -459,7 +461,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		var clicked: Vector2i = _world_tile(get_global_mouse_position())
 		if online_mode:
-			online.map_click(clicked)
+			online.map_click(online.map_target(get_global_mouse_position(), clicked))
 			return
 		if loot_visible and clicked == loot_tile:
 			if _distance(player_tile, loot_tile) <= 1: _collect_loot(true)
@@ -802,6 +804,8 @@ func _build_ui() -> void:
 	toast_label.hide()
 	_build_welcome(root)
 	_build_inventory(root)
+	shop_ui = ShopWindow.new()
+	shop_ui.build(self, root)
 	_build_paperdoll(root)
 	stats_ui = CharacterStats.new()
 	stats_ui.build(self, root)
@@ -903,6 +907,14 @@ func _build_inventory(parent: Node) -> void:
 		slot.expand_icon = true
 		slot.add_theme_constant_override("icon_max_width", 46)
 		slot.tooltip_text = "Empty slot"
+		var badge: Label = _label(slot, "", Vector2(4, 0), 18)
+		badge.name = "Quantity"
+		badge.size = Vector2(104, 28)
+		badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		badge.add_theme_color_override("font_shadow_color", Color.BLACK)
+		badge.add_theme_constant_override("shadow_offset_x", 2)
+		badge.add_theme_constant_override("shadow_offset_y", 2)
 		bag_slots.append(slot)
 	var detail: Panel = _panel(card, Vector2(26, 446), Vector2(788, 100), Color("644424"))
 	detail.add_theme_stylebox_override("panel", _wood_style(Color("644424"), Color("bf9555"), 3))
@@ -1123,12 +1135,13 @@ func _refresh_ui() -> void:
 			var slot: Button = bag_slots[index]
 			slot.icon = null
 			slot.text = ""
+			(slot.get_node("Quantity") as Label).text = ""
 			slot.tooltip_text = "Empty slot"
 			if index < kinds.size() and (index == 0 or _offline_bag_amount(kinds[index]) > 0):
 				var kind: String = kinds[index]
 				slot.icon = _item_texture(kind)
 				slot.tooltip_text = _item_name(kind)
-				if kind == "coins" or kind == "weapon": slot.text = str(_offline_bag_amount(kind))
+				if kind == "coins" or kind == "weapon": (slot.get_node("Quantity") as Label).text = str(_offline_bag_amount(kind))
 				elif slot.icon == null: slot.text = kind.substr(0, 1).to_upper()
 			var chosen: bool = index < kinds.size() and selected_item == kinds[index] and (index == 0 or _offline_bag_amount(kinds[index]) > 0)
 			slot.add_theme_stylebox_override("normal", _wood_style(Color("936a37") if chosen else Color("6b4927"), Color("edce87") if chosen else Color("a97d43")))
@@ -1195,6 +1208,8 @@ func _handle_back() -> void:
 		online._close_panel()
 	elif stats_ui != null and stats_ui.is_open():
 		stats_ui.hide()
+	elif shop_ui != null and shop_ui.panel.visible:
+		shop_ui.close()
 	elif inventory.visible:
 		inventory.hide()
 	elif character_panel.visible:

@@ -244,6 +244,8 @@ def main():
         paper=PEBitmaps(read_member(client,'gfx/gfx002.egf')).image(49,transparent=False)
         (out/'ui').mkdir(exist_ok=True)
         paper.crop((0,290,380,580)).save(out/'ui/paperdoll_male.png')
+        ui=PEBitmaps(read_member(client,'gfx/gfx002.egf'))
+        for graphic in (34,52):ui.image(graphic,transparent=False).save(out/f'ui/classic_{graphic}.png')
         paper.crop((14,302,214,568)).save(out/'ui/paperdoll_silhouette.png')
         manifest['paperdoll']={
             'background':'res://content/ui/paperdoll_male.png',

@@ -1,0 +1,48 @@
+{
+  "version": "0.9.0",
+  "native_hosted_economy": {
+    "database_reset": false,
+    "runtime": "Native pinned etheos EO v28; supplied original economy",
+    "original_shop_prices_buy_sell_and_quantity_guard": true,
+    "ground_item_add_exact_fields_owner_pickup_stack_weight_and_observer_remove": true,
+    "native_drop_protection_enforced": true,
+    "shop_and_pickup_persist_after_relogin": true,
+    "original_cyndi_crafting_consumes_ingredients_and_requires_them": true,
+    "result": "passed"
+  },
+  "native_hosted_kill_loot": {
+    "result": "passed",
+    "actual_native_kill_drop_picked_up": true,
+    "inventory_increased_by_server_drop_amount": true,
+    "item_id": 249,
+    "amount": 1,
+    "kills_until_random_drop": 17,
+    "original_drop_rates_unchanged": true,
+    "fixture_only_attributes_staged": true,
+    "database_reset": false
+  },
+  "public_wss_godot_economy_scene": "passed",
+  "public_wss_login_movement_equipment_save_isolation": "passed",
+  "parser_catalog_tests": 22,
+  "world_quantity_and_wide_screen_smoke": "passed",
+  "movement_combat_stats_regression": "passed",
+  "original_client_references": [
+    "EndlessClient/HUD/Panels/StatsPanel.cs (PostLoginUI 34)",
+    "EndlessClient/Dialogs/ShopDialog.cs (PostLoginUI 52)",
+    "EOLib/Domain/Item/ItemPickupValidator.cs"
+  ],
+  "native_references": [
+    "src/handlers/Shop.cpp",
+    "src/handlers/Item.cpp",
+    "src/map.cpp Map::AddItem / DelSomeItem",
+    "src/npc.cpp NPC::Killed"
+  ],
+  "private_data_published": false,
+  "apk_sha256": "531bf7cb5d299d30a12c60674dcd84f57d352dcb0d44e3bb26611c64ad4344f3",
+  "apk_bytes": 74657991,
+  "android_version": "0.9.0",
+  "android_version_code": 9,
+  "signature_and_16k_zip_alignment": "passed",
+  "galaxy_s23_ultra_installed": true,
+  "offline_save_preserved_byte_for_byte": true
+}

@@ -6,7 +6,7 @@ from pathlib import Path
 import unittest
 from export_catalog import parse_items, parse_npcs, pub_records, npc_frame_offset, NPC_RENDER_METADATA
 
-ROOT=Path(__file__).resolve().parents[3]
+ROOT=Path(__file__).resolve().parents[1]
 RUNTIME=Path(os.environ.get('EO_RUNTIME',str(ROOT/'work/server-build/runtime')))
 CONTENT=Path(__file__).resolve().parents[1]/'client/content'
 

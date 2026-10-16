@@ -35,7 +35,7 @@ The generated config binds **127.0.0.1:8078**, explicitly disables public server
 
 The build disables upstream precompiled headers and force-includes the upstream `src/stdafx.h` umbrella header instead. This retains required standard-library includes with the current compiler; upstream source files are not patched.
 
-Reference content is downloaded into local ignored state. The existence of a download does not establish publication rights for the original game content. No additional original content pack is blended into the authoritative sample data. The separately recovered quest archive is not used by this baseline.
+Reference content is downloaded into local ignored state. The existence of a download does not establish publication rights for the original game content. The optional economy import below stages the supplied original shops and drops separately, with explicit config overrides. The separately recovered quest archive is not used by this baseline.
 
 The sample pack contains plain EOPlus quest source under numeric `.txt` filenames. Setup preserves those original files and generates `.eqf` copies with conservative syntax repairs: explicit action keywords for implemented action functions, three missing closing quotes, and consistent renaming of internal state identifiers containing hyphens. Every change and source/generated hash is logged in `content-report.json`. Of 36 source quests, 35 now pass the real parser. Quest 17 remains isolated in `data/quests_disabled/` because it references a missing state; its intended redirect needs gameplay review. The nonnumeric haunted-house draft stays inactive. Missing numeric IDs are permitted gaps; the server prints 35/56 because it scans through highest ID 56.
 
@@ -54,3 +54,28 @@ python3 server/handshake.py
 ## Persistence
 
 The real upstream SQLite schema is installed by the server on first boot. The initial smoke test checks database tables and integrity. The later real-session integration also verifies account/character creation, equipment changes, NPC combat and persisted position/equipment after disconnect. Recovery from interrupted transactions and production backups remain untested. Database backups and production hosting require a separate deployment design.
+
+## Original shops and NPC drops
+
+After staging the supplied EODelta archive locally, stop the native world, make a
+private SQLite/config backup and run this once against that runtime:
+
+```sh
+python3 server/import_economy.py --runtime work/server-build/runtime --source-data "reference/extracted/trunk-305-EODelta/trunk 305 EODelta/data"
+```
+
+Restart the world and adapter afterwards. Initial `setup.py` also accepts
+`--economy-data /path/to/original/data`. The import preserves the original
+Version-1 NPC IDs, prices, recipes and drop chances in separate
+`data/aster-vale-shops.ini` / `data/aster-vale-drops.ini` files and changes only
+ShopsFile / DropsFile overrides. It never changes account data or PasswordSalt.
+Original content stays local and ignored by Git.
+
+`economy.py` implements Shop_Open (13/13), Buy (13/11), Sell (13/12), Create
+(13/6) and Item_Get (14/27) using pinned etheos builders/handlers. Transactions
+require an opened nearby shop and apply inventory changes only from native
+acknowledgements. Moving or warping invalidates the adapter shop session. The
+native Item_Add payload is item2/uid2/amount3/x1/y1; Walk_Reply's ground-item
+layout is separately uid2/item2/x1/y1/amount3. Partial pickup subtracts only the
+acknowledged amount. Pickup and transactions do not request a full world refresh.
+Bank, guild, quest and other NPC dialogs remain separate future work.
