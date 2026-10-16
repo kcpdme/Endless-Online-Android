@@ -1,5 +1,10 @@
 extends Control
-## Compact, text-free vitals. Each heart/orb represents one fifth of the total.
+## Compact vitals and original next-level experience progress. Each heart/orb represents one fifth of the total.
+var level: int = 0
+var experience: int = 0
+var experience_fraction: float = 0.0
+var level_label: String = "Lv. 0"
+var exp_label: String = "EXP 0%"
 var hp: float = 1.0
 var max_hp: float = 1.0
 var tp: float = 1.0
@@ -7,13 +12,26 @@ var max_tp: float = 1.0
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	size = Vector2(280, 116)
+	size = Vector2(280, 146)
 
 func update_vitals(health: float, health_max: float, mana: float, mana_max: float) -> void:
 	hp = health
 	max_hp = maxf(1.0, health_max)
 	tp = mana
 	max_tp = maxf(1.0, mana_max)
+	queue_redraw()
+
+func update_experience(current_level: int, total: int) -> void:
+	level = maxi(0, current_level)
+	experience = maxi(0, total)
+	var floor_exp: int = int(round(pow(level, 3) * 133.1))
+	var next_exp: int = int(round(pow(level + 1, 3) * 133.1))
+	experience_fraction = clampf(float(experience - floor_exp) / maxi(1, next_exp - floor_exp), 0.0, 1.0)
+	level_label = "Lv. %d" % level
+	exp_label = "EXP %d%%" % int(experience_fraction * 100.0)
+	if level >= 250:
+		experience_fraction = 1.0
+		exp_label = "MAX"
 	queue_redraw()
 
 func _shape(center: Vector2, heart: bool, radius: float) -> PackedVector2Array:
@@ -50,3 +68,14 @@ func _draw() -> void:
 				if not heart: draw_arc(center + Vector2(0, 1), 11.5, 0.15, 1.4, 16, Color(0.15, 0.55, 1.0, 0.7), 2.0, true)
 				else: draw_line(center + Vector2(8, 9), center + Vector2(1, 16), Color(0.55, 0.08, 0.22, 0.45), 2.0, true)
 			draw_polyline(shape, Color("ffc2c3") if heart else Color("a4dcff"), 1.25, true)
+
+	var progress: Rect2 = Rect2(8, 105, 232, 5)
+	draw_rect(progress.grow(1), Color(0.02, 0.04, 0.06, 0.8))
+	draw_rect(progress, Color("283d46"))
+	draw_rect(Rect2(progress.position, Vector2(progress.size.x * experience_fraction, progress.size.y)), Color("e8c475"))
+	var font: Font = ThemeDB.fallback_font
+	draw_string_outline(font, Vector2(8, 131), level_label, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, 3, Color(0.02, 0.03, 0.04, 0.8))
+	draw_string(font, Vector2(8, 131), level_label, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("fff0cf"))
+	var exp_x: float = 240.0 - font.get_string_size(exp_label, HORIZONTAL_ALIGNMENT_LEFT, -1, 13).x
+	draw_string_outline(font, Vector2(exp_x, 131), exp_label, HORIZONTAL_ALIGNMENT_LEFT, -1, 13, 3, Color(0.02, 0.03, 0.04, 0.8))
+	draw_string(font, Vector2(exp_x, 131), exp_label, HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("e8c475"))

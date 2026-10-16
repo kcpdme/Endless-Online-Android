@@ -13,9 +13,10 @@ from eo_session import Session, Reader, EOError, number
 
 from economy import EconomyMixin
 from services import ServicesMixin
+from consumables import ConsumablesMixin
 
 
-class LiveSession(ServicesMixin, EconomyMixin, Session):
+class LiveSession(ConsumablesMixin, ServicesMixin, EconomyMixin, Session):
     def __init__(self,*args):
         self.init_services()
         self.pending_moves=deque();self.position_seq=0;self.last_input_seq=0
@@ -139,6 +140,7 @@ class LiveSession(ServicesMixin, EconomyMixin, Session):
     def apply_event(self,f,a,p):
         super().apply_event(f,a,p)
         self.apply_service_packet(f,a,p)
+        self.apply_item_packet(f,a,p)
         if not self.state:return
         r=Reader(p)
         if (f,a)==(25,3):

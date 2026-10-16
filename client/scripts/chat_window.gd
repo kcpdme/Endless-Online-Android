@@ -119,5 +119,7 @@ func send_message() -> void:
 	if channel.selected == 2 and recipient.is_empty():
 		game._toast("Choose a character name to whisper to.")
 		return
-	game.online.session.request("chat_send", {"channel": ["local", "global", "private"][channel.selected], "message": text, "target": recipient})
+	var request_id: int = game.online.session.request("chat_send", {"channel": ["local", "global", "private"][channel.selected], "message": text, "target": recipient})
+	if request_id < 0: return
 	entry.clear()
+	if channel.selected == 0: close()

@@ -205,3 +205,16 @@ Sanitized evidence: `docs/services-v11-local-report.json`,
 `docs/peer-visuals-v11-public-report.json`. Runtime fixtures and raw screenshots
 remain ignored. `learnings.md` records native packet layouts, codec restrictions,
 trade limits, fixture pitfalls, deployment and device handoff details.
+
+
+## v0.12: EXP, Nearby Send and inventory item use
+
+21 server state regressions and the Godot gameplay/network checks pass. The
+actual Godot bag Use button was exercised against local native EO and the public
+WSS endpoint with a fresh dev character. Tests verify health/mana restoration,
+exact remaining quantities and vitals, full-HP refusal without consumption,
+Beach scroll warp plus rendered destination, same-destination refusal, Recall
+home, Nearby Send closing the modal while retaining the speech bubble, and
+correct level/EXP progress. Original Item.cpp and EndlessClient item handlers
+were used for packet layouts. No existing player data is staged or reset.
+See `consumables-v12-local-report.json` and `consumables-v12-public-report.json`.

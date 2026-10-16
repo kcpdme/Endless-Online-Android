@@ -126,6 +126,7 @@ func refresh() -> void:
 	var tp: int = int(p.get("tp", 0))
 	var max_tp: int = maxi(1, int(p.get("max_tp", 1)))
 	vitals.update_vitals(hp, max_hp, tp, max_tp)
+	vitals.update_experience(int(p.get("level", 0)), int(stats.get("experience", 0)))
 	var classes: Dictionary = game.online.catalog.get("classes", {}) as Dictionary
 	var profession: Dictionary = classes.get(str(int(stats.get("class_id", 0))), {}) as Dictionary
 	summary.text = "%s  ·  Level %d  ·  %s" % [str(p.get("name", "Player")), int(p.get("level", 0)), str(profession.get("name", "–"))]

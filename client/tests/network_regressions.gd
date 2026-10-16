@@ -75,6 +75,32 @@ func _run() -> void:
 	check(not appearance.is_empty() and first.get("path") != second.get("path"), "Observer must render both original weapon attack frames")
 	game.online.peer_attacks[200].until = Time.get_ticks_msec() / 1000.0 - 1.0
 	check(game.online.entity_animation("online_player", peer).state == "idle", "Peer animation must finish rather than freeze in an attack pose")
+	# Original level thresholds, including the fact that EXP is cumulative.
+	game.online.player["level"] = 1
+	game.online.player["stats"] = {"experience": 599}
+	game._refresh_ui()
+	check(is_equal_approx(game.stats_ui.vitals.experience_fraction, 0.5) and game.stats_ui.vitals.level_label == "Lv. 1", "EXP must show halfway between cumulative level thresholds, not a fraction of all lifetime EXP")
+	game.stats_ui.vitals.update_experience(2, 1065)
+	check(is_zero_approx(game.stats_ui.vitals.experience_fraction), "New level must start an empty next-level bar")
+	game.stats_ui.vitals.update_experience(50, 0)
+	check(is_zero_approx(game.stats_ui.vitals.experience_fraction), "Operator-granted level with lower EXP cannot draw a negative bar")
+	game.stats_ui.vitals.update_experience(250, 2079687500)
+	check(game.stats_ui.vitals.exp_label == "MAX", "Level cap must not offer an impossible next level")
+	game.chat_ui.open()
+	game.chat_ui.channel.select(0)
+	game.chat_ui.entry.text = "Nearby regression"
+	game.chat_ui.send_message()
+	check(not game.chat_ui.panel.visible and capture.calls.has("chat_send"), "Sending Nearby chat closes the modal and sends through the real chat operation")
+	game.chat_ui.open()
+	game.chat_ui.channel.select(1)
+	game.chat_ui.entry.text = "Global regression"
+	game.chat_ui.send_message()
+	check(game.chat_ui.panel.visible, "Global chat stays open for an ongoing conversation")
+	game.chat_ui.close()
+	game.online.player["inventory"] = [{"id": 2, "amount": 2}]
+	game.online.player["equipment"] = {}
+	game.online.bag_action("item:2")
+	check(capture.calls.has("item_use"), "Potion bag action must request native item use rather than equipment")
 	game.online_mode = false
 	game.started = false
 	game.queue_free()

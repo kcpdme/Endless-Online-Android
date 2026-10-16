@@ -1,0 +1,11 @@
+{
+  "beach_scroll_warp_and_rendered_destination": true,
+  "full_hp_potion_not_consumed": true,
+  "health_and_mana_hp_tp_stack_updates": true,
+  "level_and_next_level_exp_hud": true,
+  "nearby_send_closes_dialog_and_shows_bubble": true,
+  "real_native_item_use_from_bag": true,
+  "recall_scroll_native_home_warp": true,
+  "result": "passed",
+  "same_destination_scroll_not_consumed": true
+}

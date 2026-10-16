@@ -16,7 +16,7 @@ Godot 4.7.2, typed GDScript and 2D isometric rendering are sufficient. A Unity/3
 rewrite and a larger server have not been needed for the measured regressions.
 
 Baseline before this update: commit `8c9e541`, APK 0.10.0/code 10. The current
-build is 0.11.0/code 11. It adds native bank/lockers, player inspection and
+build is 0.12.0/code 12. v0.11 added native bank/lockers, player inspection and
 trading, local/global/private chat, a dynamic joystick, and the heart/TP HUD,
 as well as placing NPC names near visible heads and fixing observer equipment/
 attack animation updates. Check `git log` and the version in
@@ -79,6 +79,8 @@ world. Each connected client owns its own encrypted native EO connection.
 - `live_session.py`: asynchronous movement/attacks/collection and compact deltas.
 - `eo_stats.py`: exact native stats/combat parsing; `economy.py`: native shops.
 - `services.py`: original Bank, Locker, Paperdoll, Trade and Talk flows.
+- `consumables.py`: native Item_Use and acknowledged quantities, healing, scroll
+  warp completion, EXP rewards and curse removal.
 - `services_window.gd`: storage/trade/inspection UI and separate read-only
   original paperdoll. `chat_window.gd`: channels, whispers and bounded log.
 - `vitals_hud.gd`: five fractional HP hearts and five TP orbs.
@@ -519,3 +521,71 @@ its IP/port can change. Never uninstall to solve a transfer issue. Private
 install logs/save backup/hash evidence are under ignored `work/v11-phone-*`.
 The final APK must match the SHA256 in the final install report, not a prior
 intermediate v0.11 export. Source ZIP is made from the final committed HEAD.
+
+
+## v0.12: level/EXP HUD, Nearby Send and consumables
+
+Current version is 0.12.0/code12. The vitals HUD now has a five-pixel gold EXP bar
+below HP/TP, with the native level and an integer progress percentage underneath.
+EXP is cumulative: level n starts at round(n^3*133.1), so progress is
+(exp - current threshold)/(next threshold - current threshold), clamped0..1.
+Level0 starts at0; the currently configured native level cap250 shows MAX.
+Operator-granted levels with EXP below their threshold show0%, never a negative
+bar. `CharacterStats.refresh` supplies server level/EXP to `VitalsHUD` on every
+accepted player update, including kills and EXP items.
+
+Nearby chat closes and releases keyboard focus as soon as a Send request is
+queued successfully. Global/private chat remain open. The normal native sender
+echo still adds the message to the log and creates the nearby speech bubble.
+
+Inventory action now says Use for native consumable item types and Equip for
+gear. Use requests `item_use` with an owned itemID. Native `Item_Use` is14/10,
+itemID2. `Item_Reply`14/3 begins type1/itemID2/remaining4/weight1/maxweight1,
+followed by type-specific data. Only that acknowledgement changes quantities.
+Supported native types are Heal3, Teleport4, EXPReward6, Beer22, EffectPotion23,
+HairDye24 and CureCurse25. Spell/stat/skill item types have no Item_Use case in
+this pinned world and do not get a false Use action. No DB grants or client-only
+healing are involved.
+
+- Heal reply adds hpGain4/hp2/tp2; update actual HP/TP, bag quantity, weight,
+  vitals and feedback. A pure health/mana potion at its relevant full stat is
+  refused before sending or consuming anything. The Use button re-enables after
+  a refusal. Drinking keeps the bag open.
+- Scrolls follow the native Warp handshake through map download/accept and final
+  Warp_Agree before returning a usable snapshot. The client closes the bag for
+  a scroll and loads the rendered map only from confirmed native transition.
+  Native EMF offset0x2a is the scroll-permission flag; reject forbidden maps.
+  A direct destination already occupied by the character is refused without
+  consuming the scroll. Recall uses the server's home/spawn rules, not hardcoded
+  coordinates. Original source: native handlers/Item.cpp and reference
+  EOLib/Domain/Item/ItemActions.cs, PacketHandlers/Items/ItemReplyHandler.cs.
+- EXP rewards update native totals, optional new level, points and maxima;
+  levelUp0 means retain the existing level, not reset to0.
+- Cure follows native STR/INT/WIS order, removes only cursed equipment, updates
+  maxima/derived stats and obtains the original paperdoll afterwards. Cursed
+  gear is destroyed by the pinned native handler; it does not return to the bag.
+- Hair/effect/beer acknowledgements are decoded. The full original cosmetic
+  animation/drunk behavior and additional hair artwork remain future renderer
+  work; avoid claiming complete visual parity for every cosmetic item.
+
+`services.item_definitions` now also reads the native EIF type, HP/TP and the
+union at offsets32..36 (scroll map/x/y, effect or hair color). Keep native
+metadata lookup separate from item ownership and never trust a client catalog
+as authority for granting consumables. Storage/trade guards also cover use.
+
+Validation:21 server state regressions pass (including exact potion reply,
+full-stat refusal, native EXP levelUp0, trade lock and cure/stat ordering).
+Godot gameplay and network regressions pass. `test_consumables.py` runs the
+actual Godot scene and bag buttons with a fresh dev fixture, both locally and
+through public WSS: HP/mana quantities and vitals, full-health refusal, Beach
+scroll to map13 at12,19, same-destination refusal, Recall home, Nearby dialog
+closure/speech bubble, and correct level2/EXP progress all pass. Rendered HUD,
+bag Use button and Beach destination screenshots were reviewed. Reports are
+`docs/consumables-v12-{local,public}-report.json`; private fixtures stay ignored.
+Deployment adds `consumables.py` and updates services/live_session/gateway, with
+adapter backups and gateway/WebSocket restarts only. The native world, existing
+players and password salt are preserved.
+
+The v0.12 APK was installed and launched on Galaxy S23 Ultra, with identical
+offline save bytes, verified version12/0.12.0, valid signature/16KB alignment
+and no startup script/crash errors. Private evidence is in work/v12-phone-*.

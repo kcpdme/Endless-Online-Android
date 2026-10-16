@@ -28,7 +28,7 @@ def item_definitions():
     for item_id in range(1,count+1):
         name=r.take(r.num()).decode('latin1');f=r.take(58)
         if name.lower()=='eof':break
-        result[item_id]={'special':Reader(f[4:5]).num(),'weight':Reader(f[55:56]).num()}
+        result[item_id]={'special':Reader(f[4:5]).num(),'weight':Reader(f[55:56]).num(), 'type':Reader(f[2:3]).num(), 'hp':Reader(f[5:7]).num(2), 'tp':Reader(f[7:9]).num(2), 'graphic_value':Reader(f[32:35]).num(3), 'scroll_map':Reader(f[32:35]).num(3), 'scroll_x':Reader(f[35:36]).num(), 'scroll_y':Reader(f[36:37]).num()}
     return result
 
 @lru_cache(maxsize=1)

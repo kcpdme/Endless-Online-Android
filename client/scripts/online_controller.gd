@@ -197,6 +197,7 @@ func _on_message(message: Dictionary) -> void:
 		if operation == "shop_open": interaction.clear()
 		if operation == "collect": pickup_pending.clear()
 		if operation in ["equip", "unequip"]: pending_equip.clear()
+		if operation == "item_use": game._refresh_ui()
 		if game.shop_ui != null: game.shop_ui.refresh()
 		if game.services_ui != null: game.services_ui.refresh()
 		if operation in ["walk", "move"]:
@@ -237,7 +238,7 @@ func _on_message(message: Dictionary) -> void:
 				if int((player.get("equipment", {}) as Dictionary).get(str(replacement.slot), 0)) == 0:
 					session.request("equip", {"item_id": int(replacement.item_id), "subloc": int(replacement.subloc)})
 				else: game._toast("The worn item could not be removed. Your replacement remains in the bag.")
-		"world", "refresh", "snapshot", "attack", "pickup", "equip", "spend_stat", "shop_buy", "shop_sell", "shop_craft", "bank_deposit", "bank_withdraw", "bank_upgrade", "locker_deposit", "locker_withdraw", "trade_request", "trade_accept", "trade_decline", "trade_add", "trade_remove", "trade_agree", "trade_cancel", "chat_send":
+		"world", "refresh", "snapshot", "attack", "pickup", "equip", "spend_stat", "shop_buy", "shop_sell", "shop_craft", "bank_deposit", "bank_withdraw", "bank_upgrade", "locker_deposit", "locker_withdraw", "trade_request", "trade_accept", "trade_decline", "trade_add", "trade_remove", "trade_agree", "trade_cancel", "chat_send", "item_use":
 			_apply_snapshot(data)
 		"inspect_player":
 			game.services_ui.open("inspect", data)
@@ -761,6 +762,19 @@ func select_bag_item(index: int) -> void:
 		return
 	game._select_item("item:%d" % int(items[index].get("id", 0)))
 
+func consumable(kind: String) -> bool:
+	return kind.begins_with("item:") and int(item_info(kind).get("type", -1)) in [3, 4, 6, 22, 23, 24, 25]
+
+func bag_action(kind: String) -> void:
+	if not consumable(kind):
+		equipment_request(kind)
+		return
+	if not _action_ready() or not owns_item(kind): return
+	game._cancel_controls()
+	session.request("item_use", {"item_id": item_id(kind)})
+	if int(item_info(kind).get("type", -1)) == 4: game.inventory.hide()
+	game.equip_button.disabled = true
+
 func equipment_request(kind: String) -> void:
 	if not _action_ready() or not pending_equip.is_empty() or not owns_item(kind): return
 	var info: Dictionary = item_info(kind)
@@ -1027,8 +1041,9 @@ func refresh_game_ui() -> void:
 	for attribute: String in ["strength", "intelligence", "wisdom", "agility", "constitution", "charisma"]:
 		if int(info.get(attribute + "_requirement", 0)) > 0: details.append("Requires %s %d" % [attribute, int(info[attribute + "_requirement"])])
 	game.inventory_detail.text = "  ·  ".join(details) if owned else "Select an item to inspect it."
-	game.equip_button.disabled = not owned or worn or int(info.get("type", 0)) not in range(10, 22)
-	game.equip_button.text = "Equip " + str(info.get("name", "item")) if owned and not worn else "Select an unequipped item"
+	var usable: bool = consumable(selected)
+	game.equip_button.disabled = not owned or worn or (not usable and int(info.get("type", 0)) not in range(10, 22)) or not _action_ready()
+	game.equip_button.text = ("Use " if usable else "Equip ") + str(info.get("name", "item")) if owned and not worn else "Select an item from your bag"
 	game.paperdoll.refresh(selected)
 	if game.paperdoll.information_labels.size() >= 2:
 		game.paperdoll.information_labels[0].text = str(player.get("name", "Player"))
@@ -1117,6 +1132,9 @@ func _process_events(events: Array) -> void:
 			pickup_pending.erase(int(event.get("uid", 0)))
 			game._play_sound("pickup")
 			game._toast("Picked up %s ×%d." % [str(item_info("item:%d" % int(event.get("item_id", 0))).get("name", "Item")), int(event.get("amount", 0))])
+		if kind == "item_used":
+			game._toast("Used %s." % str(item_info("item:%d" % int(event.get("item_id", 0))).get("name", "item")))
+			if int(event.get("hp_gain", 0)) > 0: game.damage_numbers.append({"position": game.player_world + Vector2(0, -62), "value": "+%d" % int(event.hp_gain), "time": 0.85})
 		if kind == "chat":
 			game.chat_ui.receive(event)
 			if str(event.get("channel", "")) == "local" and int(event.get("player_id", 0)) > 0:

@@ -1064,7 +1064,7 @@ func _toggle_paperdoll() -> void:
 func _toggle_equip() -> void:
 	if selected_item == "coins": return
 	if online_mode:
-		online.equipment_request(selected_item)
+		online.bag_action(selected_item)
 		return
 	if not _owns_item(selected_item): return
 	match selected_item:

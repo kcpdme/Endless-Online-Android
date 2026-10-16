@@ -98,6 +98,7 @@ class Handler(socketserver.StreamRequestHandler):
         if op=='pickup':return s.pickup(int(r['uid']))
         if op in ('equip','unequip'):
             s._standing();s.equip(int(r['item_id']),op=='unequip',int(r.get('subloc',0)));return s.snapshot()
+        if op=='item_use':return s.use_item(int(r['item_id']))
         if op=='bank_upgrade':return s.bank_upgrade()
         if op=='bank_open':return s.bank_open(int(r['npc_index']))
         if op in ('bank_deposit','bank_withdraw'):return s.bank_change(op=='bank_withdraw',int(r['amount']))
