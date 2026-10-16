@@ -1,6 +1,7 @@
 extends Node2D
 ## First playable local slice; EO networking is deliberately a separate milestone.
 
+const OnlineController = preload("res://scripts/online_controller.gd")
 const Joystick = preload("res://scripts/joystick.gd")
 const ClassicPaperdoll = preload("res://scripts/classic_paperdoll.gd")
 const HudIconButton = preload("res://scripts/hud_icon_button.gd")
@@ -16,6 +17,8 @@ const TEXT: Color = Color("eef1df")
 const MUTED: Color = Color("aabbb2")
 const DIRECTIONS: Array[Vector2i] = [Vector2i(0, 1), Vector2i(1, 0), Vector2i(0, -1), Vector2i(-1, 0)]
 
+var online: OnlineController
+var online_mode: bool = false
 var world: Dictionary = {}
 var manifest: Dictionary = {}
 var graphics: Dictionary = {}
@@ -76,6 +79,7 @@ var damage_numbers: Array[Dictionary] = []
 var ui: CanvasLayer
 var welcome: Control
 var inventory: Control
+var quest_hint: Label
 var quest_label: Label
 var coin_label: Label
 var toast_label: Label
@@ -91,6 +95,8 @@ var started_from_save: bool = false
 var debug_snapshot_time: float = -1.0
 
 func _ready() -> void:
+	# Android Back navigates within the game; desktop close requests retain normal quitting.
+	get_tree().quit_on_go_back = false
 	DisplayServer.window_set_min_size(Vector2i(960, 540))
 	camera = Camera2D.new()
 	camera.zoom = Vector2(1.65, 1.65)
@@ -98,6 +104,9 @@ func _ready() -> void:
 	camera.position_smoothing_speed = 8.0
 	add_child(camera)
 	_load_content()
+	online = OnlineController.new()
+	online.game = self
+	add_child(online)
 	_build_ui()
 	if content_ready:
 		_load_save()
@@ -190,13 +199,13 @@ func _process(delta: float) -> void:
 	if toast_time > 0.0:
 		toast_time -= delta
 		toast_label.visible = toast_time > 0.0
-	if enemy_health <= 0 and not loot_visible:
+	if not online_mode and enemy_health <= 0 and not loot_visible:
 		enemy_respawn -= delta
 		if enemy_respawn <= 0.0:
 			enemy_health = 3
 			_place_enemy()
 	if not _modal_open():
-		if attack_touch_id != -1 and attack_clock <= 0.0 and enemy_health > 0:
+		if attack_touch_id != -1 and attack_clock <= 0.0 and (enemy_health > 0 or online_mode):
 			_attack()
 		if moving:
 			step_progress = minf(1.0, step_progress + delta / step_duration)
@@ -205,7 +214,7 @@ func _process(delta: float) -> void:
 				moving = false
 				_collect_loot()
 				_save_progress()
-		else:
+		elif not online_mode or online.can_issue_walk():
 			var direction: Vector2i = _input_direction()
 			if direction != Vector2i.ZERO:
 				route.clear()
@@ -248,6 +257,9 @@ func _can_step(origin: Vector2i, direction: Vector2i) -> bool:
 	return true
 
 func _step(direction: Vector2i) -> void:
+	if online_mode:
+		online.request_step(direction)
+		return
 	if direction == Vector2i.ZERO: return
 	facing = _direction_name(direction)
 	var target: Vector2i = player_tile + direction
@@ -269,7 +281,7 @@ func _cancel_movement() -> void:
 	waypoint = Vector2i(-1, -1)
 	if moving:
 		# Stop at the exact rendered point. Only the logical/save tile selects the nearest endpoint.
-		if step_progress < 0.5: player_tile = step_origin_tile
+		if step_progress < 0.5 and not online_mode: player_tile = step_origin_tile
 		moving = false
 		step_progress = 0.0
 		if content_ready and started: _save_progress()
@@ -289,10 +301,10 @@ func _joystick_begin(pointer: Vector2, pointer_id: int) -> void:
 	stick = Vector2.ZERO
 
 func _modal_open() -> bool:
-	return (inventory != null and inventory.visible) or (menu != null and menu.visible) or (character_panel != null and character_panel.visible)
+	return (online != null and online.panel != null and online.panel.visible) or (inventory != null and inventory.visible) or (menu != null and menu.visible) or (character_panel != null and character_panel.visible)
 
 func _begin_attack(pointer_id: int) -> void:
-	if enemy_health > 0:
+	if enemy_health > 0 or online_mode:
 		attack_touch_id = pointer_id
 		attack_button.holding = true
 	_attack()
@@ -385,9 +397,7 @@ func _input(event: InputEvent) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_ESCAPE:
-			if inventory.visible: inventory.hide()
-			elif character_panel.visible: character_panel.hide()
-			elif started: menu.visible = not menu.visible
+			_handle_back()
 		if not started: return
 		if event.keycode == KEY_SPACE: _attack()
 		if event.keycode == KEY_I: _toggle_inventory()
@@ -397,6 +407,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		var clicked: Vector2i = _world_tile(get_global_mouse_position())
+		if online_mode:
+			online.map_click(clicked)
+			return
 		if loot_visible and clicked == loot_tile:
 			if _distance(player_tile, loot_tile) <= 1: _collect_loot(true)
 			else: _request_path(loot_tile)
@@ -446,6 +459,14 @@ func _place_enemy() -> void:
 	enemy_tile = player_tile
 
 func _attack() -> void:
+	if online_mode:
+		if online.active and started and not _modal_open() and attack_clock <= 0.0:
+			if not online.request_attack(): return
+			attack_clock = ATTACK_COOLDOWN
+			swing_clock = ATTACK_SWING_DURATION
+			animation_clock = 0.0
+			_play_sound("attack")
+		return
 	if not started or _modal_open():
 		return
 	if enemy_health <= 0:
@@ -474,6 +495,9 @@ func _attack() -> void:
 	_save_progress()
 
 func _collect_loot(force: bool = false) -> void:
+	if online_mode:
+		online.collect_nearby()
+		return
 	if not loot_visible or _distance(player_tile, loot_tile) > (1 if force else 0):
 		return
 	loot_visible = false
@@ -515,8 +539,10 @@ func _draw() -> void:
 		if str(decoration.layer) == "overlay2": continue
 		entities.append({"kind": "decoration", "data": decoration, "sort": depth(decoration.tile) * 100 + _layer_rank(str(decoration.layer))})
 	entities.append({"kind": "player", "sort": depth(_world_tile(player_world)) * 100 + 30})
-	if enemy_health > 0: entities.append({"kind": "enemy", "sort": depth(enemy_tile) * 100 + 70})
-	if loot_visible: entities.append({"kind": "loot", "sort": depth(loot_tile) * 100 + 0})
+	if online_mode:
+		entities.append_array(online.entities())
+	if not online_mode and enemy_health > 0: entities.append({"kind": "enemy", "sort": depth(enemy_tile) * 100 + 70})
+	if not online_mode and loot_visible: entities.append({"kind": "loot", "sort": depth(loot_tile) * 100 + 0})
 	entities.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return int(a.sort) < int(b.sort))
 	for entity: Dictionary in entities:
 		match str(entity.kind):
@@ -524,6 +550,7 @@ func _draw() -> void:
 			"player": _draw_player()
 			"enemy": _draw_enemy()
 			"loot": _draw_loot()
+			"online_player", "online_npc", "online_item": online.draw_entity(entity)
 	for decoration: Dictionary in decorations:
 		if str(decoration.layer) == "overlay2" and visible_rect.has_point(tile_position(decoration.tile)): _draw_decoration(decoration)
 	for number: Dictionary in damage_numbers:
@@ -589,6 +616,9 @@ func _draw_player() -> void:
 		draw_circle(player_world + Vector2(0, -32), 6, GOLD)
 	if swing_clock > 0.0:
 		var aim: Vector2 = (tile_position(enemy_tile) - player_world).normalized()
+		if online_mode:
+			var directions: Dictionary = {"south": Vector2i(0, 1), "west": Vector2i(-1, 0), "north": Vector2i(0, -1), "east": Vector2i(1, 0)}
+			aim = (tile_position(player_tile + (directions.get(facing, Vector2i(0, 1)) as Vector2i)) - tile_position(player_tile)).normalized()
 		draw_arc(player_world + Vector2(0, -15), 25.0, aim.angle() - 0.75, aim.angle() + 0.75, 12, Color(1.0, 0.86, 0.56, swing_clock / ATTACK_SWING_DURATION), 2.0, true)
 
 func _draw_enemy() -> void:
@@ -675,7 +705,7 @@ func _build_ui() -> void:
 	var quest: Panel = _panel(root, Vector2(24, 114), Vector2(325, 127))
 	_label(quest, "WAYFARER’S FIRST STEPS", Vector2(18, 15), 14, GOLD)
 	quest_label = _label(quest, "", Vector2(18, 43), 18)
-	_label(quest, "Practice safely. Your progress saves here.", Vector2(18, 95), 13, MUTED)
+	quest_hint = _label(quest, "Practice safely. Your progress saves here.", Vector2(18, 95), 13, MUTED)
 	coin_label = _label(root, "", Vector2(389, 34), 19, GOLD)
 	var menu_button: Button = _button(root, "☰", Vector2(-80, 24), Vector2(56, 54), func() -> void: menu.visible = not menu.visible)
 	menu_button.set_anchors_preset(Control.PRESET_TOP_RIGHT, true)
@@ -722,6 +752,7 @@ func _build_ui() -> void:
 	_build_inventory(root)
 	_build_paperdoll(root)
 	_build_menu(root)
+	online.build_ui(root)
 
 func _modal(parent: Node, size: Vector2) -> Control:
 	var curtain: ColorRect = ColorRect.new()
@@ -744,21 +775,25 @@ func _build_welcome(parent: Node) -> void:
 	description.add_theme_constant_override("line_spacing", 7)
 	_label(card, "YOUR ADVENTURE BEGINS HERE", Vector2(34, 255), 14, GOLD)
 	_label(card, "Hold the weapon to attack. Drag the joystick to move.\nBag for items; character icon for equipment." if OS.has_feature("mobile") else "WASD / arrows to move. Hold the weapon to attack.\nI for your bag. C for your character.", Vector2(34, 283), 16, TEXT)
-	var play: Button = _button(card, "Enter the vale   →", Vector2(34, 354), Vector2(532, 58), _begin_play, true)
+	var play: Button = _button(card, "Explore offline", Vector2(34, 354), Vector2(260, 58), _begin_play, true)
 	play.name = "PlayButton"
+	_button(card, "Play online", Vector2(306, 354), Vector2(260, 58), online.show_login, true)
 
 func _show_welcome() -> void:
 	welcome.show()
 	var play: Button = welcome.get_child(0).get_node("PlayButton") as Button
-	if started_from_save: play.text = "Continue your journey   →"
+	if started_from_save: play.text = "Continue offline"
 
 func _begin_play() -> void:
 	if not content_ready: return
+	if online_mode: online.leave_for_offline()
+	if online.panel != null: online.panel.hide()
 	started = true
 	welcome.hide()
 	_toast("Follow the slime nearby. Tap adjacent ground, then the weapon button.")
 
 func _item_info(kind: String) -> Dictionary:
+	if online_mode: return online.item_info(kind)
 	var data: Dictionary = manifest.get("starter_equipment", {}) as Dictionary
 	var fallback: Dictionary = {"weapon": {"name": "Wayfarer blade", "icon": str(manifest.get("sample_item_icon", ""))}, "armor": {"name": "Starter armor", "icon": ""}, "boots": {"name": "Starter boots", "icon": ""}}
 	return data.get(kind, fallback.get(kind, {})) as Dictionary
@@ -772,6 +807,7 @@ func _item_texture(kind: String) -> Texture2D:
 	return null
 
 func _is_equipped(kind: String) -> bool:
+	if online_mode: return online.is_equipped(kind)
 	match kind:
 		"weapon": return equipped
 		"armor": return armor_equipped
@@ -779,6 +815,7 @@ func _is_equipped(kind: String) -> bool:
 	return false
 
 func _owns_item(kind: String) -> bool:
+	if online_mode: return online.owns_item(kind)
 	return has_blade if kind == "weapon" else kind == "armor" or kind == "boots"
 
 func _select_item(kind: String) -> void:
@@ -799,6 +836,9 @@ func _build_inventory(parent: Node) -> void:
 		var column: int = index % 6
 		var row: int = index / 6
 		var slot: Button = _button(bag, "", Vector2(16 + column * 126, 17 + row * 76), Vector2(114, 66), func() -> void:
+			if online_mode:
+				online.select_bag_item(index)
+				return
 			var kinds: Array[String] = ["weapon", "armor", "boots"]
 			if index < kinds.size() and _owns_item(kinds[index]) and not _is_equipped(kinds[index]): _select_item(kinds[index])
 		)
@@ -909,6 +949,9 @@ func _toggle_paperdoll() -> void:
 	_refresh_ui()
 
 func _toggle_equip() -> void:
+	if online_mode:
+		online.equipment_request(selected_item)
+		return
 	if not _owns_item(selected_item): return
 	match selected_item:
 		"weapon": equipped = not equipped
@@ -934,6 +977,9 @@ func _build_menu(parent: Node) -> void:
 	menu.hide()
 
 func _confirm_reset() -> void:
+	if online_mode:
+		_toast("Online progress belongs to the server. This control only resets an offline journey.")
+		return
 	var dialog: ConfirmationDialog = ConfirmationDialog.new()
 	dialog.title = "Reset this journey?"
 	dialog.dialog_text = "This removes the saved position, coins, blade, and training progress on this device."
@@ -975,6 +1021,11 @@ func _reset_progress() -> void:
 
 func _refresh_ui() -> void:
 	if quest_label == null: return
+	if online_mode:
+		online.refresh_game_ui()
+		return
+	health_label.text = "Training slime • no player damage"
+	quest_hint.text = "Practice safely. Your progress saves here."
 	if not has_blade:
 		quest_label.text = "1. Defeat the training slime\n2. Collect its glowing drop" if kills == 0 else "1. Slime defeated  ✓\n2. Collect its glowing drop"
 	elif not equipped:
@@ -1030,6 +1081,7 @@ func _toast(value: String) -> void:
 	toast_time = 5.5
 
 func _save_progress() -> void:
+	if online_mode: return
 	var state: Dictionary = {"version": 1, "map_id": int(world.get("id", 5)), "position": [player_tile.x, player_tile.y], "kills": kills, "coins": coins, "has_blade": has_blade, "equipped": equipped, "armor_equipped": armor_equipped, "boots_equipped": boots_equipped}
 	var file: FileAccess = FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if file != null: file.store_string(JSON.stringify(state))
@@ -1062,7 +1114,25 @@ func _show_content_error() -> void:
 	_label(card, "The map or graphic manifest could not be loaded.\nRun the documented content importer, then reopen.\nExpected: content/world.json and manifest.json.", Vector2(30, 120), 19, TEXT)
 	push_error("Aster Vale content unavailable. Run tools/import_content.py.")
 
+func _handle_back() -> void:
+	if not content_ready: return
+	_cancel_controls()
+	owned_touches.clear()
+	if online != null and online.panel != null and online.panel.visible:
+		online._close_panel()
+	elif inventory.visible:
+		inventory.hide()
+	elif character_panel.visible:
+		character_panel.hide()
+	elif menu.visible:
+		menu.hide()
+	elif started:
+		menu.show()
+
 func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_GO_BACK_REQUEST:
+		_handle_back()
+		return
 	if what == NOTIFICATION_APPLICATION_FOCUS_OUT or what == NOTIFICATION_APPLICATION_PAUSED:
 		if content_ready:
 			_cancel_controls()
@@ -1086,6 +1156,7 @@ func _play_sound(sound_id: String) -> void:
 	player.play()
 
 func _active_hero() -> Dictionary:
+	if online_mode: return online.character_graphic(online.player)
 	var characters: Dictionary = manifest.get("characters", {}) as Dictionary
 	var variants: Dictionary = characters.get("hero_variants", {}) as Dictionary
 	var key: String = "a%d_b%d_w%d" % [int(armor_equipped), int(boots_equipped), int(equipped)]

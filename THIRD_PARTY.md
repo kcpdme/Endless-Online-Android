@@ -15,5 +15,7 @@ The game is a development prototype. Imported Endless Online assets are referenc
 - etheos: zlib license, pinned upstream source and license retained by the server bootstrap. https://github.com/ethanmoffat/etheos .
 - EndlessClient: current code MIT. Used as a technical reference for projection, resource formats and character composition. https://github.com/ethanmoffat/EndlessClient .
 - EO protocol: MIT. https://github.com/Cirras/eo-protocol .
+- eolib-dotnet: MIT. Packet definitions and codec behavior used as a technical reference for the local Python adapter. https://github.com/cirras/eolib-dotnet .
+- Supplied EODelta archive: historical EOSERV-derived source with its bundled license retained in the local reference archive. Used for inspection; historical binaries and account databases are not shipped. See `docs/REFERENCE_IMPORT.md` for hashes and scope.
 
 Any reused source must retain its original notices. The root MIT file applies only to newly authored code.

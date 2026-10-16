@@ -110,7 +110,7 @@ class RealDataTests(unittest.TestCase):
         for graphic in manifest['graphics'].values():
             path=CONTENT/graphic['path'].removeprefix('res://content/')
             with Image.open(path) as img:self.assertEqual(img.size,(graphic['width'],graphic['height']))
-        character_sets=[v for k,v in manifest['characters'].items() if k!='hero_variants']+list(manifest['characters'].get('hero_variants',{}).values())
+        character_sets=[v for v in manifest['characters'].values() if 'frames' in v]+list(manifest['characters'].get('hero_variants',{}).values())+list(manifest['characters'].get('npcs',{}).values())
         for character in character_sets:
             for direction in ['south','east','north','west']:
                 self.assertTrue(character['frames'][direction])

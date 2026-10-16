@@ -1,0 +1,94 @@
+extends Node
+## JSON-lines transport to the local adapter. Adapter owns one real encrypted EO session.
+signal transport_connected
+signal message_received(message: Dictionary)
+signal transport_closed(reason: String)
+
+var peer: StreamPeerTCP = StreamPeerTCP.new()
+var receive_buffer: PackedByteArray = PackedByteArray()
+var connecting: bool = false
+var connected: bool = false
+var deadline: float = 0.0
+var serial: int = 0
+var pending: Dictionary = {}
+
+func open(host: String, port: int) -> Error:
+	close()
+	peer = StreamPeerTCP.new()
+	var error: Error = peer.connect_to_host(host, port)
+	if error != OK: return error
+	connecting = true
+	deadline = 0.0
+	return OK
+
+func close() -> void:
+	peer.disconnect_from_host()
+	connecting = false
+	connected = false
+	receive_buffer.clear()
+	pending.clear()
+
+func request(operation: String, fields: Dictionary = {}) -> int:
+	if not connected: return -1
+	serial += 1
+	var message: Dictionary = fields.duplicate(true)
+	message["id"] = serial
+	message["op"] = operation
+	var error: Error = peer.put_data((JSON.stringify(message) + "\n").to_utf8_buffer())
+	if error != OK:
+		_fail("Connection write failed.")
+		return -1
+	pending[serial] = {"op": operation, "age": 0.0}
+	return serial
+
+func _process(delta: float) -> void:
+	if not connecting and not connected: return
+	for raw_id: Variant in pending:
+		var record: Dictionary = pending[raw_id] as Dictionary
+		record.age = float(record.age) + delta
+		if float(record.age) > 20.0:
+			_fail("The game server did not answer in time. Please reconnect.")
+			return
+	peer.poll()
+	var status: int = peer.get_status()
+	if connecting:
+		deadline += delta
+		if status == StreamPeerTCP.STATUS_CONNECTED:
+			connecting = false
+			connected = true
+			transport_connected.emit()
+		elif status == StreamPeerTCP.STATUS_ERROR or deadline > 10.0:
+			_fail("Could not reach the game server. Check its address and connection.")
+			return
+	elif status != StreamPeerTCP.STATUS_CONNECTED:
+		_fail("The game server disconnected.")
+		return
+	var available: int = peer.get_available_bytes()
+	if available <= 0: return
+	var result: Array = peer.get_data(available)
+	if int(result[0]) != OK:
+		_fail("The server connection could not be read.")
+		return
+	receive_buffer.append_array(result[1] as PackedByteArray)
+	if receive_buffer.size() > 4 * 1024 * 1024:
+		_fail("The server sent an oversized response.")
+		return
+	while true:
+		var newline: int = receive_buffer.find(10)
+		if newline < 0: break
+		var line: String = receive_buffer.slice(0, newline).get_string_from_utf8()
+		receive_buffer = receive_buffer.slice(newline + 1)
+		var parsed: Variant = JSON.parse_string(line)
+		if not parsed is Dictionary:
+			_fail("The server response was invalid.")
+			return
+		var message: Dictionary = parsed as Dictionary
+		pending.erase(int(message.get("id", -1)))
+		message_received.emit(message)
+
+func _fail(reason: String) -> void:
+	close()
+	transport_closed.emit(reason)
+
+func is_idle() -> bool:
+	return pending.is_empty()

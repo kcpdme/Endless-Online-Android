@@ -1,32 +1,61 @@
 # Validation scope
 
-The version 0.4 client has been exported with Godot 4.7.2 and installed on an
-Android 15 emulator and a physical Galaxy S23 Ultra running Android 16.
+Version 0.5 uses Godot 4.7.2. The Android APK was signed, checked for
+16-KiB ZIP alignment, installed on an Android 15 emulator and updated on a
+physical Galaxy S23 Ultra running Android 16. The physical device's existing
+offline save was compared byte for byte immediately before and after updating.
+The user resumed offline play. A real EO handshake also passed through the
+physical phone's ADB reverse connection; full phone account entry was left to
+the user while they were playing.
 
-The gameplay smoke exercises real scene code for collision/pathfinding,
-eight-direction joystick input, native touch plus generated mouse ordering,
-simultaneous movement and attack, 0.9-second held attack repetition, release and
-modal/focus cancellation, combat, loot, separate bag/paperdoll equipment flow,
-the original paperdoll OK button, local save/load, and old-save migration.
-
-Run it after importing content:
+## Client checks
 
 ```sh
 python3 scripts/test_client.py --godot /path/to/Godot
+python3 scripts/test_online.py --godot /path/to/Godot
 ```
 
-The wrapper uses temporary user data. Parser tests can run without reference
-archives; real-data checks skip when those archives are absent:
+Both wrappers isolate user data in a temporary directory. The offline smoke
+covers collision/pathfinding, joystick release and multitouch, held attack
+recovery, modal/focus cancellation, Android Back behavior, combat/loot,
+separate bag/paperdoll, equipment, saves, migration and reset.
+
+The online test requires the real running gateway and etheos. It creates a
+throwaway account/character, then checks actual login, Welcome, NPC snapshots,
+server-confirmed movement and weapon equip/unequip. It writes an offline fixture
+through the actual scene, checks byte-for-byte preservation during online play,
+checks restoration after returning offline, and checks fresh authentication
+when returning online. Connection text is hidden over modal panels. Tests use
+real replies, not a simulated network service. Optional environment variables
+`ASTER_VALE_TEST_USERNAME` and `ASTER_VALE_TEST_PASSWORD` reuse a fixture account.
+
+The emulator UI was also used to create an account and character, enter Aeven,
+open the wooden bag, equip all three starter items and inspect the original
+paperdoll. A second independent EO session observed joystick movement from
+40,40 to 41,39 and unchanged coordinates two seconds after release.
+
+## Content and native server checks
 
 ```sh
 python3 -m pip install -r requirements-tools.txt
-EO_DATA_DIR=/path/to/reference-archives python3 tools/test_import_eo.py
+EO_RUNTIME=/path/to/staged/runtime python3 -m unittest discover -s tools -v
+python3 server/test_online.py --report /path/to/work/online-report.json
 ```
 
-All 12 importer tests passed locally against the reference data, including all
-289 reference map files and eight distinct equipment appearances. Android APK
-signature verification and 16-KiB zip alignment checks passed.
+All 19 importer/catalog tests passed against the reference content. Real-data
+checks skip when input archives/runtime data are unavailable. These cover map
+and PUB parsing, real source hashes, eight hero equipment variants, all item
+icons, eleven NPC graphic sets/offsets and five original money piles.
 
-Private phone saves, screenshots, compiled APKs and session reports are not
-published in this repository. Multiplayer is not yet implemented in the client;
-see `server/VALIDATION.md` for the separate server startup/handshake scope.
+Native and JSON-gateway two-session tests both confirmed authoritative movement.
+Real Rat damage/death, owned-item drop/pickup, equip/unequip and SQLite position/
+equipment persistence passed. See `server/online-validation-report.json` and
+`server/ONLINE.md` for the exact scope. Native tests create dev-prefixed accounts;
+they preserve the database and salt.
+
+Only Aeven/map 5 is rendered by the client. Other exits are blocked. NPC shops,
+quests, chat, trading, spells, additional appearance combinations and production
+hosting remain outside this milestone. Nearby entity frames currently use idle
+sprites between polled positions. Server quest/chest content gaps remain recorded
+in `server/VALIDATION.md`. Private credentials, device saves, generated assets,
+compiled APKs and screenshots are excluded from the public source repository.

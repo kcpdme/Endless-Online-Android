@@ -18,3 +18,14 @@ Run those commands from the repository root. The importer writes `world.json`,
 `manifest.json`, graphics, character variants, audio and paperdoll resources here.
 These generated files remain ignored by Git. See `tools/README.md` and
 `THIRD_PARTY.md` for formats and provenance.
+
+For online play, export the runtime catalog after the base import:
+
+```sh
+python3 tools/export_catalog.py \
+  --runtime /path/to/staged/etheos/runtime \
+  --graphics-zip reference/gfx.zip
+```
+
+This adds server item/NPC definitions, all item icons, and the NPC art used in Aeven.
+See `tools/README.md` for the catalog contract and reference archive audit.

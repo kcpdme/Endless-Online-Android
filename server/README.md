@@ -1,6 +1,6 @@
 # Aster Vale local server foundation
 
-This builds the real C++ `etheos` server and stages the maintainer's sample world for local development. The Godot exploration prototype currently runs offline: these scripts establish the server foundation and protocol fixture for a later online milestone.
+This builds the real C++ `etheos` server and stages the maintainer's sample world for local development. The project now also includes a real EO session adapter and local JSON gateway for the Android/Godot online slice. See [ONLINE.md](ONLINE.md) for commands, protocol and actual integration evidence. Offline exploration remains available separately.
 
 ## Build and run
 
@@ -49,8 +49,8 @@ The sample pack contains plain EOPlus quest source under numeric `.txt` filename
 python3 server/handshake.py
 ```
 
-This is a protocol fixture, not an implemented game session. Remaining transport work includes encrypted packet processing, sequence state, account/login/character/welcome flows, server content negotiation, movement/visibility, combat and inventory synchronization, reconnects, and physical-phone testing. Loopback cannot be reached directly from a physical Android device. A deliberate LAN/TLS development setup is a later step; this launcher intentionally remains local.
+`handshake.py` remains a minimal initialization fixture. Full account/login/character/Welcome flows, server snapshots, movement, real NPC combat, item pickup and equipment operations are implemented separately in `eo_session.py` and exposed by `gateway.py`. See [ONLINE.md](ONLINE.md) for the current supported boundary. Loopback access from Android uses an explicit USB `adb reverse` during development.
 
 ## Persistence
 
-The real upstream SQLite schema is installed by the server on first boot. Runtime tests inspect database tables and SQLite integrity; they do not yet test user creation, character progression or recovery from an interrupted transaction. Database backups and production hosting require a separate deployment design.
+The real upstream SQLite schema is installed by the server on first boot. The initial smoke test checks database tables and integrity. The later real-session integration also verifies account/character creation, equipment changes, NPC combat and persisted position/equipment after disconnect. Recovery from interrupted transactions and production backups remain untested. Database backups and production hosting require a separate deployment design.

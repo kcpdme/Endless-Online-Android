@@ -28,3 +28,34 @@ Building alignment follows the base renderer’s per-layer offsets in addition t
 The current twelve tests cover base-253 number boundaries, an independently captured encoded Aeven-name fixture, truncated input, archive traversal/size rejection, all 289 real map files, known Aeven counts, walkable spawn, PE resource offsets, black color-key transparency, every exported map graphic reference, character frame dimensions, repair of the malformed WAV header, actual classic item definitions, and eight pixel-distinct equipment combinations.
 
 Reference implementation: [EndlessClient](https://github.com/ethanmoffat/EndlessClient), especially `EOLib.IO/Services/Serializers/MapFileSerializer.cs`, `MapPropertiesSerializer.cs`, `MapStringEncoderService.cs`, `Rendering/Sprites/CharacterSpriteCalculator.cs`, `NPCSpriteSheet.cs`, character property renderers, map entity renderers, and `Audio/SoundEffectID.cs`. Current EndlessClient source is MIT licensed. The original game artwork, maps, and audio have separate unresolved publication rights. Asset extraction and local development use do not establish redistribution permission.
+
+
+## Runtime catalog for online play
+
+After importing base content, run the catalog exporter against the exact staged server data. It reads PUB files and maps without modifying the running server or database:
+
+```sh
+python3 tools/export_catalog.py \
+  --runtime /path/to/staged/runtime \
+  --graphics-zip reference/gfx.zip
+python3 -m unittest discover -s tools -v
+```
+
+`catalog.json` contains 490 item definitions, 302 NPC definitions, and metadata for 282 maps from the staged etheos runtime. `items` and `npcs` are dictionaries keyed by decimal definition ID strings. Map metadata includes dimensions, names, original spawn records, and source hashes. Only map5 has imported client geometry. All item inventory and ground icons are exported. Eleven actual map5 NPC graphic sets are added under `manifest.characters.npcs`, keyed by graphic ID strings; definition ID resolves through `catalog.npcs[id].graphic`. The eight starter hero variants remain available. NPC frames include the exact direction-dependent position and second-attack offsets from `NPCMetadataProvider.cs` and `NPCRenderer.UpdateDrawAreas`, including the original `23-yOffset` baseline. All eleven selected NPC sets have explicit `render_metadata`; frame offsets are already applied by the generic bottom-center renderer and must not be added again by the caller. Name labels use `-32-name_label_offset` relative to the tile center. `catalog.money_graphics` provides the five original coin piles at amount thresholds0,2,100,10000,100000; money item ground rendering should select the greatest threshold not exceeding the stack amount. Every source PUB hash and graphics archive provenance is recorded; original game content remains ignored local reference material.
+
+Snapshot character appearance graphics are in the actual etheos `B000A0HSW` order: boots at0, armor at4, hat at6, shield at7, weapon at8. Character selection uses five graphics in `BAHSW` order. These are doll graphic IDs, not inventory item IDs. Current hero variants cover male gender1, race0, hairstyle1, haircolor0, armor graphic0/1, boots graphic0/1, and weapon graphic0/4. Other appearances require further art composition. `catalog.appearance_bindings` records these bindings explicitly. The catalog describes definitions; ownership, positions, health, combat, and inventory changes must come from the server.
+
+The combined importer/catalog suite currently has nineteen passing tests. Catalog tests verify exact staged PUB hashes, real equipment definitions, every map5 NPC’s graphic binding, every item icon, malformed PUB rejection, every selected NPC frame offset, independently calculated guard attack/direction fixtures, and all five coin pile images/thresholds. Re-running the base importer resets the manifest; run the catalog exporter afterward to restore online bindings.
+
+`audit_archives.py` performs CRC validation, whole-file graphics comparisons, PE bitmap count/dimension inventories, and actual legacy map/PUB parsing. Example:
+
+```sh
+python3 tools/audit_archives.py \
+  --baseline /path/to/EOzipped028.zip \
+  --gfx reference/gfx.zip \
+  --delta reference/trunk-305-EODelta.zip \
+  --runtime /path/to/staged/runtime \
+  --output reference/reports/archive-audit.json
+```
+
+The supplied graphics archive’s 25 EGF files (15,580 bitmap resources) are byte-for-byte identical to the existing v28 graphics. The EODelta archive contains three small maps, plus classic-format PUB files. Its shared PUB definitions match the runtime baseline; it adds one item and two NPC definitions. It is not a replacement for the current 282-map world. The audit report and provided archives stay under ignored `reference/`; they are not public source artifacts.

@@ -1,0 +1,148 @@
+{
+  "transport": "Native EO v28 to actual running etheos",
+  "database_reset": false,
+  "account_creation_login_character_welcome": true,
+  "initial_map": 5,
+  "server_inventory_equip_unequip": true,
+  "authoritative_movement": {
+    "before": [
+      40,
+      40
+    ],
+    "self_refresh": [
+      41,
+      40
+    ],
+    "second_client_observed": [
+      41,
+      40
+    ]
+  },
+  "combat": {
+    "attempted": true,
+    "damage_confirmed": true,
+    "kill_confirmed": true,
+    "loot_pickup_confirmed": false,
+    "events": [
+      {
+        "family": 26,
+        "action": 3,
+        "bytes": 11,
+        "kind": "npc_damage",
+        "player_id": 1,
+        "npc_index": 14,
+        "damage": 3,
+        "hp_percent": 70
+      },
+      {
+        "family": 26,
+        "action": 3,
+        "bytes": 11,
+        "kind": "npc_damage",
+        "player_id": 1,
+        "npc_index": 14,
+        "damage": 0,
+        "hp_percent": 70
+      },
+      {
+        "family": 26,
+        "action": 3,
+        "bytes": 11,
+        "kind": "npc_damage",
+        "player_id": 1,
+        "npc_index": 14,
+        "damage": 1,
+        "hp_percent": 60
+      },
+      {
+        "family": 26,
+        "action": 3,
+        "bytes": 11,
+        "kind": "npc_damage",
+        "player_id": 1,
+        "npc_index": 14,
+        "damage": 2,
+        "hp_percent": 40
+      },
+      {
+        "family": 26,
+        "action": 3,
+        "bytes": 11,
+        "kind": "npc_damage",
+        "player_id": 1,
+        "npc_index": 14,
+        "damage": 2,
+        "hp_percent": 20
+      },
+      {
+        "family": 26,
+        "action": 3,
+        "bytes": 11,
+        "kind": "npc_damage",
+        "player_id": 1,
+        "npc_index": 14,
+        "damage": 1,
+        "hp_percent": 10
+      },
+      {
+        "family": 26,
+        "action": 16,
+        "bytes": 22,
+        "kind": "npc_killed",
+        "player_id": 1,
+        "npc_index": 14,
+        "damage": 1,
+        "drop": {
+          "uid": 0,
+          "id": 0,
+          "x": 42,
+          "y": 40,
+          "amount": 0
+        }
+      }
+    ]
+  },
+  "sqlite_persistence": {
+    "verified": true,
+    "map_id": 5,
+    "position": [
+      41,
+      40
+    ],
+    "equipped_weapon_persisted": true
+  },
+  "result": "passed",
+  "fixtures": {
+    "account_prefix": "dev",
+    "character_ids": [
+      5,
+      6
+    ]
+  },
+  "ground_item_roundtrip": {
+    "verified": true,
+    "source": "Dropped owned starter boots via real EO Item_Drop; picked up via Item_Get; re-equipped through Paperdoll_Add",
+    "item_id": 80,
+    "uid": 1
+  },
+  "gateway": {
+    "loopback_json_bridge": true,
+    "connect_login_enter_refresh": true,
+    "malformed_array_rejected": true,
+    "oversized_field_rejected": true,
+    "two_sessions_observed_movement": {
+      "before": [
+        41,
+        40
+      ],
+      "after": [
+        42,
+        40
+      ],
+      "observer": [
+        42,
+        40
+      ]
+    }
+  }
+}
