@@ -47,6 +47,14 @@ def parse_items(data):
     return items
 
 
+def parse_spells(data):
+    spells={}
+    for ident,(names,f) in pub_records(data,'ESF',51,names=2).items():
+        n=lambda start,size=1:decode_number(f[start:start+size])
+        spells[str(ident)]=dict(id=ident,name=names[0],shout=names[1],icon_id=n(0,2),graphic=n(2,2),tp=n(4,2),sp=n(6,2),cast_time=n(8),type=n(11),restrict=n(17),target=n(18),min_damage=n(23,2),max_damage=n(25,2),hp=n(34,2))
+    return spells
+
+
 def parse_classes(data):
     return {str(id):{'id':id,'name':names[0],'base':decode_number(f[:1]),'type':decode_number(f[1:2])}
             for id,(names,f) in pub_records(data,'ECF',14).items()}
@@ -119,7 +127,7 @@ def export_npc(graphic,definition_name,image,out):
 def export_catalog(runtime:Path,graphics_zip:Path,out:Path,map_id=5):
     pub=runtime/'data/pub';maps_dir=runtime/'data/maps'
     manifest=json.loads((out/'manifest.json').read_text())
-    files={'items':pub/'dat001.eif','npcs':pub/'dtn001.enf','classes':pub/'dat001.ecf'}
+    files={'items':pub/'dat001.eif','npcs':pub/'dtn001.enf','classes':pub/'dat001.ecf','spells':pub/'dsl001.esf'}
     items=parse_items(files['items'].read_bytes());npcs=parse_npcs(files['npcs'].read_bytes())
     maps={};worlds={}
     (out/'maps').mkdir(exist_ok=True)
@@ -136,7 +144,7 @@ def export_catalog(runtime:Path,graphics_zip:Path,out:Path,map_id=5):
             'sha256':hashlib.sha256(path.read_bytes()).hexdigest(),
             'client_geometry_available':True}
     selected=maps[str(map_id)]
-    catalog={'schema_version':1,'classes':parse_classes(files['classes'].read_bytes()),'items':items,'npcs':npcs,'maps':maps,'selected_map':map_id,
+    catalog={'schema_version':1,'spells':parse_spells(files['spells'].read_bytes()),'classes':parse_classes(files['classes'].read_bytes()),'items':items,'npcs':npcs,'maps':maps,'selected_map':map_id,
       'source':{'kind':'staged etheos runtime data','files':{key:{'path':str(path.relative_to(runtime)),
         'sha256':hashlib.sha256(path.read_bytes()).hexdigest()} for key,path in files.items()},
         'graphics_archive':graphics_zip.name,'graphics_sha256':hashlib.sha256(graphics_zip.read_bytes()).hexdigest(),
@@ -153,6 +161,30 @@ def export_catalog(runtime:Path,graphics_zip:Path,out:Path,map_id=5):
                 if len(cache)>96:cache.popitem(last=False)
             cache.move_to_end(key)
             return cache[key]
+        from spell_metadata import metadata
+        for spell in catalog['spells'].values():
+            gid=spell['icon_id'];img=image(25,gid)
+            name=f'gfx/025_{gid:05}.png';img.save(out/name)
+            spell['icon']='res://content/'+name
+            effect=spell['graphic']
+            if not 1<=effect<=34:continue
+            spell['effect']=metadata(effect);spell['effect']['paths']={}
+            for layer,enabled in enumerate(spell['effect']['layers']):
+                if not enabled:continue
+                gid=1+(effect-1)*3+layer
+                try:img=image(24,gid)
+                except KeyError:
+                    missing.append({'spell':spell['id'],'layer':layer,'graphic':f'24:{gid}'});continue
+                if img.width%spell['effect']['frames']:raise ValueError(f'Effect {effect} has partial frames')
+                name=f'gfx/024_{gid:05}.png';img.save(out/name)
+                spell['effect']['paths'][str(layer)]='res://content/'+name
+        # Recompose starter appearances too, now including the native casting pose.
+        for armor_on in (0,1):
+            for boots_on in (0,1):
+                for weapon_on in (0,1):
+                    key=f'a{armor_on}_b{boots_on}_w{weapon_on}'
+                    manifest['characters']['hero_variants'][key]=export_hero(out,image,armor_on,boots_on,4 if weapon_on else 0,key)
+        manifest['characters']['hero']=manifest['characters']['hero_variants']['a1_b1_w0']
         map_references={}
         for world in worlds.values():
             for layer,entries in world['layers'].items():

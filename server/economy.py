@@ -6,6 +6,7 @@ class EconomyMixin:
     shop = None
 
     def _standing(self):
+        if getattr(self,"casting",None):raise EOError("Wait for your skill to finish")
         if getattr(self,'trade',None):raise EOError('Close the trade before using inventory or storage')
         if not self.state or self.warp or self.stats.get('dead') or self.pending_moves:
             raise EOError('Stop moving before interacting')

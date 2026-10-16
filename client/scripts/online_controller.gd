@@ -197,6 +197,7 @@ func _on_message(message: Dictionary) -> void:
 		if operation == "shop_open": interaction.clear()
 		if operation == "collect": pickup_pending.clear()
 		if operation in ["equip", "unequip"]: pending_equip.clear()
+		if operation == "spell_cast": game.skills_ui.casting.clear()
 		if operation == "item_use": game._refresh_ui()
 		if game.shop_ui != null: game.shop_ui.refresh()
 		if game.services_ui != null: game.services_ui.refresh()
@@ -228,7 +229,7 @@ func _on_message(message: Dictionary) -> void:
 			_enter_world(data)
 		"stream":
 			streaming = bool(data.get("enabled", false))
-		"move", "strike", "collect":
+		"move", "strike", "collect", "spell_cast", "spell_cancel":
 			pass # Receipt only. The subsequent native Walk_Reply confirms acceptance.
 		"unequip":
 			_apply_snapshot(data)
@@ -238,8 +239,14 @@ func _on_message(message: Dictionary) -> void:
 				if int((player.get("equipment", {}) as Dictionary).get(str(replacement.slot), 0)) == 0:
 					session.request("equip", {"item_id": int(replacement.item_id), "subloc": int(replacement.subloc)})
 				else: game._toast("The worn item could not be removed. Your replacement remains in the bag.")
-		"world", "refresh", "snapshot", "attack", "pickup", "equip", "spend_stat", "shop_buy", "shop_sell", "shop_craft", "bank_deposit", "bank_withdraw", "bank_upgrade", "locker_deposit", "locker_withdraw", "trade_request", "trade_accept", "trade_decline", "trade_add", "trade_remove", "trade_agree", "trade_cancel", "chat_send", "item_use":
+		"world", "refresh", "snapshot", "attack", "pickup", "equip", "spend_stat", "shop_buy", "shop_sell", "shop_craft", "bank_deposit", "bank_withdraw", "bank_upgrade", "locker_deposit", "locker_withdraw", "trade_request", "trade_accept", "trade_decline", "trade_add", "trade_remove", "trade_agree", "trade_cancel", "chat_send", "item_use", "skill_learn", "skill_forget", "skill_level":
 			_apply_snapshot(data)
+		"skillmaster_open":
+			_apply_snapshot(data)
+			game._cancel_controls()
+			game.skills_ui.panel.show()
+			game.skills_ui.last_rows = ""
+			game.skills_ui.refresh()
 		"inspect_player":
 			game.services_ui.open("inspect", data)
 		"bank_open", "locker_open":
@@ -386,6 +393,7 @@ func _apply_snapshot(data: Dictionary, entering: bool = false) -> void:
 	game._refresh_ui()
 	game.shop_ui.refresh()
 	if data.has("trade"): trade = data.trade as Dictionary if data.trade is Dictionary else {}
+	game.skills_ui.receive(data)
 	game.services_ui.receive(data)
 	game.services_ui.refresh()
 	server_label.text = "● Connected  ·  %d nearby" % nearby_count()
@@ -507,6 +515,8 @@ func _action_ready() -> bool:
 	return active and not defeated and not recovering and pending_inputs.is_empty() and not transition_pending and session.is_idle()
 
 func request_attack() -> bool:
+	game.skills_ui.armed = 0
+	if not game.skills_ui.casting.is_empty(): return false
 	if not active or defeated or recovering or game.moving or transition_pending or session.has_blocking_requests() or session.pending.size() >= MAX_PREDICTIONS: return false
 	# Aim at the faced adjacent hostile; otherwise select an adjacent attackable NPC.
 	var target_direction: int = _direction(game.facing)
@@ -630,6 +640,7 @@ func entity_animation(kind: String, record: Dictionary) -> Dictionary:
 		state = "attack"
 		phase = 0.36 - (float(attack.until) - now)
 		direction = _facing(attack.direction)
+	if kind == "online_player" and game.skills_ui.is_chanting(int(record.get("player_id", -1))): state = "cast"
 	return {"key": key, "state": state, "phase": phase, "direction": direction}
 
 func npc_name_layout(graphic: Dictionary, direction: String, fighting: bool) -> Dictionary:
@@ -652,6 +663,9 @@ func draw_entity(entity: Dictionary) -> void:
 	var phase: float = float(animation.phase)
 	var half_view: Vector2 = game.get_viewport_rect().size / game.camera.zoom / 2.0 + Vector2(160, 240)
 	if not Rect2(game.camera.position - half_view, half_view * 2.0).has_point(at): return
+	var effect_kind: String = "npc" if str(entity.kind) == "online_npc" else "player"
+	var effect_id: int = int(record.get("index" if effect_kind == "npc" else "player_id", 0))
+	if str(entity.kind) != "online_item": game.skills_ui.draw_effect(effect_kind, effect_id, at, false)
 	if str(entity.kind) == "online_npc":
 		var npc_id: String = str(int(record.get("id", 0)))
 		var definitions: Dictionary = catalog.get("npcs", {}) as Dictionary
@@ -689,6 +703,8 @@ func draw_entity(entity: Dictionary) -> void:
 				if int(record.get("amount", 0)) >= int(threshold.get("minimum_amount", 0)): ground_key = str(threshold.get("ground", ground_key))
 		var texture: Texture2D = _catalog_texture(ground_key)
 		if texture != null: game.draw_texture(texture, at - texture.get_size() / 2.0)
+
+	if str(entity.kind) != "online_item": game.skills_ui.draw_effect(effect_kind, effect_id, at, true)
 
 func draw_chat_bubble(pid: int, at: Vector2) -> void:
 	var bubble: Dictionary = chat_bubbles.get(pid, {}) as Dictionary
@@ -877,6 +893,7 @@ func map_target(point: Vector2, fallback: Vector2i) -> Vector2i:
 
 func map_click(tile: Vector2i) -> void:
 	if not active or defeated or recovering or transition_pending: return
+	if game.skills_ui.target(tile): return
 	interaction.clear()
 	for drop: Dictionary in drops:
 		if Vector2i(int(drop.x), int(drop.y)) == tile:
@@ -898,8 +915,8 @@ func map_click(tile: Vector2i) -> void:
 		if Vector2i(int(npc.x), int(npc.y)) != tile: continue
 		var info: Dictionary = (catalog.get("npcs", {}) as Dictionary).get(str(int(npc.id)), {}) as Dictionary
 		var type: int = int(info.get("type", -1))
-		if type in [6, 9]:
-			interaction = {"kind": "bank" if type == 9 else "shop", "id": int(npc.index)}
+		if type in [6, 9, 14]:
+			interaction = {"kind": "skillmaster" if type == 14 else "bank" if type == 9 else "shop", "id": int(npc.index)}
 			_approach(tile, 2)
 		elif type in [1, 2, 3]:
 			if game._distance(game.player_tile, tile) == 1:
@@ -949,7 +966,7 @@ func _process_interaction() -> void:
 				return
 			if str(interaction.kind) == "drop": _pickup(int(interaction.id))
 			elif str(interaction.kind) == "locker": session.request("locker_open", {"x": int(target.x), "y": int(target.y)})
-			else: session.request("bank_open" if str(interaction.kind) == "bank" else "shop_open", {"npc_index": int(interaction.id)})
+			else: session.request("skillmaster_open" if str(interaction.kind) == "skillmaster" else "bank_open" if str(interaction.kind) == "bank" else "shop_open", {"npc_index": int(interaction.id)})
 		interaction.clear()
 		collect_pending = false
 	elif collect_pending:
@@ -1086,6 +1103,7 @@ func _process_events(events: Array) -> void:
 	for raw: Variant in events:
 		if not raw is Dictionary: continue
 		var event: Dictionary = raw as Dictionary
+		game.skills_ui.event(event)
 		var kind: String = str(event.get("kind", event.get("type", event.get("event", ""))))
 		if kind in ["player_damage", "npc_attack"]:
 			npc_attack_until[int(event.get("npc_index", -1))] = Time.get_ticks_msec() / 1000.0 + 0.36

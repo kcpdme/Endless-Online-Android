@@ -218,3 +218,23 @@ home, Nearby Send closing the modal while retaining the speech bubble, and
 correct level/EXP progress. Original Item.cpp and EndlessClient item handlers
 were used for packet layouts. No existing player data is staged or reset.
 See `consumables-v12-local-report.json` and `consumables-v12-public-report.json`.
+
+
+## Native skills (v0.13)
+
+Run packet regressions with `python3 -m unittest discover -s server -p '*_state.py'`
+and content checks with `python3 tools/test_catalog.py`. With the real local
+world/gateway/WebSocket bridge running and original skill-master data installed:
+
+```sh
+python3 server/test_skills.py --fixtures-out work/skills-fixtures-private.json --report docs/skills-local-report.json
+python3 server/test_skills_ui.py --godot work/toolchain/godot/Godot_v4.7.2-stable_linux.x86_64 --report docs/skills-ui-local-report.json --screenshots work/skills-screenshots
+```
+
+The first creates three disconnected dev fixtures, stages only their stats and
+spells, then checks native timed casts and master transactions with two observing
+sessions. The second uses the actual game scene, native touch dispatch, skill
+book and master UI. Pass --url and --fixture-file for prepared isolated fixtures
+on a hosted server; keep that file ignored/private. Never use operator accounts.
+Sanitized v0.13 local/public and UI reports are in this directory. Original
+art/icons and actual effect frames were visually reviewed with the GL renderer.

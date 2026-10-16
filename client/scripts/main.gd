@@ -92,6 +92,7 @@ var quest_hint: Label
 var quest_label: Label
 var chat_ui: RefCounted
 var chat_button: Button
+var skills_ui: RefCounted
 var services_ui: RefCounted
 var coin_label: Label
 var toast_label: Label
@@ -234,6 +235,7 @@ func _walkable(tile: Vector2i) -> bool:
 	return not blocked.has(tile) and int(ground.get(tile, int(world.get("fill_tile", 0)))) > 0
 
 func _process(delta: float) -> void:
+	if skills_ui != null: skills_ui.tick()
 	time_alive += delta
 	animation_clock += delta
 	attack_clock = maxf(0.0, attack_clock - delta)
@@ -354,7 +356,7 @@ func _joystick_begin(pointer: Vector2, pointer_id: int) -> void:
 	stick = Vector2.ZERO
 
 func _modal_open() -> bool:
-	return (online != null and online.panel != null and online.panel.visible) or (inventory != null and inventory.visible) or (menu != null and menu.visible) or (character_panel != null and character_panel.visible) or (stats_ui != null and stats_ui.is_open()) or (shop_ui != null and shop_ui.panel.visible) or (services_ui != null and services_ui.panel.visible) or (chat_ui != null and chat_ui.panel.visible)
+	return (online != null and online.panel != null and online.panel.visible) or (inventory != null and inventory.visible) or (menu != null and menu.visible) or (character_panel != null and character_panel.visible) or (stats_ui != null and stats_ui.is_open()) or (shop_ui != null and shop_ui.panel.visible) or (services_ui != null and services_ui.panel.visible) or (chat_ui != null and chat_ui.panel.visible) or (skills_ui != null and skills_ui.panel.visible)
 
 func _begin_attack(pointer_id: int) -> void:
 	if online_mode: route.clear()
@@ -382,7 +384,7 @@ func _input(event: InputEvent) -> void:
 	# Own native controls suppress their separately generated mouse events, including
 	# HUD presses that open a modal. A release can never become a second action.
 	if event is InputEventMouseButton and event.device == InputEvent.DEVICE_ID_EMULATION:
-		var native_control: bool = started and not _modal_open() and (attack_button.contains_point(event.position) or bag_button.contains_point(event.position) or chat_button.contains_point(event.position) or character_button.contains_point(event.position) or _joystick_zone().has_point(event.position) or (online_mode and online.loot_button.visible and online.loot_button.get_global_rect().has_point(event.position)))
+		var native_control: bool = started and not _modal_open() and ((skills_ui != null and skills_ui.contains(event.position) >= 0) or attack_button.contains_point(event.position) or bag_button.contains_point(event.position) or chat_button.contains_point(event.position) or character_button.contains_point(event.position) or _joystick_zone().has_point(event.position) or (online_mode and online.loot_button.visible and online.loot_button.get_global_rect().has_point(event.position)))
 		# Godot may synthesize the mouse press before delivering its native touch.
 		if native_control or not owned_touches.is_empty():
 			get_viewport().set_input_as_handled()
@@ -406,6 +408,12 @@ func _input(event: InputEvent) -> void:
 			return
 	if not started or _modal_open(): return
 	if event is InputEventScreenTouch and event.pressed:
+		var skill_slot: int = skills_ui.contains(event.position) if skills_ui != null else -1
+		if skill_slot >= 0:
+			owned_touches[event.index] = true
+			skills_ui.press(skill_slot)
+			get_viewport().set_input_as_handled()
+			return
 		if online_mode and online.loot_button.visible and online.loot_button.get_global_rect().has_point(event.position):
 			owned_touches[event.index] = true
 			online.request_collect()
@@ -620,6 +628,7 @@ func _draw() -> void:
 			"enemy": _draw_enemy()
 			"loot": _draw_loot()
 			"online_player", "online_npc", "online_item": online.draw_entity(entity)
+	if online_mode: skills_ui.draw_orphans()
 	for decoration: Dictionary in decorations:
 		if str(decoration.layer) == "overlay2" and visible_rect.has_point(tile_position(decoration.tile)): _draw_decoration(decoration)
 	for number: Dictionary in damage_numbers:
@@ -678,7 +687,8 @@ func _draw_player() -> void:
 	draw_set_transform(player_world, 0.0, Vector2(1.0, 0.40))
 	draw_circle(Vector2.ZERO, 10.0, Color(0, 0, 0, 0.30))
 	draw_set_transform(Vector2.ZERO)
-	var state: String = "attack" if swing_clock > 0.0 else ("frames" if moving else "idle")
+	if online_mode: skills_ui.draw_effect("player", int(online.player.get("player_id", 0)), player_world, false)
+	var state: String = "cast" if online_mode and skills_ui.is_chanting(int(online.player.get("player_id", 0))) else "attack" if swing_clock > 0.0 else ("frames" if moving else "idle")
 	if not _draw_character_frame(_active_hero(), player_world, facing, state, Color("ff8888") if player_hit_flash > 0.0 else Color.WHITE):
 		# Explicitly identified placeholder if the optional character conversion is unavailable.
 		draw_circle(player_world + Vector2(0, -18), 9, Color("82bfa2"))
@@ -690,6 +700,7 @@ func _draw_player() -> void:
 			aim = (tile_position(player_tile + (directions.get(facing, Vector2i(0, 1)) as Vector2i)) - tile_position(player_tile)).normalized()
 		draw_arc(player_world + Vector2(0, -15), 25.0, aim.angle() - 0.75, aim.angle() + 0.75, 12, Color(1.0, 0.86, 0.56, swing_clock / ATTACK_SWING_DURATION), 2.0, true)
 
+	if online_mode: skills_ui.draw_effect("player", int(online.player.get("player_id", 0)), player_world, true)
 	if online_mode: online.draw_chat_bubble(int(online.player.get("player_id", 0)), player_world)
 
 func _draw_enemy() -> void:
@@ -827,7 +838,7 @@ func _build_ui() -> void:
 	health_label = _label(root, "Training slime • no player damage", Vector2(-348, -220), 14, MUTED)
 	health_label.hide()
 	health_label.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT, true)
-	toast_label = _label(root, "", Vector2(-320, -126), 17, TEXT)
+	toast_label = _label(root, "", Vector2(-320, -200), 17, TEXT)
 	toast_label.set_anchors_preset(Control.PRESET_CENTER_BOTTOM, true)
 	toast_label.size = Vector2(640, 62)
 	toast_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -839,6 +850,8 @@ func _build_ui() -> void:
 	_build_inventory(root)
 	shop_ui = ShopWindow.new()
 	shop_ui.build(self, root)
+	skills_ui = preload("res://scripts/skills_controller.gd").new()
+	skills_ui.build(self, root)
 	services_ui = preload("res://scripts/services_window.gd").new()
 	services_ui.build(self, root)
 	_build_paperdoll(root)
@@ -1245,6 +1258,8 @@ func _handle_back() -> void:
 		online._close_panel()
 	elif stats_ui != null and stats_ui.is_open():
 		stats_ui.hide()
+	elif skills_ui != null and skills_ui.panel.visible:
+		skills_ui.panel.hide()
 	elif chat_ui != null and chat_ui.panel.visible:
 		chat_ui.close()
 	elif services_ui != null and services_ui.panel.visible:

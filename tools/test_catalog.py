@@ -30,6 +30,23 @@ class RuntimeCatalogTests(unittest.TestCase):
         self.assertEqual(len(self.catalog['npcs']),302)
         self.assertEqual(len(self.catalog['maps']),282)
         self.assertEqual(self.manifest['online_content']['catalog_sha256'],hashlib.sha256((CONTENT/'catalog.json').read_bytes()).hexdigest())
+    def test_original_spell_definitions_icons_effect_frames_and_cast_pose(self):
+        spells=self.catalog['spells'];self.assertEqual(len(spells),31)
+        self.assertEqual((spells['1']['name'],spells['1']['tp'],spells['1']['hp']),('Heal Self',1,4))
+        self.assertEqual((spells['4']['cast_time'],spells['4']['min_damage'],spells['4']['max_damage']),(2,1,5))
+        for spell in spells.values():
+            with Image.open(CONTENT/spell['icon'].removeprefix('res://content/')) as icon:self.assertIsNotNone(icon.getbbox())
+            effect=spell['effect']
+            for path in effect['paths'].values():
+                with Image.open(CONTENT/path.removeprefix('res://content/')) as sheet:
+                    self.assertEqual(sheet.width%effect['frames'],0)
+                    self.assertGreater(sheet.width//effect['frames'],0)
+        for hero in list(self.manifest['characters']['hero_variants'].values())+list(self.manifest['characters']['weapon_variants'].values()):
+            self.assertIn(4,hero['source_resources']['gfx/gfx008.egf'])
+            for direction in ('south','north','east','west'):
+                pose=hero['cast'][direction][0]
+                with Image.open(CONTENT/pose['path'].removeprefix('res://content/')) as image:self.assertIsNotNone(image.getbbox())
+
     def test_starter_definitions_match_actual_server_equipment(self):
         items=parse_items((RUNTIME/'data/pub/dat001.eif').read_bytes())
         for item_id,name,doll in [('21','Dagger',4),('80','Blue Boots',1),('143','Soldier Plate',1)]:

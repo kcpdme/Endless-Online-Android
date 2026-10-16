@@ -42,7 +42,13 @@ func _draw() -> void:
 	var ink: Color = Color("20312e")
 	var light: Color = Color("f2e8c7")
 	var gold: Color = Color("e7bd70")
-	if kind == "chat":
+	if kind == "skills":
+		draw_colored_polygon(PackedVector2Array([Vector2(-19, -15), Vector2(-3, -12), Vector2(0, -9), Vector2(3, -12), Vector2(19, -15), Vector2(19, 15), Vector2(3, 17), Vector2(0, 20), Vector2(-3, 17), Vector2(-19, 15)]), light)
+		draw_line(Vector2(0, -9), Vector2(0, 17), ink, 2.0, true)
+		for y: int in [-5, 1, 7]:
+			draw_line(Vector2(-14, y), Vector2(-5, y + 2), gold, 1.8, true)
+			draw_line(Vector2(5, y + 2), Vector2(14, y), gold, 1.8, true)
+	elif kind == "chat":
 		var bubble: PackedVector2Array = PackedVector2Array([Vector2(-17, -13), Vector2(17, -13), Vector2(17, 10), Vector2(-2, 10), Vector2(-12, 18), Vector2(-9, 10), Vector2(-17, 10)])
 		draw_colored_polygon(bubble, light)
 		for x: int in [-9, 0, 9]: draw_circle(Vector2(x, -1), 2.2, ink)

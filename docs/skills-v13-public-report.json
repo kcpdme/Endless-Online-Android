@@ -1,0 +1,12 @@
+{
+  "native_skillmaster_original_prices_learn_train_forget": true,
+  "cast_receipt_roundtrip_ms": 359,
+  "self_heal_hp_tp_and_observer_native_chant_effect": true,
+  "cancel_chant_without_spending_tp": true,
+  "native_spell_damage_kill_exp_and_peer_effect": true,
+  "cast_count_until_kill": 5,
+  "no_per_cast_world_refresh": true,
+  "result": "passed",
+  "transport": "WebSocket -> live adapter -> pinned native etheos",
+  "operator_accounts_used": false
+}

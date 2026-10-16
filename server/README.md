@@ -78,7 +78,7 @@ acknowledgements. Moving or warping invalidates the adapter shop session. The
 native Item_Add payload is item2/uid2/amount3/x1/y1; Walk_Reply's ground-item
 layout is separately uid2/item2/x1/y1/amount3. Partial pickup subtracts only the
 acknowledged amount. Pickup and transactions do not request a full world refresh.
-Bank, guild, quest and other NPC dialogs remain separate future work.
+Gold banking, item lockers, equipment inspection, trading, chat and skills now have separate native flows. Guild, quest and party controls remain future work.
 
 ## Password hash upgrade and recovery
 
@@ -115,3 +115,26 @@ use. Old unpatched world binaries cannot read version-3 accounts.
 `native-auth --self-test` reproduces the legacy truncation and verifies correct,
 incorrect and suffix-changed passwords under version 3. `test_reconnect.py` also
 verifies wrong-password rejection over real native login and WebSocket handoff.
+
+
+## Original skills and masters
+
+The client exposes learned native ESF spells through three touch shortcuts and
+a skill book. Casts prepare and release original Spell packets at the original
+chant cadence without blocking the gateway pump or refreshing the map. Native
+replies update TP/HP, NPC damage, kill drops and EXP, and observers receive the
+original chant, casting pose and effects. Target validation is server-side.
+
+The supplied original `skills.ini` contains skill-master prices and requirements;
+the upstream sample file contains no offers. Install the supplied file with:
+
+```sh
+python3 server/import_skills.py --runtime work/server-build/runtime --source /path/to/original/data/skills.ini
+```
+
+Restart the native world after changing its SkillsFile configuration. Setup
+also imports it when present in --economy-data. The original Version1 offers
+are preserved. Open, learn, forget and skill-point training use native16-family
+requests/acknowledgements; the adapter never grants skills. Group/party casts,
+bard effects and player-targeted offensive spells are not exposed yet.
+See `docs/TESTING.md` for local/public native and Godot UI regressions.

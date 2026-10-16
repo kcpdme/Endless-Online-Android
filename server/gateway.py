@@ -94,6 +94,10 @@ class Handler(socketserver.StreamRequestHandler):
         if op=='shop_open':return s.shop_open(int(r['npc_index']))
         if op in ('shop_buy','shop_sell','shop_craft'):return s.shop_trade(op.removeprefix('shop_'),int(r['item_id']),int(r.get('amount',1)))
         if op=='collect':return s.collect(int(r['uid']))
+        if op=='spell_cast':return s.cast_spell(int(r['spell_id']),str(r['target_kind']),int(r.get('target_id',0)))
+        if op=='spell_cancel':return s.cancel_spell()
+        if op=='skillmaster_open':return s.skillmaster_open(int(r['npc_index']))
+        if op in ('skill_learn','skill_forget','skill_level'):return s.skill_change(op.removeprefix('skill_'),int(r['spell_id']))
         if op=='diagnostics':return dict(s.metrics)
         if op=='pickup':return s.pickup(int(r['uid']))
         if op in ('equip','unequip'):

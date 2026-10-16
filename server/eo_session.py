@@ -248,7 +248,7 @@ class Session:
             from eo_stats import sync_position_stats
             sync_position_stats(self)
             self.stats.update(weight=getattr(self,'weight',0),max_weight=self.stats.get('max_weight',getattr(self,'max_weight',0)))
-            me.update(character_id=self.character_id,inventory=self.inventory,equipment=getattr(self,'equipment',{}),stats=dict(self.stats))
+            me.update(character_id=self.character_id,inventory=self.inventory,spells=getattr(self,'spells',[]),equipment=getattr(self,'equipment',{}),stats=dict(self.stats))
         events=self.events;self.events=[]
         return {'online':True,'player':me,'players':[player(c) for c in self.state['characters']],
                 'npcs':self.state['npcs'],'items':self.state['items'],'events':events,'map_id':self.state['map_id']}

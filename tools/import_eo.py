@@ -357,27 +357,27 @@ def export_hero(out,image,armor_on=1,boots_on=1,weapon_graphic=0,variant="a1_b1_
     """
     # Larger original weapons must not be clipped by the starter dagger canvas.
     canvas_size=192 if weapon_graphic not in (0,4) else 96
-    hero={'name':'Classic adventurer','anchor':[canvas_size//2,canvas_size-8],'frame_width':canvas_size,'frame_height':canvas_size,'frames':{},'idle':{},'attack':{},
+    hero={'name':'Classic adventurer','anchor':[canvas_size//2,canvas_size-8],'frame_width':canvas_size,'frame_height':canvas_size,'frames':{},'idle':{},'attack':{},'cast':{},
           'appearance':{'gender':1,'race':0,'hair_style':1,'hair_color':0,'armor_graphic':armor_on,'boots_graphic':boots_on,'weapon_graphic':weapon_graphic},
           'composition':'Layered source bitmaps precomposed for prototype; replace with runtime equipment layering later.'}
-    hero['source_resources']={'gfx/gfx008.egf':[1,2,3],'gfx/gfx009.egf':[2,4]}
-    if armor_on:hero['source_resources']['gfx/gfx013.egf']=list(range(1,11))+list(range(13,17))
+    hero['source_resources']={'gfx/gfx008.egf':[1,2,3,4],'gfx/gfx009.egf':[2,4]}
+    if armor_on:hero['source_resources']['gfx/gfx013.egf']=list(range(1,17))
     if boots_on:hero['source_resources']['gfx/gfx011.egf']=list(range(1,13))
     if weapon_graphic:
         base=(weapon_graphic-1)*100
-        hero['source_resources']['gfx/gfx017.egf']=[base+i for i in list(range(1,11))+list(range(13,18))]
+        hero['source_resources']['gfx/gfx017.egf']=[base+i for i in list(range(1,18))]
     for direction,back,flip in [('south',0,False),('east',0,True),('north',1,True),('west',1,False)]:
-        for state,count in [('idle',1),('frames',4),('attack',2)]:
+        for state,count in [('idle',1),('frames',4),('attack',2),('cast',1)]:
             frames=[]
             for index in range(count):
-                walking=state=='frames'; attacking=state=='attack'; frame=index+1
-                sheet=image(8,2 if walking else 3 if attacking else 1)
+                walking=state=='frames'; attacking=state=='attack'; casting=state=='cast'; frame=index+1
+                sheet=image(8,2 if walking else 3 if attacking else 4 if casting else 1)
                 columns=16 if walking else 8 if attacking else 4
                 sw=sheet.width//columns; sh=sheet.height//7
                 sx=sheet.width//2+back*(sheet.width//4)+(index*sw if walking or attacking else 0)+(1 if walking and not back else 0)
                 skin=sheet.crop((sx,0,sx+sw,sh))
                 hair=image(9,2+back*2)
-                armor_id=3+index+back*4 if walking else 13+index+back*2 if attacking else 1+back
+                armor_id=3+index+back*4 if walking else 13+index+back*2 if attacking else 11+back if casting else 1+back
                 boots_id=3+index+back*4 if walking else 11+back if attacking and frame==2 else 1+back
                 armor=image(13,armor_id);boots=image(11,boots_id)
                 canvas=Image.new('RGBA',(canvas_size,canvas_size))
@@ -395,11 +395,11 @@ def export_hero(out,image,armor_on=1,boots_on=1,weapon_graphic=0,variant="a1_b1_
                 # The primary weapon sits behind skin except the front half of
                 # a down/right second swing; that pose uses a split resource.
                 split=weapon_graphic and attacking and frame==2 and not back
-                weapon_id=3+index+back*4 if walking else 13+index+back*2 if attacking else 1+back
+                weapon_id=3+index+back*4 if walking else 13+index+back*2 if attacking else 11+back if casting else 1+back
                 if weapon_graphic:draw_weapon(14 if split else weapon_id)
                 skin_x=-math.floor(abs(sw-18)/2)
                 if attacking and frame==1:skin_x+=2 if flip else -2
-                paste(skin,skin_x,-math.floor(abs(sh-58)/2))
+                paste(skin,skin_x,-math.floor(abs(sh-58)/2)-(2 if casting else 0))
                 boots_x=-math.floor(abs(boots.width-18)/2);boots_y=math.floor(58/3)*2-2
                 if walking:boots_y-=1+(1 if frame==2 else 0)
                 elif attacking and frame==2:

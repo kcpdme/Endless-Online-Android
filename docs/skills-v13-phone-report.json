@@ -1,0 +1,13 @@
+{
+  "result": "passed",
+  "version_name": "0.13.0",
+  "version_code": 13,
+  "device": "Samsung Galaxy S23 Ultra",
+  "installed_and_running": true,
+  "startup_script_or_crash_errors": 0,
+  "offline_save_bytes_preserved": true,
+  "apk_signature_verified": true,
+  "apk_16kb_alignment_verified": true,
+  "hosted_healthcheck_passed": true,
+  "public_native_skills_ui_passed": true
+}

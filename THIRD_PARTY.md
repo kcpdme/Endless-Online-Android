@@ -19,3 +19,9 @@ The game is a development prototype. Imported Endless Online assets are referenc
 - Supplied EODelta archive: historical EOSERV-derived source with its bundled license retained in the local reference archive. Used for inspection; historical binaries and account databases are not shipped. See `docs/REFERENCE_IMPORT.md` for hashes and scope.
 
 Any reused source must retain its original notices. The root MIT file applies only to newly authored code.
+
+
+`tools/spell_metadata.py` derives effect defaults from the pinned EndlessClient
+`EndlessClient/Rendering/Metadata/EffectMetadataProvider.cs`; its MIT notice is
+retained in `licenses/EndlessClient-MIT.txt`. Original spell bitmaps and the
+supplied original skill-master configuration remain local reference content.

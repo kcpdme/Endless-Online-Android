@@ -16,7 +16,8 @@ Godot 4.7.2, typed GDScript and 2D isometric rendering are sufficient. A Unity/3
 rewrite and a larger server have not been needed for the measured regressions.
 
 Baseline before this update: commit `8c9e541`, APK 0.10.0/code 10. The current
-build is 0.12.0/code 12. v0.11 added native bank/lockers, player inspection and
+build is 0.13.0/code 13. v0.12 added level/EXP, Nearby Send closure and
+native consumables; v0.13 adds native skills and touch targeting. v0.11 added native bank/lockers, player inspection and
 trading, local/global/private chat, a dynamic joystick, and the heart/TP HUD,
 as well as placing NPC names near visible heads and fixing observer equipment/
 attack animation updates. Check `git log` and the version in
@@ -589,3 +590,103 @@ players and password salt are preserved.
 The v0.12 APK was installed and launched on Galaxy S23 Ultra, with identical
 offline save bytes, verified version12/0.12.0, valid signature/16KB alignment
 and no startup script/crash errors. Private evidence is in work/v12-phone-*.
+
+
+## v0.13: native skills, shortcuts and original effects
+
+Current version is 0.13.0/code13. `server/skills.py` adds original ESF parsing,
+nonblocking chant/release scheduling, skill-master dialogs, learn/forget and
+skill-point training. `client/scripts/skills_controller.gd` owns three circular
+shortcuts, an opaque book button, a wooden skill list/master screen, TP costs,
+target selection, a chant bar and original effects. The native server owns
+learned skills, TP, HP, damage, EXP, loot and learning costs. No client grant or
+fake hit is used. Tap an attack shortcut then a living NPC; Heal Self casts
+immediately. Normal friendly healing supports selecting another player or self.
+Movement cancels an unreleased cast. Weapon attacks clear selection. Skills
+cannot be cast during trade, death, warps or outstanding movement.
+
+Original protocol: Spell12/1 prepares spellID2 + timestamp3; chant lasts
+cast_time*0.48seconds. Native callback is0.47*cast_time plus remaining native
+cooldown. Self release12/30 is targetType1/spellID2/timestamp3. Other release
+12/31 is targetType1/unknown1/unknown2/spellID2/victimID2/timestamp3. TargetType2
+means NPC,1 means player. Timestamp advances48*cast_time ticks; native accepted
+window is (cast_time-1)*47+35 through max(cast_time,1)*50. `poll_spells` releases
+without sleeping or requesting Refresh; entity movement/damage keeps streaming.
+Recovery is600ms. Invalid targetType0 invokes native CancelSpell safely.
+
+NPC Cast44/3 prefixes normal damage with spellID2 and appends casterTP2. Spell
+kills44/16 and levelups44/2 also have prefix2/TP2, before recipient EXP4 and
+optional level/points/maxima11. Kill playerID identifies the loot winner, not
+necessarily the caster; do not blindly apply that TP to an observer. Matching
+own released casts identify own kill TP; another player killing the same NPC
+during our still-unreleased chant must not replace our TP. Self heal12/30 has caster2/spell2/
+displayHP4/percent1 plus ownHP2/TP2/unknown2; targeted heal12/31 starts victim2/
+caster2/direction1/spell2/displayHP4/percent1, optional victimHP2. Native Recover
+42/8 supplies caster HP/TP. Spells are serialized `id,level;` in the DB and
+exposed in player.spells; only native ACKs mutate the learned list.
+
+Skill master NPC type is14, not7 (Inn). Open16/13 sends NPCindex2 and returns
+NPC definitionID2/name break and28byte offers. Stat order in offers is STR/WIS/
+INT/AGI/CON/CHA, despite config comments listing INT/WIS. Learn16/9 uses session4/
+spellID2 and replies spellID2/Gold4; Forget16/4 uses the same request shape and
+replies spellID2. Training16/7 uses TRAIN_SKILL2 aschar1/spellID2;16/2 returns
+remaining points2/spell2/newlevel2. Native maximum skill level is100 in the
+current configuration. These levels retain the pinned world's behavior; do
+not invent extra spell scaling. The native server does not enforce client SP;
+this update uses native TP and casting/recovery rules, not a new SP system.
+
+The supplied `reference/extracted/trunk-305-EODelta/trunk 305 EODelta/data/skills.ini`
+is populated Version1 data: NPC116 Aeven,124 Anundo,144 Padu,162 Bard. The old
+runtime sample skills.ini was empty. `server/import_skills.py` installs the
+original bytes as data/aster-vale-skills.ini and points SkillsFile there. Setup
+with --economy-data also imports skills.ini when supplied. Original prices,
+class/attribute/prerequisite requirements are retained. Masters are indoors on
+maps156,162,220,216, respectively, reached by normal linked maps. NPC spawn
+locations may differ from the EMF center after native spawn placement; approach
+the live NPC coordinates, not the static center.
+
+`tools/export_catalog.py` now exports all31 ESF definitions, GFX025 icons and
+GFX024 effect layers. GFX025 has two horizontal halves (normal/hover); the
+client uses AtlasTexture regions. `tools/spell_metadata.py` derives34 default
+frame/layer/offset/loop records from pinned MIT EndlessClient
+Rendering/Metadata/EffectMetadataProvider.cs. Effects animate at120ms/frame,
+with behind/transparent/front layers, sliding/flicker/position modes. Killed
+NPC effects retain their last coordinates. Player composition now includes
+skin GFX008 resource4 and armor/weapon logical11/12 for casting in all four
+directions. Original assets remain ignored and out of the public repository.
+
+Scope limits: no party management/group casting, bard implementation or PvP
+attack targeting in this update; these show a clear unavailable message. The
+native pinned world itself has no Bard SpellAct effect. Full cosmetic/player
+appearance coverage remains as documented previously. Spell sounds beyond the
+existing game audio are not added yet.
+
+Production was backed up before a brief world/adapter restart to install native
+skill-master config and grant the requested Skylar changes. Skylar now has
+level120, EXP at least229996800, baseAGI90, baseCON30 and test skills Heal Self1,
+Small Fire4, Small Thunder5 (existing learned skills/levels preserved). Added
+level points follow the native3 stat/skill points per gained level. All Gold,
+items, equipment, other attributes, other characters and password salt were
+preserved. Public WSS native Welcome verified level120 and displayedAGI90/CON30.
+Private operator details/evidence remain in ignored work/session-handoff-private.json
+and work/v13-skylar-verified-private.json; never publish login data.
+
+Validation:31 server state regressions and13 original catalog/graphics checks
+pass; gameplay smoke passes. `server/test_skills.py` tests native learning/
+training/forgetting, self-heal HP/TP, another client receiving chant/effects,
+spell cancellation without TP spending and fire kills/EXP without Refresh.
+`server/test_skills_ui.py` drives real Godot touch shortcuts, target selection,
+original effects, skill book sizing and master learning/forgetting. Both pass
+locally and through public WSS; sanitized reports are docs/skills-v13-*-report.json.
+Rendered screenshots were reviewed under work/v13-skills*-screenshots. Tests
+use fresh dev accounts only; operator accounts are never integration fixtures.
+
+
+The v0.13 APK was installed and launched on Galaxy S23 Ultra over wireless ADB,
+verified package13/0.13.0, byte-identical offline save, valid signature and16KB
+alignment, no startup script/crash errors and healthy hosted services. Report:
+`docs/skills-v13-phone-report.json`; raw phone logs/save hashes stay ignored under work/.
+The public Godot test additionally verifies another player's original casting
+pose and heal effect. Download artifacts are the v0.13.0 APK, source ZIP and
+SHA256SUMS under the task outputs directory. Original assets are in the APK
+for the user's local testing, not in the source ZIP or public Git repository.

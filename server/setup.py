@@ -129,6 +129,9 @@ WorldDumpFile = ./world.bak.json
     if a.economy_data:
         from import_economy import install
         install(runtime,a.economy_data)
+        if (a.economy_data/"skills.ini").is_file():
+            from import_skills import install as install_skills
+            install_skills(runtime,a.economy_data)
     # Avoid loading SQL Server defaults at all (SQLite-only build).
     (runtime / 'config/database.ini').write_text('INCLUDE = ./config/database/sqlite.ini\nInstallSQL = ./install.sql\nAutoCreateDatabase = no\nDBPassFile =\nDBAuthType = sql\n')
     shutil.copy2(build / 'etheos', runtime / 'etheos')
