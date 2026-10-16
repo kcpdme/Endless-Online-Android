@@ -45,6 +45,11 @@ def main():
     deps = state / 'deps'; deps.mkdir(exist_ok=True)
     source = state / 'source'; build = state / 'build'; build.mkdir(exist_ok=True)
     checkout('etheos', source)
+    patch = ROOT / 'patches/etheos-password-v3.patch'
+    # A repeated setup must preserve the reviewed patch, but never silently
+    # accept a different upstream source or a partially applied patch.
+    applied = subprocess.run(['git','-C',str(source),'apply','--reverse','--check',str(patch)],capture_output=True).returncode == 0
+    if not applied: run('git','-C',source,'apply',patch)
     (source / 'json').mkdir(exist_ok=True)
     shutil.copy2(download(*JSON, deps / 'json.hpp'), source / 'json/json.hpp')
     checkout('bcrypt', build / 'bcrypt-src')
@@ -60,6 +65,11 @@ def main():
         '-DEOSERV_WANT_MYSQL=OFF', '-DEOSERV_WANT_SQLSERVER=OFF', '-DEOSERV_WANT_SQLITE=ON',
         '-DEOSERV_USE_PRECOMPILED_HEADERS=OFF', f'-DCMAKE_CXX_FLAGS=-include {source / "src/stdafx.h"}', f'-DSQLITE3_INCLUDE_DIR={sqlite_src}', f'-DSQLITE3_LIBRARY={sqlite_lib}')
     run(a.cmake, '--build', build, '--target', 'etheos', '-j', max(1,a.jobs))
+    run(os.environ.get('CXX','c++'), '-std=c++17', '-O2', f'-I{source / "src"}',
+        f'-I{build / "bcrypt-src/include"}', ROOT / 'native_auth_tool.cpp',
+        source / 'src/hash.cpp', source / 'src/sha256.c', build / 'bcrypt-build/libbcrypt.a',
+        '-o', build / 'native-auth')
+    run(build / 'native-auth', '--self-test')
     runtime = state / 'runtime'; runtime.mkdir(exist_ok=True)
     # Only configuration and reference game data are staged, never source git metadata.
     for name in ['config', 'lang', 'data']:
@@ -105,6 +115,8 @@ InstallSQL = ./install.sql
 Maps = {max(int(x.stem) for x in maps)}
 Quests = {max(q['id'] for q in quests)}
 PasswordSalt = {salt}
+PasswordCurrentVersion = 3
+RejectLegacyBcrypt = yes
 ThreadPoolThreads = 2
 LogOut = -
 LogErr = -
@@ -120,7 +132,9 @@ WorldDumpFile = ./world.bak.json
     # Avoid loading SQL Server defaults at all (SQLite-only build).
     (runtime / 'config/database.ini').write_text('INCLUDE = ./config/database/sqlite.ini\nInstallSQL = ./install.sql\nAutoCreateDatabase = no\nDBPassFile =\nDBAuthType = sql\n')
     shutil.copy2(build / 'etheos', runtime / 'etheos')
+    shutil.copy2(build / 'native-auth', runtime / 'native-auth')
     report = {'source_pins':{k:{'url':v[0],'commit':v[1]} for k,v in PINS.items()},
+              'local_source_patches':[{'path':str(patch.relative_to(ROOT.parent)),'sha256':hashlib.sha256(patch.read_bytes()).hexdigest()}],
               'sample':{'url':SAMPLE[0],'sha256':SAMPLE[1]}, 'sqlite':{'url':SQLITE[0],'sha256':SQLITE[1]}, 'nlohmann_json':{'url':JSON[0],'sha256':JSON[1]},
               'numbered_maps':len(maps),'highest_map_id':max(int(x.stem) for x in maps),
               'quest_conversion':'Generated .eqf copies with logged conservative legacy-syntax fixes. Original .txt bytes preserved. Real parser validation recorded separately.',

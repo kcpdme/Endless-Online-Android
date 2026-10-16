@@ -348,14 +348,16 @@ def export_sounds(out,client):
 
 
 def export_hero(out,image,armor_on=1,boots_on=1,weapon_graphic=0,variant="a1_b1_w0"):
-    """Male race0, hair1/color0, selectable armor/boots/dagger; exact EO offsets.
+    """Male race0, hair1/color0, selectable armor/boots/weapon; exact EO offsets.
 
     18x58 parent draw rectangle from CharacterRenderer. Skin source calculations
     and offsets follow CharacterSpriteCalculator, SkinRenderLocationCalculator,
     HairRenderLocationCalculator, ArmorRenderer, BootsRenderer. Compose layers
-    to fixed 96x96 transparent canvases; feet anchor stays (48,88).
+    to transparent canvases with eight pixels below the feet anchor.
     """
-    hero={'name':'Classic adventurer','anchor':[48,88],'frame_width':96,'frame_height':96,'frames':{},'idle':{},'attack':{},
+    # Larger original weapons must not be clipped by the starter dagger canvas.
+    canvas_size=192 if weapon_graphic not in (0,4) else 96
+    hero={'name':'Classic adventurer','anchor':[canvas_size//2,canvas_size-8],'frame_width':canvas_size,'frame_height':canvas_size,'frames':{},'idle':{},'attack':{},
           'appearance':{'gender':1,'race':0,'hair_style':1,'hair_color':0,'armor_graphic':armor_on,'boots_graphic':boots_on,'weapon_graphic':weapon_graphic},
           'composition':'Layered source bitmaps precomposed for prototype; replace with runtime equipment layering later.'}
     hero['source_resources']={'gfx/gfx008.egf':[1,2,3],'gfx/gfx009.egf':[2,4]}
@@ -378,8 +380,8 @@ def export_hero(out,image,armor_on=1,boots_on=1,weapon_graphic=0,variant="a1_b1_
                 armor_id=3+index+back*4 if walking else 13+index+back*2 if attacking else 1+back
                 boots_id=3+index+back*4 if walking else 11+back if attacking and frame==2 else 1+back
                 armor=image(13,armor_id);boots=image(11,boots_id)
-                canvas=Image.new('RGBA',(96,96))
-                parent_x=39;parent_y=30 # 18x58 draw area bottom at anchor y88
+                canvas=Image.new('RGBA',(canvas_size,canvas_size))
+                parent_x=canvas_size//2-9;parent_y=canvas_size-66
                 def paste(img,x,y):
                     if flip:img=ImageOps.mirror(img)
                     canvas.alpha_composite(img,(parent_x+int(x),parent_y+int(y)))
@@ -418,7 +420,7 @@ def export_hero(out,image,armor_on=1,boots_on=1,weapon_graphic=0,variant="a1_b1_
                 if split:draw_weapon(17)
                 name=f'characters/hero_{variant}_{direction}_{state}_{index}.png';canvas.save(out/name)
                 # Canvas extends eight pixels below feet; tell renderer via offset.
-                frames.append(dict(path='res://content/'+name,region=[0,0,96,96],offset=[0,8]))
+                frames.append(dict(path='res://content/'+name,region=[0,0,canvas_size,canvas_size],offset=[0,8]))
             hero[state][direction]=frames[0] if state=='idle' else frames
     return hero
 

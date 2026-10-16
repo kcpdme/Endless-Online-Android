@@ -33,7 +33,7 @@ The generated config binds **127.0.0.1:8078**, explicitly disables public server
 - SQLite 3.46.1: https://www.sqlite.org/2024/sqlite-amalgamation-3460100.zip, SHA256 `77823cb110929c2bcb0f5d48e4833b5c59a8a6e40cdea3936b99e199dbbe5784`. Public domain.
 - Authoritative world maps/PUB/config content: https://etheosstorage.blob.core.windows.net/data/sample-data.zip, SHA256 `fad601ce11a4ed8d991b80b1cf31fcba237d01c566b4dc40cabb86b28861cc4e`.
 
-The build disables upstream precompiled headers and force-includes the upstream `src/stdafx.h` umbrella header instead. This retains required standard-library includes with the current compiler; upstream source files are not patched.
+The build disables upstream precompiled headers and force-includes the upstream `src/stdafx.h` umbrella header instead. This retains required standard-library includes with the current compiler. Setup applies the checked-in `patches/etheos-password-v3.patch` to the pinned source; other native game rules remain upstream.
 
 Reference content is downloaded into local ignored state. The existence of a download does not establish publication rights for the original game content. The optional economy import below stages the supplied original shops and drops separately, with explicit config overrides. The separately recovered quest archive is not used by this baseline.
 
@@ -79,3 +79,39 @@ native Item_Add payload is item2/uid2/amount3/x1/y1; Walk_Reply's ground-item
 layout is separately uid2/item2/x1/y1/amount3. Partial pickup subtracts only the
 acknowledged amount. Pickup and transactions do not request a full world refresh.
 Bank, guild, quest and other NPC dialogs remain separate future work.
+
+## Password hash upgrade and recovery
+
+Earlier setup generated a 64-character private `PasswordSalt`. Upstream version 2
+prepended that salt and the account name to the password before bcrypt. Bcrypt
+reads at most 72 input bytes: a sufficiently long account name could remove the
+entire password from verification. A verified regression reproduced wrong-password
+acceptance on isolated dev accounts. Do not automatically migrate these hashes
+after an apparent successful login: that cannot prove the full old password.
+
+Version 3 computes the 64-character SHA-256 hex encoding of the full existing
+salt/name/password input, then bcrypt at work factor 12 with its own random salt.
+The per-runtime secret and database are preserved. Setup explicitly selects
+`PasswordCurrentVersion = 3` and `RejectLegacyBcrypt = yes`. Hosted deployment
+does the same. Vulnerable version-2 accounts receive recovery code 7 until an
+operator resets their password; their characters, equipment and inventory remain.
+The upstream-compatible patch default allows legacy verification, so upgrading an
+existing runtime must explicitly set the two secure config values above.
+
+Stop the native world and make a private backup before recovery. Run locally as
+the operator with runtime access:
+
+```sh
+python3 server/reset_password.py --runtime /absolute/path/to/runtime --username ACCOUNT
+```
+
+The tool prompts privately, creates an additional SQLite backup, uses the native
+`runtime/native-auth` helper, and changes only that account’s password/version.
+It verifies that all character rows are identical. `--generate-file /private/new-file`
+instead generates a password into a new mode-0600 file; no password belongs in argv,
+logs or source control. Rebuild both the world and helper through `setup.py` before
+use. Old unpatched world binaries cannot read version-3 accounts.
+
+`native-auth --self-test` reproduces the legacy truncation and verifies correct,
+incorrect and suffix-changed passwords under version 3. `test_reconnect.py` also
+verifies wrong-password rejection over real native login and WebSocket handoff.

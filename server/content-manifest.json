@@ -600,5 +600,12 @@
   ],
   "binding": "127.0.0.1:8078",
   "database": "SQLite",
-  "rights": "Reference content only; redistribution/publication permissions unresolved."
+  "rights": "Reference content only; redistribution/publication permissions unresolved.",
+  "local_source_patches": [
+    {
+      "path": "server/patches/etheos-password-v3.patch",
+      "sha256": "6181ced463d59cb73edc4ff718cb222d27642b0ee2b90c0c2367f3fcef176cfe",
+      "purpose": "Versioned full-input password prehash, legacy recovery code; native gameplay rules unchanged"
+    }
+  ]
 }

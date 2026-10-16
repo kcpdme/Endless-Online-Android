@@ -1,0 +1,152 @@
+{
+  "version": "0.10.0",
+  "result": "passed",
+  "parser_catalog_tests": 23,
+  "server_stream_state_regressions": 7,
+  "godot_gameplay_world_prediction_collision_combat_stats_and_touch_regressions": "passed",
+  "delayed_touch_test": {
+    "injected_delay_per_direction_ms": 120,
+    "jitter_per_direction_ms": 80,
+    "client": {
+      "corrections": 0,
+      "moves": 8,
+      "pickups": 1
+    },
+    "first_prediction_ms": [
+      9,
+      7,
+      10,
+      12,
+      15,
+      17,
+      13,
+      13
+    ],
+    "idle_full_refresh_timer_removed": true,
+    "rat_tail_touch_pickup": true,
+    "rat_tail_visible_in_bag_with_quantity": true,
+    "result": "passed",
+    "server": {
+      "collects": 1.0,
+      "corrections": 0.0,
+      "moves": 8.0,
+      "pickups": 1.0,
+      "refreshes": 0.0,
+      "walk_acks": 8.0
+    },
+    "touch_steps": 8
+  },
+  "delayed_native_rat_chase": {
+    "injected_delay_per_direction_ms": 300,
+    "jitter_per_direction_ms": 150,
+    "attacks": 3,
+    "attacks_without_extra_ack_wait": 2,
+    "client": {
+      "corrections": 0,
+      "moves": 8,
+      "pickups": 0
+    },
+    "full_refreshes_during_chase": 0,
+    "native_rat_battle_health_strip": true,
+    "real_rat_chased_and_killed": true,
+    "result": "passed",
+    "server": {
+      "collects": 0.0,
+      "corrections": 0.0,
+      "moves": 8.0,
+      "pickups": 0.0,
+      "refreshes": 1.0,
+      "walk_acks": 8.0
+    }
+  },
+  "public_wss_touch_pickup_inventory": {
+    "client": {
+      "corrections": 0,
+      "moves": 8,
+      "pickups": 1
+    },
+    "first_prediction_ms": [
+      23,
+      23,
+      24,
+      22,
+      16,
+      23,
+      23,
+      24
+    ],
+    "idle_full_refresh_timer_removed": true,
+    "rat_tail_touch_pickup": true,
+    "rat_tail_visible_in_bag_with_quantity": true,
+    "result": "passed",
+    "server": {
+      "collects": 1.0,
+      "corrections": 0.0,
+      "moves": 8.0,
+      "pickups": 1.0,
+      "refreshes": 0.0,
+      "walk_acks": 8.0
+    },
+    "touch_steps": 8
+  },
+  "public_wss_login_handoff_and_wrong_password": {
+    "wrong_password_not_authenticated": true,
+    "result": "passed",
+    "native_code_5_means_already_logged_in": true,
+    "invalid_proof_does_not_disconnect_existing_session": true,
+    "valid_proof_retires_only_its_own_old_connection": true,
+    "proof_rotated_after_login": true,
+    "password_still_verified_by_native_server": true,
+    "reconnect_seconds": 0.758,
+    "credentials_or_tokens_published": false
+  },
+  "native_password_truncation_regression": "legacy reproduces wrong-password acceptance; version 3 rejects it and accepts correct password",
+  "operator_recovery_validation": {
+    "result": "passed",
+    "recovered_player_correct_password_accepted": true,
+    "recovered_player_wrong_password_rejected": true,
+    "recovered_player_character_preserved": true,
+    "legacy_vulnerable_hash_requires_operator_reset": true,
+    "credentials_or_tokens_published": false
+  },
+  "native_and_godot_weapons": {
+    "result": "passed",
+    "fresh_dev_fixture_only": true,
+    "level_50_and_million_gold_persist": true,
+    "original_weapons_equip_unequip_and_inventory_receipts": [
+      19,
+      22,
+      32,
+      37,
+      38,
+      281
+    ],
+    "all_weapons_persist_after_relogin": true,
+    "godot_six_equips_five_one_tap_swaps_original_appearances_bag_conservation": true
+  },
+  "android": {
+    "version_code": 10,
+    "signed_verified": true,
+    "zip_alignment_16_kib": "passed",
+    "physical_phone_install": "passed",
+    "offline_save_bytes_preserved": true,
+    "apk_sha256": "ebc5065e7370a6ad27022a57f9ade4e8596f534ac64fe66b45ef69b5d03caf6a"
+  },
+  "runtime_upgrade": {
+    "private_backup_created": true,
+    "password_salt_preserved": true,
+    "character_inventory_and_equipment_preserved": true,
+    "legacy_vulnerable_bcrypt_disabled": true,
+    "hash_version": 3
+  },
+  "limits": [
+    "Injected latency is controlled test evidence, not a guarantee for every carrier.",
+    "Fresh dev fixtures cover gameplay tests; no human account credentials or recovery files are published.",
+    "Appearance additions cover six selected weapons with starter armor/boots; other appearances still need composition."
+  ],
+  "research": [
+    "https://www.gabrielgambetta.com/client-side-prediction-server-reconciliation.html",
+    "https://www.gabrielgambetta.com/entity-interpolation.html",
+    "https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html"
+  ]
+}

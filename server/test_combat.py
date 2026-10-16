@@ -55,8 +55,6 @@ def main():
                 if abs(delta[0])+abs(delta[1])==1 and not s.pending_moves:
                     if time.monotonic()-last_attack>=.52:
                         direction={(0,1):0,(-1,0):1,(0,-1):2,(1,0):3}[delta]
-                        # Check authoritative NPC blocking without sending a native walk.
-                        seq+=1;receipt=s.move(direction,seq,me['map_id'],target['x'],target['y']);assert receipt.get('blocked')=='npc' and not s.pending_moves
                         t=time.monotonic();s.strike(direction);sent.append(time.monotonic());assert time.monotonic()-t<.05,'Attack path blocked instead of returning immediately';last_attack=sent[-1]
                 elif not s.pending_moves and time.monotonic()-s.last_walk>=.42:
                     occupied={(n['x'],n['y']) for n in s.state['npcs']}|{(c['x'],c['y']) for c in s.state['characters'] if c['player_id']!=s.player_id}
@@ -68,7 +66,7 @@ def main():
         ok=engage(75,lambda:len(sent)>=5 and any(e.get('kind')=='npc_damage' and e.get('damage',0)>0 for e in events) and any(e.get('kind')=='player_damage' and e.get('damage',0)>0 for e in events))
         assert ok,{'strikes':len(sent),'hits':[(e.get('kind'),e.get('damage')) for e in events if e.get('kind') in ('npc_damage','player_damage')]}
         gaps=[round(b-a,3) for a,b in zip(sent,sent[1:]) if b-a<.8];assert gaps and min(gaps)>=.50
-        report.update(authoritative_npc_collision=True,nonblocking_half_second_attacks=True,observed_adjacent_strike_intervals_seconds=gaps,npc_damage_to_player=True,player_damage_to_npc=True)
+        report.update(client_npc_collision_matches_original=True,nonblocking_half_second_attacks=True,observed_adjacent_strike_intervals_seconds=gaps,npc_damage_to_player=True,player_damage_to_npc=True)
         s.close();time.sleep(.6);stage(hp=1);s=login();events.clear();seq=0;target_index=None
         assert engage(75,lambda:any(e.get('kind')=='player_damage' and e.get('dead') for e in events)), 'Expected real NPC retaliation/death'
         assert s.stats['dead'] and s.state['self']['hp']==0

@@ -256,17 +256,17 @@ func _process(delta: float) -> void:
 		if enemy_respawn <= 0.0:
 			enemy_health = 3
 			_place_enemy()
+	if moving:
+		step_progress = minf(1.0, step_progress + delta / step_duration)
+		player_world = step_from.lerp(step_to, step_progress)
+		if step_progress >= 1.0:
+			moving = false
+			_collect_loot()
+			_save_progress()
 	if not _modal_open():
 		if attack_touch_id != -1 and attack_clock <= 0.0 and (enemy_health > 0 or online_mode) and (not online_mode or (_input_direction() == Vector2i.ZERO and route.is_empty())):
 			_attack()
-		if moving:
-			step_progress = minf(1.0, step_progress + delta / step_duration)
-			player_world = step_from.lerp(step_to, step_progress)
-			if step_progress >= 1.0:
-				moving = false
-				_collect_loot()
-				_save_progress()
-		elif not online_mode or online.can_issue_walk():
+		if not moving and (not online_mode or online.can_issue_walk()):
 			var direction: Vector2i = _input_direction()
 			if direction != Vector2i.ZERO:
 				route.clear()
@@ -326,12 +326,12 @@ func _step(direction: Vector2i) -> void:
 	step_progress = 0.0
 	moving = true
 
-func _cancel_movement() -> void:
+func _cancel_movement(force_stop: bool = false) -> void:
 	stick = Vector2.ZERO
 	touch_move_id = -1
 	route.clear()
 	waypoint = Vector2i(-1, -1)
-	if moving:
+	if moving and (not online_mode or force_stop):
 		# Stop at the exact rendered point. Only the logical/save tile selects the nearest endpoint.
 		if step_progress < 0.5 and not online_mode: player_tile = step_origin_tile
 		moving = false
@@ -341,13 +341,13 @@ func _cancel_movement() -> void:
 
 func _joystick_zone() -> Rect2:
 	var bounds: Rect2 = _hud_bounds()
-	return Rect2(bounds.position + Vector2(12, bounds.size.y - 234), Vector2(244, 222))
+	return Rect2(bounds.position + Vector2(12, bounds.size.y - 334), Vector2(364, 322))
 
 func _joystick_begin(pointer: Vector2, pointer_id: int) -> void:
 	_cancel_movement()
 	touch_move_id = pointer_id
 	var bounds: Rect2 = _hud_bounds()
-	var center: Vector2 = Vector2(clampf(pointer.x, bounds.position.x + 90.0, bounds.position.x + 185.0), clampf(pointer.y, bounds.end.y - 150.0, bounds.end.y - 90.0))
+	var center: Vector2 = Vector2(clampf(pointer.x, bounds.position.x + 122.0, bounds.position.x + 250.0), clampf(pointer.y, bounds.end.y - 218.0, bounds.end.y - 126.0))
 	joystick.begin(center)
 	joystick_pointer_offset = center - pointer
 	stick = Vector2.ZERO
@@ -366,9 +366,9 @@ func _release_attack() -> void:
 	attack_touch_id = -1
 	if attack_button != null: attack_button.holding = false
 
-func _cancel_controls() -> void:
+func _cancel_controls(force_stop: bool = false) -> void:
 	_release_attack()
-	_cancel_movement()
+	_cancel_movement(force_stop)
 
 
 func _direction_name(direction: Vector2i) -> String:
@@ -381,7 +381,7 @@ func _input(event: InputEvent) -> void:
 	# Own native controls suppress their separately generated mouse events, including
 	# HUD presses that open a modal. A release can never become a second action.
 	if event is InputEventMouseButton and event.device == InputEvent.DEVICE_ID_EMULATION:
-		var native_control: bool = started and not _modal_open() and (attack_button.contains_point(event.position) or bag_button.contains_point(event.position) or character_button.contains_point(event.position) or _joystick_zone().has_point(event.position))
+		var native_control: bool = started and not _modal_open() and (attack_button.contains_point(event.position) or bag_button.contains_point(event.position) or character_button.contains_point(event.position) or _joystick_zone().has_point(event.position) or (online_mode and online.loot_button.visible and online.loot_button.get_global_rect().has_point(event.position)))
 		# Godot may synthesize the mouse press before delivering its native touch.
 		if native_control or not owned_touches.is_empty():
 			get_viewport().set_input_as_handled()
@@ -405,6 +405,11 @@ func _input(event: InputEvent) -> void:
 			return
 	if not started or _modal_open(): return
 	if event is InputEventScreenTouch and event.pressed:
+		if online_mode and online.loot_button.visible and online.loot_button.get_global_rect().has_point(event.position):
+			owned_touches[event.index] = true
+			online.request_collect()
+			get_viewport().set_input_as_handled()
+			return
 		if attack_button.contains_point(event.position):
 			owned_touches[event.index] = true
 			if attack_touch_id == -1: _begin_attack(event.index)
@@ -418,6 +423,10 @@ func _input(event: InputEvent) -> void:
 		if character_button.contains_point(event.position):
 			owned_touches[event.index] = true
 			_toggle_paperdoll()
+			get_viewport().set_input_as_handled()
+			return
+		if touch_move_id != -1:
+			owned_touches[event.index] = true
 			get_viewport().set_input_as_handled()
 			return
 		if touch_move_id == -1 and _joystick_zone().has_point(event.position):
@@ -456,7 +465,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		if event.keycode == KEY_I: _toggle_inventory()
 		if event.keycode == KEY_C: _toggle_paperdoll()
 		if event.keycode == KEY_E: _collect_loot(true)
-	if not started or _modal_open():
+	if not started or _modal_open() or touch_move_id != -1:
 		return
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		var clicked: Vector2i = _world_tile(get_global_mouse_position())
@@ -549,7 +558,8 @@ func _attack() -> void:
 
 func _collect_loot(force: bool = false) -> void:
 	if online_mode:
-		online.collect_nearby()
+		if force: online.request_collect()
+		else: online.collect_nearby()
 		return
 	if not loot_visible or _distance(player_tile, loot_tile) > (1 if force else 0):
 		return
@@ -760,7 +770,16 @@ func _build_ui() -> void:
 	_label(quest, "WAYFARER’S FIRST STEPS", Vector2(18, 15), 14, GOLD)
 	quest_label = _label(quest, "", Vector2(18, 43), 18)
 	quest_hint = _label(quest, "Practice safely. Your progress saves here.", Vector2(18, 95), 13, MUTED)
-	coin_label = _label(root, "", Vector2(389, 34), 19, GOLD)
+	var coin_icon: TextureRect = TextureRect.new()
+	coin_icon.name = "GoldIcon"
+	coin_icon.texture = _item_texture("coins")
+	coin_icon.position = Vector2(389, 36)
+	coin_icon.size = Vector2(34, 24)
+	coin_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	coin_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	coin_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(coin_icon)
+	coin_label = _label(root, "", Vector2(429, 34), 19, GOLD)
 	var menu_button: Button = _button(root, "☰", Vector2(-80, 24), Vector2(56, 54), func() -> void: menu.visible = not menu.visible)
 	menu_button.set_anchors_preset(Control.PRESET_TOP_RIGHT, true)
 	character_button = HudIconButton.new()
@@ -773,7 +792,7 @@ func _build_ui() -> void:
 	character_button.set_anchors_preset(Control.PRESET_TOP_RIGHT, true)
 	joystick = Joystick.new()
 	root.add_child(joystick)
-	joystick.resting_position = Vector2(32, -188)
+	joystick.resting_position = Vector2(32, -252)
 	joystick.reset()
 	var bottom_hint: Label = _label(root, "Drag to move  ·  Release to stop" if OS.has_feature("mobile") else "Tap ground to explore  ·  WASD / arrows to move", Vector2(228, -55), 16, TEXT)
 	bottom_hint.set_anchors_preset(Control.PRESET_BOTTOM_LEFT, true)
@@ -1112,7 +1131,7 @@ func _refresh_ui() -> void:
 		quest_label.text = "1. First blade found  ✓\n2. Open your bag and equip it"
 	else:
 		quest_label.text = "First steps complete  ✓\nExplore Aeven at your own pace"
-	coin_label.text = "◈  %d coins" % coins
+	coin_label.text = "%d Gold" % coins
 	location_label.text = "%s  /  %d, %d" % [str(world.get("name", "Aeven")), player_tile.x, player_tile.y]
 	if inventory_detail != null:
 		var worn: bool = _is_equipped(selected_item)

@@ -17,6 +17,8 @@ from economy import EconomyMixin
 class LiveSession(EconomyMixin, Session):
     def __init__(self,*args):
         self.pending_moves=deque();self.position_seq=0;self.last_input_seq=0
+        self.pending_pickups={};self.drop_guards={}
+        self.metrics=dict(moves=0,walk_acks=0,refreshes=0,corrections=0,collects=0,pickups=0)
         self.dirty=False;self.position_update=False;self.correction=False;self.expect_walk_refresh=False;self.sent_state=None
         super().__init__(*args)
         self.sock.setsockopt(socket.IPPROTO_TCP,socket.TCP_NODELAY,1)
@@ -34,32 +36,45 @@ class LiveSession(EconomyMixin, Session):
         # may deliver valid, evenly spaced client inputs in a burst. Never sleep here.
         now=time.monotonic();self.shop=None
         if open_door:self.send(34,13,number(x,1)+number(y,1))
+        # Match original etheos: NPC occupancy is checked by the client before
+        # prediction. Rechecking a moving NPC here rejects an already-predicted
+        # step using a newer world state, creating an extra rollback absent in EO.
         move=dict(seq=seq,x=x,y=y,direction=direction)
-        origin=[self.state['self']['x'],self.state['self']['y']]
-        for previous in self.pending_moves:
-            if not previous.get('blocked'):
-                dx,dy=[(0,1),(-1,0),(0,-1),(1,0)][previous['direction']];origin[0]+=dx;origin[1]+=dy
-        dx,dy=[(0,1),(-1,0),(0,-1),(1,0)][direction]
-        move['blocked']=any((n['x'],n['y'])==(origin[0]+dx,origin[1]+dy) for n in self.state['npcs'])
-        if not move['blocked']:
-            self.timestamp+=42
-            self.send(6,8,number(direction,1)+number(self.timestamp,3)+number(x,1)+number(y,1))
+        self.timestamp+=42
+        self.send(6,8,number(direction,1)+number(self.timestamp,3)+number(x,1)+number(y,1))
         self.pending_moves.append(move)
-        self.last_walk=now;self.last_input_seq=seq
-        self._drain_blocked()
-        return {'sent':not move['blocked'],'input_seq':seq,**({'blocked':'npc'} if move['blocked'] else {})}
+        self.last_walk=now;self.last_input_seq=seq;self.metrics['moves']+=1
+        return {'sent':True,'input_seq':seq}
 
-    def _drain_blocked(self):
-        while self.pending_moves and self.pending_moves[0].get('blocked'):
-            move=self.pending_moves.popleft();self.position_seq=move['seq']
-            self.position_update=True;self.correction=True;self.dirty=True
-            self.events.append({'kind':'move_blocked','reason':'npc','input_seq':move['seq']})
+    def collect(self,uid):
+        self._standing();uid=int(uid)
+        if uid in self.pending_pickups:return {'sent':False,'pending':True,'uid':uid}
+        if self.pending_pickups:raise EOError('Wait for the current pickup acknowledgement')
+        item=next((i for i in self.state['items'] if i['uid']==uid),None)
+        if not item:raise EOError('This drop is no longer on the ground')
+        me=self.state['self']
+        if abs(item['x']-me['x'])+abs(item['y']-me['y'])>2:raise EOError('Move closer to the drop')
+        owner,until=self.drop_guards.get(uid,(0,0))
+        if owner and owner!=self.player_id and until>time.monotonic():
+            raise EOError('This drop is reserved for another player for %d seconds' % (int(until-time.monotonic())+1))
+        self.send(14,27,number(uid,2));self.pending_pickups[uid]=time.monotonic()+2
+        self.metrics['collects']+=1
+        return {'sent':True,'uid':uid}
+
+    def poll_actions(self):
+        now=time.monotonic()
+        for uid,until in list(self.pending_pickups.items()):
+            if until<=now:
+                del self.pending_pickups[uid]
+                self.events.append(dict(kind='pickup_failed',uid=uid,message='Cannot pick up: check bag weight or wait for drop protection to expire.'))
+                self.dirty=True
 
     def strike(self,direction):
         direction=int(direction)
         if direction not in range(4) or not self.state:raise EOError('Enter the world before attacking')
         if self.warp or self.stats.get('dead'):return {'sent':False,'dead':True}
-        if self.pending_moves:raise EOError('Wait for movement confirmation before attacking')
+        # Native TCP/action queue preserves Walk -> Attack order; a delayed walk
+        # acknowledgement must not add another round trip before an attack.
         # Original Attack_Use accepts 48+ timestamp ticks; >=60 forces old facing.
         # Send the desired direction directly, avoiding Face's additional 120 ms queue slot.
         self.timestamp+=50
@@ -87,14 +102,13 @@ class LiveSession(EconomyMixin, Session):
                 for collection in ('characters','npcs','items'):
                     self.state[collection]=[row for row in self.state[collection] if abs(row['x']-me['x'])+abs(row['y']-me['y'])<=11]
         self.position_update=True;self.correction=correction;self.dirty=True
-        self._drain_blocked()
 
     def control_packet(self,f,a,p):
         was_dead=self.stats.get('dead',False)
         handled=super().control_packet(f,a,p)
         if handled and (f,a)==(19,5):
             if self.pending_moves:self.position_seq=self.pending_moves[-1]['seq']
-            self.shop=None
+            self.shop=None;self.pending_pickups.clear();self.drop_guards.clear()
             self.pending_moves.clear();self.expect_walk_refresh=False;self.position_update=True;self.correction=True;self.dirty=True
             if was_dead:self.events[-1]['reason']='death_respawn'
             self.stats['dead']=False
@@ -123,16 +137,22 @@ class LiveSession(EconomyMixin, Session):
         if not self.state:return
         r=Reader(p)
         if (f,a)==(25,3):
+            old_position=(self.state['self']['x'],self.state['self']['y']) if self.state.get('self') else None
             state=self.parse_snapshot(r)
+            changed=old_position!=(state['self']['x'],state['self']['y'])
+            correction=bool(self.pending_moves) or self.expect_walk_refresh or changed
+            self.metrics['refreshes']+=1
+            if correction:self.metrics['corrections']+=1
             for key in ('inventory','spells','character_id','player_id','online'):
                 if key in self.state:state[key]=self.state[key]
             self.state=state
             # A successful step with mismatching client coordinates sends Walk_Reply
             # followed immediately by Refresh. That second packet must not ack another input.
             consume=not self.expect_walk_refresh;self.expect_walk_refresh=False
-            self._resolve(correction=True,consume=consume)
+            self._resolve(correction=correction,consume=consume)
         elif (f,a)==(6,3):
             # The real server sends this only after Map::Walk succeeds (new ground items follow).
+            self.metrics['walk_acks']+=1
             self._resolve()
             if p[:2]==b'\xff\xff':
                 r.take(2)
@@ -168,7 +188,9 @@ class LiveSession(EconomyMixin, Session):
         elif f==26 and a in (2,16) and self.events[-1].get('kind')=='npc_killed':
             event=self.events[-1];self.state['npcs']=[n for n in self.state['npcs'] if n['index']!=event['npc_index']]
             drop=event['drop']
-            if drop['uid'] and drop['amount']:self._upsert('items','uid',dict(drop))
+            if drop['uid'] and drop['amount']:
+                self._upsert('items','uid',dict(drop))
+                self.drop_guards[drop['uid']]=(event['player_id'],time.monotonic()+30)
             self.dirty=True
         elif (f,a)==(14,7):
             item_id=r.num(2);uid=r.num(2);amount=r.num(3)
@@ -177,6 +199,7 @@ class LiveSession(EconomyMixin, Session):
             uid=r.num(2);self.state['items']=[i for i in self.state['items'] if i['uid']!=uid];self.dirty=True
         elif (f,a)==(14,27):
             uid=r.num(2);r.num(2);taken=r.num(3)
+            self.pending_pickups.pop(uid,None);self.drop_guards.pop(uid,None);self.metrics['pickups']+=1
             for item in self.state['items']:
                 if item['uid']==uid:item['amount']=max(0,item['amount']-taken)
             self.state['items']=[i for i in self.state['items'] if i['amount']>0];self.dirty=True

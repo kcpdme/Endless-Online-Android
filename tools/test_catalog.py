@@ -4,7 +4,8 @@ import json
 import os
 from pathlib import Path
 import unittest
-from export_catalog import parse_items, parse_npcs, pub_records, npc_frame_offset, NPC_RENDER_METADATA
+from PIL import Image
+from export_catalog import parse_items, parse_npcs, pub_records, npc_frame_offset, NPC_RENDER_METADATA, WEAPON_APPEARANCE_ITEMS
 
 ROOT=Path(__file__).resolve().parents[1]
 RUNTIME=Path(os.environ.get('EO_RUNTIME',str(ROOT/'work/server-build/runtime')))
@@ -70,6 +71,27 @@ class RuntimeCatalogTests(unittest.TestCase):
         for row in piles:
             metadata=self.manifest['graphics'][row['ground']]
             self.assertTrue((CONTENT/metadata['path'].removeprefix('res://content/')).is_file())
+
+    def test_added_weapons_have_original_distinct_four_direction_appearances(self):
+        variants=self.manifest['characters']['weapon_variants']
+        self.assertEqual(len(variants),len(WEAPON_APPEARANCE_ITEMS)*4)
+        distinct=[]
+        for item_id in WEAPON_APPEARANCE_ITEMS:
+            doll=self.catalog['items'][str(item_id)]['doll_graphic']
+            hero=variants[f'a1_b1_g{doll}']
+            self.assertEqual(hero['appearance']['weapon_graphic'],doll)
+            self.assertIn((doll-1)*100+1,hero['source_resources']['gfx/gfx017.egf'])
+            for state in ('idle','frames','attack'):
+                for direction in ('south','east','north','west'):
+                    frames=hero[state][direction]
+                    for frame in frames if isinstance(frames,list) else [frames]:
+                        with Image.open(CONTENT/frame['path'].removeprefix('res://content/')) as img:
+                            self.assertIsNotNone(img.getbbox())
+                            # Art must leave a transparent margin rather than clip.
+                            self.assertIsNone(img.getchannel('A').crop((0,0,img.width,1)).getbbox())
+            frame=hero['idle']['south']
+            with Image.open(CONTENT/frame['path'].removeprefix('res://content/')) as img:distinct.append(img.tobytes())
+        self.assertEqual(len(set(distinct)),len(WEAPON_APPEARANCE_ITEMS))
 
     def test_all282_map_geometry_paths_and_graphics_resolve(self):
         for map_id,record in self.catalog['maps'].items():

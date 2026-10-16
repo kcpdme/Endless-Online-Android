@@ -36,6 +36,11 @@ class Reader:
         end=self.data.index(255,self.pos);data=self.data[self.pos:end];self.pos=end+1;return data.decode('latin1')
     def rest(self):return self.data[self.pos:]
 class EOError(RuntimeError):pass
+class LoginError(EOError):
+    def __init__(self,code):
+        self.code=code
+        messages={1:'Account not found',2:'Incorrect account name or password',4:'This account is banned',5:'Account already connected; the previous network session may still be closing',6:'The game server is full',7:'This older account needs an operator password reset. Your character and inventory are preserved.'}
+        super().__init__('%s (code %d)' % (messages.get(code,'Login rejected'),code))
 class Session:
     def __init__(self,host='127.0.0.1',port=8078):
         self.sock=socket.create_connection((host,port),timeout=8);self.sock.settimeout(8)
@@ -114,7 +119,7 @@ class Session:
         return {'registered':True}
     def login(self,username,password):
         self.send(4,1,string(username)+string(password));data=self.wait(4,3,timeout=15);r=Reader(data);code=r.num(2)
-        if code!=3:raise EOError(f'Login rejected (code {code})')
+        if code!=3:raise LoginError(code)
         self.characters=self.parse_characters(r);return {'characters':self.characters}
     def parse_characters(self,r):
         count=r.num();r.take(2);result=[]
@@ -192,7 +197,10 @@ class Session:
         self.send(14,27,number(int(uid),2));self.wait(14,27,timeout=2);return self.refresh()
     def equip(self,item_id,remove=False,subloc=0):
         self.send(30,4 if remove else 7,number(int(item_id),2)+number(int(subloc),1))
-        self.wait(30,4 if remove else 5,timeout=2);self.paperdoll();return self.refresh()
+        try:self.wait(30,4 if remove else 5,timeout=2)
+        except EOError:
+            raise EOError('This item cannot be removed; it may be cursed.' if remove else 'Cannot equip: remove the worn item from this slot first, and check level, class and attribute requirements.')
+        self.paperdoll();return self.refresh()
     def apply_event(self,f,a,p):
         event={'family':f,'action':a,'bytes':len(p)}
         if (f,a)==(34,14):

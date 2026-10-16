@@ -2,6 +2,7 @@
 """Loopback JSON-lines development adapter to real EO v28 sessions. Never a mock server."""
 import argparse, collections, json, select, socket, socketserver, time, threading
 from eo_session import EOError
+from auth_sessions import AuthSessions
 from live_session import LiveSession as Session
 
 class Handler(socketserver.StreamRequestHandler):
@@ -17,6 +18,7 @@ class Handler(socketserver.StreamRequestHandler):
                         for _ in range(31):
                             if not select.select([self.session.sock],[],[],0)[0]:break
                             self.session.pump()
+                    if self.session:self.session.poll_actions()
                     if self.streaming and self.session and self.session.dirty and not self.session.warp and time.monotonic()-last_push>=0.045:
                         self.write_message({'event':'world','ok':True,'data':self.session.world_update()});last_push=time.monotonic()
                     if self.request not in ready:continue
@@ -25,7 +27,7 @@ class Handler(socketserver.StreamRequestHandler):
                     buffer+=block
                     if len(buffer)>65536:raise ValueError('Request exceeds 64 KiB')
                     if b'\n' not in buffer:continue
-                line,buffer=buffer.split(b'\n',1);request={}
+                line,buffer=buffer.split(b'\n',1);request={};error_code=None
                 try:
                     raw=json.loads(line)
                     if not isinstance(raw,dict):raise ValueError('Request must be a JSON object')
@@ -39,16 +41,28 @@ class Handler(socketserver.StreamRequestHandler):
                     data=self.execute(request)
                     result={'id':request.get('id'),'op':request.get('op'),'ok':True,'data':data}
                 except (EOError,ValueError,KeyError,TypeError,TimeoutError,OSError,RuntimeError) as exc:
+                    error_code=getattr(exc,'code',None)
                     result={'id':request.get('id'),'op':request.get('op'),'ok':False,'error':str(exc) if isinstance(exc,EOError) else 'Request failed; check fields or reconnect to the local server.'}
+                if error_code is not None:result["error_code"]=error_code
                 self.write_message(result)
         except (OSError,ValueError,RuntimeError):pass
         finally:
+            self.server.auth_sessions.forget(self)
             if self.session:self.session.close()
+    def end_session(self):
+        # A verified in-memory reconnect proof may retire only its own old session.
+        for connection in (self.request,self.session.sock if self.session else None):
+            if connection:
+                try:connection.shutdown(socket.SHUT_RDWR)
+                except OSError:pass
+                try:connection.close()
+                except OSError:pass
     def write_message(self,message):
         self.request.sendall((json.dumps(message,separators=(',',':'))+'\n').encode('utf-8'))
     def execute(self,r):
         op=r.get('op')
         if op=='connect':
+            self.server.auth_sessions.forget(self)
             if self.session:self.session.close()
             self.session=Session(*self.server.eo_address)
             return {'connected':True,'protocol':'EO v28','server':'etheos','authenticated':False}
@@ -56,12 +70,18 @@ class Handler(socketserver.StreamRequestHandler):
             if not self.session or not self.session.state:raise EOError('Enter a character before enabling movement streaming')
             self.streaming=bool(r.get('enabled',True));return {'enabled':self.streaming,'movement_seconds':0.42}
         if op=='disconnect':
+            self.server.auth_sessions.forget(self)
             if self.session:self.session.close();self.session=None
             return {'connected':False}
         s=self.session
         if not s:raise EOError('Connect to the local server first')
         if op=='register':return s.register(str(r['username']),str(r['password']))
-        if op=='login':return s.login(str(r['username']),str(r['password']))
+        if op=='login':
+            username=str(r['username']).strip().lower()
+            if self.server.auth_sessions.resume(username,str(r.get('resume_token','')),self):time.sleep(.2)
+            data=s.login(username,str(r['password']))
+            data['resume_token']=self.server.auth_sessions.issue(username,self)
+            return data
         if op=='create_character':return s.create_character(str(r['name']),int(r.get('gender',1)),int(r.get('hairstyle',1)),int(r.get('haircolor',0)),int(r.get('race',0)))
         if op=='enter':s.enter(int(r['character_id']));return s.snapshot()
         if op=='move':return s.move(int(r['direction']),int(r['input_seq']),int(r['map_id']),int(r['x']),int(r['y']),bool(r.get('open_door',False)))
@@ -72,11 +92,14 @@ class Handler(socketserver.StreamRequestHandler):
         if op=='attack':s.attack(r.get('direction'));return s.snapshot()
         if op=='shop_open':return s.shop_open(int(r['npc_index']))
         if op in ('shop_buy','shop_sell','shop_craft'):return s.shop_trade(op.removeprefix('shop_'),int(r['item_id']),int(r.get('amount',1)))
+        if op=='collect':return s.collect(int(r['uid']))
+        if op=='diagnostics':return dict(s.metrics)
         if op=='pickup':return s.pickup(int(r['uid']))
         if op in ('equip','unequip'):s.equip(int(r['item_id']),op=='unequip',int(r.get('subloc',0)));return s.snapshot()
         raise EOError('Unsupported gateway operation')
 class Server(socketserver.ThreadingTCPServer):
     allow_reuse_address=True;daemon_threads=True
+    auth_sessions=AuthSessions()
     slots=threading.BoundedSemaphore(12)
     def process_request(self,request,address):
         if not self.slots.acquire(blocking=False):self.shutdown_request(request);return

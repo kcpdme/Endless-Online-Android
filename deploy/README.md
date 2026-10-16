@@ -55,9 +55,9 @@ using the domain's SNI. The real Godot scene passed public WSS login, character
 entry, Aeven -> map4 -> Aeven, gear updates and offline-save isolation. Native
 ports listen only on loopback. The existing Caddy service remained active.
 
-This is a development world with a twelve-session capacity limit. Shops,
-quests, chat, trading, spells, expanded character appearances, account recovery,
-public abuse monitoring and load testing remain separate milestones.
+This is a development world with a twelve-session capacity limit. Quests,
+chat, trading, spells, expanded character appearances, self-service account
+recovery, public abuse monitoring and load testing remain separate milestones.
 
 References: [Caddy WebSocket reverse proxy](https://caddyserver.com/docs/caddyfile/directives/reverse_proxy),
 [Cloudflare WebSockets](https://developers.cloudflare.com/network/websockets/),
@@ -71,3 +71,20 @@ against the existing runtime and restart the world plus adapter services. Keep
 existing SQLite data and PasswordSalt. This configures an Aeven home and corrects
 the pinned server's percentage-unit mismatch in DeathRecover. The upgrade does
 not require a new world binary or more RAM. See server/ONLINE.md for semantics.
+
+
+### v0.10 movement, pickup and login recovery
+
+Deploy `auth_sessions.py` alongside the adapter modules and restart only gateway
+and WebSocket for ordinary transport updates. The in-memory reconnect proof
+is single-use and account-bound; it never skips native password verification.
+WebSocket ping interval/timeout are 5/8 seconds to retire broken network paths.
+
+The password fix additionally requires rebuilding the pinned native server with
+the checked-in password-v3 patch and installing `native-auth`. Make private
+SQLite/config/binary backups, stop the world for replacement, preserve
+PasswordSalt and set `PasswordCurrentVersion = 3`, `RejectLegacyBcrypt = yes`.
+Do not re-enable vulnerable legacy verification to avoid password recovery.
+Use `server/reset_password.py` as described in the server README; it preserves
+character rows. Existing account data is retained, but old version-2 passwords
+cannot prove the original full password and require an operator reset.

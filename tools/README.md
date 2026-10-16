@@ -61,3 +61,13 @@ python3 tools/audit_archives.py \
 The supplied graphics archive’s 25 EGF files (15,580 bitmap resources) are byte-for-byte identical to the existing v28 graphics. The EODelta archive contains three small maps, plus classic-format PUB files. Its shared PUB definitions match the runtime baseline; it adds one item and two NPC definitions. It is not a replacement for the current 282-map world. The audit report and provided archives stay under ignored `reference/`; they are not public source artifacts.
 
 The world validator records 3,945 warps; 228 maps are graph-reachable from Aeven when ignoring level/key requirements. Eight original map47 warp destinations exceed map bounds and remain recorded as invalid. Graphic171 (Ancient Wraith) has blank standing art in the supplied original archive; the client uses an explicit neutral fallback. Other blank unused poses fall back to the same NPC standing pose and retain provenance. No replacement species artwork is invented.
+
+
+Version 0.10 catalog export also composes 24 original weapon appearances under
+`manifest.characters.weapon_variants`: the six items 19,22,32,37,38,281 combined
+with armor/boots off/on. Keys are `a{armor}_b{boots}_g{weapon_doll_graphic}`;
+the eight existing starter variants remain unchanged. Extra weapons use a
+192×192 transparent canvas to retain long blade art, with the same feet anchor
+and original layer offsets. The native equipment doll graphic selects the
+appearance; item ID and bag icon are not substituted for doll graphic ID.
+The runtime continues to flag other unsupported character appearances.

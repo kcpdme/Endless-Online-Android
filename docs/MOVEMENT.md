@@ -26,7 +26,7 @@ Version 0.7 adds an asynchronous movement operation, positive native Walk_Reply
 confirmation, compact entity deltas, full-duplex WebSocket forwarding, immediate
 Godot prediction with reconciliation, and independently interpolated walking
 animations for nearby players and NPCs. Full refresh remains available for
-correction, explicit actions, legacy clients and idle recovery. Native EO still
+correction, explicit actions and legacy clients. Version 0.10 removes the idle recovery timer. Native EO still
 validates collision, movement rate, inventory and map transitions.
 
 A 60-FPS real Godot scene was driven with a held joystick for 14 seconds through
@@ -44,3 +44,39 @@ correction, a real rejected step, burst delivery of outstanding movement,
 Aeven/map4 round-trip with EMF identity checks, legacy RPC compatibility, the
 Godot reconciliation regression, public WSS login/movement/equipment, offline
 save isolation, offline gameplay, inventory quantities and full-screen layout.
+
+
+## Version 0.10: release, moving targets and collection
+
+Three further client/adapter regressions were reproduced. Releasing the stick
+froze the sprite between tiles even though the predicted tile was already
+committed; a later ten-second idle Refresh exposed the mismatch. The adapter
+also rejected a predicted step if a moving NPC had entered that tile by packet
+arrival. Original EndlessClient checks NPC occupancy locally; native etheos
+`Map::Walk(Player)` checks terrain and player occupancy. Finally, attack waited
+for an outstanding Walk ACK after the visual step had finished, adding a round
+trip while chasing a rat.
+
+Release now clears future movement and finishes only the committed online tile.
+Native Walk/Attack queue order replaces the extra ACK barrier. Client-side NPC
+collision remains, and the adapter no longer adds a second moving-NPC check.
+Ordinary world events drive updates; there is no periodic full-world Refresh.
+Real terrain/player collisions still require native corrections.
+
+Collection intent now survives movement and its ACK. A named Pick up control
+uses the original UID, distance-two and ownership rules. The new asynchronous
+collect operation returns a receipt immediately; only native Item_Get updates
+the bag and quantity. A rejected protected/overweight pickup expires as a clear
+feedback event without blocking movement or NPC packets.
+
+A real Godot touch test with injected 120 ± 80 ms delay in each direction passed
+eight steps, mid-step release, Rat Tail pickup, visible bag icon/quantity and
+eleven idle seconds with zero corrections and zero native Refresh packets. A
+separate 300 ± 150 ms-per-direction test chased and killed an actual Rat,
+including an attack before the walk ACK, without a chase Refresh or correction.
+These controlled results do not remove real mobile network latency.
+
+The design follows [Gambetta's prediction/reconciliation explanation](https://www.gabrielgambetta.com/client-side-prediction-server-reconciliation.html)
+and [entity interpolation](https://www.gabrielgambetta.com/entity-interpolation.html):
+render local movement immediately, discard only acknowledged inputs, replay
+outstanding inputs and interpolate other actors independently.

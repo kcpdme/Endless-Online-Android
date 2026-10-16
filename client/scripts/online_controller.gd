@@ -23,6 +23,7 @@ var streaming: bool = false
 var recovering: bool = false
 var defeated: bool = false
 var npc_attack_until: Dictionary = {}
+var npc_health: Dictionary = {}
 var transition_pending: bool = false
 var next_input_seq: int = 0
 var confirmed_input_seq: int = 0
@@ -45,6 +46,15 @@ var request_operations: Dictionary = {}
 var interaction: Dictionary = {}
 var collect_pending: bool = false
 var loot_attempt_after: Dictionary = {}
+var pickup_pending: Dictionary = {}
+var pending_equip: Dictionary = {}
+var loot_button: Button
+var drop_permissions: Dictionary = {}
+var resume_username: String = ""
+var resume_token: String = ""
+var login_retries: int = 0
+var login_retry_at: int = 0
+var network_metrics: Dictionary = {"moves": 0, "corrections": 0, "pickups": 0}
 
 func _ready() -> void:
 	session = OnlineSession.new()
@@ -114,6 +124,11 @@ func build_ui(parent: Control) -> void:
 	panel.hide()
 	server_label = game._label(parent, "", Vector2(390, 67), 15, game.MUTED)
 	server_label.hide()
+	loot_button = game._button(parent, "Pick up", Vector2(-486, -224), Vector2(280, 58), request_collect, true)
+	loot_button.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT, true)
+	loot_button.clip_text = true
+	loot_button.add_theme_font_size_override("font_size", 17)
+	loot_button.hide()
 
 func _field(parent: Node, value: String, at: Vector2, dimensions: Vector2) -> LineEdit:
 	var field: LineEdit = LineEdit.new()
@@ -142,10 +157,13 @@ func show_login() -> void:
 	panel.show()
 
 func _close_panel() -> void:
+	login_retry_at = 0
 	panel.hide()
 	if not active: game._show_welcome()
 
-func _authenticate(operation: String) -> void:
+func _authenticate(operation: String, retrying: bool = false) -> void:
+	if not retrying: login_retries = 0
+	login_retry_at = 0
 	if username_field.text.strip_edges().is_empty() or password_field.text.is_empty():
 		_set_status("Enter an account name and password.")
 		return
@@ -168,7 +186,14 @@ func _on_message(message: Dictionary) -> void:
 		var reason: String = str(message.get("error", "The server refused this request."))
 		_set_status(reason)
 		game._toast(reason)
+		if operation == "login" and int(message.get("error_code", 0)) == 5 and login_retries < 3:
+			var delays: Array[int] = [2500, 4000, 6000]
+			login_retry_at = Time.get_ticks_msec() + delays[login_retries]
+			login_retries += 1
+			_set_status("Previous network session is closing. Reconnecting… (%d/3)" % login_retries)
 		if operation == "shop_open": interaction.clear()
+		if operation == "collect": pickup_pending.clear()
+		if operation in ["equip", "unequip"]: pending_equip.clear()
 		if game.shop_ui != null: game.shop_ui.refresh()
 		if operation in ["walk", "move"]:
 			# A transport rejection is not an authoritative position; recover from the world.
@@ -181,20 +206,34 @@ func _on_message(message: Dictionary) -> void:
 	match operation:
 		"connect":
 			_set_status("Server handshake accepted. Signing in…")
-			session.request(desired_auth, {"username": username_field.text.strip_edges(), "password": password_field.text})
+			var credentials: Dictionary = {"username": username_field.text.strip_edges(), "password": password_field.text}
+			if desired_auth == "login" and username_field.text.strip_edges().to_lower() == resume_username: credentials["resume_token"] = resume_token
+			session.request(desired_auth, credentials)
 		"register":
 			_set_status("Account created. Signing in…")
 			session.request("login", {"username": username_field.text.strip_edges(), "password": password_field.text})
 		"login", "create_character":
+			if operation == "login" and data.has("resume_token"):
+				resume_username = username_field.text.strip_edges().to_lower()
+				resume_token = str(data.resume_token)
+			login_retry_at = 0
 			password_field.text = ""
 			_show_characters(data.get("characters", []) as Array)
 		"enter":
 			_enter_world(data)
 		"stream":
 			streaming = bool(data.get("enabled", false))
-		"move", "strike":
+		"move", "strike", "collect":
 			pass # Receipt only. The subsequent native Walk_Reply confirms acceptance.
-		"world", "refresh", "snapshot", "attack", "pickup", "equip", "unequip", "spend_stat", "shop_buy", "shop_sell", "shop_craft":
+		"unequip":
+			_apply_snapshot(data)
+			if not pending_equip.is_empty():
+				var replacement: Dictionary = pending_equip.duplicate()
+				pending_equip.clear()
+				if int((player.get("equipment", {}) as Dictionary).get(str(replacement.slot), 0)) == 0:
+					session.request("equip", {"item_id": int(replacement.item_id), "subloc": int(replacement.subloc)})
+				else: game._toast("The worn item could not be removed. Your replacement remains in the bag.")
+		"world", "refresh", "snapshot", "attack", "pickup", "equip", "spend_stat", "shop_buy", "shop_sell", "shop_craft":
 			_apply_snapshot(data)
 		"shop_open":
 			_apply_snapshot(data)
@@ -281,12 +320,15 @@ func _apply_snapshot(data: Dictionary, entering: bool = false) -> void:
 		if entering:
 			interaction.clear()
 			collect_pending = false
+			pickup_pending.clear()
+			drop_permissions.clear()
 			game.shop_ui.close()
 			pending_inputs.clear()
 			recovering = false
 			confirmed_input_seq = int(data.get("position_seq", confirmed_input_seq))
 			remote_motion.clear()
 			npc_attack_until.clear()
+			npc_health.clear()
 			waiting_for_walk = false
 			transition_pending = false
 			game.facing = _facing(player.get("direction", 0))
@@ -301,11 +343,13 @@ func _apply_snapshot(data: Dictionary, entering: bool = false) -> void:
 			while not pending_inputs.is_empty() and int(pending_inputs[0].seq) <= confirmed:
 				pending_inputs.pop_front()
 			var correction: bool = bool(data.get("correction", false))
-			if correction: recovering = true
+			if correction:
+				network_metrics.corrections = int(network_metrics.corrections) + 1
+				recovering = true
 			if not recovering and not defeated:
 				for input: Dictionary in pending_inputs: tile += input.direction as Vector2i
 			else:
-				game._cancel_controls()
+				game._cancel_controls(true)
 				game.player_tile = tile
 				game.player_world = game.tile_position(tile)
 			if pending_inputs.is_empty(): recovering = false
@@ -359,15 +403,16 @@ func _sync_inventory() -> void:
 func _process(delta: float) -> void:
 	if server_label != null:
 		server_label.visible = active and game.started and not game._modal_open() and not game.welcome.visible
+	if login_retry_at > 0 and Time.get_ticks_msec() >= login_retry_at:
+		login_retry_at = 0
+		if panel.visible and not active: _authenticate("login", true)
 	if not active: return
 	_process_interaction()
 	warp_notice_clock = maxf(0.0, warp_notice_clock - delta)
 	walk_clock = maxf(0.0, walk_clock - delta)
 	refresh_clock += delta
-	# World packets drive updates. An idle-only safety refresh never competes with walking.
-	if refresh_clock >= 10.0 and session.connected and session.is_idle() and pending_inputs.is_empty() and not game.moving and game.stick == Vector2.ZERO and game.route.is_empty() and game.attack_touch_id == -1 and game.attack_clock <= 0.0 and not defeated and not recovering:
-		refresh_clock = 0.0
-		session.request("refresh")
+	# Original EO updates are event driven; no periodic full-world Refresh.
+	_update_loot_control()
 	if not pending_inputs.is_empty() and Time.get_ticks_msec() - int(pending_inputs[0].sent_at) > 15000:
 		session._fail("Movement confirmation timed out. Please reconnect.")
 
@@ -397,6 +442,7 @@ func request_step(direction: Vector2i) -> void:
 		game.route.clear()
 		return
 	next_input_seq += 1
+	network_metrics.moves = int(network_metrics.moves) + 1
 	fields.merge({"input_seq": next_input_seq, "map_id": int(game.world.id), "x": target.x, "y": target.y})
 	if session.request("move", fields) < 0: return
 	pending_inputs.append({"seq": next_input_seq, "direction": single, "sent_at": Time.get_ticks_msec()})
@@ -418,6 +464,13 @@ func _start_step(tile: Vector2i, direction: String) -> void:
 	game.moving = true
 
 func _reset_movement() -> void:
+	npc_health.clear()
+	pending_equip.clear()
+	if loot_button != null: loot_button.hide()
+	pickup_pending.clear()
+	drop_permissions.clear()
+	interaction.clear()
+	collect_pending = false
 	streaming = false
 	recovering = false
 	defeated = false
@@ -435,7 +488,7 @@ func _action_ready() -> bool:
 	return active and not defeated and not recovering and pending_inputs.is_empty() and not transition_pending and session.is_idle()
 
 func request_attack() -> bool:
-	if not active or defeated or recovering or game.moving or not pending_inputs.is_empty() or transition_pending or session.has_blocking_requests() or session.pending.size() >= MAX_PREDICTIONS: return false
+	if not active or defeated or recovering or game.moving or transition_pending or session.has_blocking_requests() or session.pending.size() >= MAX_PREDICTIONS: return false
 	# Aim at the faced adjacent hostile; otherwise select an adjacent attackable NPC.
 	var target_direction: int = _direction(game.facing)
 	var adjacent: Array[Dictionary] = []
@@ -448,7 +501,16 @@ func request_attack() -> bool:
 	for npc: Dictionary in adjacent:
 		if Vector2i(int(npc.x), int(npc.y)) == game.player_tile + offsets[target_direction]: faced = true
 	if not faced and not adjacent.is_empty(): game.facing = game._direction_name(Vector2i(int(adjacent[0].x), int(adjacent[0].y)) - game.player_tile)
-	return session.request("strike", {"direction": _direction(game.facing)}) >= 0
+	var sent: bool = session.request("strike", {"direction": _direction(game.facing)}) >= 0
+	if sent:
+		var target_tile: Vector2i = game.player_tile + offsets[_direction(game.facing)]
+		for npc: Dictionary in adjacent:
+			if Vector2i(int(npc.x), int(npc.y)) != target_tile: continue
+			var index: int = int(npc.index)
+			var health: Dictionary = npc_health.get(index, {"percent": 100}) as Dictionary
+			health["until"] = Time.get_ticks_msec() + 8000
+			npc_health[index] = health
+	return sent
 
 func spend_stat(stat_id: int) -> void:
 	if _action_ready():
@@ -470,7 +532,7 @@ func _facing(value: Variant) -> String:
 func _on_closed(reason: String) -> void:
 	active = false
 	_reset_movement()
-	game._cancel_controls()
+	game._cancel_controls(true)
 	if game.online_mode:
 		game.started = false
 		game._show_welcome()
@@ -487,7 +549,7 @@ func leave_for_offline() -> void:
 	active = false
 	session.close()
 	_reset_movement()
-	game._cancel_controls()
+	game._cancel_controls(true)
 	game.load_map(offline_map_id)
 	for raw: Variant in offline_state:
 		game.set(str(raw), offline_state[raw])
@@ -562,7 +624,14 @@ func draw_entity(entity: Dictionary) -> void:
 		var graphic: Dictionary = npc_graphics.get(str(int(info.get("graphic", 0))), {}) as Dictionary
 		if not graphic.is_empty(): game._draw_character_frame(graphic, at, direction, state, Color.WHITE, phase if state in ["frames", "attack"] else -1.0)
 		else: game.draw_circle(at + Vector2(0, -12), 5.0, Color("e7bd70"))
-		game.draw_string(ThemeDB.fallback_font, at + Vector2(-32, -32 - int((graphic.get("render_metadata", {}) as Dictionary).get("name_label_offset", 34))), str(info.get("name", "NPC %s" % npc_id)), HORIZONTAL_ALIGNMENT_LEFT, -1, 10, game.TEXT)
+		var label_y: float = -32.0 - float((graphic.get("render_metadata", {}) as Dictionary).get("name_label_offset", 34))
+		game.draw_string(ThemeDB.fallback_font, at + Vector2(-32, label_y), str(info.get("name", "NPC %s" % npc_id)), HORIZONTAL_ALIGNMENT_LEFT, -1, 10, game.TEXT)
+		var health: float = npc_health_fraction(int(record.get("index", -1)))
+		if health >= 0.0:
+			var strip: Rect2 = Rect2(at + Vector2(-17, label_y + 4), Vector2(34, 5))
+			game.draw_rect(strip.grow(1), Color("121b18"))
+			game.draw_rect(strip, Color("50322e"))
+			game.draw_rect(Rect2(strip.position, Vector2(strip.size.x * health, strip.size.y)), Color("a6cb6f") if health > 0.3 else Color("dc6855"))
 	elif str(entity.kind) == "online_player":
 		var graphic: Dictionary = character_graphic(record)
 		if not graphic.is_empty(): game._draw_character_frame(graphic, at, direction, state, Color.WHITE, phase if state in ["frames", "attack"] else -1.0)
@@ -634,18 +703,73 @@ func select_bag_item(index: int) -> void:
 	game._select_item("item:%d" % int(items[index].get("id", 0)))
 
 func equipment_request(kind: String) -> void:
-	if not _action_ready() or not owns_item(kind): return
+	if not _action_ready() or not pending_equip.is_empty() or not owns_item(kind): return
+	var info: Dictionary = item_info(kind)
 	if is_equipped(kind):
-		var slot: String = kind
+		if int(info.get("special", 0)) == 5:
+			game._toast("This item is cursed and cannot be removed.")
+			return
+		var equipment: Dictionary = player.get("equipment", {}) as Dictionary
+		var subloc: int = 1 if not kind.begins_with("item:") and _slot_name(kind).ends_with("2") else 0
 		if kind.begins_with("item:"):
-			var equipment: Dictionary = player.get("equipment", {}) as Dictionary
-			for key: Variant in equipment:
-				if int(equipment[key]) == item_id(kind): slot = str(key)
-		session.request("unequip", {"item_id": item_id(kind)})
+			for slot: Variant in equipment:
+				if int(equipment[slot]) == item_id(kind):
+					subloc = 1 if str(slot).ends_with("2") else 0
+					break
+		session.request("unequip", {"item_id": item_id(kind), "subloc": subloc})
 	else:
-		session.request("equip", {"item_id": item_id(kind)})
+		var slots: Dictionary = {10: "weapon", 11: "offhand", 12: "armor", 13: "head", 14: "boots", 15: "gloves", 16: "accessory", 17: "belt", 18: "necklace", 19: "ring1", 20: "armlet1", 21: "bracer1"}
+		var slot: String = str(slots.get(int(info.get("type", 0)), ""))
+		if slot.is_empty():
+			game._toast("This item cannot be equipped.")
+			return
+		var equipment: Dictionary = player.get("equipment", {}) as Dictionary
+		var subloc: int = 0
+		if slot.ends_with("1") and int(equipment.get(slot, 0)) > 0:
+			var second: String = slot.trim_suffix("1") + "2"
+			if int(equipment.get(second, 0)) == 0:
+				slot = second
+				subloc = 1
+		var previous: int = int(equipment.get(slot, 0))
+		var problem: String = _equipment_problem(info, previous)
+		if not problem.is_empty():
+			game._toast(problem)
+			return
+		if previous > 0:
+			pending_equip = {"slot": slot, "item_id": item_id(kind), "subloc": subloc}
+			# EO has separate Remove/Add packets and silently refuses occupied slots.
+			# Only the actual native Remove acknowledgement may trigger Add.
+			session.request("unequip", {"item_id": previous, "subloc": subloc})
+		else: session.request("equip", {"item_id": item_id(kind), "subloc": subloc})
+
+func _equipment_problem(info: Dictionary, previous: int) -> String:
+	var stats: Dictionary = player.get("stats", {}) as Dictionary
+	var worn: Dictionary = item_info("item:%d" % previous)
+	if int(worn.get("special", 0)) == 5: return "The worn item is cursed and cannot be replaced."
+	if int(player.get("level", stats.get("level", 0))) < int(info.get("level_requirement", 0)): return "This item requires level %d." % int(info.level_requirement)
+	if int(info.get("type", 0)) == 12 and int(info.get("gender", 0)) != int(player.get("gender", 1)): return "This armor does not fit your character."
+	var class_id: int = int(stats.get("class_id", 0))
+	var classes: Dictionary = catalog.get("classes", {}) as Dictionary
+	var base_class: int = int((classes.get(str(class_id), {}) as Dictionary).get("base", 0))
+	var requirement: int = int(info.get("class_requirement", 0))
+	if requirement != 0 and requirement not in [class_id, base_class]: return "This item requires a different character class."
+	for attribute: String in ["strength", "intelligence", "wisdom", "agility", "constitution", "charisma"]:
+		if int(stats.get(attribute, 0)) - int(worn.get(attribute, 0)) < int(info.get(attribute + "_requirement", 0)): return "This item requires %s %d." % [attribute.capitalize(), int(info[attribute + "_requirement"])]
+	var equipment: Dictionary = player.get("equipment", {}) as Dictionary
+	var shield: Dictionary = item_info("item:%d" % int(equipment.get("offhand", 0)))
+	var weapon: Dictionary = item_info("item:%d" % int(equipment.get("weapon", 0)))
+	if int(info.get("type", 0)) == 10 and int(info.get("subtype", 0)) == 4 and not shield.is_empty() and int(shield.get("subtype", 0)) not in [2, 3]: return "Remove your shield before wielding a two-handed weapon."
+	if int(info.get("type", 0)) == 11 and int(weapon.get("subtype", 0)) == 4 and int(info.get("subtype", 0)) not in [2, 3]: return "Remove your two-handed weapon before equipping this shield."
+	return ""
 
 func map_target(point: Vector2, fallback: Vector2i) -> Vector2i:
+	# Ground loot gets a touch target matching its visible art, including tall items.
+	for drop: Dictionary in drops:
+		var tile: Vector2i = Vector2i(int(drop.x), int(drop.y))
+		var info: Dictionary = item_info("item:%d" % int(drop.id))
+		var texture: Texture2D = _catalog_texture(str(info.get("ground", "")))
+		var dimensions: Vector2 = texture.get_size() if texture != null else Vector2(24, 20)
+		if Rect2(game.tile_position(tile) - dimensions / 2.0, dimensions).grow(8.0).has_point(point): return tile
 	# The original client tests sprite rectangles. A tap on Bob's head must talk
 	# to Bob, rather than pathfinding to the tile behind his feet.
 	var ordered: Array[Dictionary] = npcs.duplicate()
@@ -702,9 +826,12 @@ func _approach(tile: Vector2i, distance: int) -> void:
 	interaction.clear()
 
 func _process_interaction() -> void:
-	if game.stick != Vector2.ZERO or defeated:
+	if defeated:
 		interaction.clear()
 		collect_pending = false
+		return
+	if game.stick != Vector2.ZERO:
+		interaction.clear()
 		return
 	if game.moving or not game.route.is_empty() or not _action_ready() or game._modal_open(): return
 	if not interaction.is_empty():
@@ -724,13 +851,49 @@ func _process_interaction() -> void:
 		collect_pending = false
 		for drop: Dictionary in drops:
 			var tile: Vector2i = Vector2i(int(drop.x), int(drop.y))
-			if game._distance(game.player_tile, tile) <= 1 and Time.get_ticks_msec() >= int(loot_attempt_after.get(int(drop.uid), 0)):
+			if game._distance(game.player_tile, tile) == 0 and _drop_available(drop) and Time.get_ticks_msec() >= int(loot_attempt_after.get(int(drop.uid), 0)):
 				_pickup(int(drop.uid))
 				return
 
 func _pickup(uid: int) -> void:
-	loot_attempt_after[uid] = Time.get_ticks_msec() + 5000
-	session.request("pickup", {"uid": uid})
+	if pickup_pending.has(uid): return
+	loot_attempt_after[uid] = Time.get_ticks_msec() + 2500
+	pickup_pending[uid] = Time.get_ticks_msec()
+	if session.request("collect", {"uid": uid}) < 0: pickup_pending.erase(uid)
+
+func _drop_available(drop: Dictionary) -> bool:
+	var permission: Dictionary = drop_permissions.get(int(drop.uid), {}) as Dictionary
+	return permission.is_empty() or int(permission.get("owner", 0)) == int(player.get("player_id", -1)) or Time.get_ticks_msec() >= int(permission.get("until", 0))
+
+func nearest_drop() -> Dictionary:
+	var nearest: Dictionary = {}
+	var distance: int = 999
+	for drop: Dictionary in drops:
+		var steps: int = game._distance(game.player_tile, Vector2i(int(drop.x), int(drop.y)))
+		if steps <= 2 and steps < distance and _drop_available(drop):
+			nearest = drop
+			distance = steps
+	return nearest
+
+func request_collect() -> void:
+	if not active or defeated: return
+	game._cancel_controls()
+	var drop: Dictionary = nearest_drop()
+	if drop.is_empty():
+		game._toast("No available drop nearby. Tap ground loot to walk closer.")
+		return
+	interaction = {"kind": "drop", "id": int(drop.uid)}
+	collect_pending = true
+
+func _update_loot_control() -> void:
+	if loot_button == null: return
+	var drop: Dictionary = nearest_drop()
+	loot_button.visible = active and game.started and not game._modal_open() and (not drop.is_empty() or not pickup_pending.is_empty())
+	loot_button.disabled = not pickup_pending.is_empty() or defeated
+	if not pickup_pending.is_empty(): loot_button.text = "Picking up…"
+	elif not drop.is_empty():
+		loot_button.text = "Pick up %s ×%d" % [str(item_info("item:%d" % int(drop.id)).get("name", "item")), int(drop.amount)]
+
 
 func collect_nearby() -> void:
 	# Movement animation may finish before Walk_Reply. Keep this intent until confirmed.
@@ -739,7 +902,7 @@ func collect_nearby() -> void:
 func refresh_game_ui() -> void:
 	game.quest_label.text = "%s\n%d nearby players  ·  %d NPCs" % [str(game.world.get("name", "Area %s" % str(player.get("map_id", "")))), nearby_count(), npcs.size()]
 	game.quest_hint.text = "Progress is saved by your server."
-	game.coin_label.text = "◈  %d coins" % game.coins
+	game.coin_label.text = "%d Gold" % game.coins
 	game.location_label.text = "%s  /  %d, %d" % [str(player.get("name", "Player")), game.player_tile.x, game.player_tile.y]
 	game.health_label.visible = false
 	game.health_label.text = "HP %d / %d" % [int(player.get("hp", 0)), int(player.get("max_hp", player.get("maxhp", 0)))]
@@ -799,11 +962,19 @@ func character_graphic(record: Dictionary) -> Dictionary:
 	if equipment_graphics.size() != 9: return {}
 	if int(record.get("gender", 1)) != 1 or int(record.get("race", 0)) != 0 or int(record.get("hairstyle", 1)) != 1 or int(record.get("haircolor", 0)) != 0: return {}
 	if int(equipment_graphics[6]) != 0 or int(equipment_graphics[7]) != 0: return {}
-	if int(equipment_graphics[0]) not in [0, 1] or int(equipment_graphics[4]) not in [0, 1] or int(equipment_graphics[8]) not in [0, 4]: return {}
-	var key: String = "a%d_b%d_w%d" % [int(int(equipment_graphics[4]) == 1), int(int(equipment_graphics[0]) == 1), int(int(equipment_graphics[8]) == 4)]
+	if int(equipment_graphics[0]) not in [0, 1] or int(equipment_graphics[4]) not in [0, 1]: return {}
 	var characters: Dictionary = game.manifest.get("characters", {}) as Dictionary
+	if int(equipment_graphics[8]) not in [0, 4]:
+		var weapon_variants: Dictionary = characters.get("weapon_variants", {}) as Dictionary
+		return weapon_variants.get("a%d_b%d_g%d" % [int(equipment_graphics[4]), int(equipment_graphics[0]), int(equipment_graphics[8])], {}) as Dictionary
+	var key: String = "a%d_b%d_w%d" % [int(int(equipment_graphics[4]) == 1), int(int(equipment_graphics[0]) == 1), int(int(equipment_graphics[8]) == 4)]
 	var variants: Dictionary = characters.get("hero_variants", {}) as Dictionary
 	return variants.get(key, {}) as Dictionary
+
+func npc_health_fraction(index: int) -> float:
+	var health: Dictionary = npc_health.get(index, {}) as Dictionary
+	if health.is_empty() or Time.get_ticks_msec() >= int(health.get("until", 0)): return -1.0
+	return clampf(float(health.get("percent", 100)) / 100.0, 0.0, 1.0)
 
 func _process_events(events: Array) -> void:
 	for raw: Variant in events:
@@ -814,6 +985,11 @@ func _process_events(events: Array) -> void:
 			npc_attack_until[int(event.get("npc_index", -1))] = Time.get_ticks_msec() / 1000.0 + 0.36
 			for npc: Dictionary in npcs:
 				if int(npc.index) == int(event.get("npc_index", -1)): npc.direction = int(event.get("direction", 0))
+			if int(event.get("player_id", -1)) == int(player.get("player_id", -2)):
+				var index: int = int(event.get("npc_index", -1))
+				var health: Dictionary = npc_health.get(index, {"percent": 100}) as Dictionary
+				health["until"] = Time.get_ticks_msec() + 8000
+				npc_health[index] = health
 		if kind == "peer_attack": npc_attack_until["player:" + str(int(event.get("player_id", -1)))] = Time.get_ticks_msec() / 1000.0 + 0.36
 		if kind == "player_damage":
 			game.player_hit_flash = 0.22
@@ -822,17 +998,33 @@ func _process_events(events: Array) -> void:
 				defeated = true
 				pending_inputs.clear()
 				waiting_for_walk = false
-				game._cancel_controls()
+				game._cancel_controls(true)
 				game._toast("You were defeated. Returning to your respawn point…")
 		if kind == "map_transition" and str(event.get("reason", "")) == "death_respawn": game._toast("You have returned to your respawn point.")
 		if kind == "door_locked": game._toast("This door needs a key.")
 		if kind in ["npc_damage", "npc_killed"]:
+			var index: int = int(event.get("npc_index", -1))
+			if kind == "npc_damage": npc_health[index] = {"percent": clampi(int(event.get("hp_percent", 100)), 0, 100), "until": Time.get_ticks_msec() + 8000}
+			else: npc_health.erase(index)
 			for npc: Dictionary in npcs:
 				if int(npc.get("index", -1)) == int(event.get("npc_index", -2)):
 					var tile: Vector2i = Vector2i(int(npc.get("x", 0)), int(npc.get("y", 0)))
 					game.damage_numbers.append({"position": game.tile_position(tile) + Vector2(0, -44), "value": str(int(event.get("damage", 0))), "time": 0.8})
 			if kind == "npc_killed":
-				game._toast("Level %d reached! Stat points are available in Character Stats." % int(event.level_up) if event.has("level_up") else "Enemy defeated. Its drops belong to the online world.")
+				var drop: Dictionary = event.get("drop", {}) as Dictionary
+				if int(drop.get("uid", 0)) > 0:
+					drop_permissions[int(drop.uid)] = {"owner": int(event.get("player_id", 0)), "until": Time.get_ticks_msec() + 30000}
+					game._toast(("%s ×%d dropped. Tap Pick up." if int(event.get("player_id", 0)) == int(player.get("player_id", -1)) else "%s ×%d is reserved for another player.") % [str(item_info("item:%d" % int(drop.id)).get("name", "Item")), int(drop.amount)])
+				else: game._toast("Enemy defeated.")
+				if event.has("level_up"): game._toast("Level %d reached! Stat points are available in Character Stats." % int(event.level_up))
+		if kind == "pickup":
+			network_metrics.pickups = int(network_metrics.pickups) + 1
+			pickup_pending.erase(int(event.get("uid", 0)))
+			game._play_sound("pickup")
+			game._toast("Picked up %s ×%d." % [str(item_info("item:%d" % int(event.get("item_id", 0))).get("name", "Item")), int(event.get("amount", 0))])
+		if kind == "pickup_failed":
+			pickup_pending.erase(int(event.get("uid", 0)))
+			game._toast(str(event.get("message", "The server refused this pickup.")))
 
 func _slot_name(kind: String) -> String:
 	return str({"hat": "head", "shield": "offhand"}.get(kind, kind))

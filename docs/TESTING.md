@@ -1,5 +1,37 @@
 # Validation scope
 
+Version 0.10 adds native streaming/pickup regressions, delayed real-scene touch
+and Rat-chase tests, secure session handoff, native wrong-password rejection,
+legacy hash recovery, larger joystick capture and six original weapon
+appearances. A live Godot test equips all six weapons with five automatic
+Remove-ACK-then-Add swaps, checking exact bag conservation, native receipts and
+original appearance bindings. Battle health strips use native HP percentages and
+clear on death, timeout and map changes. The original Gold icon replaces the HUD
+glyph. Parser/catalog tests now total 23.
+
+Reproduce additional checks against local services:
+
+```sh
+python3 -m unittest discover -s server -p test_live_state.py -v
+/path/to/Godot --headless --path client --script res://tests/network_regressions.gd
+python3 server/test_reconnect.py --deps-dir work/server-build/python
+python3 server/test_weapons.py --godot /path/to/Godot
+```
+
+`latency_proxy.py` binds loopback only and pipelines packets without logging
+credentials. Run it against port 8183 with `--port 8194 --delay-ms 120 --jitter-ms 80`
+before `test_mobile_flow.py --godot /path/to/Godot`. A second proxy on 8195 with
+300/150 ms delay/jitter supports `test_mobile_flow.py --chase --url
+ws://127.0.0.1:8195/ws --godot /path/to/Godot`. These stage only new dev accounts.
+The known Rat Tail is a controlled player drop; the independent native kill-loot
+test covers actual random NPC drops and ownership.
+
+APK 0.10.0 was signed, checked for 16-KiB ZIP alignment and installed on the
+Galaxy S23 Ultra; offline save bytes matched before and after the update.
+
+`gameplay-v10-report.json` contains sanitized measured results. Private accounts,
+recovery passwords, device saves and fixture credentials are excluded.
+
 Version 0.9 restores the supplied original Version-1 per-NPC shop catalogue
 (48 trade/craft records) and 152 NPC drop-table entries. The public runtime was
 backed up before the change; existing accounts, inventory and PasswordSalt were

@@ -12,7 +12,7 @@ from pathlib import Path
 import zipfile
 from collections import OrderedDict
 from PIL import ImageOps
-from import_eo import Reader, decode_number, parse_emf, PEBitmaps, read_member, write_json, LAYER_GFX
+from import_eo import Reader, decode_number, parse_emf, PEBitmaps, read_member, write_json, LAYER_GFX, export_hero
 
 
 def pub_records(data,signature,size,names=1):
@@ -69,6 +69,7 @@ SERVER_BLOCKING_SPECS={0,1,2,3,4,5,6,7,9,16,18,20,21,22,23,24,25,26,27,28}
 
 MONEY_GRAPHICS=[{'minimum_amount':amount,'ground':f'23:{gid}'}
                 for amount,gid in [(0,269),(2,271),(100,273),(10000,275),(100000,277)]]
+WEAPON_APPEARANCE_ITEMS=(19,22,32,37,38,281)
 
 
 def npc_frame_offset(metadata,direction,state,index):
@@ -179,6 +180,13 @@ def export_catalog(runtime:Path,graphics_zip:Path,out:Path,map_id=5):
             name=f'gfx/023_{gid:05}.png';img.save(out/name)
             manifest['graphics'][graphic_key]={'path':'res://content/'+name,'width':img.width,'height':img.height}
         catalog['money_graphics']=MONEY_GRAPHICS
+        manifest['characters']['weapon_variants']={}
+        for item_id in WEAPON_APPEARANCE_ITEMS:
+            item=items[str(item_id)];doll=item['doll_graphic']
+            for armor_on in (0,1):
+                for boots_on in (0,1):
+                    key=f'a{armor_on}_b{boots_on}_g{doll}'
+                    manifest['characters']['weapon_variants'][key]=export_hero(out,image,armor_on,boots_on,doll,key)
         npc_graphics={}
         for map_data in maps.values():
             for spawn in map_data['npc_spawns']:
@@ -197,6 +205,7 @@ def export_catalog(runtime:Path,graphics_zip:Path,out:Path,map_id=5):
     catalog['appearance_bindings']={'snapshot_equipment_order':['boots','reserved','reserved','reserved','armor','reserved','hat','shield','weapon'],
         'character_selection_equipment_order':['boots','armor','hat','shield','weapon'],
         'rendered_appearance':{'gender':1,'race':0,'hairstyle':1,'haircolor':0,'armor_doll_graphic':1,'boots_doll_graphic':1,'weapon_doll_graphic':4},
+        'additional_weapon_items':list(WEAPON_APPEARANCE_ITEMS),
         'reference':'etheos Character::AddPaperdollData B000A0HSW / BAHSW'}
     catalog['available_npc_graphics']=sorted(int(g) for g in manifest['characters']['npcs'])
     catalog['missing_graphics']=missing

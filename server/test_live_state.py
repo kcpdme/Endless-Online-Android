@@ -1,0 +1,52 @@
+"""Regression for original EO movement ownership and nonblocking collection."""
+import time, unittest
+from collections import deque
+from copy import deepcopy
+from eo_session import EOError,number
+from live_session import LiveSession
+
+def fixture():
+    s=LiveSession.__new__(LiveSession)
+    s.pending_moves=deque();s.position_seq=0;s.last_input_seq=0;s.pending_pickups={};s.drop_guards={}
+    s.metrics=dict(moves=0,walk_acks=0,refreshes=0,corrections=0,collects=0,pickups=0)
+    s.dirty=False;s.position_update=False;s.correction=False;s.expect_walk_refresh=False;s.sent_state=None
+    s.state={'map_id':5,'self':{'player_id':100,'map_id':5,'x':40,'y':40,'direction':0},'characters':[],'npcs':[],'items':[]}
+    s.stats={};s.inventory=[];s.events=[];s.timestamp=1000;s.last_walk=0;s.warp=None;s.player_id=100;s.weight=0;s.max_weight=70
+    s.sent=[];s.send=lambda f,a,p=b'':s.sent.append((f,a,p))
+    return s
+
+class StreamStateTests(unittest.TestCase):
+    def test_moving_npc_race_uses_original_native_walk_instead_of_synthetic_rejection(self):
+        s=fixture();s.state['npcs']=[dict(index=1,id=2,x=41,y=40)]
+        result=s.move(3,1,5,41,40)
+        self.assertTrue(result['sent']);self.assertEqual(s.sent[0][:2],(6,8));self.assertFalse(s.correction)
+        s.apply_event(6,3,b'\xff\xff')
+        self.assertEqual((s.state['self']['x'],s.position_seq),(41,1))
+    def test_attack_queues_after_walk_without_waiting_another_round_trip(self):
+        s=fixture();s.move(3,1,5,41,40)
+        self.assertTrue(s.strike(3)['sent'])
+        self.assertEqual([entry[:2] for entry in s.sent],[(6,8),(11,10)])
+    def test_unchanged_refresh_is_not_a_position_correction(self):
+        s=fixture();s.parse_snapshot=lambda r:deepcopy(s.state)
+        s.apply_event(25,3,b'')
+        self.assertFalse(s.correction);self.assertEqual(s.metrics['corrections'],0)
+    def test_collect_returns_without_wait_and_does_not_block_movement(self):
+        s=fixture();s.state['items']=[dict(uid=7,id=249,amount=2,x=40,y=40)]
+        before=time.monotonic();self.assertTrue(s.collect(7)['sent']);self.assertLess(time.monotonic()-before,.01)
+        self.assertTrue(s.move(3,1,5,41,40)['sent'])
+        s.apply_event(14,27,number(7,2)+number(249,2)+number(2,3)+number(2,1)+number(70,1))
+        self.assertEqual(s.inventory,[dict(id=249,amount=2)]);self.assertFalse(s.pending_pickups);self.assertFalse(s.state['items'])
+        self.assertEqual(s.events[-1]['kind'],'pickup')
+    def test_failed_collect_expires_as_event_without_socket_wait(self):
+        s=fixture();s.pending_pickups[7]=time.monotonic()-1;s.poll_actions()
+        self.assertEqual(s.events[-1]['kind'],'pickup_failed');self.assertTrue(s.dirty)
+    def test_known_other_owner_is_reported_without_stalling(self):
+        s=fixture();s.state['items']=[dict(uid=7,id=249,amount=1,x=40,y=40)];s.drop_guards[7]=(200,time.monotonic()+30)
+        with self.assertRaisesRegex(EOError,'reserved for another player'):s.collect(7)
+        self.assertFalse(s.sent)
+    def test_partial_pickup_keeps_uncollected_amount(self):
+        s=fixture();s.state['items']=[dict(uid=7,id=249,amount=4,x=40,y=40)]
+        s.apply_event(14,27,number(7,2)+number(249,2)+number(2,3)+number(70,1)+number(70,1))
+        self.assertEqual(s.state['items'][0]['amount'],2)
+
+if __name__=='__main__':unittest.main()
