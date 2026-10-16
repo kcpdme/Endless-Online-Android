@@ -22,6 +22,7 @@ class LiveSession(Session):
         direction=int(direction);seq=int(seq);x=int(x);y=int(y)
         if direction not in range(4) or not self.state or not self.state.get('self'):raise EOError('Enter the world before moving')
         if self.warp:raise EOError('Wait for the map transition')
+        if self.stats.get('dead'):return {'sent':False,'input_seq':seq,'dead':True}
         if seq<=self.last_input_seq:raise EOError('Movement sequence is stale')
         if len(self.pending_moves)>=4:raise EOError('Wait for outstanding movement')
         if int(map_id)!=self.state['map_id']:raise EOError('Movement map changed')
@@ -30,11 +31,45 @@ class LiveSession(Session):
         # may deliver valid, evenly spaced client inputs in a burst. Never sleep here.
         now=time.monotonic()
         if open_door:self.send(34,13,number(x,1)+number(y,1))
-        self.timestamp+=42
-        self.send(6,8,number(direction,1)+number(self.timestamp,3)+number(x,1)+number(y,1))
-        self.pending_moves.append(dict(seq=seq,x=x,y=y,direction=direction))
+        move=dict(seq=seq,x=x,y=y,direction=direction)
+        origin=[self.state['self']['x'],self.state['self']['y']]
+        for previous in self.pending_moves:
+            if not previous.get('blocked'):
+                dx,dy=[(0,1),(-1,0),(0,-1),(1,0)][previous['direction']];origin[0]+=dx;origin[1]+=dy
+        dx,dy=[(0,1),(-1,0),(0,-1),(1,0)][direction]
+        move['blocked']=any((n['x'],n['y'])==(origin[0]+dx,origin[1]+dy) for n in self.state['npcs'])
+        if not move['blocked']:
+            self.timestamp+=42
+            self.send(6,8,number(direction,1)+number(self.timestamp,3)+number(x,1)+number(y,1))
+        self.pending_moves.append(move)
         self.last_walk=now;self.last_input_seq=seq
-        return {'sent':True,'input_seq':seq}
+        self._drain_blocked()
+        return {'sent':not move['blocked'],'input_seq':seq,**({'blocked':'npc'} if move['blocked'] else {})}
+
+    def _drain_blocked(self):
+        while self.pending_moves and self.pending_moves[0].get('blocked'):
+            move=self.pending_moves.popleft();self.position_seq=move['seq']
+            self.position_update=True;self.correction=True;self.dirty=True
+            self.events.append({'kind':'move_blocked','reason':'npc','input_seq':move['seq']})
+
+    def strike(self,direction):
+        direction=int(direction)
+        if direction not in range(4) or not self.state:raise EOError('Enter the world before attacking')
+        if self.warp or self.stats.get('dead'):return {'sent':False,'dead':True}
+        if self.pending_moves:raise EOError('Wait for movement confirmation before attacking')
+        # Original Attack_Use accepts 48+ timestamp ticks; >=60 forces old facing.
+        # Send the desired direction directly, avoiding Face's additional 120 ms queue slot.
+        self.timestamp+=50
+        self.send(11,10,number(direction,1)+number(self.timestamp,3))
+        self.state['self']['direction']=direction
+        return {'sent':True,'attack_seconds':0.52}
+
+    def spend_stat(self,stat_id):
+        stat_id=int(stat_id)
+        if stat_id not in range(1,7) or self.stats.get('stat_points',0)<=0:raise EOError('No available stat point')
+        if self.pending_moves or self.warp or self.stats.get('dead'):raise EOError('Wait until you are standing safely')
+        self.send(16,7,number(1,1)+number(stat_id,2));self.wait(16,8,timeout=3)
+        return self.snapshot()
 
     def _resolve(self,correction=False,consume=True):
         if consume and self.pending_moves:
@@ -44,13 +79,23 @@ class LiveSession(Session):
                 me=self.state['self'];dx,dy=[(0,1),(-1,0),(0,-1),(1,0)][move['direction']]
                 me.update(x=me['x']+dx,y=me['y']+dy,direction=move['direction'])
                 self.expect_walk_refresh=(me['x'],me['y'])!=(move['x'],move['y'])
+                # Native EO relies on clients to discard entities that leave the view diamond.
+                # Match the pinned world's SeeDistance=11; stale NPCs must not become invisible walls.
+                for collection in ('characters','npcs','items'):
+                    self.state[collection]=[row for row in self.state[collection] if abs(row['x']-me['x'])+abs(row['y']-me['y'])<=11]
         self.position_update=True;self.correction=correction;self.dirty=True
+        self._drain_blocked()
 
     def control_packet(self,f,a,p):
+        was_dead=self.stats.get('dead',False)
         handled=super().control_packet(f,a,p)
         if handled and (f,a)==(19,5):
             if self.pending_moves:self.position_seq=self.pending_moves[-1]['seq']
             self.pending_moves.clear();self.expect_walk_refresh=False;self.position_update=True;self.correction=True;self.dirty=True
+            if was_dead:self.events[-1]['reason']='death_respawn'
+            self.stats['dead']=False
+            from eo_stats import sync_position_stats
+            sync_position_stats(self)
         return handled
 
     @staticmethod
@@ -110,10 +155,10 @@ class LiveSession(Session):
                 if x>=252 or y>=252:self.state['npcs']=[n for n in self.state['npcs'] if n['index']!=index]
                 elif npc:npc.update(x=x,y=y,direction=direction)
                 self.dirty=True
-            if p[:1]==b'\xff' and len(p)>=18:
-                q=Reader(p[4:]);pid=q.num(2)
-                if pid==self.player_id:
-                    q=Reader(p[-4:]);self.state['self'].update(hp=q.num(2),tp=q.num(2));self.dirty=True
+            if self.events[-1].get('kind') in ('player_damage','npc_attack'):
+                self.dirty=True
+                if self.events[-1].get('kind')=='player_damage' and self.events[-1]['dead']:
+                    self.position_seq=self.last_input_seq;self.pending_moves.clear()
         elif (f,a)==(26,16) and len(p)==5:
             r.take(3);index=r.num(2);self.state['npcs']=[n for n in self.state['npcs'] if n['index']!=index];self.dirty=True
         elif f==26 and a in (2,16) and self.events[-1].get('kind')=='npc_killed':
@@ -131,7 +176,7 @@ class LiveSession(Session):
             pid=r.num(2);direction=r.num()
             row=next((c for c in self.state['characters'] if c['player_id']==pid),None)
             if row:row['direction']=direction;self.dirty=True
-        elif self.events[-1].get('kind') in ('npc_damage','equip','unequip','door_locked','drop'):
+        elif self.events[-1].get('kind') in ('npc_damage','equip','unequip','door_locked','drop','recover','stat_changed','npc_attack','peer_attack'):
             self.dirty=True
 
     def snapshot(self):

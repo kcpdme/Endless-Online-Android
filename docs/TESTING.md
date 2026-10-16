@@ -1,5 +1,21 @@
 # Validation scope
 
+Version 0.8 adds real NPC collision, nonblocking 520 ms attacks, health/TP bars,
+hit/death feedback, valid Aeven respawn, character attributes/stat allocation,
+and original item bonuses/requirements. `server/test_combat.py` verifies real
+outgoing damage, NPC retaliation, point persistence, equipment-derived stats,
+zero HP on death and 50% native HP recovery after the queued respawn. It creates
+and stages only a fresh dev fixture. The Godot movement regression also covers
+NPC blocking, attack recovery before movement, death input suppression,
+distinct INT/WIS display and Android Back. A real 60-FPS Godot held-attack probe
+recorded five swings at 522–543 ms intervals, with no idle refresh during the
+held attack; an outstanding strike receipt did not block another strike.
+
+```sh
+python3 server/test_combat.py --state-dir /path/to/server-state
+```
+
+
 Version 0.7 is signed, verified for 16-KiB ZIP alignment and installed on the
 physical Galaxy S23 Ultra. Its existing offline save is byte-for-byte identical
 before and after updating. The same APK passes hosted WSS login/world entry on

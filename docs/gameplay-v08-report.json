@@ -1,0 +1,42 @@
+{
+  "runtime": "Real native EO v28 / pinned etheos",
+  "database_reset": false,
+  "welcome_attribute_order_and_native_point_allocation": true,
+  "equipment_damage_armor_totals_and_unequip": true,
+  "allocated_point_persisted": true,
+  "authoritative_npc_collision": true,
+  "nonblocking_half_second_attacks": true,
+  "observed_adjacent_strike_intervals_seconds": [
+    0.524,
+    0.525,
+    0.524,
+    0.524
+  ],
+  "npc_damage_to_player": true,
+  "player_damage_to_npc": true,
+  "dead_input_blocked_and_hp_zero": true,
+  "respawn_hp": 12,
+  "respawn_max_hp": 25,
+  "death_respawn_verified": true,
+  "observed_respawn_delay_seconds": 2.271,
+  "respawn_map": 5,
+  "respawn_position": [
+    40,
+    40
+  ],
+  "result": "passed",
+  "version": "0.8.0",
+  "environment": "Existing AWS hosted world, using fresh dev fixture only",
+  "phone_update_save_bytes_identical": true,
+  "godot_held_attack": {
+    "intervals_ms": [
+      522,
+      542,
+      543,
+      538
+    ],
+    "outstanding_receipt_does_not_block": true,
+    "refreshes_during_held_attack": 0,
+    "swings": 5
+  }
+}

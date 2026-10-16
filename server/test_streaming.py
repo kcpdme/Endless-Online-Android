@@ -45,41 +45,42 @@ def main():
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--url',default='ws://127.0.0.1:8183/ws');p.add_argument('--deps-dir',type=pathlib.Path,default=DEFAULT_TARGET)
     p.add_argument('--state-dir');p.add_argument('--report',type=pathlib.Path);a=p.parse_args();load(a.deps_dir)
     fixtures=[]
-    for _ in range(4):
+    for _ in range(5):
         s,f=provision();s.close();fixtures.append(f)
     time.sleep(.6)
     dbpath=state_path(a.state_dir)/'runtime/database.sdb'
     # Stage only our three newly created, disconnected dev fixtures.
     with sqlite3.connect(dbpath) as db:
-        for f,(x,y) in zip(fixtures,[(40,40),(40,41),(33,1),(0,0)]):
+        for f,(x,y) in zip(fixtures,[(59,13),(59,14),(33,1),(0,0),(40,40)]):
             assert f['username'].startswith('dev') and f['character_name'].startswith('dev')
             assert db.execute('SELECT account FROM characters WHERE name=?',(f['character_name'],)).fetchone()[0]==f['username']
             db.execute('UPDATE characters SET map=5,x=?,y=? WHERE name=? AND account=?',(x,y,f['character_name'],f['username']))
     first=Client(a.url,fixtures[0]);observer=Client(a.url,fixtures[1]);report={};clients=[first,observer]
     try:
         pid=first.entry['player']['player_id'];first.worlds.clear();observer.worlds.clear()
-        receipt=first.call('move',direction=3,input_seq=1,map_id=5,x=41,y=40)
+        receipt=first.call('move',direction=3,input_seq=1,map_id=5,x=60,y=13)
         assert receipt=={'sent':True,'input_seq':1}
         world=first.until(lambda w:w['position_seq']==1 and w['position_update'])
-        assert (world['player']['x'],world['player']['y'])==(41,40) and not world['correction']
-        peer=observer.until(lambda w:any(c['player_id']==pid and (c['x'],c['y'])==(41,40) for c in w['players']))
+        assert (world['player']['x'],world['player']['y'])==(60,13) and not world['correction']
+        peer=observer.until(lambda w:any(c['player_id']==pid and (c['x'],c['y'])==(60,13) for c in w['players']))
         report['native_walk_ack_and_peer_push_without_refresh']=True
-        initial={n['index']:(n['x'],n['y']) for n in observer.entry['npcs']}
-        observer.until(lambda w:any(n['index'] in initial and (n['x'],n['y'])!=initial[n['index']] for n in w['npcs']),20)
+        npcwatch=Client(a.url,fixtures[4]);clients.append(npcwatch)
+        initial={n['index']:(n['x'],n['y']) for n in npcwatch.entry['npcs']}
+        npcwatch.until(lambda w:any(n['index'] in initial and (n['x'],n['y'])!=initial[n['index']] for n in w['npcs']),20)
         report['npc_movement_push_without_refresh']=True
-        # Deliberately wrong client coordinates: native server moves east to 42,40,
+        # Deliberately wrong client coordinates: native server moves east to 61,13,
         # then corrects the bad prediction. It must not consume the next input twice.
         first.worlds.clear()
         first.call('move',direction=3,input_seq=2,map_id=5,x=99,y=99)
         world=first.until(lambda w:w['position_seq']==2 and w['correction'])
-        assert (world['player']['x'],world['player']['y'])==(42,40)
+        assert (world['player']['x'],world['player']['y'])==(61,13)
         report['authoritative_mismatch_correction']=True
         first.worlds.clear()
         # Burst simulates jitter delivering two correctly timed client inputs together.
-        first.call('move',direction=1,input_seq=3,map_id=5,x=41,y=40)
-        first.call('move',direction=1,input_seq=4,map_id=5,x=40,y=40)
+        first.call('move',direction=1,input_seq=3,map_id=5,x=60,y=13)
+        first.call('move',direction=1,input_seq=4,map_id=5,x=59,y=13)
         world=first.until(lambda w:w['position_seq']==4)
-        assert (world['player']['x'],world['player']['y'])==(40,40)
+        assert (world['player']['x'],world['player']['y'])==(59,13)
         report['bounded_jitter_burst_acknowledged']=True
         warp=Client(a.url,fixtures[2]);clients.append(warp)
         warp.call('move',direction=2,input_seq=1,map_id=5,x=33,y=0)

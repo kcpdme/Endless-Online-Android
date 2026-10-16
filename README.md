@@ -23,6 +23,8 @@ The Android build defaults to **`wss://eo.kcpd.top/ws`**. Create an account and 
 
 The world pack now includes all **282 maps**, 3,945 original warp records and their graphics. Walking into a valid exit changes the rendered map only after the real server completes its warp handshake. Doors open through native EO requests; keys and level restrictions remain server-controlled. Eight malformed legacy warp destinations on map 47 are blocked rather than sending a player outside a map. NPC shops, quests, chat, trading, spells, full character customization and additional equipment appearances remain future work.
 
+Version 0.8 adds solid NPC collision, held attacks about every 0.52 seconds online, visible HP/TP and incoming hits, and a clear death/respawn sequence. Open **Person → Stats** for the six original attributes, server-calculated combat totals, experience and earned stat points. Select equipment and choose **Details** to inspect its original bonuses and requirements. Stat spending, combat and equipment totals are authoritative server operations.
+
 Version 0.7 uses 400 ms walking animations with a 420 ms input cadence, bounded local prediction and server reconciliation. Nearby characters interpolate and animate between server updates. Movement never waits for a full map refresh.
 
 The bag always displays Gold, including zero. Repeated offline training drops add Daggers to a stack; equipping one reduces the stored stack by one. Online quantities come from actual server inventory and pickup acknowledgements. Wide Android screens show more of the world, with controls anchored inside the device safe area.

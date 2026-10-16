@@ -147,5 +147,5 @@ func is_idle() -> bool:
 
 func has_blocking_requests() -> bool:
 	for record: Variant in pending.values():
-		if str(record.get("op", "")) != "move": return true
+		if str(record.get("op", "")) not in ["move", "strike"]: return true
 	return false

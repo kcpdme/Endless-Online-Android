@@ -1,0 +1,11 @@
+{
+  "native_walk_ack_and_peer_push_without_refresh": true,
+  "npc_movement_push_without_refresh": true,
+  "authoritative_mismatch_correction": true,
+  "bounded_jitter_burst_acknowledged": true,
+  "streamed_map_roundtrip_and_content_negotiation": true,
+  "native_rejected_step_corrected": true,
+  "result": "passed",
+  "transport": "Real WebSocket -> live adapter -> native EO -> etheos",
+  "database_reset": false
+}

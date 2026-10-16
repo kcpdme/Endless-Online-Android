@@ -7,6 +7,8 @@ const ClassicPaperdoll = preload("res://scripts/classic_paperdoll.gd")
 const HudIconButton = preload("res://scripts/hud_icon_button.gd")
 const WeaponButton = preload("res://scripts/weapon_button.gd")
 const WoodGrain = preload("res://scripts/wood_grain.gd")
+const CharacterStats = preload("res://scripts/character_stats.gd")
+const ONLINE_ATTACK_COOLDOWN: float = 0.52
 const ATTACK_COOLDOWN: float = 0.90
 const ATTACK_SWING_DURATION: float = 0.26
 const SAVE_PATH: String = "user://aster_vale_save.json"
@@ -34,6 +36,8 @@ var hero: Dictionary = {}
 var monster: Dictionary = {}
 var joystick: Joystick
 var paperdoll: ClassicPaperdoll
+var stats_ui: CharacterStats
+var player_hit_flash: float = 0.0
 var character_panel: Control
 var equipment_detail: Label
 var remove_button: Button
@@ -221,7 +225,7 @@ func _world_tile(point: Vector2) -> Vector2i:
 
 func _walkable(tile: Vector2i) -> bool:
 	if tile.x < 0 or tile.y < 0 or tile.x >= int(world.get("width", 0)) or tile.y >= int(world.get("height", 0)): return false
-	if online_mode: return not server_blocked.has(tile)
+	if online_mode: return not server_blocked.has(tile) and not online.npc_occupies(tile)
 	return not blocked.has(tile) and int(ground.get(tile, int(world.get("fill_tile", 0)))) > 0
 
 func _process(delta: float) -> void:
@@ -229,8 +233,11 @@ func _process(delta: float) -> void:
 	animation_clock += delta
 	attack_clock = maxf(0.0, attack_clock - delta)
 	swing_clock = maxf(0.0, swing_clock - delta)
-	if attack_button != null: attack_button.cooldown_fraction = attack_clock / ATTACK_COOLDOWN
+	if attack_button != null: attack_button.cooldown_fraction = attack_clock / (ONLINE_ATTACK_COOLDOWN if online_mode else ATTACK_COOLDOWN)
 	hit_flash = maxf(0.0, hit_flash - delta)
+	player_hit_flash = maxf(0.0, player_hit_flash - delta)
+	if stats_ui != null:
+		stats_ui.vitals.visible = online_mode and online.active and started and not _modal_open() and not welcome.visible
 	if debug_snapshot_time > 0.0 and time_alive > debug_snapshot_time:
 		debug_snapshot_time = -1.0
 		var snapshot: Image = get_viewport().get_texture().get_image()
@@ -248,7 +255,7 @@ func _process(delta: float) -> void:
 			enemy_health = 3
 			_place_enemy()
 	if not _modal_open():
-		if attack_touch_id != -1 and attack_clock <= 0.0 and (enemy_health > 0 or online_mode):
+		if attack_touch_id != -1 and attack_clock <= 0.0 and (enemy_health > 0 or online_mode) and (not online_mode or (_input_direction() == Vector2i.ZERO and route.is_empty())):
 			_attack()
 		if moving:
 			step_progress = minf(1.0, step_progress + delta / step_duration)
@@ -344,9 +351,10 @@ func _joystick_begin(pointer: Vector2, pointer_id: int) -> void:
 	stick = Vector2.ZERO
 
 func _modal_open() -> bool:
-	return (online != null and online.panel != null and online.panel.visible) or (inventory != null and inventory.visible) or (menu != null and menu.visible) or (character_panel != null and character_panel.visible)
+	return (online != null and online.panel != null and online.panel.visible) or (inventory != null and inventory.visible) or (menu != null and menu.visible) or (character_panel != null and character_panel.visible) or (stats_ui != null and stats_ui.is_open())
 
 func _begin_attack(pointer_id: int) -> void:
+	if online_mode: route.clear()
 	if enemy_health > 0 or online_mode:
 		attack_touch_id = pointer_id
 		attack_button.holding = true
@@ -505,7 +513,7 @@ func _attack() -> void:
 	if online_mode:
 		if online.active and started and not _modal_open() and attack_clock <= 0.0:
 			if not online.request_attack(): return
-			attack_clock = ATTACK_COOLDOWN
+			attack_clock = ONLINE_ATTACK_COOLDOWN
 			swing_clock = ATTACK_SWING_DURATION
 			animation_clock = 0.0
 			_play_sound("attack")
@@ -632,7 +640,7 @@ func _frame(character: Dictionary, direction: String, state: String, phase: floa
 	if raw is Array and not (raw as Array).is_empty():
 		var frames: Array = raw as Array
 		var frame_index: int = int((phase if phase >= 0.0 else animation_clock) * 9.0) % frames.size() if phase >= 0.0 or (moving and state != "idle") or bool(character.get("animate_idle", false)) else 0
-		if state == "attack": frame_index = mini(int((1.0 - swing_clock / ATTACK_SWING_DURATION) * frames.size()), frames.size() - 1)
+		if state == "attack": frame_index = mini(int((phase / 0.36 if phase >= 0.0 else 1.0 - swing_clock / ATTACK_SWING_DURATION) * frames.size()), frames.size() - 1)
 		return frames[frame_index] as Dictionary
 	return {}
 
@@ -653,7 +661,7 @@ func _draw_player() -> void:
 	draw_circle(Vector2.ZERO, 10.0, Color(0, 0, 0, 0.30))
 	draw_set_transform(Vector2.ZERO)
 	var state: String = "attack" if swing_clock > 0.0 else ("frames" if moving else "idle")
-	if not _draw_character_frame(_active_hero(), player_world, facing, state):
+	if not _draw_character_frame(_active_hero(), player_world, facing, state, Color("ff8888") if player_hit_flash > 0.0 else Color.WHITE):
 		# Explicitly identified placeholder if the optional character conversion is unavailable.
 		draw_circle(player_world + Vector2(0, -18), 9, Color("82bfa2"))
 		draw_circle(player_world + Vector2(0, -32), 6, GOLD)
@@ -795,6 +803,8 @@ func _build_ui() -> void:
 	_build_welcome(root)
 	_build_inventory(root)
 	_build_paperdoll(root)
+	stats_ui = CharacterStats.new()
+	stats_ui.build(self, root)
 	_build_menu(root)
 	online.build_ui(root)
 
@@ -897,7 +907,10 @@ func _build_inventory(parent: Node) -> void:
 	var detail: Panel = _panel(card, Vector2(26, 446), Vector2(788, 100), Color("644424"))
 	detail.add_theme_stylebox_override("panel", _wood_style(Color("644424"), Color("bf9555"), 3))
 	item_title = _label(detail, "", Vector2(16, 8), 22)
-	inventory_detail = _label(detail, "", Vector2(16, 39), 16, MUTED)
+	_button(detail, "Details", Vector2(650, 4), Vector2(120, 32), func() -> void: stats_ui.show_item(selected_item))
+	inventory_detail = _label(detail, "", Vector2(16, 39), 15, MUTED)
+	inventory_detail.size = Vector2(756, 56)
+	inventory_detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	equip_button = _button(card, "", Vector2(26, 558), Vector2(788, 46), func() -> void:
 		if _owns_item(selected_item) and not _is_equipped(selected_item): _toggle_equip()
 	, true)
@@ -915,6 +928,8 @@ func _build_paperdoll(parent: Node) -> void:
 	var card: Control = character_panel.get_child(0) as Control
 	_wood_card(card)
 	_label(card, "CHARACTER", Vector2(40, 8), 16, GOLD)
+	_button(card, "Item details", Vector2(440, 2), Vector2(180, 28), func() -> void: stats_ui.show_item(selected_item))
+	_button(card, "Stats", Vector2(640, 2), Vector2(160, 28), func() -> void: stats_ui.show_stats())
 	paperdoll = ClassicPaperdoll.new()
 	paperdoll.game = self
 	paperdoll.position = Vector2(40, 34)
@@ -924,7 +939,9 @@ func _build_paperdoll(parent: Node) -> void:
 	paperdoll.close_requested.connect(func() -> void: character_panel.hide())
 	card.add_child(paperdoll)
 	equipment_slots = paperdoll.slots
-	equipment_detail = _label(card, "Select worn equipment to inspect it.", Vector2(40, 628), 17, TEXT)
+	equipment_detail = _label(card, "Select worn equipment to inspect it.", Vector2(40, 623), 14, TEXT)
+	equipment_detail.size = Vector2(470, 48)
+	equipment_detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	remove_button = _button(card, "Remove", Vector2(520, 625), Vector2(280, 42), func() -> void:
 		if _owns_item(selected_item) and _is_equipped(selected_item): _toggle_equip()
 	)
@@ -1071,8 +1088,10 @@ func _reset_progress() -> void:
 func _refresh_ui() -> void:
 	if quest_label == null: return
 	if online_mode:
+		if stats_ui != null: stats_ui.refresh()
 		online.refresh_game_ui()
 		return
+	health_label.visible = true
 	health_label.text = "Training slime • no player damage"
 	quest_hint.text = "Practice safely. Your progress saves here."
 	if not has_blade:
@@ -1174,6 +1193,8 @@ func _handle_back() -> void:
 	owned_touches.clear()
 	if online != null and online.panel != null and online.panel.visible:
 		online._close_panel()
+	elif stats_ui != null and stats_ui.is_open():
+		stats_ui.hide()
 	elif inventory.visible:
 		inventory.hide()
 	elif character_panel.visible:

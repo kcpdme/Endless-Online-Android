@@ -59,8 +59,33 @@ func _run() -> void:
 	# Input releases still stop local movement immediately.
 	game._cancel_controls()
 	check(not game.moving and game.stick == Vector2.ZERO, "Releasing controls must stop movement")
+	game.attack_clock = 0.2
+	check(not c.can_issue_walk(), "Movement must respect the native attack recovery instead of queuing behind it")
+	game.attack_clock = 0.0
+	# Original client NPC occupancy, health/death feedback and accessible server stats.
+	c.npcs.assign([{"index": 1, "id": 1, "x": 43, "y": 40}])
+	check(not game._can_step(Vector2i(42, 40), Vector2i(1, 0)), "NPC tiles must block the player before prediction")
+	check(game._can_step(Vector2i(42, 40), Vector2i(0, 1)), "An adjacent empty tile must remain walkable")
+	me.hp = 0
+	me.max_hp = 10
+	me.tp = 5
+	me.max_tp = 10
+	me.stats = {"dead": true, "strength": 2, "intelligence": 3, "wisdom": 7, "agility": 5, "constitution": 6, "charisma": 9, "stat_points": 2}
+	c._apply_snapshot({"player": me, "events": [{"kind": "player_damage", "npc_index": 1, "damage": 3, "dead": true}]})
+	check(c.defeated and not c.can_issue_walk() and not c.request_attack() and not game.moving, "Death must stop movement/attacks during delayed native respawn")
+	check(game.stats_ui.hp_bar.value == 0 and not game.damage_numbers.is_empty(), "Real damage must update visible health and hit feedback")
+	check(game.stats_ui.values[1].text == "3" and game.stats_ui.values[2].text == "7", "Stats screen must preserve distinct INT and WIS values")
+	game.stats_ui.show_stats()
+	check(game._modal_open(), "Stats must be a touch-safe modal")
+	game._handle_back()
+	check(not game.stats_ui.is_open(), "Android Back must close the stats screen")
+	me.hp = 10
+	me.x = 40
+	me.stats.dead = false
+	c._apply_snapshot({"player": me, "position_seq": 3, "events": [{"kind": "map_transition", "reason": "death_respawn"}]})
+	check(not c.defeated and game.player_tile == Vector2i(40, 40) and not game.moving, "Death respawn must restore the confirmed position and controls")
 	game.online_mode = false
 	game.queue_free()
 	await process_frame
-	if not failed: print("MOVEMENT PASS: immediate prediction, in-flight replay, no ACK rewind, authoritative correction, remote interpolation, immediate stop")
+	if not failed: print("MOVEMENT PASS: immediate prediction, in-flight replay, no ACK rewind, authoritative correction, remote interpolation, immediate stop, NPC collision, damage/death/respawn, character stats")
 	quit(1 if failed else 0)

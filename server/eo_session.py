@@ -40,7 +40,7 @@ class Session:
     def __init__(self,host='127.0.0.1',port=8078):
         self.sock=socket.create_connection((host,port),timeout=8);self.sock.settimeout(8)
         self.encode_multi=0;self.decode_multi=0;self.seq_start=0;self.counter=1;self.character_id=None;self.state=None;self.characters=[];self.events=[]
-        self.timestamp=1000;self.last_walk=0;self.last_attack=0;self.warp=None;self.map_content={}
+        self.stats={};self.timestamp=1000;self.last_walk=0;self.last_attack=0;self.warp=None;self.map_content={}
         challenge=12345;payload=b'\xff\xff'+number(challenge,3)+b''.join(number(n,1) for n in [0,0,28,0,0])+str(secrets.randbelow(1000000000)+1).encode('ascii')
         self.sock.sendall(number(len(payload),2)+payload)
         init=self.receive_raw()
@@ -221,6 +221,8 @@ class Session:
                 uid=r.num(2);item=r.num(2);x=r.num();y=r.num();amount=r.num(4);damage=r.num(3)
                 event.update(kind='npc_killed',player_id=pid,npc_index=index,damage=damage,drop={'uid':uid,'id':item,'x':x,'y':y,'amount':amount})
         self.events.append(event);self.events=self.events[-100:]
+        from eo_stats import apply_packet
+        apply_packet(self,f,a,p)
     def inventory_add(self,item,amount):
         for row in self.inventory:
             if row['id']==item:row['amount']+=amount;return
@@ -230,7 +232,11 @@ class Session:
         def player(row):
             row=dict(row);row['id']=row['player_id'];row['max_hp']=row['maxhp'];row['max_tp']=row['maxtp'];return row
         me=player(self.state['self']) if self.state.get('self') else None
-        if me:me.update(character_id=self.character_id,inventory=self.inventory,equipment=getattr(self,'equipment',{}))
+        if me:
+            from eo_stats import sync_position_stats
+            sync_position_stats(self)
+            self.stats.update(weight=getattr(self,'weight',0),max_weight=self.stats.get('max_weight',getattr(self,'max_weight',0)))
+            me.update(character_id=self.character_id,inventory=self.inventory,equipment=getattr(self,'equipment',{}),stats=dict(self.stats))
         events=self.events;self.events=[]
         return {'online':True,'player':me,'players':[player(c) for c in self.state['characters']],
                 'npcs':self.state['npcs'],'items':self.state['items'],'events':events,'map_id':self.state['map_id']}

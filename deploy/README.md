@@ -62,3 +62,12 @@ public abuse monitoring and load testing remain separate milestones.
 References: [Caddy WebSocket reverse proxy](https://caddyserver.com/docs/caddyfile/directives/reverse_proxy),
 [Cloudflare WebSockets](https://developers.cloudflare.com/network/websockets/),
 [websockets server API](https://websockets.readthedocs.io/en/17.2/reference/sync/server.html).
+
+### v0.8 combat and respawn
+
+Deploy `eo_stats.py` alongside `eo_session.py`, `live_session.py` and `gateway.py`.
+After making a private database/config backup, run `server/configure_gameplay.py`
+against the existing runtime and restart the world plus adapter services. Keep
+existing SQLite data and PasswordSalt. This configures an Aeven home and corrects
+the pinned server's percentage-unit mismatch in DeathRecover. The upgrade does
+not require a new world binary or more RAM. See server/ONLINE.md for semantics.

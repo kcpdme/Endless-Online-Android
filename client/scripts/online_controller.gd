@@ -20,6 +20,9 @@ var waiting_for_walk: bool = false
 const MOVE_SECONDS: float = 0.42
 const MAX_PREDICTIONS: int = 4
 var streaming: bool = false
+var recovering: bool = false
+var defeated: bool = false
+var npc_attack_until: Dictionary = {}
 var transition_pending: bool = false
 var next_input_seq: int = 0
 var confirmed_input_seq: int = 0
@@ -167,7 +170,7 @@ func _on_message(message: Dictionary) -> void:
 			pending_inputs.clear()
 			transition_pending = false
 			game._cancel_controls()
-			session.request("refresh")
+			if not defeated: session.request("refresh")
 		return
 	var data: Dictionary = message.get("data", {}) as Dictionary
 	match operation:
@@ -184,9 +187,9 @@ func _on_message(message: Dictionary) -> void:
 			_enter_world(data)
 		"stream":
 			streaming = bool(data.get("enabled", false))
-		"move":
+		"move", "strike":
 			pass # Receipt only. The subsequent native Walk_Reply confirms acceptance.
-		"world", "refresh", "snapshot", "attack", "pickup", "equip", "unequip":
+		"world", "refresh", "snapshot", "attack", "pickup", "equip", "unequip", "spend_stat":
 			_apply_snapshot(data)
 		"disconnect":
 			_on_closed("Disconnected from the world.")
@@ -247,6 +250,7 @@ func _apply_snapshot(data: Dictionary, entering: bool = false) -> void:
 		if raw is Dictionary and str(raw.get("kind", "")) == "map_transition": entering = true
 	if data.has("player"):
 		player = data.player as Dictionary
+		defeated = bool((player.get("stats", {}) as Dictionary).get("dead", false))
 		var map_id: int = int(player.get("map_id", player.get("map", 5)))
 		if map_id != int(game.world.get("id", 5)):
 			if not game.load_map(map_id):
@@ -268,7 +272,10 @@ func _apply_snapshot(data: Dictionary, entering: bool = false) -> void:
 		var tile: Vector2i = Vector2i(int(player.get("x", 40)), int(player.get("y", 40)))
 		if entering:
 			pending_inputs.clear()
+			recovering = false
+			confirmed_input_seq = int(data.get("position_seq", confirmed_input_seq))
 			remote_motion.clear()
+			npc_attack_until.clear()
 			waiting_for_walk = false
 			transition_pending = false
 			game.facing = _facing(player.get("direction", 0))
@@ -282,9 +289,15 @@ func _apply_snapshot(data: Dictionary, entering: bool = false) -> void:
 			confirmed_input_seq = confirmed
 			while not pending_inputs.is_empty() and int(pending_inputs[0].seq) <= confirmed:
 				pending_inputs.pop_front()
-			# Replay inputs still in flight on the authoritative coordinate.
-			for input: Dictionary in pending_inputs:
-				tile += input.direction as Vector2i
+			var correction: bool = bool(data.get("correction", false))
+			if correction: recovering = true
+			if not recovering and not defeated:
+				for input: Dictionary in pending_inputs: tile += input.direction as Vector2i
+			else:
+				game._cancel_controls()
+				game.player_tile = tile
+				game.player_world = game.tile_position(tile)
+			if pending_inputs.is_empty(): recovering = false
 			waiting_for_walk = not pending_inputs.is_empty()
 			if not waiting_for_walk: transition_pending = false
 			if tile != game.player_tile:
@@ -339,7 +352,7 @@ func _process(delta: float) -> void:
 	walk_clock = maxf(0.0, walk_clock - delta)
 	refresh_clock += delta
 	# World packets drive updates. An idle-only safety refresh never competes with walking.
-	if refresh_clock >= 10.0 and session.connected and session.is_idle() and pending_inputs.is_empty() and not game.moving and game.stick == Vector2.ZERO and game.route.is_empty():
+	if refresh_clock >= 10.0 and session.connected and session.is_idle() and pending_inputs.is_empty() and not game.moving and game.stick == Vector2.ZERO and game.route.is_empty() and game.attack_touch_id == -1 and game.attack_clock <= 0.0 and not defeated and not recovering:
 		refresh_clock = 0.0
 		session.request("refresh")
 	if not pending_inputs.is_empty() and Time.get_ticks_msec() - int(pending_inputs[0].sent_at) > 15000:
@@ -393,6 +406,9 @@ func _start_step(tile: Vector2i, direction: String) -> void:
 
 func _reset_movement() -> void:
 	streaming = false
+	recovering = false
+	defeated = false
+	npc_attack_until.clear()
 	waiting_for_walk = false
 	transition_pending = false
 	next_input_seq = 0
@@ -403,11 +419,33 @@ func _reset_movement() -> void:
 	refresh_clock = 0.0
 
 func _action_ready() -> bool:
-	return active and pending_inputs.is_empty() and not transition_pending and session.is_idle()
+	return active and not defeated and not recovering and pending_inputs.is_empty() and not transition_pending and session.is_idle()
 
 func request_attack() -> bool:
-	if not _action_ready(): return false
-	return session.request("attack", {"direction": _direction(game.facing)}) >= 0
+	if not active or defeated or recovering or game.moving or not pending_inputs.is_empty() or transition_pending or session.has_blocking_requests() or session.pending.size() >= MAX_PREDICTIONS: return false
+	# Aim at the faced adjacent hostile; otherwise select an adjacent attackable NPC.
+	var target_direction: int = _direction(game.facing)
+	var adjacent: Array[Dictionary] = []
+	for npc: Dictionary in npcs:
+		var tile: Vector2i = Vector2i(int(npc.x), int(npc.y))
+		var info: Dictionary = (catalog.get("npcs", {}) as Dictionary).get(str(int(npc.id)), {}) as Dictionary
+		if game._distance(game.player_tile, tile) == 1 and int(info.get("type", -1)) in [1, 2, 3]: adjacent.append(npc)
+	var offsets: Array[Vector2i] = [Vector2i(0, 1), Vector2i(-1, 0), Vector2i(0, -1), Vector2i(1, 0)]
+	var faced: bool = false
+	for npc: Dictionary in adjacent:
+		if Vector2i(int(npc.x), int(npc.y)) == game.player_tile + offsets[target_direction]: faced = true
+	if not faced and not adjacent.is_empty(): game.facing = game._direction_name(Vector2i(int(adjacent[0].x), int(adjacent[0].y)) - game.player_tile)
+	return session.request("strike", {"direction": _direction(game.facing)}) >= 0
+
+func spend_stat(stat_id: int) -> void:
+	if _action_ready():
+		session.request("spend_stat", {"stat_id": stat_id})
+		game.stats_ui.refresh()
+
+func npc_occupies(tile: Vector2i) -> bool:
+	for npc: Dictionary in npcs:
+		if Vector2i(int(npc.get("x", -1)), int(npc.get("y", -1))) == tile: return true
+	return false
 
 func _direction(value: String) -> int:
 	return int({"south": 0, "west": 1, "north": 2, "east": 3}.get(value, 0))
@@ -427,6 +465,7 @@ func _on_closed(reason: String) -> void:
 	panel.hide()
 	game.inventory.hide()
 	game.character_panel.hide()
+	game.stats_ui.hide()
 	game.menu.hide()
 	_set_status(reason)
 	game._toast(reason)
@@ -490,6 +529,13 @@ func draw_entity(entity: Dictionary) -> void:
 	var motion: Dictionary = remote_motion.get(key, {}) as Dictionary
 	var phase: float = Time.get_ticks_msec() / 1000.0 - float(motion.get("start", 0.0))
 	var state: String = "frames" if not motion.is_empty() and phase < MOVE_SECONDS and motion.from != motion.to else "idle"
+	if str(entity.kind) == "online_npc" and float(npc_attack_until.get(int(record.get("index", -1)), 0.0)) > Time.get_ticks_msec() / 1000.0:
+		state = "attack"
+		phase = 0.36 - (float(npc_attack_until[int(record.index)]) - Time.get_ticks_msec() / 1000.0)
+	if str(entity.kind) == "online_player" and float(npc_attack_until.get(key, 0.0)) > Time.get_ticks_msec() / 1000.0:
+		state = "attack"
+		phase = 0.36 - (float(npc_attack_until[key]) - Time.get_ticks_msec() / 1000.0)
+		record.direction = _direction(_facing(record.get("direction", 0)))
 	at = _remote_position(key, at)
 	var direction: String = _facing(record.get("direction", 0))
 	var half_view: Vector2 = game.get_viewport_rect().size / game.camera.zoom / 2.0 + Vector2(160, 240)
@@ -501,12 +547,12 @@ func draw_entity(entity: Dictionary) -> void:
 		var characters: Dictionary = game.manifest.get("characters", {}) as Dictionary
 		var npc_graphics: Dictionary = characters.get("npcs", {}) as Dictionary
 		var graphic: Dictionary = npc_graphics.get(str(int(info.get("graphic", 0))), {}) as Dictionary
-		if not graphic.is_empty(): game._draw_character_frame(graphic, at, direction, state, Color.WHITE, phase if state == "frames" else -1.0)
+		if not graphic.is_empty(): game._draw_character_frame(graphic, at, direction, state, Color.WHITE, phase if state in ["frames", "attack"] else -1.0)
 		else: game.draw_circle(at + Vector2(0, -12), 5.0, Color("e7bd70"))
 		game.draw_string(ThemeDB.fallback_font, at + Vector2(-32, -32 - int((graphic.get("render_metadata", {}) as Dictionary).get("name_label_offset", 34))), str(info.get("name", "NPC %s" % npc_id)), HORIZONTAL_ALIGNMENT_LEFT, -1, 10, game.TEXT)
 	elif str(entity.kind) == "online_player":
 		var graphic: Dictionary = character_graphic(record)
-		if not graphic.is_empty(): game._draw_character_frame(graphic, at, direction, state, Color.WHITE, phase if state == "frames" else -1.0)
+		if not graphic.is_empty(): game._draw_character_frame(graphic, at, direction, state, Color.WHITE, phase if state in ["frames", "attack"] else -1.0)
 		else:
 			game.draw_circle(at + Vector2(0, -12), 7.0, Color("a6cec0"))
 			game.draw_string(ThemeDB.fallback_font, at + Vector2(-32, -42), "Appearance pending", HORIZONTAL_ALIGNMENT_LEFT, -1, 9, game.MUTED)
@@ -594,9 +640,16 @@ func map_click(tile: Vector2i) -> void:
 			return
 	for npc: Dictionary in npcs:
 		var npc_tile: Vector2i = Vector2i(int(npc.get("x", 0)), int(npc.get("y", 0)))
-		if npc_tile == tile and game._distance(game.player_tile, tile) <= 1:
-			game.facing = game._direction_name(npc_tile - game.player_tile)
-			game._attack()
+		if npc_tile == tile:
+			if game._distance(game.player_tile, tile) == 1:
+				game.facing = game._direction_name(npc_tile - game.player_tile)
+				game._attack()
+			else:
+				var choices: Array[Vector2i] = []
+				for offset: Vector2i in game.DIRECTIONS:
+					if game._walkable(tile + offset): choices.append(tile + offset)
+				choices.sort_custom(func(a: Vector2i, b: Vector2i) -> bool: return game._distance(game.player_tile, a) < game._distance(game.player_tile, b))
+				if not choices.is_empty(): game._request_path(choices[0])
 			return
 	game._request_path(tile)
 
@@ -613,6 +666,7 @@ func refresh_game_ui() -> void:
 	game.quest_hint.text = "Progress is saved by your server."
 	game.coin_label.text = "◈  %d coins" % game.coins
 	game.location_label.text = "%s  /  %d, %d" % [str(player.get("name", "Player")), game.player_tile.x, game.player_tile.y]
+	game.health_label.visible = false
 	game.health_label.text = "HP %d / %d" % [int(player.get("hp", 0)), int(player.get("max_hp", player.get("maxhp", 0)))]
 	var items: Array[Dictionary] = inventory_items()
 	game.inventory_summary.text = "%d coins  ·  %d items" % [game.coins, items.size()]
@@ -636,7 +690,12 @@ func refresh_game_ui() -> void:
 	var details: Array[String] = ["Equipped" if worn else "In your bag"]
 	if int(info.get("max_damage", 0)) > 0:
 		details.append("Damage %d–%d" % [int(info.get("min_damage", 0)), int(info.get("max_damage", 0))])
-	if int(info.get("armor", 0)) > 0: details.append("Defense %d" % int(info.get("armor", 0)))
+	for field: String in ["armor", "accuracy", "evade", "hp", "tp", "strength", "intelligence", "wisdom", "agility", "constitution", "charisma"]:
+		if int(info.get(field, 0)) != 0: details.append("%s +%d" % [field.capitalize(), int(info[field])])
+	if owned: details.append("Weight %d" % int(info.get("weight", 0)))
+	if int(info.get("level_requirement", 0)) > 0: details.append("Requires level %d" % int(info.level_requirement))
+	for attribute: String in ["strength", "intelligence", "wisdom", "agility", "constitution", "charisma"]:
+		if int(info.get(attribute + "_requirement", 0)) > 0: details.append("Requires %s %d" % [attribute, int(info[attribute + "_requirement"])])
 	game.inventory_detail.text = "  ·  ".join(details) if owned else "Select an item to inspect it."
 	game.equip_button.disabled = not owned or worn or int(info.get("type", 0)) not in range(10, 22)
 	game.equip_button.text = "Equip " + str(info.get("name", "item")) if owned and not worn else "Select an unequipped item"
@@ -645,6 +704,8 @@ func refresh_game_ui() -> void:
 		game.paperdoll.information_labels[0].text = str(player.get("name", "Player"))
 		game.paperdoll.information_labels[1].text = str(game.world.get("name", ""))
 	game.equipment_detail.text = str(info.get("name", "Empty " + selected + " slot"))
+	if worn:
+		game.equipment_detail.text += "  ·  Damage %d–%d  ·  Armor %d" % [int(info.get("min_damage", 0)), int(info.get("max_damage", 0)), int(info.get("armor", 0))]
 	game.remove_button.disabled = not worn
 	game.remove_button.text = "Remove " + str(info.get("name", "item")) if worn else "Empty slot"
 	game.attack_button.weapon = game._item_texture("weapon") if game.equipped else null
@@ -673,16 +734,32 @@ func _process_events(events: Array) -> void:
 		if not raw is Dictionary: continue
 		var event: Dictionary = raw as Dictionary
 		var kind: String = str(event.get("kind", event.get("type", event.get("event", ""))))
+		if kind in ["player_damage", "npc_attack"]:
+			npc_attack_until[int(event.get("npc_index", -1))] = Time.get_ticks_msec() / 1000.0 + 0.36
+			for npc: Dictionary in npcs:
+				if int(npc.index) == int(event.get("npc_index", -1)): npc.direction = int(event.get("direction", 0))
+		if kind == "peer_attack": npc_attack_until["player:" + str(int(event.get("player_id", -1)))] = Time.get_ticks_msec() / 1000.0 + 0.36
+		if kind == "player_damage":
+			game.player_hit_flash = 0.22
+			game.damage_numbers.append({"position": game.player_world + Vector2(0, -62), "value": "-%d" % int(event.get("damage", 0)) if int(event.get("damage", 0)) > 0 else "Miss", "time": 0.85, "player_hit": true})
+			if bool(event.get("dead", false)):
+				defeated = true
+				pending_inputs.clear()
+				waiting_for_walk = false
+				game._cancel_controls()
+				game._toast("You were defeated. Returning to your respawn point…")
+		if kind == "map_transition" and str(event.get("reason", "")) == "death_respawn": game._toast("You have returned to your respawn point.")
 		if kind == "door_locked": game._toast("This door needs a key.")
 		if kind in ["npc_damage", "npc_killed"]:
 			for npc: Dictionary in npcs:
 				if int(npc.get("index", -1)) == int(event.get("npc_index", -2)):
 					var tile: Vector2i = Vector2i(int(npc.get("x", 0)), int(npc.get("y", 0)))
 					game.damage_numbers.append({"position": game.tile_position(tile) + Vector2(0, -44), "value": str(int(event.get("damage", 0))), "time": 0.8})
-			if kind == "npc_killed": game._toast("Enemy defeated. Its drops belong to the online world.")
+			if kind == "npc_killed":
+				game._toast("Level %d reached! Stat points are available in Character Stats." % int(event.level_up) if event.has("level_up") else "Enemy defeated. Its drops belong to the online world.")
 
 func _slot_name(kind: String) -> String:
 	return str({"hat": "head", "shield": "offhand"}.get(kind, kind))
 
 func can_issue_walk() -> bool:
-	return active and streaming and not transition_pending and walk_clock <= 0.0 and pending_inputs.size() < MAX_PREDICTIONS and not session.has_blocking_requests()
+	return active and streaming and not defeated and not recovering and not transition_pending and walk_clock <= 0.0 and game.attack_clock <= 0.0 and pending_inputs.size() < MAX_PREDICTIONS and not session.has_blocking_requests()

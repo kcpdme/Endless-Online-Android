@@ -38,11 +38,18 @@ def parse_items(data):
           'type':number(2),'subtype':number(3),'special':number(4),
           'hp':number(5,2),'tp':number(7,2),'min_damage':number(9,2),'max_damage':number(11,2),
           'accuracy':number(13,2),'evade':number(15,2),'armor':number(17,2),
+          **{key:number(20+i) for i,key in enumerate(['strength','intelligence','wisdom','agility','constitution','charisma'])},
+          **{key+'_requirement':number(41+i*2,2) for i,key in enumerate(['strength','intelligence','wisdom','agility','constitution','charisma'])},
           'doll_graphic':number(32,3),'gender':number(35),'level_requirement':number(37,2),
           'class_requirement':number(39,2),'weight':number(55),'size':number(57),
           'icon':f'23:{graphic*2}' if graphic else None,
           'ground':f'23:{graphic*2-1}' if graphic else None}
     return items
+
+
+def parse_classes(data):
+    return {str(id):{'id':id,'name':names[0],'base':decode_number(f[:1]),'type':decode_number(f[1:2])}
+            for id,(names,f) in pub_records(data,'ECF',14).items()}
 
 
 def parse_npcs(data):
@@ -109,7 +116,7 @@ def export_npc(graphic,definition_name,image,out):
 def export_catalog(runtime:Path,graphics_zip:Path,out:Path,map_id=5):
     pub=runtime/'data/pub';maps_dir=runtime/'data/maps'
     manifest=json.loads((out/'manifest.json').read_text())
-    files={'items':pub/'dat001.eif','npcs':pub/'dtn001.enf'}
+    files={'items':pub/'dat001.eif','npcs':pub/'dtn001.enf','classes':pub/'dat001.ecf'}
     items=parse_items(files['items'].read_bytes());npcs=parse_npcs(files['npcs'].read_bytes())
     maps={};worlds={}
     (out/'maps').mkdir(exist_ok=True)
@@ -126,7 +133,7 @@ def export_catalog(runtime:Path,graphics_zip:Path,out:Path,map_id=5):
             'sha256':hashlib.sha256(path.read_bytes()).hexdigest(),
             'client_geometry_available':True}
     selected=maps[str(map_id)]
-    catalog={'schema_version':1,'items':items,'npcs':npcs,'maps':maps,'selected_map':map_id,
+    catalog={'schema_version':1,'classes':parse_classes(files['classes'].read_bytes()),'items':items,'npcs':npcs,'maps':maps,'selected_map':map_id,
       'source':{'kind':'staged etheos runtime data','files':{key:{'path':str(path.relative_to(runtime)),
         'sha256':hashlib.sha256(path.read_bytes()).hexdigest()} for key,path in files.items()},
         'graphics_archive':graphics_zip.name,'graphics_sha256':hashlib.sha256(graphics_zip.read_bytes()).hexdigest(),
