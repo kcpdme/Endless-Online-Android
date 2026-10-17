@@ -16,7 +16,7 @@ Godot 4.7.2, typed GDScript and 2D isometric rendering are sufficient. A Unity/3
 rewrite and a larger server have not been needed for the measured regressions.
 
 Baseline before this update: commit `8c9e541`, APK 0.10.0/code 10. The current
-build is 0.13.0/code 13. v0.12 added level/EXP, Nearby Send closure and
+build is 0.14.0/code 14. v0.12 added level/EXP, Nearby Send closure and
 native consumables; v0.13 adds native skills and touch targeting. v0.11 added native bank/lockers, player inspection and
 trading, local/global/private chat, a dynamic joystick, and the heart/TP HUD,
 as well as placing NPC names near visible heads and fixing observer equipment/
@@ -690,3 +690,74 @@ The public Godot test additionally verifies another player's original casting
 pose and heal effect. Download artifacts are the v0.13.0 APK, source ZIP and
 SHA256SUMS under the task outputs directory. Original assets are in the APK
 for the user's local testing, not in the source ZIP or public Git repository.
+
+
+## v0.14: counter NPC services and left-side skill targeting
+
+Skylar's saved production position was map125/tile6,4 (Marble Shop) when the
+user reported being unable to tap Marble's head. Read-only SQL confirmed this;
+no operator-character login, relocation, stat changes or grants were performed.
+Map125 has an impassable counter at x5 separating the customer from Marble
+(NPC87, graphic53). Marble can wander on her side. The previous client AND
+Python gateway imposed a two-tile service range and tried to path to that
+range, which can be entirely unreachable. Original EndlessClient
+Rendering/Map/ClickDispatcher.HandleNPCClick directly calls ShowNPCDialog for
+visible NPCs; native handlers/Shop.cpp Shop_Open does not require adjacency or
+pathfinding. It is therefore wrong to remove counter collision or move Marble.
+
+Visible service NPCs (shop6, bank9, skillmaster14) now open directly without
+pathfinding. The adapter bounds these services to the current same-map visible
+NPC within Manhattan11 (the world's SeeDistance), rechecks live NPC presence and
+range for transactions, and keeps movement/death/warp/trade/casting guards.
+`services.NPC_SERVICE_DISTANCE` is shared by economy and NPC service checks;
+`_near_service` validates current NPC index/location instead of stale coordinates.
+Locker adjacency1, ground pickup distance2, NPC collision and combat approach
+rules remain intact. This fix also covers bankers and teachers behind counters.
+
+The joystick regression was input dispatch order: _input captured the entire
+large lower-left zone before a touch could reach skill target handling in
+_unhandled_input. Previous skill tests called map_click directly, so they missed
+this actual Android input path. Main now converts the native screen touch using
+get_global_transform_with_canvas().affine_inverse() and dispatches armed skill
+or visible entity taps before starting the floating stick. The full world is
+available for a selected spell's target; left-side enemies no longer become
+joystick presses. Empty ground still starts the floating joystick, dragging
+retains pointer ownership, and release clears input. An existing joystick
+finger still suppresses unrelated map touches unless a skill is armed.
+
+`online.map_entity_target` returns an explicit kind/tile, and `map_press` uses
+that identity so a head tap doesn't become a loot/locker action on the same
+tile. `map_target` remains a compatibility tile wrapper. Ground loot/lockers
+are excluded from spell hit testing. Native touch ownership and emulated-mouse
+suppression prevent a single tap from issuing a second cast/open request.
+Physical desktop mouse clicks use the same priority and target resolution.
+
+`server/test_npc_services_state.py` adds regressions for Marble four tiles away,
+open without movement, transaction range/presence and live service contexts.
+35 server state checks and gameplay smoke pass. `server/test_touch_interactions.py`
+creates separate dev shop/combat fixtures; Godot feeds Input.parse_input_event
+through the actual scene, including mouse emulation. At map125/tile6,4 it taps
+Marble's visible head, opens Marble Shop without moving/path/correction, buys
+War Axe360 for2000 and sells it for200. It then frames a real native rat inside
+the lower-left joystick zone, selects Small Fire, injects a real touch, verifies
+exactly one native cast/TP decrement with no movement, and checks empty-ground
+joystick drag/release. Local and public WSS reports are docs/touch-v14-*-report.json.
+Screenshots under work/v14-touch*-screenshots were reviewed. Existing bank,
+locker, inspection, trading/chat and native skill UI regressions are also run
+for the changed service flow; reports are docs/services-v14-local-report.json
+and docs/skills-v14-local-report.json.
+
+Production deployment updates economy.py/services.py/skills.py with source
+backups and restarts only gateway/WebSocket services. Native world, Caddy,
+Cloudflare, database and operator account data are not modified. The APK is
+version0.14.0/code14, with the existing package/signing key. Use the current
+mDNS ADB serial to install with -r and preserve the offline save byte-for-byte.
+
+
+The v0.14 APK is installed and running on Galaxy S23 Ultra. Confirmed package
+code14/version0.14.0, valid APK signature and16KB alignment, byte-identical
+pre/post-install offline save, healthy public endpoint and no startup script/
+crash errors. Sanitized evidence is docs/touch-v14-phone-report.json. Original
+bank/locker/inspection/trade/chat UI and original skills/observer pose regressions
+also passed. Deliverables use outputs/endless-online-android-v0.14.0.{apk,...}.
+Raw device logs, saves and fixture credentials stay private/ignored under work/.

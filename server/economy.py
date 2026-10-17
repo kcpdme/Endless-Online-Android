@@ -1,6 +1,7 @@
 """Original etheos Shop packets; only acknowledged transactions change inventory."""
 from collections import Counter
 from eo_session import EOError, Reader, number
+from services import NPC_SERVICE_DISTANCE
 
 class EconomyMixin:
     shop = None
@@ -17,7 +18,7 @@ class EconomyMixin:
             raise EOError('Talk to the shopkeeper first')
         npc = next((n for n in self.state['npcs'] if n['index'] == self.shop['npc_index']), None)
         me = self.state['self']
-        if not npc or abs(npc['x']-me['x'])+abs(npc['y']-me['y']) > 2:
+        if not npc or abs(npc['x']-me['x'])+abs(npc['y']-me['y']) > NPC_SERVICE_DISTANCE:
             self.shop = None
             raise EOError('Move closer to the shopkeeper')
 
@@ -36,7 +37,7 @@ class EconomyMixin:
         self._standing();self.shop = None
         npc = next((n for n in self.state['npcs'] if n['index'] == int(npc_index)), None)
         me = self.state['self']
-        if not npc or abs(npc['x']-me['x'])+abs(npc['y']-me['y']) > 2:
+        if not npc or abs(npc['x']-me['x'])+abs(npc['y']-me['y']) > NPC_SERVICE_DISTANCE:
             raise EOError('Move closer to the shopkeeper')
         self.send(13,13,number(int(npc_index),2))
         try:r = Reader(self.wait(13,13,timeout=2))

@@ -9,6 +9,8 @@ import socket
 import time
 from eo_session import EOError, Reader, number
 
+NPC_SERVICE_DISTANCE = 11
+
 SLOTS = ['boots','accessory','gloves','belt','armor','necklace','head','offhand','weapon','ring1','ring2','armlet1','armlet2','bracer1','bracer2']
 
 @lru_cache(maxsize=1)
@@ -71,19 +73,26 @@ class ServicesMixin:
         me=self.state['self']
         if abs(target['x']-me['x'])+abs(target['y']-me['y'])>distance: raise EOError('Move closer first')
 
+    def _near_service(self, context):
+        self._standing()
+        if not context or context['map_id']!=self.state['map_id']:raise EOError('Open this service again within view')
+        npc=next((n for n in self.state['npcs'] if n['index']==context['npc_index']),None)
+        me=self.state['self']
+        if not npc or abs(npc['x']-me['x'])+abs(npc['y']-me['y'])>NPC_SERVICE_DISTANCE:raise EOError('This NPC is no longer within view')
+
     def bank_open(self, npc_index):
         self._standing()
         npc=next((n for n in self.state['npcs'] if n['index']==npc_index),None)
         if not npc: raise EOError('This banker is no longer nearby')
         context=dict(npc_index=npc_index,map_id=self.state['map_id'],x=npc['x'],y=npc['y'])
-        self._near(context,2)
+        self._near_service(context)
         self.send(36,13,number(npc_index,2));r=Reader(self._wait_service(36,{13}))
         context.update(gold=r.num(4),token=r.num(3),upgrades=r.num())
         self.bank=context;self._bank_capacity();self.locker=None
         return self.snapshot()
 
     def bank_change(self, withdraw, amount):
-        self._near(self.bank,2);amount=int(amount)
+        self._near_service(self.bank);amount=int(amount)
         maximum=self.bank['gold'] if withdraw else self.item_amount(1)
         if amount<=0 or amount>maximum or amount>=253**4: raise EOError('Choose an amount within your available Gold')
         self.send(36,9 if withdraw else 7,number(amount,4)+number(self.bank['token'],3))
@@ -94,7 +103,7 @@ class ServicesMixin:
         self.bank.update(capacity=settings['BaseBankSize']+n*settings['BankSizeStep'],upgrade_cost=settings['BankUpgradeBase']+n*settings['BankUpgradeStep'],can_upgrade=n<settings['MaxBankUpgrades'])
 
     def bank_upgrade(self):
-        self._near(self.bank,2);self._bank_capacity()
+        self._near_service(self.bank);self._bank_capacity()
         if not self.bank['can_upgrade']:raise EOError('Your locker is fully expanded')
         if self.item_amount(1)<self.bank['upgrade_cost']:raise EOError('You need more Gold to expand your locker')
         self.send(37,11);self._wait_service(37,{11});return self.snapshot()

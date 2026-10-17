@@ -1,0 +1,11 @@
+{
+  "actual_gameplay_ui": true,
+  "chat_log_and_local_speech_bubble": true,
+  "clean_heart_tp_hud": true,
+  "native_banker_tap_deposit": true,
+  "native_locker_tap_deposit_withdraw": true,
+  "native_two_player_trade_dialog_and_inventory": true,
+  "original_player_inspection_without_self_equipment_overwrite": true,
+  "result": "passed",
+  "whisper_input": true
+}

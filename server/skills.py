@@ -91,7 +91,7 @@ class SkillsMixin:
         npc=next((n for n in self.state['npcs'] if n['index']==npc_index),None)
         if not npc or npc_types().get(npc['id'])!=14:raise EOError('Select a nearby skill master')
         context=dict(npc_index=npc_index,map_id=self.state['map_id'],x=npc['x'],y=npc['y'])
-        self._near(context,2);self.send(16,13,number(npc_index,2));r=Reader(self._wait_service(16,{13}))
+        self._near_service(context);self.send(16,13,number(npc_index,2));r=Reader(self._wait_service(16,{13}))
         context.update(id=r.num(2),name=r.text(),offers=[])
         while len(r.rest())>=28:
             offer=dict(id=r.num(2),level=r.num(),class_id=r.num(),cost=r.num(4),prerequisites=[r.num(2) for _ in range(4)])
@@ -107,7 +107,7 @@ class SkillsMixin:
             if not known or self.stats.get('skill_points',0)<=0:raise EOError('No available skill point for this skill')
             self.send(16,7,number(2,1)+number(spell_id,2));self._wait_service(16,{2})
         else:
-            self._near(getattr(self,'skillmaster',None),2)
+            self._near_service(getattr(self,'skillmaster',None))
             if action=='learn':
                 if known:raise EOError('You already know this skill')
                 if not any(o['id']==spell_id for o in self.skillmaster['offers']):raise EOError('This master does not teach that skill')

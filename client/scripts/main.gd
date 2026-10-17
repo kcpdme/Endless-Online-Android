@@ -380,11 +380,14 @@ func _direction_name(direction: Vector2i) -> String:
 	if direction.y < 0: return "north"
 	return "south"
 
+func _screen_to_world(point: Vector2) -> Vector2:
+	return get_global_transform_with_canvas().affine_inverse() * point
+
 func _input(event: InputEvent) -> void:
 	# Own native controls suppress their separately generated mouse events, including
 	# HUD presses that open a modal. A release can never become a second action.
 	if event is InputEventMouseButton and event.device == InputEvent.DEVICE_ID_EMULATION:
-		var native_control: bool = started and not _modal_open() and ((skills_ui != null and skills_ui.contains(event.position) >= 0) or attack_button.contains_point(event.position) or bag_button.contains_point(event.position) or chat_button.contains_point(event.position) or character_button.contains_point(event.position) or _joystick_zone().has_point(event.position) or (online_mode and online.loot_button.visible and online.loot_button.get_global_rect().has_point(event.position)))
+		var native_control: bool = started and not _modal_open() and ((skills_ui != null and skills_ui.contains(event.position) >= 0) or attack_button.contains_point(event.position) or bag_button.contains_point(event.position) or chat_button.contains_point(event.position) or character_button.contains_point(event.position) or _joystick_zone().has_point(event.position) or (online_mode and (skills_ui.armed > 0 or not online.map_entity_target(_screen_to_world(event.position)).is_empty())) or (online_mode and online.loot_button.visible and online.loot_button.get_global_rect().has_point(event.position)))
 		# Godot may synthesize the mouse press before delivering its native touch.
 		if native_control or not owned_touches.is_empty():
 			get_viewport().set_input_as_handled()
@@ -439,6 +442,12 @@ func _input(event: InputEvent) -> void:
 			_toggle_paperdoll()
 			get_viewport().set_input_as_handled()
 			return
+		# An armed spell owns targeting across the entire world, including the
+		# floating-stick area. Ordinary sprite taps also precede joystick capture.
+		if online_mode and (skills_ui.armed > 0 or touch_move_id == -1) and online.map_press(_screen_to_world(event.position), true):
+			owned_touches[event.index] = true
+			get_viewport().set_input_as_handled()
+			return
 		if touch_move_id != -1:
 			owned_touches[event.index] = true
 			get_viewport().set_input_as_handled()
@@ -459,6 +468,9 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		if attack_button.contains_point(event.position):
 			_begin_attack(-2)
+			get_viewport().set_input_as_handled()
+			return
+		if online_mode and (skills_ui.armed > 0 or touch_move_id == -1) and online.map_press(_screen_to_world(event.position), true):
 			get_viewport().set_input_as_handled()
 			return
 		if touch_move_id == -1 and _joystick_zone().has_point(event.position):
@@ -484,7 +496,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		var clicked: Vector2i = _world_tile(get_global_mouse_position())
 		if online_mode:
-			online.map_click(online.map_target(get_global_mouse_position(), clicked))
+			online.map_press(get_global_mouse_position())
 			return
 		if loot_visible and clicked == loot_tile:
 			if _distance(player_tile, loot_tile) <= 1: _collect_loot(true)

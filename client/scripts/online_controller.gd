@@ -19,6 +19,7 @@ var character_box: Control
 var selected_characters: Array[Dictionary] = []
 var active: bool = false
 var waiting_for_walk: bool = false
+const NPC_SERVICE_DISTANCE: int = 11
 const MOVE_SECONDS: float = 0.42
 const MAX_PREDICTIONS: int = 4
 var streaming: bool = false
@@ -852,13 +853,23 @@ func _equipment_problem(info: Dictionary, previous: int) -> String:
 	return ""
 
 func map_target(point: Vector2, fallback: Vector2i) -> Vector2i:
+	var hit: Dictionary = map_entity_target(point)
+	return hit.get("tile", fallback) as Vector2i
+
+func map_press(point: Vector2, entities_only: bool = false) -> bool:
+	var hit: Dictionary = map_entity_target(point)
+	if hit.is_empty() and entities_only and game.skills_ui.armed == 0: return false
+	map_click(hit.get("tile", game._world_tile(point)) as Vector2i, str(hit.get("kind", "")))
+	return true
+
+func map_entity_target(point: Vector2) -> Dictionary:
 	# Ground loot gets a touch target matching its visible art, including tall items.
-	for drop: Dictionary in drops:
+	for drop: Dictionary in ([] if game.skills_ui.armed > 0 else drops):
 		var tile: Vector2i = Vector2i(int(drop.x), int(drop.y))
 		var info: Dictionary = item_info("item:%d" % int(drop.id))
 		var texture: Texture2D = _catalog_texture(str(info.get("ground", "")))
 		var dimensions: Vector2 = texture.get_size() if texture != null else Vector2(24, 20)
-		if Rect2(game.tile_position(tile) - dimensions / 2.0, dimensions).grow(8.0).has_point(point): return tile
+		if Rect2(game.tile_position(tile) - dimensions / 2.0, dimensions).grow(8.0).has_point(point): return {"tile": tile, "kind": "drop"}
 	# The original client tests sprite rectangles. A tap on Bob's head must talk
 	# to Bob, rather than pathfinding to the tile behind his feet.
 	var ordered: Array[Dictionary] = npcs.duplicate()
@@ -873,9 +884,9 @@ func map_target(point: Vector2, fallback: Vector2i) -> Vector2i:
 		var dimensions: Vector2 = Vector2(float(region[2]), float(region[3]))
 		var at: Vector2 = _remote_position("npc:%d" % int(npc.index), game.tile_position(tile))
 		var rectangle: Rect2 = Rect2(at + Vector2(float(offset[0]), float(offset[1])) - Vector2(dimensions.x / 2.0, dimensions.y), dimensions)
-		if rectangle.grow(5.0).has_point(point): return tile
+		if rectangle.grow(5.0).has_point(point): return {"tile": tile, "kind": "npc"}
 	# Match the visible locker object, including its tall front above its tile.
-	for spec: Dictionary in game.world.get("tile_specs", []):
+	for spec: Dictionary in ([] if game.skills_ui.armed > 0 else game.world.get("tile_specs", [])):
 		if int(spec.get("spec", -1)) != 16: continue
 		var tile: Vector2i = Vector2i(int(spec.x), int(spec.y))
 		for decoration: Dictionary in game.decorations:
@@ -883,30 +894,30 @@ func map_target(point: Vector2, fallback: Vector2i) -> Vector2i:
 			var texture: Texture2D = game._graphic(int(decoration.gfx), int(decoration.id))
 			if texture == null: continue
 			var size: Vector2 = texture.get_size()
-			if Rect2(game.tile_position(tile) + Vector2(-2.0 - size.x / 2.0, 14.0 - size.y), size).grow(4.0).has_point(point): return tile
+			if Rect2(game.tile_position(tile) + Vector2(-2.0 - size.x / 2.0, 14.0 - size.y), size).grow(4.0).has_point(point): return {"tile": tile, "kind": "locker"}
 	for peer: Dictionary in players:
 		if int(peer.get("player_id", 0)) == int(player.get("player_id", 0)): continue
 		var tile: Vector2i = Vector2i(int(peer.x), int(peer.y))
 		var at: Vector2 = _remote_position("player:%d" % int(peer.player_id), game.tile_position(tile))
-		if Rect2(at - Vector2(24, 66), Vector2(48, 72)).has_point(point): return tile
-	return fallback
+		if Rect2(at - Vector2(24, 66), Vector2(48, 72)).has_point(point): return {"tile": tile, "kind": "player"}
+	return {}
 
-func map_click(tile: Vector2i) -> void:
+func map_click(tile: Vector2i, preferred_kind: String = "") -> void:
 	if not active or defeated or recovering or transition_pending: return
 	if game.skills_ui.target(tile): return
 	interaction.clear()
-	for drop: Dictionary in drops:
+	for drop: Dictionary in (drops if preferred_kind in ["", "drop"] else []):
 		if Vector2i(int(drop.x), int(drop.y)) == tile:
 			interaction = {"kind": "drop", "id": int(drop.uid)}
 			_approach(tile, 2)
 			return
-	for peer: Dictionary in players:
+	for peer: Dictionary in (players if preferred_kind in ["", "player"] else []):
 		if int(peer.get("player_id", 0)) == int(player.get("player_id", 0)): continue
 		if Vector2i(int(peer.x), int(peer.y)) == tile:
 			game._cancel_controls()
 			interaction = {"kind": "player", "id": int(peer.player_id)}
 			return
-	for spec: Dictionary in game.world.get("tile_specs", []):
+	for spec: Dictionary in (game.world.get("tile_specs", []) if preferred_kind in ["", "locker"] else []):
 		if int(spec.get("spec", -1)) == 16 and Vector2i(int(spec.x), int(spec.y)) == tile:
 			interaction = {"kind": "locker", "id": 0, "x": tile.x, "y": tile.y}
 			_approach(tile, 1)
@@ -916,8 +927,10 @@ func map_click(tile: Vector2i) -> void:
 		var info: Dictionary = (catalog.get("npcs", {}) as Dictionary).get(str(int(npc.id)), {}) as Dictionary
 		var type: int = int(info.get("type", -1))
 		if type in [6, 9, 14]:
+			# Original EO dispatches a visible service NPC directly, including
+			# shopkeepers behind sealed counters. Never path onto their side.
+			game._cancel_controls()
 			interaction = {"kind": "skillmaster" if type == 14 else "bank" if type == 9 else "shop", "id": int(npc.index)}
-			_approach(tile, 2)
 		elif type in [1, 2, 3]:
 			if game._distance(game.player_tile, tile) == 1:
 				game.facing = game._direction_name(tile - game.player_tile)
@@ -960,8 +973,12 @@ func _process_interaction() -> void:
 			if int(row.get("uid" if str(interaction.kind) == "drop" else "index", -1)) == int(interaction.id): target = row
 		if not target.is_empty():
 			var tile: Vector2i = Vector2i(int(target.x), int(target.y))
-			var distance: int = 1 if str(interaction.kind) == "locker" else 2
+			var distance: int = 1 if str(interaction.kind) == "locker" else 2 if str(interaction.kind) == "drop" else NPC_SERVICE_DISTANCE
 			if game._distance(game.player_tile, tile) > distance:
+				if str(interaction.kind) in ["shop", "bank", "skillmaster"]:
+					interaction.clear()
+					game._toast("This NPC has left your view.")
+					return
 				_approach(tile, distance)
 				return
 			if str(interaction.kind) == "drop": _pickup(int(interaction.id))

@@ -238,3 +238,19 @@ book and master UI. Pass --url and --fixture-file for prepared isolated fixtures
 on a hosted server; keep that file ignored/private. Never use operator accounts.
 Sanitized v0.13 local/public and UI reports are in this directory. Original
 art/icons and actual effect frames were visually reviewed with the GL renderer.
+
+
+## Counter shops and joystick target arbitration (v0.14)
+
+```sh
+python3 server/test_touch_interactions.py --godot work/toolchain/godot/Godot_v4.7.2-stable_linux.x86_64 --report docs/touch-v14-local-report.json --screenshots work/v14-touch-screenshots
+```
+
+This uses fresh dev fixtures only, matching the customer's map125/tile6,4.
+It injects real native touches through `Input.parse_input_event`, including the
+engine's emulated mouse. It verifies Marble's shop opens without movement,
+actual native buy/sell across the counter, a spell target inside the joystick
+activation zone with exactly one cast, and normal empty-ground drag/release.
+Do not replace this with direct `map_click` calls: those bypass the regression.
+`--url` and `--fixture-file` support privately prepared hosted dev fixtures.
+NPCs wander, so use live sprite positions, not their static EMF spawn centers.

@@ -1,0 +1,10 @@
+{
+  "counter_shop_opens_without_path_or_movement": true,
+  "empty_ground_dynamic_joystick_and_release_preserved": true,
+  "exactly_one_cast_with_emulated_mouse": true,
+  "marble_head_touch_from_skylar_map125_tile6_4": true,
+  "native_buy_and_sell_across_counter": true,
+  "operator_accounts_modified": false,
+  "real_touch_skill_target_inside_left_joystick_zone": true,
+  "result": "passed"
+}
