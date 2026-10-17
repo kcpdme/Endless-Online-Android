@@ -1,0 +1,28 @@
+{
+  "result": "passed",
+  "native_service_types_protected": {
+    "0": 45,
+    "6": 15,
+    "7": 150,
+    "9": 16,
+    "10": 32,
+    "11": 46,
+    "12": 114,
+    "13": 115,
+    "14": 116,
+    "15": 28
+  },
+  "service_melee_and_magic_rejected": true,
+  "service_bow_rejected": true,
+  "king_hp": 13000,
+  "king_first_hit_damage": 1501,
+  "king_hit_count": 9,
+  "king_damage_sum": 13000,
+  "king_melee_bow_and_magic_work": true,
+  "king_exp_gain": 1500,
+  "normal_player_can_kill_king": true,
+  "native_quest_kill_advanced_to_talk2": true,
+  "quest_rule_count": 24,
+  "operator_accounts_modified": false,
+  "native_sha256": "17b74d76ef392731c6e02927e078b3fab5c638892528772b37798435d2cb26b2"
+}

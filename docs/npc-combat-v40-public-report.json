@@ -1,0 +1,6 @@
+{
+  "result": "passed",
+  "https_health": "ok",
+  "public_wss_native_handshake": true,
+  "unauthenticated_stream_rejected": true
+}

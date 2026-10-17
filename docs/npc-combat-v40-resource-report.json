@@ -1,0 +1,265 @@
+{
+  "changes": [
+    {
+      "id": 123,
+      "name": "King",
+      "before": 15,
+      "after": 1
+    },
+    {
+      "id": 227,
+      "name": "Vitaman",
+      "before": 2,
+      "after": 1
+    }
+  ],
+  "original_enf_sha256": "263f0259b07a960ab9ca72d33ba9ac3bdbab212cb2f1f2dd885baa0bef990ad7",
+  "before_sha256": "cc8946149a3c2c9feaa383f28be61ac302ca19a0391e44a4929ca5e02aa01555",
+  "after_sha256": "d9a7245e1a3457757a54363075096603bf3d6eaed5c6698588dfa6697210aecb",
+  "quest_kill_rules": [
+    {
+      "quest": "00002",
+      "npc_id": 2,
+      "name": "Rat",
+      "count": 20
+    },
+    {
+      "quest": "00002",
+      "npc_id": 170,
+      "name": "Sheep",
+      "count": 20
+    },
+    {
+      "quest": "00005",
+      "npc_id": 178,
+      "name": "Imperial Sea Guard",
+      "count": 50
+    },
+    {
+      "quest": "00010",
+      "npc_id": 10,
+      "name": "Spider",
+      "count": 20
+    },
+    {
+      "quest": "00015",
+      "npc_id": 139,
+      "name": "Swamp Monster",
+      "count": 25
+    },
+    {
+      "quest": "00021",
+      "npc_id": 128,
+      "name": "Drunken Pirate",
+      "count": 3
+    },
+    {
+      "quest": "00021",
+      "npc_id": 285,
+      "name": "Inspection Guard",
+      "count": 1
+    },
+    {
+      "quest": "00021",
+      "npc_id": 2,
+      "name": "Rat",
+      "count": 30
+    },
+    {
+      "quest": "00023",
+      "npc_id": 241,
+      "name": "Mole",
+      "count": 50
+    },
+    {
+      "quest": "00025",
+      "npc_id": 232,
+      "name": "Tenba",
+      "count": 60
+    },
+    {
+      "quest": "00026",
+      "npc_id": 9,
+      "name": "Reaper",
+      "count": 1
+    },
+    {
+      "quest": "00026",
+      "npc_id": 120,
+      "name": "Anundo Leader",
+      "count": 1
+    },
+    {
+      "quest": "00026",
+      "npc_id": 118,
+      "name": "Octopus",
+      "count": 1
+    },
+    {
+      "quest": "00026",
+      "npc_id": 142,
+      "name": "Apozen",
+      "count": 1
+    },
+    {
+      "quest": "00028",
+      "npc_id": 230,
+      "name": "Piglet",
+      "count": 10
+    },
+    {
+      "quest": "00030",
+      "npc_id": 3,
+      "name": "Blob",
+      "count": 25
+    },
+    {
+      "quest": "00035",
+      "npc_id": 2,
+      "name": "Rat",
+      "count": 1
+    },
+    {
+      "quest": "00035",
+      "npc_id": 270,
+      "name": "Fierce Rat",
+      "count": 20
+    },
+    {
+      "quest": "00036",
+      "npc_id": 6,
+      "name": "Snake",
+      "count": 5
+    },
+    {
+      "quest": "00040",
+      "npc_id": 1,
+      "name": "Crow",
+      "count": 10
+    },
+    {
+      "quest": "00046",
+      "npc_id": 12,
+      "name": "Cactusaur",
+      "count": 12
+    },
+    {
+      "quest": "00048",
+      "npc_id": 288,
+      "name": "Castle Hedgehog",
+      "count": 10
+    },
+    {
+      "quest": "00049",
+      "npc_id": 6,
+      "name": "Snake",
+      "count": 3
+    },
+    {
+      "quest": "00051",
+      "npc_id": 299,
+      "name": "Big Throat",
+      "count": 1
+    }
+  ],
+  "quest_kill_rules_valid": true,
+  "npc_count": 302,
+  "database_modified": false,
+  "world_and_gateway_restart_required": true,
+  "original_record_count": 255,
+  "shared_record_count": 255,
+  "combat_role_mismatches": [],
+  "protected_quest_role_upgrades": [
+    {
+      "id": 28,
+      "name": "Drunk",
+      "original_type": 0,
+      "current_type": 15
+    },
+    {
+      "id": 53,
+      "name": "Dan (daily)",
+      "original_type": 0,
+      "current_type": 15
+    },
+    {
+      "id": 54,
+      "name": "Jacob (rep)",
+      "original_type": 0,
+      "current_type": 15
+    },
+    {
+      "id": 75,
+      "name": "Candy (daily)",
+      "original_type": 0,
+      "current_type": 15
+    },
+    {
+      "id": 76,
+      "name": "Hactor (rep)",
+      "original_type": 0,
+      "current_type": 15
+    },
+    {
+      "id": 154,
+      "name": "Adventurer",
+      "original_type": 0,
+      "current_type": 15
+    }
+  ],
+  "later_npc_ids_preserved": [
+    256,
+    257,
+    258,
+    259,
+    260,
+    261,
+    262,
+    263,
+    264,
+    265,
+    266,
+    267,
+    268,
+    269,
+    270,
+    271,
+    272,
+    273,
+    274,
+    275,
+    276,
+    277,
+    278,
+    279,
+    280,
+    281,
+    282,
+    283,
+    284,
+    285,
+    286,
+    287,
+    288,
+    289,
+    290,
+    291,
+    292,
+    293,
+    294,
+    295,
+    296,
+    297,
+    298,
+    299,
+    300,
+    301,
+    302
+  ],
+  "reference_scope": "Official v28 client has 255 definitions. Later 47 server definitions retained; no older counterpart exists in this reference.",
+  "sources": [
+    "Supplied EOzipped028.zip/pub/dtn001.enf",
+    "https://github.com/ethanmoffat/EndlessClient/blob/master/EOLib/Domain/Spells/SpellCastValidationActions.cs",
+    "https://apollo-games.com/eoclassic/npc.php?npc=122"
+  ]
+}

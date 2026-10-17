@@ -2171,3 +2171,58 @@ conditions. Other players need0.24.0 for the queue/phase and numeric-ID fixes.
   signing/16KB alignment pass, offline save bytes identical, no startup resource/
   script/crash errors. After adb restart use actual mDNS serial from devices; an
   IP:port may not be registered as a transport until explicit adb connect.
+
+## v0.30.1 / code 40 — original v28 NPC combat and protection roles
+
+- Supersedes the v39 decision to preserve supplied server King123 as quest/type15.
+  User explicitly requested original EO NPC combat/protection behavior after
+  discovering Skylar could not fight the King. Official supplied v28 ENF has
+  255 NPCs; staged/live sample-data has302. Audited every shared record: only
+  King123 (original passive1, sample quest15) and Vitaman227 (original passive1,
+  sample aggressive2) differ in combat classification or aggression. Restore
+  both to passive1. King retains original13000HP and150 base EXP. Both King
+  definitions and Princess remain combatants; human appearance is NOT a reason
+  to protect a NPC. Native and Android both use ENF types1/2 for combat.
+- Six original protected villagers later became protected quest/type15 NPCs;
+  preserve those quest conversations since protection is identical. Keep all47
+  later NPC definitions supplied by sample data; official v28 has no counterpart.
+  Do not claim that an older archive proves exact later-era behavior. A second
+  archive eoarchive.7z/28c (modified2019,350 records) differs again and marks the
+  King as quest NPC; it is not interchangeable with the verified v28 baseline.
+- Reference official ENF SHA256263f0259b07a960ab9ca72d33ba9ac3bdbab212cb2f1f2dd885baa0bef990ad7.
+  Final runtime ENF SHA256d9a7245e1a3457757a54363075096603bf3d6eaed5c6698588dfa6697210aecb.
+  `server/configure_npc_combat.py` is idempotent, validates known identities and
+  expected roles, changes only type bytes and original revision, detaches private
+  PUB symlinks, and refuses any quest kill rule pointing to a protected NPC.
+  Fresh `server/setup.py` also applies it. `tools/export_npc_combat.py` independently
+  audits every shared original role, preserves later data, and exports matching
+  Android catalog+manifest checksum without rebuilding art/music/maps.
+- Preserve v39 native service-NPC protection patch: ordinary weapons and spells,
+  including admin characters' normal attacks, cannot damage noncombat NPCs.
+  Explicit admin commands are separate. Source reference EndlessClient's
+  SpellCastValidationActions accepts only Passive/Aggressive for damaging spells.
+- All24 live quest kill requirements across21 unique NPC types remain combatants.
+  King Audience51 requires Big Throat299, not King. Missing original52 dialogue
+  remains absent; King123 is now a combatant, not an advertised quest starter.
+  Native kill credit still invokes Quest_Context::KilledNPC and advances rules.
+- Validation:116 server Python +34 tool tests passed;31 castle/client checks passed.
+  Private native integration used disposable accounts/SQLite only, confirmed all
+  ten protected service type categories, melee/bow/magic King attacks, first hit
+  1501 rather than instant kill, total King damage13000 across9 events,1500EXP
+  with current10x rate, normal non-admin King kill and native Rat Problems35
+  Begin->Talk2 quest progression. Quest hint follows death in a later packet;
+  wait for it instead of asserting immediately after the kill packet.
+- Only original NPC role corrections are part of this release. Existing map
+  spawn positions/AI modes, stats, drops,10x EXP/2x drop rate, movement, HUD,
+  music/SFX, arenas, quests, equipment and account data remain intact.
+- Production deployment backup:
+  `/opt/aster-vale/backups/v40-npc-combat-20261017T170758Z`. Hash guarded original
+  ENF and existing native binary; stopped-world SQLite/PUB backup; changed only
+  two ENF types + revision and installed the migration utility. Native binary
+  unchanged. Native world/gateway/websocket restarted; public HTTPS health,
+  WSS native handshake and unauthenticated streaming guard passed.
+- v0.30.1/code40 installed and launched on Galaxy S23 Ultra via wireless ADB;
+  offline save byte-identical, installed APK SHA matches final signed/aligned
+  package and no startup errors. APK SHA256:
+  `4e0b79ded091f6c29b6f76b01813bc1c9b492332289b2c96b51fbf8f2a4ceae3`.
+  Reports: `docs/npc-combat-v40-*.json`, `docs/gameplay-v40-phone-report.json`.

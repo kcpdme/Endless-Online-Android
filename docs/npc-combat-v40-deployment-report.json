@@ -1,0 +1,176 @@
+{
+  "result": "deployed",
+  "backup": "/opt/aster-vale/backups/v40-npc-combat-20261017T170758Z",
+  "npc_combat": {
+    "changes": [
+      {
+        "id": 123,
+        "name": "King",
+        "before": 15,
+        "after": 1
+      },
+      {
+        "id": 227,
+        "name": "Vitaman",
+        "before": 2,
+        "after": 1
+      }
+    ],
+    "original_enf_sha256": "263f0259b07a960ab9ca72d33ba9ac3bdbab212cb2f1f2dd885baa0bef990ad7",
+    "before_sha256": "cc8946149a3c2c9feaa383f28be61ac302ca19a0391e44a4929ca5e02aa01555",
+    "after_sha256": "d9a7245e1a3457757a54363075096603bf3d6eaed5c6698588dfa6697210aecb",
+    "quest_kill_rules": [
+      {
+        "quest": "00002",
+        "npc_id": 2,
+        "name": "Rat",
+        "count": 20
+      },
+      {
+        "quest": "00002",
+        "npc_id": 170,
+        "name": "Sheep",
+        "count": 20
+      },
+      {
+        "quest": "00005",
+        "npc_id": 178,
+        "name": "Imperial Sea Guard",
+        "count": 50
+      },
+      {
+        "quest": "00010",
+        "npc_id": 10,
+        "name": "Spider",
+        "count": 20
+      },
+      {
+        "quest": "00015",
+        "npc_id": 139,
+        "name": "Swamp Monster",
+        "count": 25
+      },
+      {
+        "quest": "00021",
+        "npc_id": 128,
+        "name": "Drunken Pirate",
+        "count": 3
+      },
+      {
+        "quest": "00021",
+        "npc_id": 285,
+        "name": "Inspection Guard",
+        "count": 1
+      },
+      {
+        "quest": "00021",
+        "npc_id": 2,
+        "name": "Rat",
+        "count": 30
+      },
+      {
+        "quest": "00023",
+        "npc_id": 241,
+        "name": "Mole",
+        "count": 50
+      },
+      {
+        "quest": "00025",
+        "npc_id": 232,
+        "name": "Tenba",
+        "count": 60
+      },
+      {
+        "quest": "00026",
+        "npc_id": 9,
+        "name": "Reaper",
+        "count": 1
+      },
+      {
+        "quest": "00026",
+        "npc_id": 120,
+        "name": "Anundo Leader",
+        "count": 1
+      },
+      {
+        "quest": "00026",
+        "npc_id": 118,
+        "name": "Octopus",
+        "count": 1
+      },
+      {
+        "quest": "00026",
+        "npc_id": 142,
+        "name": "Apozen",
+        "count": 1
+      },
+      {
+        "quest": "00028",
+        "npc_id": 230,
+        "name": "Piglet",
+        "count": 10
+      },
+      {
+        "quest": "00030",
+        "npc_id": 3,
+        "name": "Blob",
+        "count": 25
+      },
+      {
+        "quest": "00035",
+        "npc_id": 2,
+        "name": "Rat",
+        "count": 1
+      },
+      {
+        "quest": "00035",
+        "npc_id": 270,
+        "name": "Fierce Rat",
+        "count": 20
+      },
+      {
+        "quest": "00036",
+        "npc_id": 6,
+        "name": "Snake",
+        "count": 5
+      },
+      {
+        "quest": "00040",
+        "npc_id": 1,
+        "name": "Crow",
+        "count": 10
+      },
+      {
+        "quest": "00046",
+        "npc_id": 12,
+        "name": "Cactusaur",
+        "count": 12
+      },
+      {
+        "quest": "00048",
+        "npc_id": 288,
+        "name": "Castle Hedgehog",
+        "count": 10
+      },
+      {
+        "quest": "00049",
+        "npc_id": 6,
+        "name": "Snake",
+        "count": 3
+      },
+      {
+        "quest": "00051",
+        "npc_id": 299,
+        "name": "Big Throat",
+        "count": 1
+      }
+    ],
+    "quest_kill_rules_valid": true,
+    "npc_count": 302,
+    "database_modified": false,
+    "world_and_gateway_restart_required": true
+  },
+  "native_binary_unchanged": true,
+  "account_edits": false,
+  "world_and_gateway_restarted": true
+}

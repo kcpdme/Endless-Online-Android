@@ -1,0 +1,17 @@
+{
+  "result": "passed",
+  "version": "0.30.1",
+  "version_code": 40,
+  "device": "Galaxy S23 Ultra",
+  "installed_apk_matches_final_sha256": true,
+  "apk_sha256": "4e0b79ded091f6c29b6f76b01813bc1c9b492332289b2c96b51fbf8f2a4ceae3",
+  "save_preserved_byte_for_byte": true,
+  "launched_process_running": true,
+  "startup_errors": 0,
+  "apk_signature_verified": true,
+  "alignment_16k_verified": true,
+  "packaged_king_hp": 13000,
+  "packaged_king_type": 1,
+  "packaged_vitaman_type": 1,
+  "timestamp": "2026-10-17T17:09:57.295417+00:00"
+}

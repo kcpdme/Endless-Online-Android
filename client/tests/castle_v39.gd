@@ -17,7 +17,7 @@ func run() -> void:
 	var wire: Capture = Capture.new();c.add_child(wire);wire.set_process(false);c.session = wire;c.active = true;c.streaming = true
 	c.player = {"name":"fixture","player_id":100,"character_id":100,"map_id":5,"x":40,"y":40,"hp":100,"max_hp":100,"tp":100,"max_tp":100,"equipment":{},"spells":[{"id":5,"level":0}],"stats":{"admin":4}}
 	game.player_tile = Vector2i(40,40);game.player_world = game.tile_position(game.player_tile);game.facing = "east"
-	for id: int in [15,16,57,123,166]:
+	for id: int in [15,16,57,166]:
 		var npc: Dictionary = {"id":id,"index":1,"x":41,"y":40,"direction":0};c.npcs.assign([npc]);c.npc_health.clear()
 		check(not c.is_combat_npc(npc),"Original service/quest/guard must be noncombat")
 		wire.calls.clear();c.request_attack()
@@ -26,6 +26,12 @@ func run() -> void:
 		check(wire.calls.is_empty() and game.skills_ui.casting.is_empty(),"Clicking a service NPC cannot send a damaging spell")
 		game.skills_ui.cast(5,"npc",1)
 		check(wire.calls.is_empty() and game.skills_ui.casting.is_empty(),"Direct cast path must also reject service NPCs")
+	check(int(c.catalog.npcs["123"].hp) == 13000 and c.is_combat_npc({"id":123}),"Original throne-room King is a13000HP passive combatant")
+	check(int(c.catalog.npcs["227"].type) == 1,"Original Vitaman is passive, not aggressive")
+	var king: Dictionary = {"id":123,"index":3,"x":41,"y":40,"direction":0};c.npcs.assign([king]);wire.calls.clear()
+	game.skills_ui.armed = 5;game.skills_ui.target(Vector2i(41,40))
+	check(wire.calls.any(func(call: Dictionary) -> bool: return call.op == "spell_cast"),"King must accept a damaging skill target instead of opening missing quest52")
+	game.skills_ui.cancel_cast()
 	var rat: Dictionary = {"id":2,"index":2,"x":41,"y":40,"direction":0};c.npcs.assign([rat]);wire.calls.clear()
 	check(c.is_combat_npc(rat),"Passive rats remain valid monsters")
 	game.skills_ui.armed = 5;game.skills_ui.target(Vector2i(41,40))

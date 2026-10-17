@@ -105,3 +105,23 @@ coordinates and90s rounds (46/183/184),30s (137/138). The original Princess151
 is a passive combatant with13000HP; no supplied map spawns her. This restoration
 adds her near the current King in map281, with the original sprites and stats.
 The placement/180s respawn are restoration choices, not claimed historical coordinates.
+
+To restore combat/protection roles from the supplied official v28 NPC data while
+keeping later protected quest-giver conversations:
+
+```bash
+python3 tools/export_npc_combat.py \
+  --runtime work/server-build/runtime \
+  --original-client work/eoserv-crawl/downloads/EOzipped028.zip \
+  --output client/content
+```
+
+This verifies the reference ENF hash, compares all 255 shared NPC definitions,
+restores King 123 and Vitaman 227, validates every loaded quest kill requirement,
+and refreshes the Android catalog checksum. The 47 later server NPCs have no
+counterpart in this client archive and retain their supplied definitions. The
+migration changes only two type fields and the PUB revision, preserving stats,
+art, quests and map spawns. `server/setup.py` also applies it to fresh runtimes.
+For an existing server, stop and back up the world first, run
+`server/configure_npc_combat.py --runtime <runtime>`, then restart both native
+world and gateway so their PUB caches agree. Rebuild Android after export.
