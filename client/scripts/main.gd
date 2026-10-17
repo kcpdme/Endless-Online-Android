@@ -102,6 +102,9 @@ var coin_label: Label
 var toast_label: Label
 var location_label: Label
 var health_label: Label
+var junk_button: Button
+var quick_items: RefCounted
+var head_images: Dictionary = {}
 var drop_button: Button
 var bag_overflow: OptionButton
 var equip_button: Button
@@ -181,6 +184,7 @@ func load_map(map_id: int) -> bool:
 	if int(data.get("id", -1)) != map_id or int(data.get("width", 0)) <= 0: return false
 	_cancel_controls()
 	textures.clear()
+	head_images.clear()
 	_configure_world(data)
 	damage_numbers.clear()
 	queue_redraw()
@@ -241,6 +245,7 @@ func _walkable(tile: Vector2i) -> bool:
 
 func _process(delta: float) -> void:
 	if skills_ui != null: skills_ui.tick()
+	if quick_items != null: quick_items.refresh()
 	time_alive += delta
 	animation_clock += delta
 	attack_clock = maxf(0.0, attack_clock - delta)
@@ -363,7 +368,7 @@ func _joystick_begin(pointer: Vector2, pointer_id: int) -> void:
 	stick = Vector2.ZERO
 
 func _modal_open() -> bool:
-	return (online != null and online.panel != null and online.panel.visible) or (inventory != null and inventory.visible) or (menu != null and menu.visible) or (character_panel != null and character_panel.visible) or (stats_ui != null and stats_ui.is_open()) or (shop_ui != null and shop_ui.panel.visible) or (services_ui != null and services_ui.panel.visible) or (chat_ui != null and chat_ui.panel.visible) or (skills_ui != null and skills_ui.panel.visible)
+	return (online != null and online.panel != null and online.panel.visible) or (inventory != null and inventory.visible) or (menu != null and menu.visible) or (character_panel != null and character_panel.visible) or (stats_ui != null and stats_ui.is_open()) or (shop_ui != null and shop_ui.panel.visible) or (services_ui != null and services_ui.panel.visible) or (chat_ui != null and chat_ui.panel.visible) or (skills_ui != null and skills_ui.panel.visible) or (quick_items != null and quick_items.panel.visible)
 
 func _begin_attack(pointer_id: int) -> void:
 	if online_mode: route.clear()
@@ -394,13 +399,14 @@ func _input(event: InputEvent) -> void:
 	# Own native controls suppress their separately generated mouse events, including
 	# HUD presses that open a modal. A release can never become a second action.
 	if event is InputEventMouseButton and event.device == InputEvent.DEVICE_ID_EMULATION:
-		var native_control: bool = started and not _modal_open() and ((skills_ui != null and skills_ui.contains(event.position) >= 0) or attack_button.contains_point(event.position) or bag_button.contains_point(event.position) or chat_button.contains_point(event.position) or character_button.contains_point(event.position) or _joystick_zone().has_point(event.position) or (online_mode and (skills_ui.armed > 0 or not online.map_entity_target(_screen_to_world(event.position)).is_empty())) or (online_mode and online.loot_button.visible and online.loot_button.get_global_rect().has_point(event.position)))
+		var native_control: bool = started and not _modal_open() and ((skills_ui != null and skills_ui.contains(event.position) >= 0) or (quick_items != null and quick_items.contains(event.position) >= 0) or attack_button.contains_point(event.position) or bag_button.contains_point(event.position) or chat_button.contains_point(event.position) or character_button.contains_point(event.position) or _joystick_zone().has_point(event.position) or (online_mode and (skills_ui.armed > 0 or not online.map_entity_target(_screen_to_world(event.position)).is_empty())) or (online_mode and online.loot_button.visible and online.loot_button.get_global_rect().has_point(event.position)))
 		# Godot may synthesize the mouse press before delivering its native touch.
 		if native_control or not owned_touches.is_empty():
 			get_viewport().set_input_as_handled()
 			return
 	if event is InputEventScreenTouch and not event.pressed:
 		var owned: bool = owned_touches.has(event.index)
+		if quick_items != null: quick_items.release(event.index)
 		if event.index == attack_touch_id: _release_attack()
 		if event.index == touch_move_id: _cancel_movement()
 		if owned:
@@ -408,6 +414,7 @@ func _input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			return
 	if event is InputEventMouseButton and not event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		if quick_items != null: quick_items.release(-2)
 		if attack_touch_id == -2:
 			_release_attack()
 			get_viewport().set_input_as_handled()
@@ -418,6 +425,12 @@ func _input(event: InputEvent) -> void:
 			return
 	if not started or _modal_open(): return
 	if event is InputEventScreenTouch and event.pressed:
+		var item_slot: int = quick_items.contains(event.position) if quick_items != null else -1
+		if item_slot >= 0:
+			owned_touches[event.index] = true
+			quick_items.begin(item_slot, event.index)
+			get_viewport().set_input_as_handled()
+			return
 		var skill_slot: int = skills_ui.contains(event.position) if skills_ui != null else -1
 		if skill_slot >= 0:
 			owned_touches[event.index] = true
@@ -473,6 +486,16 @@ func _input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			return
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		var item_slot: int = quick_items.contains(event.position) if quick_items != null else -1
+		if item_slot >= 0:
+			quick_items.begin(item_slot, -2)
+			get_viewport().set_input_as_handled()
+			return
+		var skill_slot: int = skills_ui.contains(event.position) if skills_ui != null else -1
+		if skill_slot >= 0:
+			skills_ui.press(skill_slot)
+			get_viewport().set_input_as_handled()
+			return
 		if attack_button.contains_point(event.position):
 			_begin_attack(-2)
 			get_viewport().set_input_as_handled()
@@ -684,6 +707,29 @@ func _draw_decoration(entry: Dictionary) -> void:
 	draw_texture_rect_region(texture, Rect2(at + offset, size), Rect2(Vector2(frame_index * size.x, 0), size), color)
 
 func _frame(character: Dictionary, direction: String, state: String, phase: float = -1.0) -> Dictionary:
+	if character.has("directional_offhand"):
+		var offhand: Dictionary = character.directional_offhand
+		var behind: bool = bool(offhand.get("on_back", false)) and direction in ["south", "east"]
+		return _frame(offhand, direction, state, phase) if behind == bool(character.behind) else {}
+	if character.has("head_layers"):
+		var frames: Array[Dictionary] = []
+		for layer: Dictionary in character.head_layers:
+			frames.append(_frame(layer, direction, state, phase))
+		var key: String = "head://" + JSON.stringify(frames) + str(character.clip_black)
+		if not textures.has(key):
+			var result: Image = Image.create(192, 192, false, Image.FORMAT_RGBA8)
+			for frame: Dictionary in frames:
+				var path: String = str(frame.path)
+				if not head_images.has(path): head_images[path] = _texture(path).get_image()
+				var r: Array = frame.region
+				result.blend_rect(head_images[path] as Image, Rect2i(int(r[0]), int(r[1]), int(r[2]), int(r[3])), Vector2i.ZERO)
+			if bool(character.clip_black):
+				var bytes: PackedByteArray = result.get_data()
+				for index: int in range(0, bytes.size(), 4):
+					if bytes[index] == 0 and bytes[index + 1] == 0 and bytes[index + 2] == 0: bytes[index + 3] = 0
+				result = Image.create_from_data(192, 192, false, Image.FORMAT_RGBA8, bytes)
+			textures[key] = ImageTexture.create_from_image(result)
+		return {"path": key, "region": [0, 0, 192, 192], "offset": [0, 8]}
 	if character.has("layers"):
 		var layers: Array[Dictionary] = []
 		for layer: Dictionary in character.layers:
@@ -860,14 +906,14 @@ func _build_ui() -> void:
 	bottom_hint.set_anchors_preset(Control.PRESET_BOTTOM_LEFT, true)
 	bag_button = HudIconButton.new()
 	bag_button.kind = "bag"
-	bag_button.position = Vector2(-286, -100)
+	bag_button.position = Vector2(-104, -96)
 	bag_button.size = Vector2(76, 76)
 	bag_button.tooltip_text = "Inventory bag"
 	bag_button.pressed.connect(_toggle_inventory)
 	root.add_child(bag_button)
 	bag_button.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT, true)
 	attack_button = WeaponButton.new()
-	attack_button.position = Vector2(-188, -188)
+	attack_button.position = Vector2(-188, -252)
 	attack_button.size = Vector2(164, 164)
 	root.add_child(attack_button)
 	attack_button.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT, true)
@@ -892,6 +938,8 @@ func _build_ui() -> void:
 	shop_ui.build(self, root)
 	skills_ui = preload("res://scripts/skills_controller.gd").new()
 	skills_ui.build(self, root)
+	quick_items = preload("res://scripts/quick_items.gd").new()
+	quick_items.build(self, root)
 	services_ui = preload("res://scripts/services_window.gd").new()
 	services_ui.build(self, root)
 	_build_paperdoll(root)
@@ -1022,9 +1070,10 @@ func _build_inventory(parent: Node) -> void:
 	bag_scroll.add_child(bag_grid)
 	bag_grid.hide()
 	item_title = _label(card, "", Vector2(28, 548), 22)
-	item_title.size = Vector2(710, 32)
+	item_title.size = Vector2(540, 32)
 	item_title.clip_text = true
 	_label(card, "Drag items to rearrange your bag.", Vector2(28, 591), 17, MUTED)
+	junk_button = _button(card, "Junk", Vector2(576, 558), Vector2(160, 52), func() -> void: online.drop_ui.open(selected_item, "junk"))
 	drop_button = _button(card, "Drop", Vector2(754, 558), Vector2(160, 52), func() -> void: online.drop_ui.open(selected_item))
 	bag_overflow = OptionButton.new()
 	bag_overflow.position = Vector2(420, 583)
@@ -1194,6 +1243,7 @@ func _confirm_reset() -> void:
 
 func _reset_progress() -> void:
 	_cancel_controls()
+	if quick_items != null: quick_items.cancel_hold()
 	owned_touches.clear()
 	attack_clock = 0.0
 	swing_clock = 0.0
@@ -1243,6 +1293,7 @@ func _refresh_ui() -> void:
 		equip_button.disabled = not owned or worn or selected_item == "coins"
 		equip_button.text = "Equip"
 		drop_button.disabled = true
+		junk_button.disabled = true
 		bag_overflow.hide()
 		bag_grid.hide()
 		bag_scroll.hide()
@@ -1326,11 +1377,14 @@ func _handle_back() -> void:
 		return
 	if not content_ready: return
 	_cancel_controls()
+	if quick_items != null: quick_items.cancel_hold()
 	owned_touches.clear()
 	if online != null and online.panel != null and online.panel.visible:
 		online._close_panel()
 	elif stats_ui != null and stats_ui.is_open():
 		stats_ui.hide()
+	elif quick_items != null and quick_items.panel.visible:
+		quick_items.panel.hide()
 	elif skills_ui != null and skills_ui.panel.visible:
 		skills_ui.panel.hide()
 	elif chat_ui != null and chat_ui.panel.visible:
@@ -1356,6 +1410,7 @@ func _notification(what: int) -> void:
 		if content_ready:
 			_cancel_controls()
 			if stats_ui != null: stats_ui.stop_repeat()
+			if quick_items != null: quick_items.cancel_hold()
 			owned_touches.clear()
 	if what == NOTIFICATION_APPLICATION_PAUSED or what == NOTIFICATION_WM_CLOSE_REQUEST:
 		if content_ready and started: _save_progress()

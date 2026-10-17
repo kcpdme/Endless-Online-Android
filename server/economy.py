@@ -23,6 +23,15 @@ class EconomyMixin:
         if r.num(2)!=item_id or r.num(3)<=0:raise EOError('Unexpected drop acknowledgement; reconnect')
         return self.snapshot()
 
+    def junk_item(self, item_id, amount=1):
+        self._standing();item_id=int(item_id);amount=int(amount)
+        # The original reply has a three-byte junked amount. Keep it representable.
+        if amount <= 0 or amount > 16194276 or amount > self.item_amount(item_id):raise EOError('Choose a quantity you have in your bag')
+        self.send(14,25,number(item_id,2)+number(amount,4))
+        payload=self._wait_service(14,{25});r=Reader(payload)
+        if r.num(2)!=item_id or r.num(3)!=amount:raise EOError('Unexpected junk acknowledgement; reconnect')
+        return self.snapshot()
+
     def _near_shop(self):
         self._standing()
         if not self.shop or self.shop['map_id'] != self.state['map_id']:

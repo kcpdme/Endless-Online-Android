@@ -104,6 +104,7 @@ class Handler(socketserver.StreamRequestHandler):
         if op in ('equip','unequip'):
             s._standing();s.equip(int(r['item_id']),op=='unequip',int(r.get('subloc',0)));return s.snapshot()
         if op=='item_drop':return s.drop_item(int(r['item_id']),int(r.get('amount',1)))
+        if op=='item_junk':return s.junk_item(int(r['item_id']),int(r.get('amount',1)))
         if op=='item_use':return s.use_item(int(r['item_id']))
         if op=='bank_upgrade':return s.bank_upgrade()
         if op=='bank_open':return s.bank_open(int(r['npc_index']))

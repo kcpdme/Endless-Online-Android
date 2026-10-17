@@ -16,7 +16,7 @@ Godot 4.7.2, typed GDScript and 2D isometric rendering are sufficient. A Unity/3
 rewrite and a larger server have not been needed for the measured regressions.
 
 Baseline before this update: commit `8c9e541`, APK 0.10.0/code 10. The current
-build is 0.19.0/code 19. v0.12 added level/EXP, Nearby Send closure and
+build is 0.20.0/code 20. See the final v0.20 section for current equipment/HUD/Junk support. v0.12 added level/EXP, Nearby Send closure and
 native consumables; v0.13 adds native skills and touch targeting. v0.11 added native bank/lockers, player inspection and
 trading, local/global/private chat, a dynamic joystick, and the heart/TP HUD,
 as well as placing NPC names near visible heads and fixing observer equipment/
@@ -1057,3 +1057,77 @@ base.apk matches the download APK by SHA256; signature/16KiB alignment,
 byte-identical offline save and zero startup script/crash errors verified.
 Phone report: `docs/gameplay-v19-phone-report.json`. Release files use
 `outputs/endless-online-android-v0.19.0*`.
+
+
+## v0.20 — complete catalog equipment layers, combat shortcuts and native Junk
+
+Helmet of Darkness (item426, doll graphic44) was worn correctly in native state,
+but the Android compositor exported/rendered no head or offhand layers. This
+was a client asset/composition gap, not a server equip failure. New
+`tools/export_player_layers.py` manifest version2 exports 1,055 layers, with no
+missing resources: both genders, all seven native skins, 20 hairstyles × ten
+colors, every catalog armor for its correct gender, all boots/weapons, headgear
+and offhands. Original CharacterSpriteCalculator/renderer/metadata rules are
+used for directional resource IDs, offsets, hat hair masking/hiding, face masks
+and shield/wings depth. Armor/boot/skin offsets now respect gender. Bald uses
+no hair while retaining the original hair-based hat anchor. This supersedes the
+older male-only/no-hats/offhands limitations above. Exact ranged attack offsets
+and sitting poses remain future work; rings/belts/etc have no world sprite in
+the original and continue to affect stats/paperdoll only.
+
+`online_controller.character_graphic` binds B000A0HSW head6/offhand7, builds
+independent body/gear layers and a head/hair composition. `main._frame` masks
+black hat pixels after compositing and caches the resulting head texture;
+`head_images` caches source readbacks. Map changes clear both image/texture
+caches. The existing paperdoll live preview uses the same generated frames.
+A shader or trimmed atlases could further reduce large-population memory/
+first-appearance composition work if future profiling warrants it. Do not
+regress starter pixels: the 32-pose reference composition test still passes.
+
+The attack circle moved up 64 logical pixels. Two configurable skill shortcuts
+sit on its upper arc; two consumable shortcuts sit to its left. The Skills book
+still opens the full learned list/master offers, with Set slot1/2. Bag remains
+bottom-right. `quick_items.gd` provides tap-to-use and 500ms hold-to-assign, native
+quantity badges, zero-stock indication, and per-endpoint/character persistent
+assignments in `user://quick_items.json`. Defaults select owned HP/TP potions
+only if no saved assignment exists; clearing both slots must remain cleared.
+Assignment supports the same native consumables as bag Use, including scrolls.
+No inventory is decremented optimistically; blocking/pending requests guard
+repeated use. Native touches are owned and emulated mouse suppressed, holds
+cancel on focus loss/other modals/disconnect; mouse presses also precede spell
+world targeting. The pickup control is now a circular hand icon with an optional
+item tooltip and no changing item-name text ribbon.
+
+Bag footer adds Junk beside Drop and Equip/Use. `drop_window.gd` shares the
+quantity chooser but labels Junk as permanent destruction and requires its
+explicit button confirmation; Cancel has no effect on inventory. Original
+Item_Junk is family14/action25 (NOT26): request id2+amount4; reply id2+amount3+
+remaining4+weight1+maxweight1. Gateway validates positive, owned quantities up to
+the three-byte reply limit, sends native Junk, waits for and applies the ack,
+then returns state. Original Junk permits Lore items (unlike Drop), so the UI
+and adapter preserve that distinction. Base event `item_junk` updates remaining
+inventory/weight, and LiveSession marks dirty without a ground drop or Refresh.
+Gold continues to show its coin even at zero. Public services deployment changed
+only gateway.py/economy.py/eo_session.py/live_session.py, with source backups in
+`/opt/aster-vale/backups` and ignored work/hosting/upgrade_v20.py. The native world
+was not restarted. All operator accounts, including Skylar, remained unchanged.
+
+Validation: 40 server state tests, 16 catalog checks including every visible
+item/body choice and original hat colorkeys, gameplay/world smoke, network
+regressions, native skill/master UI, and Rat chase with zero corrections and
+zero full Refresh during chase. Native touch integration locally and over
+public WSS tests both potion shortcuts/counts, hold assignment without use,
+persistence, hand-only pickup, partial Junk/Cancel/no ground drop, and native
+helmet426+shield56+robe407 equip with an independent observer. Original existing
+bag/shop/drop/held-stat flows also pass. Reports:
+`docs/gameplay-v20-{live,public}-report.json`, `docs/skills-v20-live-report.json`,
+`docs/combat-chase-v20-report.json`. Private screenshots in
+`work/v20-gameplay-shots` and `work/v20-public-gameplay-shots`.
+Version0.20.0/code20 uses the existing Android package and signing key.
+
+Final v0.20 APK installed and launched on Galaxy S23 Ultra; installed base.apk
+SHA256 matches the download build, code20/name0.20.0 verified, signature and
+16KiB alignment valid, offline save byte-identical, zero startup script/crash
+errors. Report: `docs/gameplay-v20-phone-report.json`. Release files use
+`outputs/endless-online-android-v0.20.0*`. Wireless ADB was reconnected using its
+mDNS endpoint after Godot export restarted the daemon; use the current SDK adb.

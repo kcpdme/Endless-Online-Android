@@ -28,14 +28,15 @@ python3 tools/export_catalog.py \
 ```
 
 This adds server item/NPC definitions, all 282 map geometries, item icons, spawned
-NPC art, spells and independent male armor/boots/weapon animation layers.
+NPC art, spells and independent equipment animation layers for both genders.
 To refresh only equipment layers after an existing import/catalog export:
 
 ```sh
 python3 tools/export_player_layers.py --graphics-zip reference/gfx.zip
 ```
 
-Equipment layers currently use the male starter body, race 0, hair 1/color 0.
-Alternate bodies/hair, hats/offhands and exact ranged weapon animation offsets
-still need additional rendering support.
+Equipment layers cover both genders, all seven skins, 20 hairstyles × 10 colors,
+and every visible armor, boots, weapon, headgear and offhand graphic in the current
+catalog. Hats use original hair hiding/masking rules; shields/wings change depth
+with facing. Exact ranged attack offsets and sitting poses remain future work.
 See `tools/README.md` for the catalog contract and reference archive audit.

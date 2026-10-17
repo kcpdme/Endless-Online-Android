@@ -42,7 +42,13 @@ func _draw() -> void:
 	var ink: Color = Color("20312e")
 	var light: Color = Color("f2e8c7")
 	var gold: Color = Color("e7bd70")
-	if kind == "skills":
+	if kind == "hand":
+		# Open palm: compact pickup action, without a changing item-name ribbon.
+		var hand: PackedVector2Array = PackedVector2Array([Vector2(-13, 5), Vector2(-21, -3), Vector2(-20, -7), Vector2(-16, -8), Vector2(-9, -2), Vector2(-9, -19), Vector2(-6, -22), Vector2(-3, -20), Vector2(-3, -7), Vector2(-2, -25), Vector2(1, -27), Vector2(4, -24), Vector2(4, -7), Vector2(5, -22), Vector2(8, -23), Vector2(11, -20), Vector2(11, -5), Vector2(12, -16), Vector2(15, -17), Vector2(18, -14), Vector2(18, 4), Vector2(13, 16), Vector2(12, 23), Vector2(-5, 23), Vector2(-6, 16)])
+		draw_colored_polygon(hand, light)
+		draw_line(Vector2(-2, 5), Vector2(8, 2), gold, 2.0, true)
+		draw_line(Vector2(-1, 10), Vector2(9, 8), gold, 2.0, true)
+	elif kind == "skills":
 		draw_colored_polygon(PackedVector2Array([Vector2(-19, -15), Vector2(-3, -12), Vector2(0, -9), Vector2(3, -12), Vector2(19, -15), Vector2(19, 15), Vector2(3, 17), Vector2(0, 20), Vector2(-3, 17), Vector2(-19, 15)]), light)
 		draw_line(Vector2(0, -9), Vector2(0, 17), ink, 2.0, true)
 		for y: int in [-5, 1, 7]:

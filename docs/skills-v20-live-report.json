@@ -1,0 +1,10 @@
+{
+  "native_fire_tp_damage_and_original_effect": true,
+  "observer_renders_original_peer_casting_pose_and_effect": true,
+  "result": "passed",
+  "self_heal_cast_hp_tp_hud_effect": true,
+  "skills_book_fits_screen": true,
+  "tap_skill_master_original_offers_learn_forget": true,
+  "tap_skill_then_npc_without_melee_path": true,
+  "touch_shortcuts_with_native_spell_icons": true
+}

@@ -21,6 +21,30 @@ func _run() -> void:
 	var c: Node = game.online
 	c.session.message_received.connect(func(message: Dictionary) -> void: messages.append(message))
 	if not check(await login_fixture(c, f), "Inventory fixture login: " + c.last_error): return
+	var quick: RefCounted = game.quick_items
+	quick.slots.assign([4, 5])
+	quick.refresh()
+	for id: int in range(2):
+		if not check(quick.buttons[id].visible and root.get_visible_rect().encloses(quick.buttons[id].get_global_rect()), "Quick slot outside screen"): return
+		var item: int = 4 + id
+		var before: int = amount(item)
+		await tap_control(quick.buttons[id])
+		if not check(await wait_for(func() -> bool: return amount(item) == before - 1 and c.session.is_idle()), "Quick potion touch must use exactly one native item: " + c.last_error): return
+		if not check((quick.buttons[id].get_node("Quantity") as Label).text == str(before - 1), "Quick quantity badge must follow native acknowledgement"): return
+	var held: InputEventScreenTouch = InputEventScreenTouch.new()
+	held.index = 81
+	held.position = quick.buttons[0].get_global_rect().get_center()
+	held.pressed = true
+	Input.parse_input_event(held)
+	await create_timer(.65).timeout
+	held.pressed = false
+	Input.parse_input_event(held)
+	if not check(quick.panel.visible and amount(4) == 6, "Holding shortcut must open assignment without consuming"): return
+	quick.assign(4)
+	quick.identity = ""
+	quick.refresh()
+	if not check(quick.slots[0] == 4, "Quick assignments must survive reload"): return
+	await capture("v20-consumable-shortcuts")
 	var marble: Dictionary = {}
 	for npc: Dictionary in c.npcs:
 		if int(npc.id) == 87: marble = npc
@@ -65,9 +89,14 @@ func _run() -> void:
 	var dropped_uid: int = 0
 	for item: Dictionary in c.drops:
 		if int(item.id) == 360 and int(item.amount) == 1: dropped_uid = int(item.uid)
+	game.inventory.hide()
+	c._update_loot_control()
+	if not check(c.loot_button.visible and c.loot_button.text.is_empty() and c.loot_button.get("kind") == "hand", "Pickup must be a hand icon only"): return
+	await capture("v20-pickup-hand")
 	if not check(dropped_uid > 0, "Dropped item must appear on native ground"): return
 	c.session.request("pickup", {"uid": dropped_uid})
 	if not check(await wait_for(func() -> bool: return amount(360) == 2 and c.session.is_idle()), "Native drop pickup roundtrip failed"): return
+	game.inventory.show()
 	game._select_item("item:4")
 	if not check(game.equip_button.text == "Use", "Consumable action must say Use only"): return
 	game._select_item("item:407")
@@ -137,8 +166,16 @@ func _run() -> void:
 	for direction: String in ["south", "west", "north", "east"]:
 		for state: String in ["idle", "frames", "attack", "cast"]:
 			if not check(not game._frame(appearance, direction, state).is_empty(), "Missing dressed pose"): return
+	for id: int in [426, 56]:
+		c.session.request("equip", {"item_id": id})
+		if not check(await wait_for(func() -> bool: return c.is_equipped("item:%d" % id) and c.session.is_idle()), "Native helmet/shield equip failed: " + c.last_error): return
+	appearance = c.character_graphic(c.player)
+	if not check(int(appearance.appearance.head_graphic) == 44 and int(appearance.appearance.offhand_graphic) == 1, "Native helmet/offhand artwork was not bound"): return
+	for direction: String in ["south", "west", "north", "east"]:
+		game.facing = direction
+		await capture("v20-darkness-helmet-" + direction)
 	game.facing = "south"
-	await capture("v19-plaot-robes-in-world")
+	await capture("v20-plaot-robes-in-world")
 	actor = (load("res://scripts/online_session.gd") as Script).new()
 	root.add_child(actor)
 	actor.message_received.connect(func(message: Dictionary) -> void: actor_replies[int(message.get("id", -1))] = message)
@@ -149,7 +186,7 @@ func _run() -> void:
 	var entry: Dictionary = await rpc("enter", {"character_id": (login.characters as Array)[0].id})
 	var observer_saw: bool = false
 	for peer: Dictionary in entry.get("players", []):
-		if int(peer.get("player_id", -1)) == int(c.player.player_id): observer_saw = int((peer.equipment_graphics as Array)[4]) == 40 and not c.character_graphic(peer).is_empty()
+		if int(peer.get("player_id", -1)) == int(c.player.player_id): observer_saw = int((peer.equipment_graphics as Array)[4]) == 40 and int((peer.equipment_graphics as Array)[6]) == 44 and int((peer.equipment_graphics as Array)[7]) == 1 and not c.character_graphic(peer).is_empty()
 	if not check(observer_saw, "Independent native observer did not see Plaot appearance"): return
 	c.request_face("north")
 	await create_timer(.3).timeout
@@ -179,11 +216,25 @@ func _run() -> void:
 	if not check(int(c.player.stats.intelligence) == settled, "Stat allocation continued after release"): return
 	await capture("v19-held-stat-result")
 	game.stats_ui.hide()
+	game.inventory.show()
+	game._select_item("item:360")
+	await tap_control(game.junk_button)
+	if not check(drop.panel.visible and drop.operation == "junk" and int(drop.quantity.max_value) == 2, "Junk must offer the actual stack quantity"): return
+	drop.panel.hide()
+	if not check(amount(360) == 2, "Cancelling junk must preserve items"): return
+	await tap_control(game.junk_button)
+	drop.quantity.value = 1
+	var ground_before: String = JSON.stringify(c.drops)
+	await tap_control(drop.submit)
+	if not check(await wait_for(func() -> bool: return amount(360) == 1 and not drop.panel.visible and c.session.is_idle()), "Native partial junk failed: " + c.last_error): return
+	if not check(JSON.stringify(c.drops) == ground_before, "Junk must not create a ground drop"): return
+	await capture("v20-junk-native-quantity")
+	game.inventory.hide()
 	game.started = false
 	game._toast("Game server disconnected")
 	await create_timer(2.2).timeout
 	if not check(not game.toast_label.visible and is_zero_approx(game.toast_time), "Disconnected notification must expire even while gameplay is stopped"): return
-	var report: Dictionary = {"result": "passed", "confirmed_native_purchase_feedback_only": true, "craft_quantities_30px_scrollbar_margin": true, "native_touch_drag_six_cell_robe": true, "overlap_rejected": true, "focus_loss_cancels_drag": true, "fixed_15_columns_5_rows": true, "native_quantity_drop_and_pickup_roundtrip": true, "compact_equip_and_use_labels": true, "character_layout_survives_reload": true, "server_quantities_unchanged_by_rearrangement": true, "legacy_page_items_migrated_into_one_bag": true, "large_original_gear_preview": true, "plaot_robe_all_directions_walk_attack_cast": true, "independent_native_observer_sees_robe": true, "native_observer_sees_turn_in_place": true, "held_plus_uses_native_acknowledged_points_and_stops": true, "text_notification_expires_while_disconnected": true, "operator_accounts_modified": false}
+	var report: Dictionary = {"result": "passed", "pickup_is_hand_icon_only": true, "native_observer_sees_helmet_robe_and_offhand": true, "two_native_consumable_shortcuts_and_quantities": true, "hold_to_reassign_without_using_and_assignment_persists": true, "helmet_of_darkness_and_shield_native_equip_four_directions": true, "native_partial_junk_and_cancel_no_ground_drop": true, "confirmed_native_purchase_feedback_only": true, "craft_quantities_30px_scrollbar_margin": true, "native_touch_drag_six_cell_robe": true, "overlap_rejected": true, "focus_loss_cancels_drag": true, "fixed_15_columns_5_rows": true, "native_quantity_drop_and_pickup_roundtrip": true, "compact_equip_and_use_labels": true, "character_layout_survives_reload": true, "server_quantities_unchanged_by_rearrangement": true, "legacy_page_items_migrated_into_one_bag": true, "large_original_gear_preview": true, "plaot_robe_all_directions_walk_attack_cast": true, "independent_native_observer_sees_robe": true, "native_observer_sees_turn_in_place": true, "held_plus_uses_native_acknowledged_points_and_stops": true, "text_notification_expires_while_disconnected": true, "operator_accounts_modified": false}
 	var file: FileAccess = FileAccess.open(OS.get_environment("ASTER_VALE_TEST_REPORT"), FileAccess.WRITE)
 	file.store_string(JSON.stringify(report, "  ") + "\n")
 	print("INVENTORY LIVE PASS: ", JSON.stringify(report))

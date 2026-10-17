@@ -18,6 +18,19 @@ def fixture():
     return s
 
 class StreamStateTests(unittest.TestCase):
+    def test_junk_ack_removes_only_acknowledged_amount_without_ground_drop(self):
+        s=fixture();s.inventory=[dict(id=360,amount=2)]
+        s.apply_event(14,25,number(360,2)+number(1,3)+number(1,4)+number(3,1)+number(70,1))
+        self.assertEqual(s.inventory,[dict(id=360,amount=1)])
+        self.assertEqual(s.state['items'],[]);self.assertTrue(s.dirty)
+        self.assertEqual((s.weight,s.max_weight),(3,70));self.assertFalse(s.sent)
+        self.assertEqual(s.events[-1]['kind'],'item_junk')
+    def test_junk_rejects_invalid_and_unowned_quantities_without_send(self):
+        s=fixture();s.inventory=[dict(id=360,amount=2)]
+        for amount in (-1,0,3,16194277):
+            with self.assertRaises(EOError):s.junk_item(360,amount)
+        with self.assertRaises(EOError):s.junk_item(999,1)
+        self.assertFalse(s.sent);self.assertEqual(s.inventory,[dict(id=360,amount=2)])
     def test_native_drop_ack_updates_ground_stack_and_weight_without_refresh(self):
         s=fixture();s.inventory=[dict(id=360,amount=2)]
         s.apply_event(14,24,number(360,2)+number(1,3)+number(1,4)+number(77,2)+number(40,1)+number(40,1)+number(6,1)+number(70,1))

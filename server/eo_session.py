@@ -214,6 +214,12 @@ class Session:
             self.inventory=[i for i in self.inventory if i['id']!=item]
             if remaining:self.inventory.append({'id':item,'amount':remaining})
             event.update(kind='drop',uid=uid,item_id=item,amount=amount)
+        elif (f,a)==(14,25):
+            r=Reader(p);item=r.num(2);amount=r.num(3);remaining=r.num(4)
+            self.inventory=[i for i in self.inventory if i['id']!=item]
+            if remaining:self.inventory.append({'id':item,'amount':remaining})
+            self.weight=r.num();self.max_weight=r.num();self.stats.update(weight=self.weight,max_weight=self.max_weight)
+            event.update(kind='item_junk',item_id=item,amount=amount)
         elif (f,a)==(14,27):
             r=Reader(p);uid=r.num(2);item=r.num(2);amount=r.num(3);self.inventory_add(item,amount)
             if len(r.rest())>=2:

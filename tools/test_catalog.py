@@ -44,6 +44,30 @@ class RuntimeCatalogTests(unittest.TestCase):
                             self.assertIsNone(ImageChops.difference(composed.crop((48,96,144,192)),expected).getbbox(),(state,direction,index))
         finally:
             for atlas in atlases.values():atlas.close()
+    def test_all_visible_equipment_and_native_body_choices_are_exported(self):
+        data=self.manifest['characters']['equipment_layers'];layers=data['layers']
+        self.assertEqual(data['version'],2);self.assertEqual(data['missing'],[])
+        for gender,prefix in ((1,''),(0,'f:')):
+            for race in range(7):self.assertIn(f'skin:{prefix}0'+(f':{race}' if race else ''),layers)
+            for style in range(1,21):
+                for color in range(10):self.assertIn(f'hair:{prefix}0'+(f':{style}:{color}' if (style,color)!=(1,0) else ''),layers)
+            for item in self.catalog['items'].values():
+                name={10:'weapon_back',11:'offhand',12:'armor',13:'head',14:'boots'}.get(item['type'])
+                if not name or not item['doll_graphic'] or (item['type']==12 and item['gender']!=gender):continue
+                key=f"{name}:{prefix}{item['doll_graphic']}"
+                self.assertIn(key,layers,item['name'])
+                self.assertEqual(len(layers[key]['frames']['south']),4)
+        for key in ('head:44','head:f:44'):
+            self.assertEqual(layers[key]['mask_mode'],'hide')
+            with Image.open(CONTENT/layers[key]['idle']['south']['path'].removeprefix('res://content/')) as im:
+                self.assertIsNotNone(im.getbbox())
+                self.assertFalse(any(p[:3] in ((8,0,0),(0,0,0)) and p[3] for p in im.getdata()),'Helmet cannot retain black/red mask pixels')
+        self.assertTrue(layers['offhand:10']['on_back']);self.assertFalse(layers['offhand:1']['on_back'])
+    def test_original_hat_colorkeys_preserve_mask_only_when_required(self):
+        from export_player_layers import hat_bitmap
+        raw=Image.new('RGBA',(3,1));raw.putdata([(8,0,0,255),(0,0,0,255),(100,100,100,255)])
+        self.assertEqual([p[3] for p in hat_bitmap(raw,1).getdata()],[0,255,255])
+        for graphic in (7,44):self.assertEqual([p[3] for p in hat_bitmap(raw,graphic).getdata()],[0,0,255])
     def test_catalog_tracks_actual_server_pub_hashes(self):
         for source in self.catalog['source']['files'].values():
             self.assertEqual(source['sha256'],hashlib.sha256((RUNTIME/source['path']).read_bytes()).hexdigest())

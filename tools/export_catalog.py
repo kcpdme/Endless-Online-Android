@@ -222,7 +222,10 @@ def export_catalog(runtime:Path,graphics_zip:Path,out:Path,map_id=5):
                     key=f'a{armor_on}_b{boots_on}_g{doll}'
                     manifest['characters']['weapon_variants'][key]=export_hero(out,image,armor_on,boots_on,doll,key)
         from export_player_layers import export_layers
-        manifest['characters']['equipment_layers']=export_layers(out,image,items)
+        def raw_image(gfx,gid):
+            if gfx not in containers:containers[gfx]=PEBitmaps(read_member(archive,f'gfx/gfx{gfx:03}.egf'))
+            return containers[gfx].image(gid,transparent=False)
+        manifest['characters']['equipment_layers']=export_layers(out,image,items,raw_image)
         npc_graphics={}
         for map_data in maps.values():
             for spawn in map_data['npc_spawns']:

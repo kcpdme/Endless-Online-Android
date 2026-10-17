@@ -347,8 +347,8 @@ def export_sounds(out,client):
     return sounds
 
 
-def export_hero(out,image,armor_on=1,boots_on=1,weapon_graphic=0,variant="a1_b1_w0",component=None):
-    """Male race0, hair1/color0, selectable armor/boots/weapon; exact EO offsets.
+def export_hero(out,image,armor_on=1,boots_on=1,weapon_graphic=0,variant="a1_b1_w0",component=None,gender=1,race=0,hairstyle=1,haircolor=0):
+    """Selectable native body/hair and armor/boots/weapon; EO melee pose offsets.
 
     18x58 parent draw rectangle from CharacterRenderer. Skin source calculations
     and offsets follow CharacterSpriteCalculator, SkinRenderLocationCalculator,
@@ -358,7 +358,7 @@ def export_hero(out,image,armor_on=1,boots_on=1,weapon_graphic=0,variant="a1_b1_
     # Larger original weapons must not be clipped by the starter dagger canvas.
     canvas_size=192 if component or weapon_graphic not in (0,4) else 96
     hero={'name':'Classic adventurer','anchor':[canvas_size//2,canvas_size-8],'frame_width':canvas_size,'frame_height':canvas_size,'frames':{},'idle':{},'attack':{},'cast':{},
-          'appearance':{'gender':1,'race':0,'hair_style':1,'hair_color':0,'armor_graphic':armor_on,'boots_graphic':boots_on,'weapon_graphic':weapon_graphic},
+          'appearance':{'gender':gender,'race':race,'hair_style':hairstyle,'hair_color':haircolor,'armor_graphic':armor_on,'boots_graphic':boots_on,'weapon_graphic':weapon_graphic},
           'composition':'Layered source bitmaps precomposed for prototype; replace with runtime equipment layering later.'}
     hero['source_resources']={'gfx/gfx008.egf':[1,2,3,4],'gfx/gfx009.egf':[2,4]}
     if armor_on:hero['source_resources']['gfx/gfx013.egf']=[(armor_on-1)*50+i for i in range(1,17)]
@@ -374,12 +374,12 @@ def export_hero(out,image,armor_on=1,boots_on=1,weapon_graphic=0,variant="a1_b1_
                 sheet=image(8,2 if walking else 3 if attacking else 4 if casting else 1)
                 columns=16 if walking else 8 if attacking else 4
                 sw=sheet.width//columns; sh=sheet.height//7
-                sx=sheet.width//2+back*(sheet.width//4)+(index*sw if walking or attacking else 0)+(1 if walking and not back else 0)
-                skin=sheet.crop((sx,0,sx+sw,sh))
-                hair=image(9,2+back*2)
+                sx=gender*(sheet.width//2)+back*(sheet.width//4)+(index*sw if walking or attacking else 0)+(1 if (gender==1 and walking and not back) or (gender==0 and attacking) else 0)
+                skin=sheet.crop((sx,race*sh,sx+sw,(race+1)*sh))
+                hair=image(10-gender,(max(1,hairstyle)-1)*40+haircolor*4+2+back*2)
                 armor_id=3+index+back*4 if walking else 13+index+back*2 if attacking else 11+back if casting else 1+back
                 boots_id=3+index+back*4 if walking else 11+back if attacking and frame==2 else 1+back
-                armor=image(13,max(0,armor_on-1)*50+armor_id);boots=image(11,max(0,boots_on-1)*40+boots_id)
+                armor=image(14-gender,max(0,armor_on-1)*50+armor_id);boots=image(12-gender,max(0,boots_on-1)*40+boots_id)
                 canvas=Image.new('RGBA',(canvas_size,canvas_size))
                 parent_x=canvas_size//2-9;parent_y=canvas_size-66
                 def paste(img,x,y,layer):
@@ -387,7 +387,7 @@ def export_hero(out,image,armor_on=1,boots_on=1,weapon_graphic=0,variant="a1_b1_
                     if flip:img=ImageOps.mirror(img)
                     canvas.alpha_composite(img,(parent_x+int(x),parent_y+int(y)))
                 def draw_weapon(gid,layer='weapon_back'):
-                    blade=image(17,(weapon_graphic-1)*100+gid)
+                    blade=image(18-gender,(weapon_graphic-1)*100+gid)
                     factor=1 if flip else -1
                     bx=-math.floor(abs(blade.width-18)/2)+9*factor
                     if attacking and frame==2:bx+=2*factor
@@ -399,25 +399,25 @@ def export_hero(out,image,armor_on=1,boots_on=1,weapon_graphic=0,variant="a1_b1_
                 weapon_id=3+index+back*4 if walking else 13+index+back*2 if attacking else 11+back if casting else 1+back
                 if weapon_graphic:draw_weapon(14 if split else weapon_id)
                 skin_x=-math.floor(abs(sw-18)/2)
-                if attacking and frame==1:skin_x+=2 if flip else -2
+                if gender==1 and attacking and frame==1:skin_x+=2 if flip else -2
                 paste(skin,skin_x,-math.floor(abs(sh-58)/2)-(2 if casting else 0),'skin')
-                boots_x=-math.floor(abs(boots.width-18)/2);boots_y=math.floor(58/3)*2-2
+                boots_x=-math.floor(abs(boots.width-18)/2);boots_y=math.floor(58/3)*2-1-gender
                 if walking:boots_y-=1+(1 if frame==2 else 0)
                 elif attacking and frame==2:
-                    factor=1 if flip else -1;boots_x+=2*factor;boots_y+=factor-(2 if flip else 0)
+                    factor=1 if flip else -1;boots_x+=2*factor;boots_y+=factor-(2*gender if flip else 0)
                 if boots_on:paste(boots,boots_x,boots_y,'boots')
                 armor_x=-math.floor(abs(armor.width-18)/2)-2
                 if attacking and frame==2:armor_x+=4 if flip else 0
                 else:armor_x+=2
-                armor_y=-math.floor(abs(armor.height-58)/2)-(5 if walking else 4)
+                armor_y=-math.floor(abs(armor.height-58)/2)-(4 if walking else 3)-gender
                 if armor_on:paste(armor,armor_x,armor_y,'armor')
                 hair_x=-math.floor(abs(hair.width-18)/2)-1+(2 if flip else 0)
-                hair_y=-math.floor(abs(hair.height-29)/2)-1
+                hair_y=-math.floor(abs(hair.height-29)/2)-gender
                 if attacking and frame==2:
                     hair_x+=4 if flip else -4
-                    if back:hair_x+=-2 if flip else 2
-                    hair_y+=1 if back else 4
-                paste(hair,hair_x,hair_y,'hair')
+                    if back:hair_x+=(-2 if flip else 2)*gender
+                    hair_y+=1 if back else 5-gender
+                if hairstyle:paste(hair,hair_x,hair_y,'hair')
                 if split:draw_weapon(17,'weapon_front')
                 name=f'characters/hero_{variant}_{direction}_{state}_{index}.png';canvas.save(out/name)
                 # Canvas extends eight pixels below feet; tell renderer via offset.

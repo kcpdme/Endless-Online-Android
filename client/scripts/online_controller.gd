@@ -135,7 +135,12 @@ func build_ui(parent: Control) -> void:
 	panel.hide()
 	server_label = game._label(parent, "", Vector2(390, 67), 15, game.MUTED)
 	server_label.hide()
-	loot_button = game._button(parent, "Pick up", Vector2(-486, -224), Vector2(280, 58), request_collect, true)
+	loot_button = preload("res://scripts/hud_icon_button.gd").new()
+	loot_button.set("kind", "hand")
+	loot_button.position = Vector2(-94, -406)
+	loot_button.size = Vector2(68, 68)
+	loot_button.pressed.connect(request_collect)
+	parent.add_child(loot_button)
 	loot_button.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT, true)
 	loot_button.clip_text = true
 	loot_button.add_theme_font_size_override("font_size", 17)
@@ -206,7 +211,7 @@ func _on_message(message: Dictionary) -> void:
 		if operation == "collect": pickup_pending.clear()
 		if operation in ["equip", "unequip"]: pending_equip.clear()
 		if operation == "spell_cast": game.skills_ui.casting.clear()
-		if operation == "item_drop":
+		if operation in ["item_drop", "item_junk"]:
 			drop_ui.submitting = false
 			drop_ui.refresh()
 		if operation == "spend_stat": game.stats_ui.stop_repeat()
@@ -253,7 +258,7 @@ func _on_message(message: Dictionary) -> void:
 				else: game._toast("The worn item could not be removed. Your replacement remains in the bag.")
 		"world", "refresh", "snapshot", "attack", "pickup", "equip", "spend_stat", "shop_buy", "shop_sell", "shop_craft", "bank_deposit", "bank_withdraw", "bank_upgrade", "locker_deposit", "locker_withdraw", "trade_request", "trade_accept", "trade_decline", "trade_add", "trade_remove", "trade_agree", "trade_cancel", "chat_send", "item_use", "skill_learn", "skill_forget", "skill_level":
 			_apply_snapshot(data)
-		"item_drop":
+		"item_drop", "item_junk":
 			drop_ui.panel.hide()
 			drop_ui.submitting = false
 			_apply_snapshot(data)
@@ -1069,9 +1074,10 @@ func _update_loot_control() -> void:
 	var drop: Dictionary = nearest_drop()
 	loot_button.visible = active and game.started and not game._modal_open() and (not drop.is_empty() or not pickup_pending.is_empty())
 	loot_button.disabled = not pickup_pending.is_empty() or defeated
-	if not pickup_pending.is_empty(): loot_button.text = "Picking up…"
+	loot_button.text = ""
+	if not pickup_pending.is_empty(): loot_button.tooltip_text = "Picking up…"
 	elif not drop.is_empty():
-		loot_button.text = "Pick up %s ×%d" % [str(item_info("item:%d" % int(drop.id)).get("name", "item")), int(drop.amount)]
+		loot_button.tooltip_text = "Pick up %s ×%d" % [str(item_info("item:%d" % int(drop.id)).get("name", "item")), int(drop.amount)]
 
 
 func collect_nearby() -> void:
@@ -1079,6 +1085,7 @@ func collect_nearby() -> void:
 	collect_pending = true
 
 func refresh_game_ui() -> void:
+	if game.quick_items != null: game.quick_items.refresh()
 	game.quest_label.text = "%s\n%d nearby players  ·  %d NPCs" % [str(game.world.get("name", "Area %s" % str(player.get("map_id", "")))), nearby_count(), npcs.size()]
 	game.quest_hint.text = "Progress is saved by your server."
 	game.coin_label.text = "%d Gold" % game.coins
@@ -1099,6 +1106,7 @@ func refresh_game_ui() -> void:
 	game.equip_button.disabled = not owned or worn or (not usable and int(info.get("type", 0)) not in range(10, 22)) or not _action_ready()
 	game.equip_button.text = "Use" if usable else "Equip"
 	game.drop_button.disabled = not _action_ready() or bag_amount(item_id(selected)) <= 0 or int(info.get("special", 0)) == 4
+	game.junk_button.disabled = not _action_ready() or bag_amount(item_id(selected)) <= 0
 	drop_ui.refresh()
 	game.paperdoll.refresh(selected)
 	if game.paperdoll.information_labels.size() >= 2:
@@ -1122,18 +1130,39 @@ func nearby_count() -> int:
 func character_graphic(record: Dictionary) -> Dictionary:
 	var equipment_graphics: Array = record.get("equipment_graphics", []) as Array
 	if equipment_graphics.size() != 9: return {}
-	if int(record.get("gender", 1)) != 1 or int(record.get("race", 0)) != 0 or int(record.get("hairstyle", 1)) != 1 or int(record.get("haircolor", 0)) != 0: return {}
 	var characters: Dictionary = game.manifest.get("characters", {}) as Dictionary
 	var layered: Dictionary = characters.get("equipment_layers", {}) as Dictionary
-	if not layered.is_empty():
+	if int(layered.get("version", 0)) >= 2:
 		var definitions: Dictionary = layered.get("layers", {}) as Dictionary
+		var female: String = "f:" if int(record.get("gender", 1)) == 0 else ""
+		var race: int = clampi(int(record.get("race", 0)), 0, 6)
+		var hairstyle: int = clampi(int(record.get("hairstyle", 1)), 0, 20)
+		var color: int = clampi(int(record.get("haircolor", 0)), 0, 9)
+		var skin_key: String = "skin:%s0" % female + (":%d" % race if race > 0 else "")
+		var hair_key: String = "hair:%s0" % female + (":%d:%d" % [maxi(1, hairstyle), color] if [maxi(1, hairstyle), color] != [1, 0] else "")
+		var head: Dictionary = definitions.get("head:%s%d" % [female, int(equipment_graphics[6])], {}) as Dictionary
+		var hair: Dictionary = definitions.get(hair_key, {}) as Dictionary if hairstyle > 0 and str(head.get("mask_mode", "")) != "hide" else {}
+		var head_parts: Array[Dictionary] = []
+		if str(head.get("mask_mode", "")) == "face":
+			if not head.is_empty(): head_parts.append(head)
+			if not hair.is_empty(): head_parts.append(hair)
+		else:
+			if not hair.is_empty(): head_parts.append(hair)
+			if not head.is_empty(): head_parts.append(head)
+		var offhand: Dictionary = definitions.get("offhand:%s%d" % [female, int(equipment_graphics[7])], {}) as Dictionary
 		var parts: Array[Dictionary] = []
-		for name: String in ["weapon_back", "skin", "boots", "armor", "hair", "weapon_front"]:
-			var graphic: int = int(equipment_graphics[8]) if name.begins_with("weapon") else int(equipment_graphics[4]) if name == "armor" else int(equipment_graphics[0]) if name == "boots" else 0
-			if graphic == 0 and name not in ["skin", "hair"]: continue
-			var part: Dictionary = definitions.get("%s:%d" % [name, graphic], {}) as Dictionary
+		if not offhand.is_empty(): parts.append({"directional_offhand": offhand, "behind": true})
+		for name: String in ["weapon_back", "skin", "boots", "armor"]:
+			var graphic: int = int(equipment_graphics[8]) if name == "weapon_back" else int(equipment_graphics[4]) if name == "armor" else int(equipment_graphics[0]) if name == "boots" else 0
+			if graphic == 0 and name != "skin": continue
+			var key: String = skin_key if name == "skin" else "%s:%s%d" % [name, female, graphic]
+			var part: Dictionary = definitions.get(key, {}) as Dictionary
 			if not part.is_empty(): parts.append(part)
-		if not parts.is_empty(): return {"layers": parts, "appearance": {"armor_graphic": int(equipment_graphics[4]), "boots_graphic": int(equipment_graphics[0]), "weapon_graphic": int(equipment_graphics[8])}}
+		if not head_parts.is_empty(): parts.append({"head_layers": head_parts, "clip_black": str(head.get("mask_mode", "")) == "standard"})
+		var front: Dictionary = definitions.get("weapon_front:%s%d" % [female, int(equipment_graphics[8])], {}) as Dictionary
+		if not front.is_empty(): parts.append(front)
+		if not offhand.is_empty(): parts.append({"directional_offhand": offhand, "behind": false})
+		if not parts.is_empty(): return {"layers": parts, "appearance": {"armor_graphic": int(equipment_graphics[4]), "boots_graphic": int(equipment_graphics[0]), "weapon_graphic": int(equipment_graphics[8]), "head_graphic": int(equipment_graphics[6]), "offhand_graphic": int(equipment_graphics[7])}}
 	if int(equipment_graphics[6]) != 0 or int(equipment_graphics[7]) != 0: return {}
 	if int(equipment_graphics[0]) not in [0, 1] or int(equipment_graphics[4]) not in [0, 1]: return {}
 	if int(equipment_graphics[8]) not in [0, 4]:
@@ -1206,6 +1235,8 @@ func _process_events(events: Array) -> void:
 			game.shop_ui.confirm_transaction(event)
 		if kind == "drop":
 			game._toast("Dropped %s ×%d." % [str(item_info("item:%d" % int(event.get("item_id", 0))).get("name", "Item")), int(event.get("amount", 0))])
+		if kind == "item_junk":
+			game._toast("Junked %s ×%d." % [str(item_info("item:%d" % int(event.get("item_id", 0))).get("name", "Item")), int(event.get("amount", 0))])
 		if kind == "item_used":
 			game._toast("Used %s." % str(item_info("item:%d" % int(event.get("item_id", 0))).get("name", "item")))
 			if int(event.get("hp_gain", 0)) > 0: game.damage_numbers.append({"position": game.player_world + Vector2(0, -62), "value": "+%d" % int(event.hp_gain), "time": 0.85})

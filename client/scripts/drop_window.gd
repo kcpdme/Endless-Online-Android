@@ -7,6 +7,7 @@ var quantity: SpinBox
 var submit: Button
 var item_id: int = 0
 var submitting: bool = false
+var operation: String = "drop"
 
 func build(owner_game: Node, parent: Control) -> void:
 	game = owner_game
@@ -30,17 +31,19 @@ func build(owner_game: Node, parent: Control) -> void:
 	submit = game._button(card, "Drop", Vector2(310, 214), Vector2(252, 56), confirm, true)
 	panel.hide()
 
-func open(kind: String) -> void:
+func open(kind: String, action: String = "drop") -> void:
+	operation = action if action in ["drop", "junk"] else "drop"
 	if not game.online_mode or not game.online._action_ready(): return
 	item_id = game.online.item_id(kind)
 	var amount: int = game.online.bag_amount(item_id)
 	if amount <= 0: return
-	if int(game.online.item_info(kind).get("special", 0)) == 4:
+	if operation == "drop" and int(game.online.item_info(kind).get("special", 0)) == 4:
 		game._toast("This item cannot be dropped.")
 		return
 	submitting = false
 	game._cancel_controls()
-	heading.text = "Drop %s on the ground" % str(game.online.item_info(kind).get("name", "item"))
+	heading.text = ("Permanently junk %s?" if operation == "junk" else "Drop %s on the ground") % str(game.online.item_info(kind).get("name", "item"))
+	submit.text = "Junk" if operation == "junk" else "Drop"
 	quantity.max_value = mini(amount, 16194276)
 	quantity.value = 1
 	submit.disabled = false
@@ -59,4 +62,4 @@ func confirm() -> void:
 	if submitting or not game.online._action_ready(): return
 	submitting = true
 	submit.disabled = true
-	game.online.session.request("item_drop", {"item_id": item_id, "amount": int(quantity.value)})
+	game.online.session.request("item_" + operation, {"item_id": item_id, "amount": int(quantity.value)})

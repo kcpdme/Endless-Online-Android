@@ -29,7 +29,7 @@ func _run() -> void:
 	c.session.message_received.connect(func(message: Dictionary) -> void: messages.append(message))
 	if not check(await login_fixture(c, fixtures.actor), "Skill actor login: " + c.last_error): return
 	var ui: RefCounted = game.skills_ui
-	if not check(ui.slots.has(1) and ui.slots.has(4) and ui.slots.has(5), "Learned native spells missing from shortcuts"): return
+	if not check(ui.slots.size() == 2 and ui.slots.has(1) and ui.slots.has(4), "Learned native spells missing from shortcuts"): return
 	for button: Button in ui.buttons:
 		if not check(button.visible and root.get_visible_rect().encloses(button.get_global_rect()), "Skill button outside screen"): return
 	actor = (load("res://scripts/online_session.gd") as Script).new()
@@ -83,7 +83,7 @@ func _run() -> void:
 			if str(fx.kind) == "player" and int(fx.id) == peer_id: return true
 		return false
 	), "Nearby player's heal effect was not rendered"): return
-	ui.press(3)
+	ui.press(2)
 	if not check(ui.panel.visible and ui.list.item_count >= 3, "Skills book missing learned spells"): return
 	if not check(root.get_visible_rect().encloses((ui.panel.get_child(0) as Control).get_global_rect()), "Skill window does not fit screen"): return
 	await capture("v13-skills-book")

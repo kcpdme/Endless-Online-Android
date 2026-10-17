@@ -25,11 +25,11 @@ var last_rows: String = ""
 
 func build(owner_game: Node, parent: Control) -> void:
 	game = owner_game
-	for index: int in range(4):
+	for index: int in range(3):
 		var slot: int = index
-		var button: Button = preload("res://scripts/hud_icon_button.gd").new() if index == 3 else Button.new()
-		if index == 3: button.set("kind", "skills")
-		button.position = Vector2(-624 + index * 78, -100)
+		var button: Button = preload("res://scripts/hud_icon_button.gd").new() if index == 2 else Button.new()
+		if index == 2: button.set("kind", "skills")
+		button.position = [Vector2(-258, -318), Vector2(-166, -346), Vector2(-258, -96)][index]
 		button.size = Vector2(68, 68)
 		button.focus_mode = Control.FOCUS_NONE
 		button.expand_icon = true
@@ -45,7 +45,7 @@ func build(owner_game: Node, parent: Control) -> void:
 		parent.add_child(button)
 		button.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT, true)
 		buttons.append(button)
-		if index < 3:
+		if index < 2:
 			var cost: Label = game._label(button, "", Vector2(0, 50), 11, game.TEXT)
 			cost.name = "TPCost"
 			cost.size = Vector2(68, 16)
@@ -86,13 +86,13 @@ func build(owner_game: Node, parent: Control) -> void:
 	level_button = game._button(card, "Train +1", Vector2(414, 386), Vector2(190, 48), func() -> void: change("level"))
 	learn_button = game._button(card, "Learn", Vector2(618, 386), Vector2(190, 48), func() -> void: change("learn"))
 	forget_button = game._button(card, "Forget skill", Vector2(414, 446), Vector2(394, 46), func() -> void: change("forget"))
-	for index: int in range(3):
+	for index: int in range(2):
 		var slot: int = index
-		game._button(card, "Set slot %d" % (index + 1), Vector2(30 + index * 264, 516), Vector2(248, 50), func() -> void:
+		game._button(card, "Set slot %d" % (index + 1), Vector2(30 + index * 398, 516), Vector2(380, 50), func() -> void:
 			if not known(selected):
 				game._toast("Learn this skill first.")
 				return
-			while slots.size() < 3: slots.append(0)
+			while slots.size() < 2: slots.append(0)
 			var old: int = slots.find(selected)
 			if old >= 0: slots[old] = slots[slot]
 			slots[slot] = selected
@@ -122,7 +122,7 @@ func known(ident: int) -> bool:
 	return false
 
 func press(index: int) -> void:
-	if index == 3:
+	if index == 2:
 		game._cancel_controls()
 		master.clear()
 		last_rows = ""
@@ -130,7 +130,7 @@ func press(index: int) -> void:
 		refresh()
 		return
 	if index >= slots.size() or slots[index] == 0:
-		press(3)
+		press(2)
 		return
 	if not game.online._action_ready() or not casting.is_empty() or game.moving:
 		game._toast("Stand still before casting.")
@@ -210,19 +210,19 @@ func refresh() -> void:
 	for index: int in range(slots.size()):
 		if slots[index] != 0 and not known(slots[index]): slots[index] = 0
 	for spell: Dictionary in learned:
-		if slots.size() >= 3: break
+		if slots.size() >= 2: break
 		if not slots.has(int(spell.id)): slots.append(int(spell.id))
 	for index: int in range(buttons.size()):
 		var button: Button = buttons[index]
 		button.visible = active and game.started and not game._modal_open()
-		var ident: int = slots[index] if index < slots.size() and index < 3 else 0
+		var ident: int = slots[index] if index < slots.size() and index < 2 else 0
 		var spell: Dictionary = info(ident)
 		button.icon = icon(ident, armed == ident) if ident > 0 else null
-		if index < 3: (button.get_node("TPCost") as Label).text = "TP %d" % int(spell.get("tp", 0)) if ident > 0 else ""
-		button.text = "" if index == 3 else ("+" if ident == 0 else "")
-		button.tooltip_text = "Skills" if index == 3 else str(spell.get("name", "Assign a skill"))
+		if index < 2: (button.get_node("TPCost") as Label).text = "TP %d" % int(spell.get("tp", 0)) if ident > 0 else ""
+		button.text = "" if index == 2 else ("+" if ident == 0 else "")
+		button.tooltip_text = "Skills" if index == 2 else str(spell.get("name", "Assign a skill"))
 		button.modulate = Color("ffe39c") if armed == ident and ident > 0 else Color.WHITE
-		button.disabled = index < 3 and (game.online.defeated or not casting.is_empty() or Time.get_ticks_msec() < ready_at)
+		button.disabled = index < 2 and (game.online.defeated or not casting.is_empty() or Time.get_ticks_msec() < ready_at)
 	cast_hint.visible = active and game.started and not game._modal_open() and (armed > 0 or not casting.is_empty())
 	cast_bar.visible = cast_hint.visible and not casting.is_empty()
 	if not casting.is_empty():

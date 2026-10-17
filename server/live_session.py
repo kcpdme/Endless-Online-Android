@@ -249,7 +249,7 @@ class LiveSession(SkillsMixin, ConsumablesMixin, ServicesMixin, EconomyMixin, Se
             pid=r.num(2);direction=r.num()
             row=next((c for c in self.state['characters'] if c['player_id']==pid),None)
             if row:row['direction']=direction;self.dirty=True
-        elif self.events[-1].get('kind') in ('npc_damage','equip','unequip','door_locked','drop','recover','stat_changed','npc_attack','peer_attack'):
+        elif self.events[-1].get('kind') in ('npc_damage','equip','unequip','door_locked','drop','item_junk','recover','stat_changed','npc_attack','peer_attack'):
             self.dirty=True
 
     def snapshot(self):
