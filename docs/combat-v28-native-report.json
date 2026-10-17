@@ -1,0 +1,25 @@
+{
+  "result": "passed",
+  "isolated_native_world": true,
+  "live_world_npcs_changed": false,
+  "operator_accounts_modified": false,
+  "moving_actions": {
+    "potion_used_while_walk_unacknowledged": true,
+    "potion_native_quantity_decrement": 1,
+    "spell_finished_while_walking": true,
+    "walk_acks_before_heal": 3,
+    "steps": 6,
+    "corrections": 0,
+    "tp_spent": 1
+  },
+  "boss": {
+    "real_native_apozen_overlord_killed": true,
+    "taraduda_visible_before": 20,
+    "taraduda_visible_after": 0,
+    "observer_despawn_received": true,
+    "attacks_to_kill": 3
+  },
+  "original_attack_queue_seconds": 0.5,
+  "attack_dispatch_seconds": 0.02,
+  "version": "0.26.0"
+}

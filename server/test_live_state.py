@@ -18,6 +18,16 @@ def fixture():
     return s
 
 class StreamStateTests(unittest.TestCase):
+    def test_boss_children_despawn_by_type_not_spawn_index(self):
+        s=fixture();s.state['npcs']=[dict(id=256,index=1,x=40,y=41),dict(id=256,index=2,x=40,y=42),dict(id=99,index=256,x=41,y=40)]
+        s.apply_event(26,25,number(256,2))
+        self.assertEqual([n['id'] for n in s.state['npcs']],[99])
+        self.assertEqual(s.events[-1]['indexes'],[1,2]);self.assertTrue(s.dirty)
+        s.apply_event(26,8,number(1,1)+number(40,1)+number(41,1)+number(0,1))
+        self.assertEqual(len(s.state['npcs']),1) # a late old movement cannot resurrect a ghost
+        s.apply_event(29,3,number(0,1)+b'\xff'+number(1,1)+number(256,2)+number(40,1)+number(41,1)+number(0,1))
+        self.assertEqual({n['id'] for n in s.state['npcs']},{99,256}) # genuine native respawn restores it
+
     def test_spikes_update_hp_and_stream_every_nonlethal_hit(self):
         s=fixture();s.stats={'hp':1000,'max_hp':1000}
         for hp in [950,900,850]:

@@ -16,7 +16,7 @@ Godot 4.7.2, typed GDScript and 2D isometric rendering are sufficient. A Unity/3
 rewrite and a larger server have not been needed for the measured regressions.
 
 Baseline before this update: commit `8c9e541`, APK 0.10.0/code 10. The current
-build is 0.25.0/code 27. See the final v0.21 section for current chat/presence and the v0.20 sections for equipment/HUD/Junk support. v0.12 added level/EXP, Nearby Send closure and
+build is 0.26.0/code 28. See the final v0.21 section for current chat/presence and the v0.20 sections for equipment/HUD/Junk support. v0.12 added level/EXP, Nearby Send closure and
 native consumables; v0.13 adds native skills and touch targeting. v0.11 added native bank/lockers, player inspection and
 trading, local/global/private chat, a dynamic joystick, and the heart/TP HUD,
 as well as placing NPC names near visible heads and fixing observer equipment/
@@ -1489,3 +1489,69 @@ conditions. Other players need0.24.0 for the queue/phase and numeric-ID fixes.
 - 49 Python state tests and the Godot checks pass. Evidence:
   docs/fixes-v27-report.json, docs/gameplay-v27-phone-report.json. Version0.25.0
   code27 keeps package/signature/player progress. Install with -r, never uninstall.
+
+
+## v0.26.0 / code28 — boss cleanup, moving actions, attacks and chat scrolling
+
+- Apozen Overlord (ENF257 boss1) dying makes native NPC::Killed call
+  Die(false) for its children (ENF256 Taraduda child1). Native NPC_Junk26/25
+  carries an ENF **type ID**, not a map spawn index. Original NPCJunkHandler
+  removes all matching NPC types. The adapter previously ignored this packet,
+  leaving frozen sprites. LiveSession now removes matching rows and emits
+  npc_despawn with their spawn indexes; streaming removes their client motion
+  tracks/collision and health/attack flashes. Actual Range_Reply29/3 can add
+  legitimate respawns. Do not make surviving children continue fighting: their
+  disappearance matches the original boss rule.
+- Quick HP/TP potions now use a new nonblocking gateway operation potion_use.
+  Validate EIF type3, alive/no warp/no trade, ownership and a useful HP/TP gain.
+  Outstanding walking and chanting are allowed; no movement finger cancellation.
+  LiveSession keeps one pending_potion until original Item_Reply14/3 updates
+  exact quantity/weight/HP/TP. Item_Reject14/5 or a5s timeout unlocks with feedback;
+  never invent healing/consumption or disconnect the session on potion rejection.
+  Inventory nonpotion item_use remains blocking; scroll/equipment/storage/trade
+  keep their existing standing guards. Old synchronous use_item remains available.
+- Original Map::Walk cancels spells. User explicitly requested mobile casting
+  while walking, so fifth native patch etheos-mobile-spells.patch adds
+  AllowMovingSpells (upstream-compatible defaultfalse; our generated/live config
+  yes). Normal shortcut casting preserves joystick/route and releases attack.
+  Walking pose takes priority during a chant, with spell effects retained.
+  Native spell_timestamp tracks the independent chant start; target self/other/
+  group validate against it. Timestamp::AdvanceTo preserves the newer walk clock,
+  including24h wrap. Gateway release timestamp uses chant start+cast_time*48 and
+  must not rewind its global movement timestamp. Warp/attack/invalid targets still
+  cancel; TP/range/learned skill/cast duration/duplicate/cooldown checks remain.
+  Native binary must be rebuilt with all five patches before enabling this feature.
+  The hosted Debian binary has been rebuilt; local work/server-build executable
+  may still need rebuilding before local moving-cast integration.
+- Original Attack handler has500ms cooldown plus20ms autoqueue overhead. Keep
+  ONLINE_ATTACK_COOLDOWN=.52, and preserve420ms walking. The previous260ms
+  swing returned to idle halfway through the attack cycle. Online swings now
+  last480ms, with original120ms melee poses and two240ms ranged poses; held
+  attack carries frame overshoot rather than accumulating frame delays. Offline
+  prototype swing remains260ms. Six seconds at60FPS yielded12attacks, mean
+  521.21ms. This restores animation/cadence rather than raising native attack rate.
+- Chat modal and compact feed have22px scrollbars and finger-drag handling.
+  Feed renders the retained250-message history, not only the last4. New messages
+  follow only if already near the bottom; reading older chat preserves position.
+  Desktop wheel/selection and tap-name whisper remain supported.
+- 53 Python state tests pass. Godot gameplay smoke, combat_mobile,
+  movement_timing, network_regressions, movement_controls and short_movement pass.
+  combat_mobile tests actual scene shortcut/joystick preservation, no estimated
+  potion consumption, held attack pacing/poses and touch-scrolled chat retention.
+  Five native patches apply in order to a clean pinned checkout and all remain
+  detectable on repeat setup. The password patch context was shortened by one
+  unchanged line to coexist with the new config default; password behavior is
+  unchanged.
+- Real isolated native runtime on AWS port18078, its own SQLite and disposable
+  stationary map136, tested pending-walk potion consumption once, six walking
+  steps while self-heal completed (3ACKs before effect, zero corrections), TP
+  spent and observer effect. Actual Overlord kill in3hits removed20visible
+  Taraduda for fighter and observer. Original live accounts/world NPCs untouched.
+  Sanitized evidence: docs/combat-v28-native-report.json.
+- Hosted deploy backs up native binary/config/database and five Python files,
+  verifies pre/post source hashes, enables AllowMovingSpells=yes, restarts world/
+  gateway/WebSocket and checks public health. Ignored scripts under
+  work/hosting/*v28*.py. No operator character edits in this release.
+- APK uses existing signing key/package and version0.26.0/code28. Update with
+  adb install -r, never uninstall; reports record save-byte preservation, installed
+  APK hash/version and startup errors. Private credentials/saves stay ignored.

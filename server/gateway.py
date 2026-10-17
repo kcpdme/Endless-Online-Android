@@ -107,6 +107,7 @@ class Handler(socketserver.StreamRequestHandler):
         if op=='item_junk':return s.junk_item(int(r['item_id']),int(r.get('amount',1)))
         if op=='redeem_code':return s.redeem_code(str(r['code']))
         if op=='item_use':return s.use_item(int(r['item_id']))
+        if op=='potion_use':return s.use_potion(int(r['item_id']))
         if op=='bank_upgrade':return s.bank_upgrade()
         if op=='bank_open':return s.bank_open(int(r['npc_index']))
         if op in ('bank_deposit','bank_withdraw'):return s.bank_change(op=='bank_withdraw',int(r['amount']))

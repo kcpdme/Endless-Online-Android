@@ -79,7 +79,7 @@ func _run() -> void:
 	check(animation.state == "attack" and animation.direction == "north" and int(peer.direction) == 2, "Peer swing must use native attack facing immediately")
 	var appearance: Dictionary = game.online.character_graphic(peer)
 	var first: Dictionary = game._frame(appearance, str(animation.direction), "attack", 0.01)
-	var second: Dictionary = game._frame(appearance, str(animation.direction), "attack", 0.20)
+	var second: Dictionary = game._frame(appearance, str(animation.direction), "attack", 0.30)
 	check(not appearance.is_empty() and JSON.stringify(first) != JSON.stringify(second), "Observer must render both original weapon attack frames")
 	game.online.peer_attacks[200].until = Time.get_ticks_msec() / 1000.0 - 1.0
 	check(game.online.entity_animation("online_player", peer).state == "idle", "Peer animation must finish rather than freeze in an attack pose")
@@ -108,7 +108,7 @@ func _run() -> void:
 	game.online.player["inventory"] = [{"id": 2, "amount": 2}]
 	game.online.player["equipment"] = {}
 	game.online.bag_action("item:2")
-	check(capture.calls.has("item_use"), "Potion bag action must request native item use rather than equipment")
+	check(capture.calls.has("potion_use"), "Potion bag action must request native item use rather than equipment")
 	game.online_mode = true
 	game.online.active = true
 	game.online.defeated = false

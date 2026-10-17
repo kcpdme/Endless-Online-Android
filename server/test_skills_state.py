@@ -31,10 +31,15 @@ class SkillsStateTests(unittest.TestCase):
         s.state['self']['tp']=20;s.state['npcs'][0]['x']=60
         with self.assertRaisesRegex(EOError,'far'):s.cast_spell(4,'npc',2)
         self.assertFalse(s.sent)
-    def test_movement_cancels_unreleased_cast_without_tp_change(self):
-        s=setup();s.cast_spell(4,'npc',2);s.move(0,1,5,40,41)
-        self.assertIsNone(s.casting);self.assertEqual(s.sent[1][:2],(12,31));self.assertEqual(Reader(s.sent[1][2]).num(),0)
-        self.assertEqual(s.stats['tp'],20);self.assertEqual(s.sent[-1][:2],(6,8))
+    def test_movement_preserves_chant_and_release_has_independent_timestamp(self):
+        s=setup();s.cast_spell(4,'npc',2);start=s.casting['timestamp']
+        for seq in range(1,5):
+            s.move(0,seq,5,40,40+seq)
+        self.assertIsNotNone(s.casting);self.assertEqual(s.stats['tp'],20)
+        latest=s.timestamp;s.casting['release_at']=time.monotonic()-1;s.poll_actions()
+        r=Reader(s.sent[-1][2]);r.take(8)
+        self.assertEqual(r.num(3),start+96);self.assertEqual(s.timestamp,latest)
+        self.assertTrue(s.casting['released'])
     def test_damage_and_tp_are_native_acknowledged_only_for_caster(self):
         p=payload((4,2),(100,2),(0,1),(2,2),(5,3),(50,2),(19,2))
         s=setup();s.cast_spell(4,'npc',2);s.apply_event(44,3,p)
@@ -73,6 +78,6 @@ class SkillsStateTests(unittest.TestCase):
     def test_storage_and_duplicate_cast_are_blocked_during_chant(self):
         s=setup();s.cast_spell(4,'npc',2)
         with self.assertRaisesRegex(EOError,'finish'):s.cast_spell(4,'npc',2)
-        with self.assertRaisesRegex(EOError,'finish'):s.use_item(2)
+        with self.assertRaisesRegex(EOError,'finish'):s.drop_item(2,1)
 
 if __name__=='__main__':unittest.main()

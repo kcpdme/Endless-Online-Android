@@ -58,6 +58,7 @@ var collect_pending: bool = false
 var loot_attempt_after: Dictionary = {}
 var pickup_pending: Dictionary = {}
 var pending_equip: Dictionary = {}
+var pending_item_use: bool = false
 var loot_button: Button
 var drop_permissions: Dictionary = {}
 var resume_username: String = ""
@@ -218,7 +219,9 @@ func _on_message(message: Dictionary) -> void:
 			drop_ui.submitting = false
 			drop_ui.refresh()
 		if operation == "spend_stat": game.stats_ui.stop_repeat()
-		if operation == "item_use": game._refresh_ui()
+		if operation in ["item_use", "potion_use"]:
+			pending_item_use = false
+			game._refresh_ui()
 		if game.shop_ui != null: game.shop_ui.refresh()
 		if game.services_ui != null: game.services_ui.refresh()
 		if operation in ["walk", "move"]:
@@ -249,7 +252,7 @@ func _on_message(message: Dictionary) -> void:
 			_enter_world(data)
 		"stream":
 			streaming = bool(data.get("enabled", false))
-		"move", "face", "strike", "collect", "spell_cast", "spell_cancel", "online_players":
+		"move", "face", "strike", "collect", "spell_cast", "spell_cancel", "online_players", "potion_use":
 			pass # Receipt only. The subsequent native Walk_Reply confirms acceptance.
 		"unequip":
 			_apply_snapshot(data)
@@ -520,6 +523,7 @@ func _start_step(tile: Vector2i, direction: String) -> void:
 	game.moving = true
 
 func _reset_movement() -> void:
+	pending_item_use = false
 	pending_face = ""
 	npc_hit_until.clear()
 	previous_npc_tiles.clear()
@@ -542,6 +546,9 @@ func _reset_movement() -> void:
 	pending_inputs.clear()
 	remote_motion.clear()
 	refresh_clock = 0.0
+
+func mobile_action_ready() -> bool:
+	return active and not defeated and not recovering and not transition_pending and not session.has_blocking_requests() and trade.is_empty()
 
 func _action_ready() -> bool:
 	return active and not defeated and not recovering and pending_inputs.is_empty() and not transition_pending and session.is_idle()
@@ -707,13 +714,13 @@ func entity_animation(kind: String, record: Dictionary) -> Dictionary:
 	var direction: String = str(sample.get("direction", _facing(record.get("direction", 0)))) if state == "frames" else _facing(record.get("direction", 0))
 	if kind == "online_npc" and float(npc_attack_until.get(int(record.get("index", -1)), 0.0)) > now:
 		state = "attack"
-		phase = 0.36 - (float(npc_attack_until[int(record.index)]) - now)
+		phase = (0.36 - (float(npc_attack_until[int(record.index)]) - now)) * game.ONLINE_ATTACK_SWING_DURATION / 0.36
 	var attack: Dictionary = peer_attacks.get(int(record.get("player_id", -1)), {}) as Dictionary
 	if kind == "online_player" and float(attack.get("until", 0.0)) > now:
 		state = "attack"
-		phase = 0.36 - (float(attack.until) - now)
+		phase = game.ONLINE_ATTACK_SWING_DURATION - (float(attack.until) - now)
 		direction = _facing(attack.direction)
-	if kind == "online_player" and game.skills_ui.is_chanting(int(record.get("player_id", -1))): state = "cast"
+	if kind == "online_player" and state == "idle" and game.skills_ui.is_chanting(int(record.get("player_id", -1))): state = "cast"
 	return {"key": key, "state": state, "phase": phase, "direction": direction}
 
 func player_name_offset(name: String) -> Vector2:
@@ -882,9 +889,15 @@ func bag_action(kind: String) -> void:
 	if not consumable(kind):
 		equipment_request(kind)
 		return
-	if not _action_ready() or not owns_item(kind): return
-	game._cancel_controls()
-	session.request("item_use", {"item_id": item_id(kind)})
+	var potion: bool = int(item_info(kind).get("type", -1)) == 3
+	if not owns_item(kind) or pending_item_use: return
+	if potion:
+		if not mobile_action_ready(): return
+	else:
+		if not _action_ready(): return
+		game._cancel_controls()
+	pending_item_use = true
+	if session.request("potion_use" if potion else "item_use", {"item_id": item_id(kind)}) < 0: pending_item_use = false
 	if int(item_info(kind).get("type", -1)) == 4: game.inventory.hide()
 	game.equip_button.disabled = true
 
@@ -1251,7 +1264,7 @@ func _process_events(events: Array) -> void:
 			game.damage_numbers.append({"position":at + Vector2(0,-62),"value":"-%d" % int(event.get("damage",0)),"time":0.85})
 		if kind == "peer_attack":
 			var pid: int = int(event.get("player_id", -1))
-			peer_attacks[pid] = {"until": Time.get_ticks_msec() / 1000.0 + 0.36, "direction": int(event.get("direction", 0))}
+			peer_attacks[pid] = {"until": Time.get_ticks_msec() / 1000.0 + game.ONLINE_ATTACK_SWING_DURATION, "direction": int(event.get("direction", 0))}
 			for peer: Dictionary in players:
 				if int(peer.get("player_id", -2)) == pid: peer.direction = int(event.get("direction", 0))
 		if kind == "player_damage":
@@ -1294,7 +1307,17 @@ func _process_events(events: Array) -> void:
 			game._toast("Dropped %s ×%d." % [str(item_info("item:%d" % int(event.get("item_id", 0))).get("name", "Item")), int(event.get("amount", 0))])
 		if kind == "item_junk":
 			game._toast("Junked %s ×%d." % [str(item_info("item:%d" % int(event.get("item_id", 0))).get("name", "Item")), int(event.get("amount", 0))])
+		if kind == "item_use_failed":
+			pending_item_use = false
+			game._toast(str(event.get("message", "The potion was not used.")))
+		if kind == "npc_despawn":
+			for index: Variant in event.get("indexes", []):
+				npc_health.erase(int(index))
+				npc_attack_until.erase(int(index))
+				npc_hit_until.erase(int(index))
+				if interaction.get("kind", "") == "npc" and int(interaction.get("id", -1)) == int(index): interaction.clear()
 		if kind == "item_used":
+			pending_item_use = false
 			game._toast("Used %s." % str(item_info("item:%d" % int(event.get("item_id", 0))).get("name", "item")))
 			if int(event.get("hp_gain", 0)) > 0: game.damage_numbers.append({"position": game.player_world + Vector2(0, -62), "value": "+%d" % int(event.hp_gain), "time": 0.85})
 		if kind == "online_players": game.chat_ui.receive_roster(event)

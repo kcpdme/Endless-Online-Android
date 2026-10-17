@@ -87,7 +87,7 @@ func press(index: int) -> void:
 	if slots[index] == 0:
 		open(index)
 		return
-	if not game.online._action_ready() or game.online.session.has_blocking_requests(): return
+	if not game.online.mobile_action_ready(): return
 	if game.online.bag_amount(slots[index]) <= 0:
 		game._toast("Your bag has no more of this item. Hold to change the shortcut.")
 		return

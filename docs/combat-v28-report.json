@@ -1,0 +1,48 @@
+{
+  "result": "passed",
+  "version": "0.26.0",
+  "version_code": 28,
+  "python_state_tests": 53,
+  "godot_checks": [
+    "gameplay_smoke",
+    "combat_mobile",
+    "movement_timing",
+    "network_regressions",
+    "movement_controls",
+    "short_movement"
+  ],
+  "original_source_comparison": {
+    "native_attack_cooldown_ms": 500,
+    "native_packet_dispatch_ms": 20,
+    "client_online_attack_interval_ms": 520,
+    "original_attack_pose_ms": 120,
+    "client_online_swing_ms": 480,
+    "native_walking_cancels_spells": true,
+    "mobile_walking_spell_support_requires_native_patch": true,
+    "npc_junk_payload": "ENF NPC type ID; all matching child spawns despawn"
+  },
+  "measured_held_attacks": {
+    "duration_seconds": 6,
+    "attacks": 12,
+    "mean_interval_seconds": 0.52121212121212
+  },
+  "chat": {
+    "touch_scroll_modal_and_feed": true,
+    "retained_messages": 250,
+    "preserve_reading_position_on_new_message": true
+  },
+  "patches_apply_to_clean_pin": true,
+  "production": {
+    "five_python_source_hashes_verified": true,
+    "tested_native_binary_identical": true,
+    "public_health": "ok",
+    "world_gateway_websocket_active": true,
+    "config_database_binary_python_backups": true,
+    "operator_accounts_modified": false
+  },
+  "limitations": [
+    "Phone verification covers installation, exact APK hash and startup; combat evidence uses the real isolated native world plus actual Godot scene regressions.",
+    "Server attack speed remains at the original effective520ms cycle; animation and frame scheduling were corrected."
+  ],
+  "patches_remain_detectable_on_repeat_setup": true
+}

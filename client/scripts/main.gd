@@ -12,6 +12,7 @@ const CharacterStats = preload("res://scripts/character_stats.gd")
 const ONLINE_ATTACK_COOLDOWN: float = 0.52
 const ATTACK_COOLDOWN: float = 0.90
 const ATTACK_SWING_DURATION: float = 0.26
+const ONLINE_ATTACK_SWING_DURATION: float = 0.48
 const SAVE_PATH: String = "user://aster_vale_save.json"
 const TILE: Vector2 = Vector2(64.0, 32.0)
 const GOLD: Color = Color("e9bd71")
@@ -251,6 +252,8 @@ func _process(delta: float) -> void:
 	if chat_ui != null: chat_ui.tick()
 	time_alive += delta
 	animation_clock += delta
+	var attack_previous: float = attack_clock
+	var attack_remainder: float = maxf(0.0, delta - attack_clock)
 	attack_clock = maxf(0.0, attack_clock - delta)
 	swing_clock = maxf(0.0, swing_clock - delta)
 	if attack_button != null: attack_button.cooldown_fraction = attack_clock / (ONLINE_ATTACK_COOLDOWN if online_mode else ATTACK_COOLDOWN)
@@ -287,6 +290,7 @@ func _process(delta: float) -> void:
 	if not _modal_open():
 		if attack_touch_id != -1 and attack_clock <= 0.0 and (enemy_health > 0 or online_mode) and (not online_mode or (_input_direction() == Vector2i.ZERO and route.is_empty())):
 			_attack()
+			if attack_clock > 0.0 and attack_previous > 0.0: attack_clock = maxf(0.0, attack_clock - attack_remainder)
 		if not moving:
 			var direction: Vector2i = _input_direction()
 			if direction != Vector2i.ZERO:
@@ -644,7 +648,7 @@ func _attack() -> void:
 		if online.active and started and not _modal_open() and attack_clock <= 0.0:
 			if not online.request_attack(): return
 			attack_clock = ONLINE_ATTACK_COOLDOWN
-			swing_clock = ATTACK_SWING_DURATION
+			swing_clock = ONLINE_ATTACK_SWING_DURATION
 			animation_clock = 0.0
 			_play_sound("attack")
 		return
@@ -811,7 +815,9 @@ func _frame(character: Dictionary, direction: String, state: String, phase: floa
 		var frames: Array = raw as Array
 		var frame_rate: float = frames.size() / online.MOVE_SECONDS if online_mode and state == "frames" else 9.0
 		var frame_index: int = int((phase if phase >= 0.0 else animation_clock) * frame_rate) % frames.size() if phase >= 0.0 or (moving and state != "idle") or bool(character.get("animate_idle", false)) else 0
-		if state == "attack": frame_index = mini(int((phase / 0.36 if phase >= 0.0 else 1.0 - swing_clock / ATTACK_SWING_DURATION) * frames.size()), frames.size() - 1)
+		if state == "attack":
+			if online_mode: frame_index = mini(int((phase if phase >= 0.0 else ONLINE_ATTACK_SWING_DURATION - swing_clock) / (0.24 if frames.size() == 2 else 0.12)), frames.size() - 1)
+			else: frame_index = mini(int((phase / 0.36 if phase >= 0.0 else 1.0 - swing_clock / ATTACK_SWING_DURATION) * frames.size()), frames.size() - 1)
 		return frames[frame_index] as Dictionary
 	return {}
 
@@ -838,7 +844,7 @@ func _draw_player() -> void:
 	draw_circle(Vector2.ZERO, 10.0, Color(0, 0, 0, 0.30))
 	draw_set_transform(Vector2.ZERO)
 	if online_mode: skills_ui.draw_effect("player", int(online.player.get("player_id", 0)), player_world, false)
-	var state: String = "cast" if online_mode and skills_ui.is_chanting(int(online.player.get("player_id", 0))) else "attack" if swing_clock > 0.0 else ("frames" if moving else "idle")
+	var state: String = "frames" if moving else "cast" if online_mode and skills_ui.is_chanting(int(online.player.get("player_id", 0))) else "attack" if swing_clock > 0.0 else "idle"
 	if not _draw_character_frame(_active_hero(), player_world, facing, state, Color("ff8888") if player_hit_flash > 0.0 else Color.WHITE):
 		# Explicitly identified placeholder if the optional character conversion is unavailable.
 		draw_circle(player_world + Vector2(0, -18), 9, Color("82bfa2"))
@@ -848,7 +854,7 @@ func _draw_player() -> void:
 		if online_mode:
 			var directions: Dictionary = {"south": Vector2i(0, 1), "west": Vector2i(-1, 0), "north": Vector2i(0, -1), "east": Vector2i(1, 0)}
 			aim = (tile_position(player_tile + (directions.get(facing, Vector2i(0, 1)) as Vector2i)) - tile_position(player_tile)).normalized()
-		draw_arc(player_world + Vector2(0, -15), 25.0, aim.angle() - 0.75, aim.angle() + 0.75, 12, Color(1.0, 0.86, 0.56, swing_clock / ATTACK_SWING_DURATION), 2.0, true)
+		draw_arc(player_world + Vector2(0, -15), 25.0, aim.angle() - 0.75, aim.angle() + 0.75, 12, Color(1.0, 0.86, 0.56, swing_clock / (ONLINE_ATTACK_SWING_DURATION if online_mode else ATTACK_SWING_DURATION)), 2.0, true)
 
 	if online_mode: skills_ui.draw_effect("player", int(online.player.get("player_id", 0)), player_world, true)
 

@@ -1,0 +1,110 @@
+--- a/src/map.cpp
++++ b/src/map.cpp
+@@ -1002,7 +1002,7 @@
+ 
+     from->last_walk = Timer::GetTime();
+     from->attacks = 0;
+-    from->CancelSpell();
++    if (!this->world->config["AllowMovingSpells"]) from->CancelSpell();
+ 
+ 	from->direction = direction;
+ 
+--- a/src/character.hpp
++++ b/src/character.hpp
+@@ -46,6 +46,8 @@
+ 		Timestamp(int ts)
+ 			: ts(ts % max_ts)
+ 		{ }
++
++		void AdvanceTo(Timestamp next) { if (ts == -1 || next - *this < max_ts / 2) ts = next.ts; }
+ 
+ 		int GetHour() const        { return ts / 360000; }
+ 		int GetMinute() const      { return ts / 6000 - GetHour() * 60; }
+@@ -241,6 +243,7 @@
+ 		};
+ 
+ 		bool spell_ready;
++		Timestamp spell_timestamp; // Chant clock independent of walking timestamps.
+ 		unsigned short spell_id;
+ 		TimeEvent *spell_event;
+ 		SpellTarget spell_target;
+--- a/src/handlers/Spell.cpp
++++ b/src/handlers/Spell.cpp
+@@ -28,9 +28,10 @@
+ 	unsigned short spell_id = reader.GetShort();
+ 	int timestamp = reader.GetThree();
+ 
+-	character->timestamp = timestamp;
++	character->timestamp.AdvanceTo(timestamp);
+ 
+ 	character->CancelSpell();
++	character->spell_timestamp = timestamp;
+ 
+ 	if (character->HasSpell(spell_id))
+ 	{
+@@ -74,15 +75,15 @@
+ 	{
+ 		const ESF_Data& spell = character->world->esf->Get(character->spell_id);
+ 
+-		if (timestamp - character->timestamp < (spell.cast_time - 1) * 47 + 35
+-		 || timestamp - character->timestamp > std::max<int>(spell.cast_time, 1) * 50)
++		if (timestamp - character->spell_timestamp < (spell.cast_time - 1) * 47 + 35
++		 || timestamp - character->spell_timestamp > std::max<int>(spell.cast_time, 1) * 50)
+ 		{
+ 			character->CancelSpell();
+ 			return;
+ 		}
+ 	}
+ 
+-	character->timestamp = timestamp;
++	character->timestamp.AdvanceTo(timestamp);
+ 
+ 	if (character->spell_ready)
+ 		character->SpellAct();
+@@ -122,15 +123,15 @@
+ 	{
+ 		const ESF_Data& spell = character->world->esf->Get(character->spell_id);
+ 
+-		if (timestamp - character->timestamp < (spell.cast_time - 1) * 47 + 35
+-		 || timestamp - character->timestamp > std::max<int>(spell.cast_time, 1) * 50)
++		if (timestamp - character->spell_timestamp < (spell.cast_time - 1) * 47 + 35
++		 || timestamp - character->spell_timestamp > std::max<int>(spell.cast_time, 1) * 50)
+ 		{
+ 			character->CancelSpell();
+ 			return;
+ 		}
+ 	}
+ 
+-	character->timestamp = timestamp;
++	character->timestamp.AdvanceTo(timestamp);
+ 
+ 	if (character->spell_ready)
+ 		character->SpellAct();
+@@ -152,15 +153,15 @@
+ 	{
+ 		const ESF_Data& spell = character->world->esf->Get(character->spell_id);
+ 
+-		if (timestamp - character->timestamp < (spell.cast_time - 1) * 47 + 35
+-		 || timestamp - character->timestamp > std::max<int>(spell.cast_time, 1) * 50)
++		if (timestamp - character->spell_timestamp < (spell.cast_time - 1) * 47 + 35
++		 || timestamp - character->spell_timestamp > std::max<int>(spell.cast_time, 1) * 50)
+ 		{
+ 			character->CancelSpell();
+ 			return;
+ 		}
+ 	}
+ 
+-	character->timestamp = timestamp;
++	character->timestamp.AdvanceTo(timestamp);
+ 
+ 	if (character->spell_ready)
+ 		character->SpellAct();
+--- a/src/eoserv_config.cpp
++++ b/src/eoserv_config.cpp
+@@ -54,5 +54,6 @@
+ 	eoserv_config_default(config, "PingRate"           , 60.0);
+ 	eoserv_config_default(config, "EnforceSequence"    , true);
+ 	eoserv_config_default(config, "EnforceTimestamps"  , true);
++	eoserv_config_default(config, "AllowMovingSpells"   , false);
+ 	eoserv_config_default(config, "EnforceSessions"    , true);
+ 	eoserv_config_default(config, "PasswordSalt"       , "ChangeMe");

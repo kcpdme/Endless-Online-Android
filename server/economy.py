@@ -6,6 +6,10 @@ from services import NPC_SERVICE_DISTANCE
 class EconomyMixin:
     shop = None
 
+    def _mobile_action(self):
+        if getattr(self,'trade',None):raise EOError('Close the trade before using items or skills')
+        if not self.state or self.warp or self.stats.get('dead'):raise EOError('Enter the world alive before acting')
+
     def _standing(self):
         if getattr(self,"casting",None):raise EOError("Wait for your skill to finish")
         if getattr(self,'trade',None):raise EOError('Close the trade before using inventory or storage')

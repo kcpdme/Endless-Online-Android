@@ -40,7 +40,7 @@ class LiveSession(RewardsMixin, SkillsMixin, ConsumablesMixin, ServicesMixin, Ec
         if not(0<=x<=251 and 0<=y<=251):raise EOError('Movement destination is outside protocol bounds')
         # Bound the queue; the native server enforces its 400 ms cadence. Network jitter
         # may deliver valid, evenly spaced client inputs in a burst. Never sleep here.
-        self.cancel_spell();self.skillmaster=None
+        self.skillmaster=None
         now=time.monotonic();self.shop=None;self.bank=None;self.locker=None
         if open_door:self.send(34,13,number(x,1)+number(y,1))
         # Match original etheos: NPC occupancy is checked by the client before
@@ -70,6 +70,10 @@ class LiveSession(RewardsMixin, SkillsMixin, ConsumablesMixin, ServicesMixin, Ec
 
     def poll_actions(self):
         self.poll_spells()
+        pending=getattr(self,'pending_potion',None)
+        if pending and time.monotonic()>=pending['until']:
+            self.pending_potion=None;self.using_item=None;self.dirty=True
+            self.events.append(dict(kind='item_use_failed',message='Potion was not acknowledged. Check your HP/TP and bag.'))
         now=time.monotonic()
         for uid,until in list(self.pending_pickups.items()):
             if until<=now:
@@ -223,6 +227,15 @@ class LiveSession(RewardsMixin, SkillsMixin, ConsumablesMixin, ServicesMixin, Ec
                 self.dirty=True
                 if self.events[-1].get('kind')=='player_damage' and self.events[-1]['dead']:
                     self.position_seq=self.last_input_seq;self.pending_moves.clear()
+        elif (f,a)==(26,25):
+            # Original NPC_Junk carries an ENF type, not a spawn index.
+            ident=r.num(2)
+            removed=[n['index'] for n in self.state['npcs'] if n['id']==ident]
+            self.state['npcs']=[n for n in self.state['npcs'] if n['id']!=ident]
+            self.events.append(dict(kind='npc_despawn',npc_id=ident,indexes=removed))
+            cast=getattr(self,'casting',None)
+            if cast and cast['target_kind']=='npc' and cast['target_id'] in removed:self.cancel_spell()
+            self.dirty=True
         elif (f,a)==(26,16) and len(p)==5:
             r.take(3);index=r.num(2);self.state['npcs']=[n for n in self.state['npcs'] if n['index']!=index];self.dirty=True
         elif f in (26,44) and a in (2,16) and self.events[-1].get('kind')=='npc_killed':

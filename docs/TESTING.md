@@ -1,5 +1,15 @@
 # Validation scope
 
+v0.26 adds moving potion/skill, boss-child despawn, attack-timing and chat-scroll
+regressions. Run `python3 -m unittest discover -s server -p "test_*state.py" -v`
+(53 cases), then Godot `res://tests/combat_mobile.gd`, `movement_timing.gd`,
+`network_regressions.gd`, `movement_controls.gd`, `short_movement.gd` and
+`gameplay_smoke.gd`. Native isolated-server evidence is in
+`combat-v28-native-report.json`; the phone/build report is
+`gameplay-v28-phone-report.json`. The native test creates its own disposable DB
+and map fixture; it never stages a human player or alters live-world NPCs.
+
+
 Version 0.10 adds native streaming/pickup regressions, delayed real-scene touch
 and Rat-chase tests, secure session handoff, native wrong-password rejection,
 legacy hash recovery, larger joystick capture and six original weapon

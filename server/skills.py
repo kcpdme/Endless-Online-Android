@@ -32,7 +32,8 @@ class SkillsMixin:
         self.casting=None;self.skillmaster=None;self.spell_ready_at=0.0
 
     def cast_spell(self,spell_id,target_kind,target_id=0):
-        self._standing();spell_id=int(spell_id);target_id=int(target_id)
+        self._mobile_action();spell_id=int(spell_id);target_id=int(target_id)
+        if self.casting:raise EOError('Wait for your skill to finish')
         if not any(s['id']==spell_id for s in getattr(self,'spells',[])):raise EOError('You have not learned this skill')
         spell=spell_definitions().get(spell_id)
         if not spell or spell['type'] not in (0,1):raise EOError('This native skill has no supported effect')
@@ -54,7 +55,7 @@ class SkillsMixin:
         self.timestamp+=1
         duration=spell['cast_time']*.48
         self.casting=dict(spell_id=spell_id,target_kind=target_kind,target_id=target_id,seconds=duration,
-                          release_at=time.monotonic()+duration,timeout_at=time.monotonic()+duration+2,
+                          release_at=time.monotonic()+duration,timeout_at=time.monotonic()+duration+5,
                           timestamp=self.timestamp,released=False)
         self.send(12,1,number(spell_id,2)+number(self.timestamp,3))
         self.events.append(dict(kind='spell_chant',player_id=self.player_id,spell_id=spell_id,seconds=duration))
@@ -77,9 +78,10 @@ class SkillsMixin:
         if not cast['released'] and now>=cast['release_at']:
             # Timestamp units are 10 ms, independent of transport/polling jitter.
             ticks=spell_definitions()[cast['spell_id']]['cast_time']*48
-            self.timestamp=cast['timestamp']+ticks
-            if cast['target_kind']=='self':self.send(12,30,number(1,1)+number(cast['spell_id'],2)+number(self.timestamp,3))
-            else:self.send(12,31,number(2 if cast['target_kind']=='npc' else 1,1)+number(1,1)+number(1,2)+number(cast['spell_id'],2)+number(cast['target_id'],2)+number(self.timestamp,3))
+            release_timestamp=cast['timestamp']+ticks
+            self.timestamp=max(self.timestamp,release_timestamp)
+            if cast['target_kind']=='self':self.send(12,30,number(1,1)+number(cast['spell_id'],2)+number(release_timestamp,3))
+            else:self.send(12,31,number(2 if cast['target_kind']=='npc' else 1,1)+number(1,1)+number(1,2)+number(cast['spell_id'],2)+number(cast['target_id'],2)+number(release_timestamp,3))
             cast['released']=True
             self.spell_ready_at=now+.6
         elif now>=cast['timeout_at']:

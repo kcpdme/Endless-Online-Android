@@ -1,4 +1,5 @@
 """Original Item_Use / Item_Reply packets; quantities and effects are native-owned."""
+import time
 from eo_session import EOError, Reader, number
 from eo_stats import ATTRIBUTES, DERIVED, update
 from services import item_definitions, runtime_path
@@ -6,10 +7,16 @@ from services import item_definitions, runtime_path
 USABLE_TYPES = (3, 4, 6, 22, 23, 24, 25)
 
 class ConsumablesMixin:
-    def use_item(self, item_id):
-        self._standing();item_id=int(item_id)
+    def use_potion(self, item_id):
+        if item_definitions().get(int(item_id),{}).get('type')!=3:raise EOError('Select a health or mana potion')
+        return self.use_item(item_id,asynchronous=True)
+
+    def use_item(self, item_id, asynchronous=False):
+        item_id=int(item_id)
         item=item_definitions().get(item_id,{})
         kind=item.get('type',-1)
+        if kind==3:self._mobile_action()
+        else:self._standing()
         if kind not in USABLE_TYPES:raise EOError('This item cannot be used as a consumable')
         if self.item_amount(item_id)<=0:raise EOError('This item is no longer in your bag')
         me=self.state['self']
@@ -23,6 +30,12 @@ class ConsumablesMixin:
                 raise EOError('You are already at this scroll destination. Nothing was consumed.')
         if kind==24 and me['haircolor']==item['graphic_value']:raise EOError('Your hair already has this color. Nothing was consumed.')
         if kind==25 and not any(item_definitions().get(i,{}).get('special')==5 for i in self.equipment.values()):raise EOError('You have no cursed equipment to cure. Nothing was consumed.')
+        if kind==3 and asynchronous:
+            if getattr(self,'pending_potion',None):raise EOError('Wait for the potion acknowledgement')
+            self.pending_potion=dict(id=item_id,until=time.monotonic()+5)
+            self.using_item=item_id
+            self.send(14,10,number(item_id,2))
+            return {'sent':True,'item_id':item_id}
         self.using_item=item_id
         try:
             self.send(14,10,number(item_id,2))
@@ -39,6 +52,10 @@ class ConsumablesMixin:
     def apply_item_packet(self,f,a,p):
         if (f,a)==(14,5) and getattr(self,'using_item',None):
             if Reader(p).num(2)==self.using_item:
+                if getattr(self,'pending_potion',None):
+                    self.pending_potion=None;self.using_item=None;self.dirty=True
+                    self.events.append(dict(kind='item_use_failed',message='The potion is no longer in your bag.'))
+                    return
                 self.item_use_rejected=True
                 raise EOError('The server says this item is no longer in your bag')
         if (f,a)!=(14,3):return
@@ -49,6 +66,8 @@ class ConsumablesMixin:
         values=dict(weight=weight,max_weight=maximum)
         event=dict(kind='item_used',item_id=item_id,item_type=kind,remaining=remaining)
         if kind==3:
+            if getattr(self,'pending_potion',None) and self.pending_potion['id']==item_id:
+                self.pending_potion=None;self.using_item=None
             event['hp_gain']=r.num(4);values.update(hp=r.num(2),tp=r.num(2))
         elif kind==24:
             color=r.num();self.state['self']['haircolor']=color;event['haircolor']=color

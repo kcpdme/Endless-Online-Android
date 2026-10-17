@@ -132,8 +132,8 @@ func press(index: int) -> void:
 	if index >= slots.size() or slots[index] == 0:
 		press(2)
 		return
-	if not game.online._action_ready() or not casting.is_empty() or game.moving:
-		game._toast("Stand still before casting.")
+	if not game.online.mobile_action_ready() or not casting.is_empty():
+		game._toast("Wait until this skill is ready.")
 		return
 	if Time.get_ticks_msec() < ready_at:
 		game._toast("Your skill is recovering.")
@@ -145,7 +145,7 @@ func press(index: int) -> void:
 	if int(spell.get("type", 2)) == 2 or int(spell.get("target", -1)) == 3:
 		game._toast("This skill needs bard or party support, which is not available yet.")
 		return
-	game._cancel_controls()
+	game._release_attack()
 	if int(spell.get("target", 0)) == 1:
 		cast(slots[index], "self", 0)
 		return
@@ -176,7 +176,8 @@ func target(tile: Vector2i) -> bool:
 
 func cast(ident: int, kind: String, target_id: int) -> void:
 	if not casting.is_empty() or Time.get_ticks_msec() < ready_at: return
-	game._cancel_controls()
+	if not game.online.mobile_action_ready(): return
+	game._release_attack()
 	armed = 0
 	var seconds: float = float(info(ident).get("cast_time", 1)) * 0.48
 	casting = {"spell_id": ident, "until": Time.get_ticks_msec() + int(seconds * 1000), "seconds": seconds}

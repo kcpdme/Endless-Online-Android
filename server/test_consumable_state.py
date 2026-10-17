@@ -5,6 +5,28 @@ from eo_session import number,EOError
 from test_live_state import fixture
 
 class ConsumableStateTests(unittest.TestCase):
+    def test_quick_potion_returns_immediately_while_walking_and_casting(self):
+        import time
+        s=fixture();s.inventory=[dict(id=2,amount=2)];s.state['self'].update(hp=1,maxhp=50,tp=0,maxtp=20)
+        s.pending_moves.append(dict(seq=1));s.casting={'released':False}
+        with patch('consumables.item_definitions',return_value={2:dict(type=3,hp=20,tp=0)}):
+            before=time.monotonic();reply=s.use_potion(2);self.assertLess(time.monotonic()-before,.02)
+            self.assertTrue(reply['sent']);self.assertEqual(s.item_amount(2),2)
+            self.assertEqual(s.stats.get('hp'),None);self.assertEqual(s.sent[-1][:2],(14,10))
+            with self.assertRaisesRegex(EOError,'acknowledgement'):s.use_potion(2)
+        s.apply_event(14,3,number(3,1)+number(2,2)+number(1,4)+number(3,1)+number(70,1)+number(20,4)+number(21,2)+number(0,2))
+        self.assertIsNone(s.pending_potion);self.assertEqual(s.item_amount(2),1);self.assertEqual(s.stats['hp'],21)
+        self.assertEqual(len(s.pending_moves),1);self.assertIsNotNone(s.casting)
+    def test_async_potion_rejection_does_not_disconnect_or_change_inventory(self):
+        s=fixture();s.pending_potion={'id':2,'until':99999999};s.using_item=2;s.inventory=[dict(id=2,amount=2)]
+        s.apply_event(14,5,number(2,2))
+        self.assertEqual(s.item_amount(2),2);self.assertIsNone(s.pending_potion)
+        self.assertEqual(s.events[-1]['kind'],'item_use_failed');self.assertTrue(s.dirty)
+    def test_async_potion_timeout_unlocks_without_inventing_healing(self):
+        s=fixture();s.pending_potion={'id':2,'until':0};s.using_item=2
+        s.poll_actions();self.assertIsNone(s.pending_potion)
+        self.assertEqual(s.events[-1]['kind'],'item_use_failed')
+
     def test_heal_reply_updates_exact_remaining_weight_hp_and_tp(self):
         s=fixture();s.inventory=[dict(id=9,amount=4)];s.state['self'].update(hp=1,maxhp=50,tp=0,maxtp=20)
         s.apply_event(14,3,number(3,1)+number(9,2)+number(3,4)+number(3,1)+number(70,1)+number(20,4)+number(21,2)+number(10,2))

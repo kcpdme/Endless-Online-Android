@@ -131,3 +131,30 @@ Self Effect_Spec31/16 subtype2 supplies real damage/currentHP/maxHP; the adapter
 updates authoritative stats and streams the hit immediately. Effect_Admin31/17
 supplies peer damage. The Android HUD and damage numbers consume these native
 values; they do not locally subtract estimated health.
+
+
+### Mobile combat and boss cleanup (v0.26)
+
+`potion_use {item_id}` sends the original native Item_Use for health/mana
+potions and immediately returns a transport receipt. It is nonblocking alongside
+walks and spell chants. Native Item_Reply updates exact inventory and HP/TP;
+`item_use_failed` releases the shortcut after rejection/timeout. Only one potion
+may await acknowledgement. Other consumables retain `item_use` and standing
+checks. Trade, death and map-transition guards remain in force.
+
+The fifth native patch, `etheos-mobile-spells.patch`, adds AllowMovingSpells.
+Our setup enables it; the patch defaults to false for upstream compatibility.
+It preserves chants while walking and separates spell timing from the advancing
+movement timestamp. Cast duration, native range/TP/target validation and attack/
+warp cancellation remain authoritative. Rebuild the native server and restart
+with AllowMovingSpells=yes when deploying the new moving-cast client behavior.
+
+NPC_Junk26/25 removes all NPCs of its ENF type ID. This matches original boss
+child cleanup: killing Apozen Overlord removes its Taraduda children. Streamed
+removals clear sprites and collision; Range_Reply restores actual respawns.
+
+Attack remains at the native500ms plus20ms dispatch cycle. The client now
+renders the original480ms swing timeline and carries frame overshoot between
+held attacks. Movement remains420ms and does not wait for previous strike RPC
+receipts. Chat history and compact feed support finger dragging and preserve the
+reader's scroll position while incoming messages arrive.

@@ -35,6 +35,7 @@ var reply_to: String = ""
 var visible_tab: int = -1
 var roster_stamp: String = ""
 var last_keyboard_lift: float = 0.0
+var scroll_fingers: Dictionary = {}
 
 func build(owner_game: Node, parent: Control) -> void:
 	game = owner_game
@@ -51,7 +52,7 @@ func build(owner_game: Node, parent: Control) -> void:
 	var card: Control = panel.get_child(0) as Control
 	card.add_theme_stylebox_override("panel", game._style(Color("102126"), Color("64756e"), 16))
 	heading = game._label(card, "CONVERSATIONS", Vector2(32, 20), 26, game.GOLD)
-	subheading = game._label(card, "Across the world · Tap a name to whisper", Vector2(32, 55), 16, game.MUTED)
+	subheading = game._label(card, "Drag history to scroll · Tap a name to whisper", Vector2(32, 55), 16, game.MUTED)
 	game._button(card, "×", Vector2(916, 18), Vector2(54, 48), close)
 	channel = OptionButton.new()
 	for title: String in TITLES: channel.add_item(title)
@@ -124,11 +125,30 @@ func _log(parent: Control, at: Vector2, dimensions: Vector2, font_size: int) -> 
 	log.size = dimensions
 	log.bbcode_enabled = false
 	log.scroll_following = true
+	log.scroll_active = true
+	log.mouse_filter = Control.MOUSE_FILTER_STOP
+	log.gui_input.connect(func(event: InputEvent) -> void: _scroll_input(log, event))
+	log.get_v_scroll_bar().custom_minimum_size.x = 22
 	log.add_theme_font_size_override("normal_font_size", font_size)
 	log.add_theme_constant_override("line_separation", 5)
 	log.meta_clicked.connect(func(meta: Variant) -> void: open(str(meta)))
 	parent.add_child(log)
 	return log
+
+func _scroll_input(log: RichTextLabel, event: InputEvent) -> void:
+	var key: int = log.get_instance_id()
+	if event is InputEventScreenTouch:
+		if event.pressed: scroll_fingers[key] = event.index
+		elif scroll_fingers.get(key, -1) == event.index: scroll_fingers.erase(key)
+	elif event is InputEventScreenDrag and int(scroll_fingers.get(key, -1)) == event.index:
+		log.selection_enabled = false
+		log.scroll_following = false
+		var bar: VScrollBar = log.get_v_scroll_bar()
+		bar.value = clampf(bar.value - event.relative.y, bar.min_value, maxf(bar.min_value, bar.max_value - bar.page))
+		log.accept_event()
+	elif event is InputEventMouseButton and event.device != InputEvent.DEVICE_ID_EMULATION:
+		if event.button_index == MOUSE_BUTTON_LEFT: log.selection_enabled = log == history
+		if event.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN]: log.scroll_following = false
 
 func _build_quick(parent: Control) -> void:
 	quick_root = Control.new()
@@ -145,7 +165,7 @@ func _build_quick(parent: Control) -> void:
 	quick_root.add_child(feed_panel)
 	feed = _log(quick_root, Vector2(12, 8), Vector2(480, 118), 16)
 	feed.selection_enabled = false
-	feed.scroll_active = false
+	feed.scroll_active = true
 	feed.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.75))
 	feed.add_theme_constant_override("outline_size", 3)
 	feed_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -308,8 +328,13 @@ func _append(log: RichTextLabel, row: Dictionary, compact: bool = false) -> void
 	log.pop()
 
 func _render_feed() -> void:
+	var bar: VScrollBar = feed.get_v_scroll_bar()
+	var previous: float = bar.value
+	var follow: bool = bar.value >= bar.max_value - bar.page - 4
+	feed.scroll_following = follow
 	feed.clear()
-	for index: int in range(maxi(0, messages.size() - 4), messages.size()): _append(feed, messages[index], true)
+	for row: Dictionary in messages: _append(feed, row, true)
+	if not follow: bar.set_deferred("value", previous)
 
 func _refresh() -> void:
 	var selected: int = channel.selected
@@ -333,6 +358,7 @@ func _refresh() -> void:
 	var previous: float = scroll.value
 	var follow: bool = scroll.value >= scroll.max_value - scroll.page - 4 or visible_tab != selected
 	visible_tab = selected
+	history.scroll_following = follow
 	history.clear()
 	for event: Dictionary in messages:
 		var kind: String = str(event.get("channel", "local"))
