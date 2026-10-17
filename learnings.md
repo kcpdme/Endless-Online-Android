@@ -2011,7 +2011,8 @@ conditions. Other players need0.24.0 for the queue/phase and numeric-ID fixes.
   Production health/TLS handshake/auth guards and deployed source hashes passed.
 - APK0.29.0/code36 verified signature and16KB alignment; original45 tracks still
   packaged. SHA25684e62cfa41d12b67628040cedb6e6a33a67dcc72e58230a86c8dfefff60ed8cd.
-  Wireless ADB installation pending: no device/mDNS currently. Asked for current
-  Wireless debugging address and started a bounded reconnect/install attempt.
-  Check docs/android-v36-report.json and work/v36-phone-install.log before claiming
-  installed; keep the existing signing key and preserve run-as offline save bytes.
+  Installed and launched on Galaxy S23 Ultra after wireless ADB reconnected.
+  Installed APK hash/version match, offline save bytes identical, no startup
+  script/crash errors. See docs/gameplay-v36-phone-report.json. Current mDNS port
+  was41673; discover again next session rather than assume the port is stable.
+  Keep the existing signing key and preserve run-as offline save bytes.
