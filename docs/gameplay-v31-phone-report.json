@@ -1,0 +1,26 @@
+{
+  "result": "passed",
+  "version": "0.27.1",
+  "version_code": 31,
+  "device": "Galaxy S23 Ultra",
+  "installed_apk_matches_final_sha256": true,
+  "apk_sha256": "bc645ea98fa8b2a3fc87d2ff6ff7dace94b097e419a8d5122ddd583be11b7922",
+  "save_preserved_byte_for_byte": true,
+  "launched_process_running": true,
+  "startup_script_or_crash_errors": 0,
+  "apk_signature_verified": true,
+  "alignment_16k_verified": true,
+  "native_world_changes": false,
+  "operator_accounts_modified": false,
+  "desktop_render_review": [
+    "plain spell label without bubble",
+    "smaller green stat buttons",
+    "NPC name and health strip without percentage"
+  ],
+  "regressions": [
+    "paperdoll_mobile headless and rendered",
+    "combat_mobile"
+  ],
+  "spell_blink_interval_ms": 250,
+  "timestamp": "2026-10-17T10:22:23.970996+00:00"
+}

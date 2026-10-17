@@ -279,7 +279,7 @@ func change(action: String) -> void:
 func flash_spell(ident: int, suffix: String = "") -> void:
 	var text: String = str(info(ident).get("shout", info(ident).get("name", "Skill")))
 	if not suffix.is_empty(): text += " · " + suffix
-	game.online.chat_bubbles[int(game.online.player.get("player_id", 0))] = {"text": text, "until": Time.get_ticks_msec() + 900}
+	game.online.chat_bubbles[int(game.online.player.get("player_id", 0))] = {"text": text, "spell": true, "start": Time.get_ticks_msec(), "until": Time.get_ticks_msec() + 900}
 
 func event(event_data: Dictionary) -> void:
 	var kind: String = str(event_data.get("kind", ""))
@@ -287,7 +287,7 @@ func event(event_data: Dictionary) -> void:
 	if kind == "spell_chant":
 		chants[pid] = Time.get_ticks_msec() + int(float(event_data.get("seconds", 0.48)) * 1000) + 200
 		var shout: String = str(info(int(event_data.get("spell_id", 0))).get("shout", ""))
-		if not shout.is_empty(): game.online.chat_bubbles[pid] = {"text": shout, "until": int(chants[pid])}
+		if not shout.is_empty(): game.online.chat_bubbles[pid] = {"text": shout, "spell": true, "start": Time.get_ticks_msec(), "until": int(chants[pid])}
 		return
 	if kind in ["spell_failed", "spell_cancelled"]:
 		cancel_cast()

@@ -45,11 +45,11 @@ func build(owner_game: Node, parent: Control) -> void:
 		value.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		values.append(value)
 		var stat_id: int = index + 1
-		var increase: Button = game._button(card, "+", Vector2(252, 130 + index * 36), Vector2(38, 30), func() -> void: pass)
+		var increase: Button = game._button(card, "+", Vector2(256, 133 + index * 36), Vector2(30, 24), func() -> void: pass)
 		increase.button_down.connect(func() -> void: begin_repeat(stat_id))
 		increase.button_up.connect(stop_repeat)
 		increase.mouse_exited.connect(stop_repeat)
-		increase.add_theme_font_size_override("font_size", 16)
+		increase.add_theme_font_size_override("font_size", 14)
 		for state: String in ["normal", "hover", "pressed", "disabled"]:
 			var style: StyleBoxFlat = game._wood_style(Color("51381f") if state == "disabled" else Color("286541") if state == "normal" else Color("368451"), Color("87633c") if state == "disabled" else Color("8ad89c"))
 			style.content_margin_left = 2.0

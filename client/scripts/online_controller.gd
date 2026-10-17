@@ -804,7 +804,18 @@ func draw_chat_bubbles() -> void:
 
 func draw_chat_bubble(pid: int, at: Vector2) -> void:
 	var bubble: Dictionary = chat_bubbles.get(pid, {}) as Dictionary
-	if bubble.is_empty() or Time.get_ticks_msec() >= int(bubble.until): return
+	var now: int = Time.get_ticks_msec()
+	if bubble.is_empty() or now >= int(bubble.until): return
+	if bool(bubble.get("spell", false)):
+		# Original CharacterRenderer blinks the spell label every 250ms.
+		# Speech keeps its normal bubble; spell shouts are only outlined text.
+		if int((now - int(bubble.get("start", now))) / 250.0) % 2 == 1: return
+		var text: String = str(bubble.text)
+		var font: Font = ThemeDB.fallback_font
+		var origin: Vector2 = at + Vector2(-font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 11).x / 2.0, -82)
+		game.draw_string_outline(font, origin, text, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, 3, Color.BLACK)
+		game.draw_string(font, origin, text, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, game.TEXT)
+		return
 	var lines: Array[String] = []
 	var line: String = ""
 	for word: String in str(bubble.text).split(" "):
@@ -1264,7 +1275,7 @@ func draw_npc_combat_overlays() -> void:
 		game.draw_rect(strip.grow(1), Color("121b18"))
 		game.draw_rect(strip, Color("50322e"))
 		game.draw_rect(Rect2(strip.position, Vector2(strip.size.x * health, strip.size.y)), Color("a6cb6f") if health > .3 else Color("dc6855"))
-		var text: String = "%s · %d%%" % [str(info.get("name", "NPC")), int(round(health * 100))]
+		var text: String = str(info.get("name", "NPC"))
 		var font: Font = ThemeDB.fallback_font
 		var origin: Vector2 = at + (layout.name as Vector2) - Vector2(font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 11).x / 2, 0)
 		game.draw_string_outline(font, origin, text, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, 3, Color.BLACK)

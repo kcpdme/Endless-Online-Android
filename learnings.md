@@ -16,7 +16,7 @@ Godot 4.7.2, typed GDScript and 2D isometric rendering are sufficient. A Unity/3
 rewrite and a larger server have not been needed for the measured regressions.
 
 Baseline before this update: commit `8c9e541`, APK 0.10.0/code 10. The current
-build is 0.27.0/code 30. See the final v0.21 section for current chat/presence and the v0.20 sections for equipment/HUD/Junk support. v0.12 added level/EXP, Nearby Send closure and
+build is 0.27.1/code 31. See the final v0.21 section for current chat/presence and the v0.20 sections for equipment/HUD/Junk support. v0.12 added level/EXP, Nearby Send closure and
 native consumables; v0.13 adds native skills and touch targeting. v0.11 added native bank/lockers, player inspection and
 trading, local/global/private chat, a dynamic joystick, and the heart/TP HUD,
 as well as placing NPC names near visible heads and fixing observer equipment/
@@ -1682,3 +1682,19 @@ conditions. Other players need0.24.0 for the queue/phase and numeric-ID fixes.
   restarts world/gateway/WebSocket. No operator accounts/stats/inventory edited.
   Ignored work/hosting/*v30* scripts contain setup, tests and deployment. Android
   version0.27.0/code30 keeps package/signing key and save-preserving -r update.
+
+## v0.27.1: compact stats and original spell shouts
+
+- Spell-name feedback now draws centered outlined text without the Nearby chat
+  background/rectangle. Both local casts/full-health flashes and observed native
+  spell_chant events mark their records as spell shouts, blinking every250ms
+  like original CharacterRenderer. Normal Nearby speech retains its bubble.
+- Available green stat increment buttons are30×24 with14px plus glyphs, centered
+  in the prior38×30 area; hold/repeat and server-authoritative allocation remain.
+- Combat NPC labels show only the name. The existing native-percentage health
+  strips and damage numbers remain; no numeric percentage is appended.
+- Headless/rendered paperdoll_mobile and combat_mobile regressions pass. Reviewed
+  work/v31-{stats,bosscombat,spell-off,nearby-chat}.png (blink on/off and normal
+  speech confirmed). Android0.27.1/code31 is a client-only update;
+  no server deployment or operator account changes. See the v31 phone report
+  for installation, matching APK hash, launch and save-preservation evidence.
