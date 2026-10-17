@@ -64,6 +64,12 @@ func _run() -> void:
 		check(is_equal_approx((layout.head as Vector2).y - (layout.name as Vector2).y, 5.0), "NPC name must sit five pixels above visible head")
 		var battle: Dictionary = game.online.npc_name_layout(graphic, "south", true)
 		check((battle.health as Rect2).end.y < (layout.head as Vector2).y, "Battle strip must fit above head without hiding the name")
+	# Short and long peer names share the same body center, including Skylar's
+	# asymmetric bow/helmet/offhand loadout; equipment never shifts the label.
+	for name: String in ["skylar", "a", "abcdefghijklmnop"]:
+		var width: float = ThemeDB.fallback_font.get_string_size(name, HORIZONTAL_ALIGNMENT_LEFT, -1, 11).x
+		var offset: Vector2 = game.online.player_name_offset(name)
+		check(is_zero_approx(offset.x + width / 2.0) and is_equal_approx(offset.y, -66.0), "Peer name must center its actual width on the head without changing height")
 	# A peer's actual native attack direction drives both swing frames, even
 	# when the previously-rendered movement direction differs.
 	var peer: Dictionary = {"player_id": 200, "direction": 0, "gender": 1, "race": 0, "hairstyle": 1, "haircolor": 0, "equipment_graphics": [1,0,0,0,1,0,0,0,33]}

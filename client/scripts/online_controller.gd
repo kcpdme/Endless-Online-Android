@@ -683,6 +683,12 @@ func entity_animation(kind: String, record: Dictionary) -> Dictionary:
 	if kind == "online_player" and game.skills_ui.is_chanting(int(record.get("player_id", -1))): state = "cast"
 	return {"key": key, "state": state, "phase": phase, "direction": direction}
 
+func player_name_offset(name: String) -> Vector2:
+	# Original CharacterRenderer centers the measured label on the 18px body,
+	# never on asymmetric equipment bounds. Keep this stable through animations.
+	var width: float = ThemeDB.fallback_font.get_string_size(name, HORIZONTAL_ALIGNMENT_LEFT, -1, 11).x
+	return Vector2(-width / 2.0, -66)
+
 func npc_name_layout(graphic: Dictionary, direction: String, fighting: bool) -> Dictionary:
 	# Use the original visible standing art, including its render offset. This
 	# keeps names close to heads and stable while a walking/attack pose changes.
@@ -732,7 +738,8 @@ func draw_entity(entity: Dictionary) -> void:
 		else:
 			game.draw_circle(at + Vector2(0, -12), 7.0, Color("a6cec0"))
 			game.draw_string(ThemeDB.fallback_font, at + Vector2(-32, -42), "Appearance pending", HORIZONTAL_ALIGNMENT_LEFT, -1, 9, game.MUTED)
-		game.draw_string(ThemeDB.fallback_font, at + Vector2(-28, -66), str(record.get("name", "Player")), HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color("b9e2c5"))
+		var name: String = str(record.get("name", "Player"))
+		game.draw_string(ThemeDB.fallback_font, at + player_name_offset(name), name, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color("b9e2c5"))
 		draw_chat_bubble(int(record.get("player_id", 0)), at)
 	elif str(entity.kind) == "online_item":
 		var definitions: Dictionary = catalog.get("items", {}) as Dictionary

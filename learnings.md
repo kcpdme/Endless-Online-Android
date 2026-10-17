@@ -16,7 +16,7 @@ Godot 4.7.2, typed GDScript and 2D isometric rendering are sufficient. A Unity/3
 rewrite and a larger server have not been needed for the measured regressions.
 
 Baseline before this update: commit `8c9e541`, APK 0.10.0/code 10. The current
-build is 0.21.0/code 22. See the final v0.21 section for current chat/presence and the v0.20 sections for equipment/HUD/Junk support. v0.12 added level/EXP, Nearby Send closure and
+build is 0.21.1/code 23. See the final v0.21 section for current chat/presence and the v0.20 sections for equipment/HUD/Junk support. v0.12 added level/EXP, Nearby Send closure and
 native consumables; v0.13 adds native skills and touch targeting. v0.11 added native bank/lockers, player inspection and
 trading, local/global/private chat, a dynamic joystick, and the heart/TP HUD,
 as well as placing NPC names near visible heads and fixing observer equipment/
@@ -1228,3 +1228,28 @@ valid, offline save byte-identical and no startup script/crash errors. Report:
 `docs/gameplay-v22-phone-report.json`. Download files use
 `outputs/endless-online-android-v0.21.0*`. Source/graphics state and live Python
 adapter hashes match the tested build/deployment; native world was not restarted.
+
+
+## v0.21.1 / code23 — center other players' names on their heads
+
+Peer names previously began at the fixed offset(-28,-66), so a short name such
+as skylar visibly sat left of the character's center. Original CharacterRenderer
+uses HorizontalCenter - ActualWidth/2. New online_controller.player_name_offset
+measures the actual name with the same Godot font/size11 used to draw it, and
+subtracts half its width from the shared body/head anchor. Existing label height
+and interpolation remain unchanged. Weapon/shield/wings/animation bounds never
+move the label. This fixes every observing client's peer labels for short and
+long names; it does not require a native server change. Observers on an older
+APK still need to update to see centered names.
+
+Expanded existing network regressions cover skylar, a single letter, and a
+16-character name, alongside the previous peer swing/direction checks. Gameplay
+smoke and signed Android build pass. Private original-art visual probe:
+work/v23_names_preview.gd / work/v23-peer-name-centering.png. APK0.21.1/code23
+retains the existing package/signing key. No operator-character mutation.
+
+Installed and launched v0.21.1/code23 on Galaxy S23 Ultra; final installed APK
+SHA256 matches the build, signature/16KiB alignment valid, offline save unchanged
+byte-for-byte and no startup script/crash errors. Report:
+docs/gameplay-v23-phone-report.json. Download files use
+outputs/endless-online-android-v0.21.1*. No server restart or account change.
