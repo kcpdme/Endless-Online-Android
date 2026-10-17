@@ -1,0 +1,49 @@
+{
+  "result": "passed",
+  "native_admin_weapon_cannot_kill_service_npcs": [
+    15,
+    16,
+    57,
+    123,
+    166
+  ],
+  "service_npcs_emit_no_damage_or_kill_events": true,
+  "bow_cannot_kill_shopkeeper": true,
+  "service_spell_target_rejected": true,
+  "monster_kill_still_works": true,
+  "rat_exp_still_50": true,
+  "princess_native_spawn_present": true,
+  "princess_definition_unmodified": true,
+  "arena_rounds": [
+    {
+      "map_id": 46,
+      "timed_entry": true,
+      "one_hit_elimination": true,
+      "winner_event": true,
+      "both_return_to_lobby": true
+    },
+    {
+      "map_id": 183,
+      "timed_entry": true,
+      "one_hit_elimination": true,
+      "winner_event": true,
+      "both_return_to_lobby": true
+    },
+    {
+      "map_id": 184,
+      "timed_entry": true,
+      "one_hit_elimination": true,
+      "winner_event": true,
+      "both_return_to_lobby": true
+    }
+  ],
+  "private_timer_seconds": 3,
+  "production_timer_seconds": {
+    "46": 90,
+    "137": 30,
+    "138": 30,
+    "183": 90,
+    "184": 90
+  },
+  "operator_accounts_modified": false
+}

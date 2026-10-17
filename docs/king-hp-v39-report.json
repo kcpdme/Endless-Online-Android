@@ -1,0 +1,75 @@
+{
+  "EOzipped028.zip": {
+    "source_sha256": "263f0259b07a960ab9ca72d33ba9ac3bdbab212cb2f1f2dd885baa0bef990ad7",
+    "kings": {
+      "122": {
+        "name": "King",
+        "type": 1,
+        "hp": 13000,
+        "exp": 150,
+        "graphic": 93
+      },
+      "123": {
+        "name": "King",
+        "type": 1,
+        "hp": 13000,
+        "exp": 150,
+        "graphic": 94
+      }
+    }
+  },
+  "sample-data.zip": {
+    "source_sha256": "cc8946149a3c2c9feaa383f28be61ac302ca19a0391e44a4929ca5e02aa01555",
+    "kings": {
+      "122": {
+        "name": "King",
+        "type": 1,
+        "hp": 13000,
+        "exp": 150,
+        "graphic": 93
+      },
+      "123": {
+        "name": "King",
+        "type": 15,
+        "hp": 13000,
+        "exp": 150,
+        "graphic": 94
+      }
+    }
+  },
+  "trunk-305-EODelta.zip": {
+    "source_sha256": "d10ca04ad80a8de68dd133a0d5f90e9ae085448692a418553f0e02cc9b689c4f",
+    "kings": {
+      "122": {
+        "name": "King",
+        "type": 1,
+        "hp": 13000,
+        "exp": 150,
+        "graphic": 93
+      },
+      "123": {
+        "name": "King",
+        "type": 15,
+        "hp": 13000,
+        "exp": 150,
+        "graphic": 94
+      }
+    }
+  },
+  "runtime": {
+    "122": {
+      "name": "King",
+      "type": 1,
+      "hp": 13000,
+      "exp": 150,
+      "graphic": 93
+    },
+    "123": {
+      "name": "King",
+      "type": 15,
+      "hp": 13000,
+      "exp": 150,
+      "graphic": 94
+    }
+  }
+}

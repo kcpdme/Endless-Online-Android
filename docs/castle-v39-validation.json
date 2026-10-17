@@ -1,0 +1,59 @@
+{
+  "result": "passed",
+  "version": "0.30.0",
+  "version_code": 39,
+  "client_castle_checks": 32,
+  "godot_regressions": [
+    {
+      "suite": "movement_controls",
+      "passed": true,
+      "shutdown_resource_warnings": []
+    },
+    {
+      "suite": "combat_mobile",
+      "passed": true,
+      "shutdown_resource_warnings": []
+    },
+    {
+      "suite": "bow_and_npc_labels",
+      "passed": true,
+      "shutdown_resource_warnings": []
+    },
+    {
+      "suite": "paperdoll_mobile",
+      "passed": true,
+      "shutdown_resource_warnings": []
+    },
+    {
+      "suite": "paired_equipment_v38",
+      "passed": true,
+      "shutdown_resource_warnings": []
+    },
+    {
+      "suite": "v36_features_mobile",
+      "passed": true,
+      "shutdown_resource_warnings": []
+    },
+    {
+      "suite": "network_regressions",
+      "passed": true,
+      "shutdown_resource_warnings": []
+    }
+  ],
+  "python_tests": 145,
+  "native_reference": "castle-v39-native-report.json",
+  "resource_reference": "castle-v39-resource-report.json",
+  "king_hp_reference": "king-hp-v39-report.json",
+  "deployment_reference": "castle-v39-deployment-report.json",
+  "original_king_hp": 13000,
+  "king_hp_changed": false,
+  "king_instant_kill_cause": "Admin attack bypass sent a noncombat quest NPC to NPC::Damage, whose original noncombat branch sets HP to zero. Normal player actions now reject noncombat NPCs.",
+  "princess_original_definition_preserved": true,
+  "princess_spawn_placement": "Original archives omit this spawn; restore near current King on map281 centered at10,5, ordinary passive AI and180s respawn.",
+  "princess_original_graphic": 115,
+  "npc_graphic_count": 159,
+  "original_music_tracks": 45,
+  "original_sfx_count": 81,
+  "apk_sha256": "6f6d521efaa2c94b62979128703c36172e645f629477f2661f9b9655b2320a1f",
+  "timestamp": "2026-10-17T15:18:50.958028+00:00"
+}

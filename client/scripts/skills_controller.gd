@@ -170,6 +170,9 @@ func target(tile: Vector2i) -> bool:
 	else:
 		for npc: Dictionary in game.online.npcs:
 			if Vector2i(int(npc.x), int(npc.y)) == tile:
+				if not game.online.is_combat_npc(npc):
+					game._toast("Only monsters can be targeted by this skill.")
+					return true
 				cast(armed, "npc", int(npc.index))
 				return true
 	game._toast("Select a valid target for %s." % str(spell.get("name", "this skill")))
@@ -179,6 +182,13 @@ func cast(ident: int, kind: String, target_id: int) -> void:
 	if not casting.is_empty() or Time.get_ticks_msec() < ready_at: return
 	if not game.online.mobile_action_ready(): return
 	var spell: Dictionary = info(ident)
+	if kind == "npc":
+		var target_npc: Dictionary = {}
+		for npc: Dictionary in game.online.npcs:
+			if int(npc.get("index", -1)) == target_id: target_npc = npc; break
+		if not game.online.is_combat_npc(target_npc):
+			game._toast("Only monsters can be targeted by this skill.")
+			return
 	armed = 0
 	if kind == "self" and int(spell.get("type", -1)) == 0 and int(game.online.player.get("hp", 0)) >= int(game.online.player.get("max_hp", 1)):
 		flash_spell(ident, "HP full")

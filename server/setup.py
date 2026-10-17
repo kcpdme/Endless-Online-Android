@@ -45,7 +45,7 @@ def main():
     deps = state / 'deps'; deps.mkdir(exist_ok=True)
     source = state / 'source'; build = state / 'build'; build.mkdir(exist_ok=True)
     checkout('etheos', source)
-    patches = [ROOT / 'patches' / name for name in ('etheos-password-v3.patch', 'etheos-redeem.patch', 'etheos-character-hp.patch', 'etheos-spikes.patch', 'etheos-mobile-spells.patch', 'etheos-mobile-feedback.patch', 'etheos-skill-training.patch', 'etheos-drop-rate.patch')]
+    patches = [ROOT / 'patches' / name for name in ('etheos-password-v3.patch', 'etheos-redeem.patch', 'etheos-character-hp.patch', 'etheos-spikes.patch', 'etheos-mobile-spells.patch', 'etheos-mobile-feedback.patch', 'etheos-skill-training.patch', 'etheos-drop-rate.patch', 'etheos-protect-service-npcs.patch')]
     for patch in patches:
         applied = subprocess.run(['git','-C',str(source),'apply','--reverse','--check',str(patch)],capture_output=True).returncode == 0
         if not applied: run('git','-C',source,'apply',patch)
@@ -136,6 +136,9 @@ WorldDumpFile = ./world.bak.json
         if (a.economy_data/"home.ini").is_file():
             from import_inns import install as install_inns
             install_inns(runtime,a.economy_data)
+        if (a.economy_data/"arenas.ini").is_file():
+            from configure_castle import configure as configure_castle
+            configure_castle(runtime,a.economy_data/"arenas.ini")
     from configure_world import configure as configure_world
     configure_world(runtime)
     from configure_rates import configure as configure_rates

@@ -2107,3 +2107,67 @@ conditions. Other players need0.24.0 for the queue/phase and numeric-ID fixes.
   match; offline save unchanged byte for byte, no startup resource/script/crash
   errors. Existing v36 feature regression passed. See gameplay-v38-phone-report.
   Private native fixture and SSH tunnel stopped after tests.
+
+
+## v0.30.0 / code39 — castle arenas, Princess, friendly NPC protection, King HP
+
+- All active arena configs were blank examples. Supplied EODelta data/arenas.ini
+  has real gates/destinations/timing for46,137,138,183,184. configure_castle.py
+  imports only native enabled/time/block/spawns to data/aster-vale-arenas.ini and
+  sets ArenasFile. Do NOT copy fork-only PK/event giveitem/takeitem hooks. Native
+  rounds remain90s for red46 and blue183/184,30s for137/138. Stand on gate tiles;
+  actual Arena::Spawn performs authoritative entry and original one-hit elimination.
+- arena_events.py decodes native Arena45 Use10,Drop24,Spec16,Accept2 including
+  break-delimited kills/names. Gateway dirty flag delivers notifications; client
+  shows concise start/elimination/busy/win notices in chat/toast and original
+  busy51/win52 sounds. Existing native Warp correction handles same-map entry
+  and return to original relog tiles. No fake client teleports or HP death.
+- Friendly kill root cause: admin4 SourceDutyAccess >= killnpc bypass in native
+  Map::Attack. NPC::Damage's noncombat branch explicitly sets HP0. The new
+  etheos-protect-service-npcs.patch removes this ordinary-attack bypass AND puts
+  a noncombat guard at NPC::Damage entry. Only native Passive1/Aggressive2 can
+  receive player combat damage, even for admins. Explicit admin despawn commands
+  remain separate. Client uses same whitelist, removes unknown3 target allowance,
+  does not create service NPC health bars and rejects damage-spell click/direct
+  cast paths. Native spell targeting already rejected noncombat NPCs.
+- Princess151 had NO spawn anywhere and no exported art because the exporter
+  only extracts spawned graphics. Restored in map281 near King8,5 with spawn
+  center10,5, ordinary passive AI/type3 and180s respawn, amount1. The position/
+  respawn are explicit restoration choices because original spawn data is absent.
+  Original NPC type1, HP13000, EXP150, graphic115 are unchanged. Exported original
+  GFX021 Princess sprites in all facings/idle/walk/attack; NPC graphics now159.
+  Never assume adding a spawn alone makes its previously unexported art available.
+- User also asked to restore original King HP. Independently compared clientv28,
+  sample-data and EODelta archives: BOTH King122 and King123 have13000HP in all
+  originals. Live ENF remains byte-identical to sample data, SHA256cc8946149a3c2c9feaa383f28be61ac302ca19a0391e44a4929ca5e02aa01555.
+  Original client King123 is type1; supplied server deliberately makes123 a
+  quest NPC/type15. King122 is still combat type1. Preserve this server role and
+  actual original13000HP. Quest King was dying instantly due admin forced-kill
+  branch above, not reduced HP. Do not invent higher HP. See king-hp-v39-report.
+- Export_castle.py preserves/reconstructs server_blocked, map relog metadata and
+  manifest catalog checksum. Changing catalog requires updating its manifest
+  digest. Catalog tests now expect159 NPC graphics including Princess.
+- Important fixture isolation lesson: old private data/maps directories contain
+  INDIVIDUAL symlinked map files pointing at production. Detaching directories
+  alone is insufficient. configure_castle now rejects symlinked parents and
+  detaches the individual map file before writing; regression verifies source
+  bytes remain untouched. A deployment hash guard caught the Princess patch
+  reaching map281 through this old fixture link before restart. Restored its
+  verified original sample-data bytes before guarded backup/deploy. No character
+  database edits. Do not write through linked fixture maps/PUB/config files.
+- Native two-client tests verified timed entry/winner/elimination/lobby return
+  for46,183,184 (PRIVATE timer3s only). Admin melee/bow cannot kill shops, banker,
+  guard, quest King or Wise Man; spell selection rejected; Rat combat still50EXP.
+  Princess appears in native snapshot. Godot rendered32 checks and7 prior suites
+  passed.145 Python tests passed. Actual Princess textures/appearance inspected.
+- Production backup /opt/aster-vale/backups/v39-castle-20261017T151225Z.
+  Native SHA25617b74d76ef392731c6e02927e078b3fab5c638892528772b37798435d2cb26b2.
+  Castle map281 SHA2564e2e67b5ad98685d1d3921222b0bb0d24c81b26b9c3ff42c195c7387bc9cb43d.
+  Source/native/config/map upgrade guarded and backed up with stopped-world DB
+  backup; native+gateway+websocket restarted. No manual account edits; EXP10× and
+  drop chance2× retained. Public HTTPS/WSS/native handshake/auth guard passed.
+- APK0.30.0/code39 installed/launched on Galaxy S23 Ultra. Final installed hash
+  6f6d521efaa2c94b62979128703c36172e645f629477f2661f9b9655b2320a1f; existing
+  signing/16KB alignment pass, offline save bytes identical, no startup resource/
+  script/crash errors. After adb restart use actual mDNS serial from devices; an
+  IP:port may not be registered as a transport until explicit adb connect.

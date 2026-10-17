@@ -342,7 +342,7 @@ func _enter_world(data: Dictionary) -> void:
 	session.request("stream", {"enabled": true})
 	server_label.hide()
 	_set_status("Connected to your world.")
-	game._toast("You have entered your online world.")
+	game._toast("Arena · stand on a marked gate tile. Rounds every %ds." % int((game.world.arena as Dictionary).get("interval_seconds", 90)) if game.world.has("arena") else "You have entered your online world.")
 
 func _apply_snapshot(data: Dictionary, entering: bool = false) -> void:
 	for raw: Variant in data.get("events", []):
@@ -588,6 +588,10 @@ func mobile_action_ready() -> bool:
 func _action_ready() -> bool:
 	return active and not defeated and not recovering and pending_inputs.is_empty() and not transition_pending and session.is_idle()
 
+func is_combat_npc(npc: Dictionary) -> bool:
+	var info: Dictionary = (catalog.get("npcs", {}) as Dictionary).get(str(int(npc.get("id", 0))), {}) as Dictionary
+	return int(info.get("type", -1)) in [1, 2] # Original ENF Passive/Aggressive only.
+
 func request_attack() -> bool:
 	game.skills_ui.armed = 0
 	if not game.skills_ui.casting.is_empty(): return false
@@ -602,7 +606,7 @@ func request_attack() -> bool:
 	if sent:
 		var target_tile: Vector2i = game.player_tile + offsets[_direction(game.facing)]
 		for npc: Dictionary in adjacent:
-			if Vector2i(int(npc.x), int(npc.y)) != target_tile: continue
+			if Vector2i(int(npc.x), int(npc.y)) != target_tile or not is_combat_npc(npc): continue
 			var index: int = int(npc.index)
 			var health: Dictionary = npc_health.get(index, {"percent": 100}) as Dictionary
 			health["until"] = Time.get_ticks_msec() + 8000
@@ -1098,14 +1102,14 @@ func map_click(tile: Vector2i, preferred_kind: String = "") -> void:
 			# shopkeepers behind sealed counters. Never path onto their side.
 			game._cancel_controls()
 			interaction = {"kind": "inn" if type == 7 else "quest" if type == 15 else "skillmaster" if type == 14 else "bank" if type == 9 else "shop", "id": int(npc.index)}
-		elif type in [1, 2, 3]:
+		elif is_combat_npc(npc):
 			if game._distance(game.player_tile, tile) == 1:
 				var direction: String = game._direction_name(tile - game.player_tile)
 				if game.attack_clock > 0.0: request_face(direction)
 				else: game.facing = direction
 				game._attack()
 			else: _approach(tile, 1)
-		else: game._toast("%s: this NPC service is not available yet." % str(info.get("name", "NPC")))
+		else: game._toast("%s is not a combat target." % str(info.get("name", "NPC")))
 		return
 	game._request_path(tile)
 
@@ -1374,6 +1378,9 @@ func _process_events(events: Array) -> void:
 		game.skills_ui.event(event)
 		var kind: String = str(event.get("kind", event.get("type", event.get("event", ""))))
 		_action_sound(event, kind)
+		if kind.begins_with("arena_"):
+			game._toast(str(event.get("message", "")))
+			game.chat_ui.receive({"channel":"system","name":"Arena","message":str(event.get("message", ""))})
 		if kind == "inn_recovered": game._toast("Rested at the inn · HP and TP restored.")
 		elif kind == "quest_hint": game._toast(str(event.get("message", "")))
 		elif kind == "class_changed":
@@ -1487,6 +1494,8 @@ func _action_sound(event: Dictionary, kind: String) -> void:
 	elif kind == "door_open": game.sfx.play_named("DoorOpen", "door")
 	elif kind == "door_locked": game.sfx.play_named("DoorOrChestLocked", "door")
 	elif kind == "chat" and event.get("channel", "") == "private": game.sfx.play_named("PrivateMessageSent" if event.get("outgoing", false) else "PrivateMessageReceived", "whisper")
+	elif kind == "arena_win": game.sfx.play_named("ArenaWin", "arena")
+	elif kind == "arena_busy": game.sfx.play_named("ArenaTickSound", "arena")
 	elif kind == "trade_complete": game.sfx.play_named("TradeAccepted", "trade")
 	elif kind == "sound": game.sfx.play_id(int(event.get("sound_id", 0)), "server")
 	elif kind == "potion_effect" or (kind == "item_used" and int(event.get("item_type", -1)) == 23): game.sfx.effect(int(event.get("effect_id", -1)) + 1)

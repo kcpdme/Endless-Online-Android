@@ -1,0 +1,24 @@
+--- a/src/map.cpp
++++ b/src/map.cpp
+@@ -1554,7 +1554,7 @@
+ 
+ 		UTIL_FOREACH(this->npcs, npc)
+ 		{
+-			if ((npc->ENF().type == ENF::Passive || npc->ENF().type == ENF::Aggressive || from->SourceDutyAccess() >= static_cast<int>(this->world->admin_config["killnpc"]))
++			if ((npc->ENF().type == ENF::Passive || npc->ENF().type == ENF::Aggressive)
+ 			 && npc->alive && npc->x == target_x && npc->y == target_y)
+ 			{
+ 				int amount = util::rand(from->mindam, from->maxdam);
+--- a/src/npc.cpp
++++ b/src/npc.cpp
+@@ -432,6 +432,10 @@
+ 
+ void NPC::Damage(Character *from, int amount, int spell_id)
+ {
++	// Player attacks, including admin weapons, never damage service NPCs.
++	if (this->ENF().type != ENF::Passive && this->ENF().type != ENF::Aggressive)
++		return;
++
+ 	int limitamount = std::min(this->hp, amount);
+ 
+ 	if (this->map->world->config["LimitDamage"])

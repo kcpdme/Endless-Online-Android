@@ -159,7 +159,7 @@ class RuntimeCatalogTests(unittest.TestCase):
         for spawn in selected['npc_spawns']:
             definition=self.catalog['npcs'][str(spawn['id'])]
             self.assertIn(str(definition['graphic']),self.manifest['characters']['npcs'])
-        self.assertEqual(len(self.manifest['characters']['npcs']),158)
+        self.assertEqual(len(self.manifest['characters']['npcs']),159)
     def test_all_world_npc_offsets_match_reference_formulas(self):
         npcs=self.manifest['characters']['npcs']
         self.assertTrue(set(map(int,npcs)).issubset(set(NPC_RENDER_METADATA)))

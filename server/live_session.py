@@ -178,7 +178,11 @@ class LiveSession(RewardsMixin, SkillsMixin, ConsumablesMixin, InnsMixin, Quests
             npc=next((n for n in self.state['npcs'] if n['index']==event['npc_index']),{})
             if npc:event.update(npc_id=npc['id'],x=npc['x'],y=npc['y'],npc_direction=npc.get('direction',0))
         r=Reader(p)
-        if (f,a)==(40,8):
+        if f==45:
+            from arena_events import decode_arena
+            arena=decode_arena(a,p)
+            if arena:self.events[-1].update(arena);self.dirty=True
+        elif (f,a)==(40,8):
             sound_id=r.num()
             if r.rest():raise EOError('Unexpected native sound payload')
             self.events[-1].update(kind='sound',sound_id=sound_id);self.dirty=True

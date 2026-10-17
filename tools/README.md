@@ -88,3 +88,20 @@ means sfx015.wav; the old prototype’s three aliases were offset by one. Ordina
 health potions have no dedicated SFX in the original; confirmed spells, effect
 potions, weapons, NPC attacks and acknowledged actions use their original cues.
 Music export remains a separate step; its45 original tracks are retained.
+
+
+Castle restoration (v0.30): after catalog export, preserve the supplied arena
+configuration and export the added Princess spawn and original GFX021/115 art:
+
+```sh
+python3 tools/export_castle.py --runtime work/server-build/runtime \
+  --source "reference/extracted/trunk-305-EODelta/trunk 305 EODelta/data/arenas.ini" \
+  --graphics work/eoserv-crawl/downloads/EOzipped028.zip
+```
+
+This updates only six map records and Princess assets, retains native blocking
+specifications and refreshes the catalog checksum. Arenas use the supplied gate
+coordinates and90s rounds (46/183/184),30s (137/138). The original Princess151
+is a passive combatant with13000HP; no supplied map spawns her. This restoration
+adds her near the current King in map281, with the original sprites and stats.
+The placement/180s respawn are restoration choices, not claimed historical coordinates.
