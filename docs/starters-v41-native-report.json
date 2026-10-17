@@ -1,0 +1,21 @@
+{
+  "female": {
+    "appearance_persists": true,
+    "starter_inventory_exact": true,
+    "all_starter_gear_equips": true,
+    "relogin_does_not_duplicate_kit": true,
+    "heal_self_learned": true
+  },
+  "male": {
+    "appearance_persists": true,
+    "starter_inventory_exact": true,
+    "all_starter_gear_equips": true,
+    "relogin_does_not_duplicate_kit": true,
+    "heal_self_learned": true
+  },
+  "all_native_spells": 31,
+  "grant_additive_idempotent_only_spells_changed": true,
+  "granted_spells_native_welcome_after_restart": true,
+  "result": "passed",
+  "operator_accounts_used": false
+}

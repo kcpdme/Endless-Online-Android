@@ -1,0 +1,61 @@
+{
+  "result": "passed",
+  "version": "0.31.0",
+  "version_code": 41,
+  "apk_sha256": "2da4792470e52683a09bbe95d1cce2b2312416aabe8ab813985653d94c830f4d",
+  "signature_verified": true,
+  "alignment_16k_verified": true,
+  "controls_creation_checks": 196,
+  "server_state_tests": 92,
+  "starter_grant_unit_tests": 3,
+  "native_starter_and_additive_grant_integration": "passed",
+  "public_tls_real_ui_both_bodies": "passed",
+  "regression_suites": {
+    "gameplay_smoke": {
+      "exit": 0,
+      "errors": [],
+      "pass": [
+        "GAMEPLAY SMOKE PASS: content, joystick pointer/drag/release, multitouch, modal/focus cancellation, corner collision, movement, combat, loot, paperdoll equipment, save/load, reset"
+      ]
+    },
+    "movement_controls": {
+      "exit": 0,
+      "errors": [],
+      "pass": [
+        "MOVEMENT CONTROLS PASS: WASD/arrows physical+logical, newest held key, release/focus/typing, digital four-way stick, diagonal tolerance/dead zone/reversal, NPC overlap, armed skill priority, captured outside drag, modal protection"
+      ]
+    },
+    "combat_mobile": {
+      "exit": 0,
+      "errors": [],
+      "pass": [
+        "MOBILE COMBAT PASS: potion/skill during walking, native ACK only, despawn cleanup, held attack mean=0.52121212121212s, touch chat history and preserved scroll"
+      ]
+    },
+    "network_regressions": {
+      "exit": 0,
+      "errors": [
+        "ERROR: 2 resources still in use at exit (run with --verbose for details)."
+      ],
+      "pass": [
+        "NETWORK REGRESSIONS PASS: committed-tile release, visual/server alignment, deferred loot intent"
+      ]
+    },
+    "paired_equipment_v38": {
+      "exit": 0,
+      "errors": [],
+      "pass": [
+        "PAIRED EQUIPMENT V38 PASS: 25 actual UI checks"
+      ]
+    },
+    "v36_features_mobile": {
+      "exit": 0,
+      "errors": [],
+      "pass": [
+        "V36 FEATURES PASS: native sit touch, paired slots, single gloves, item/skill reconnect persistence, trained effect details, native inn quote and sleep"
+      ]
+    }
+  },
+  "known_preexisting_exit_warning": "network_regressions reports two audio resources still in use at immediate exit; all assertions pass",
+  "phone_installation": "pending_wireless_adb_unavailable"
+}

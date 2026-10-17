@@ -16,7 +16,8 @@ Godot 4.7.2, typed GDScript and 2D isometric rendering are sufficient. A Unity/3
 rewrite and a larger server have not been needed for the measured regressions.
 
 Baseline before this update: commit `8c9e541`, APK 0.10.0/code 10. The current
-build is 0.29.0/code 36. See the final v0.21 section for current chat/presence and the v0.20 sections for equipment/HUD/Junk support. v0.12 added level/EXP, Nearby Send closure and
+build is 0.31.0/code 41. See the final v0.31 section for online-first creation,
+starter inventory, spell grants and latched auto attack. See the final v0.21 section for current chat/presence and the v0.20 sections for equipment/HUD/Junk support. v0.12 added level/EXP, Nearby Send closure and
 native consumables; v0.13 adds native skills and touch targeting. v0.11 added native bank/lockers, player inspection and
 trading, local/global/private chat, a dynamic joystick, and the heart/TP HUD,
 as well as placing NPC names near visible heads and fixing observer equipment/
@@ -2226,3 +2227,79 @@ conditions. Other players need0.24.0 for the queue/phase and numeric-ID fixes.
   package and no startup errors. APK SHA256:
   `4e0b79ded091f6c29b6f76b01813bc1c9b492332289b2c96b51fbf8f2a4ceae3`.
   Reports: `docs/npc-combat-v40-*.json`, `docs/gameplay-v40-phone-report.json`.
+
+
+## v0.31.0 / code 41 — reachable combat, auto attack, online-first creation and starters
+
+- Read current source/context and original reference CreateCharacterDialog /
+  CreateCharacterControl plus native Character_Create. Shifted the complete
+  lower-right combat cluster LEFT72 / UP36 logical pixels through one shared
+  main.COMBAT_HUD_SHIFT: weapon, both spells, both consumables, bag, sit and
+  pickup. Preserve the top Skills book anchor and safe-area root.
+- Weapon short/repeated taps remain manual. Holding600ms latches auto attack;
+  release keeps repeating at existing native520ms cadence and AUTO appears on
+  the circle. Next weapon press returns to manual and cannot re-latch on that
+  same stopping gesture. Separate _end_attack_gesture (release latch survives)
+  from _release_attack (explicit cancellation). Modal/focus/death/warp/
+  disconnect/skill selection cancellation still clears auto. Android emulated
+  mouse cannot toggle the native gesture a second time. Online movement still
+  pauses attacks until the player is stationary; no native timing change.
+- Welcome now gives Play online the primary left button and describes the shared
+  server world. Offline practice/save remains separate. Character selection's
+  New character opens a dedicated touch modal with male/female body,20 hair
+  styles,10 original hair colors and native creation skins0White/1Tan/2Pale/3Orc.
+  Do NOT label2 Yellow or3 Black: original native enum says Pale/Orc. Native
+  default creation rules allow0..3; skeleton/panda/fish rendering support does
+  not mean those admin skins are allowed for ordinary creation.
+- character_preview.gd composes the SAME original character_graphic/_frame
+  layers at2x scale and rotates through four directions on tap. Creation sends
+  selected gender/hairstyle/haircolor/race instead of hardcoded male defaults.
+  Name validation is4–12 ASCII letters, native refusal text appears on the
+  creation card, success closes it, Back closes only the top creator.
+- Every NEW character receives native bag items Gold1x1000, Dagger21x1,
+  Oak Shield453x1 (the supplied wooden shield), and gender-matched Peasant
+  Suit144x1 (male) / Peasant Clothes151x1 (female), plus Heal Self spell1level0.
+  All gear has native level0/no attribute requirements and was actually equipped
+  via native acknowledgements in tests. No boots/plate grant remains.
+- etheos-starter-kit.patch chooses StartItemsMale/StartItemsFemale inside native
+  World::CreateCharacter and falls back to StartItems when an override is absent
+  or empty. Native StartSpells supplies Heal Self. setup.py applies the patch
+  and policy; configure_starters.py updates an existing backed-up runtime config.
+  Only character creation grants these belongings, never login/Welcome/reconnect.
+- User explicitly requested all spells for Skylar and Ravigameboy. Stopped-world
+  operator grant_spells.py reads actual31 ESF IDs, appends only missing spells
+  atlevel0 and preserves all trained levels. Both had1/4/5; each received the
+  other28. Additive/idempotent, separate from public gateway, no credential use.
+  Party/bard casting remains unsupported as before; learning all31 does not add
+  those unimplemented targeting/effect paths.
+- Production backup /opt/aster-vale/backups/v41-starters-spells-20261017T183353Z.
+  Guarded previous native SHA17b74d76ef392731c6e02927e078b3fab5c638892528772b37798435d2cb26b2.
+  Rebuilt native on Debian host and installed SHAa584e038f7c91f7f66d437f481b8dc124e0b840e4cb293b182f36c57184f1ef9.
+  Gracefully stopped services, backed up SQLite/config/binary, changed ONLY the
+  spells field for those two names, compared every other field and all other
+  tables byte-for-value, preserved account/password/quest/inventory/progress,
+  restarted all three services. Public HTTPS and real WSS creation/entry pass.
+  Canonical LOCAL native runtime/config updated too, with private backups;
+  no local character DB grant. Operator profiles are never test fixtures.
+- Validation:196 actual touch/mouse/layout/appearance checks,92 Python state
+  tests,3 starter/grant unit tests,5 coupon tests,5 NPC role tests; gameplay,
+  movement controls, mobile combat, paired bag equipment and v36 feature suites
+  pass. Network assertions pass with the already-known immediate-exit warning
+  about2 audio resources. Initial build check hit this same teardown warning;
+  import and Android export pass without parse/resource errors.
+- Isolated real native tests prove both selected appearances, exact starter bag,
+  equip all3 gear types, learned Heal Self, no reconnect duplication, additive
+  all31 grant, preserved trained levels/every other column, and native Welcome
+  after restart. Public real Godot touch UI registers a fresh dev account,
+  creates both bodies with selected cosmetics, enters, verifies bag/shortcut,
+  and equips all3 items through actual bag buttons. Select test characters by
+  NAME because native character list may sort names; passwords are cleared
+  after login and a test reconnect must supply its own private fixture password.
+- APK0.31.0/code41 signature and16KB alignment verified; SHA256 2da4792470e52683a09bbe95d1cce2b2312416aabe8ab813985653d94c830f4d.
+  Wireless ADB currently unavailable (stale32773 discovery refuses connection,
+  no active transport); APK prepared for manual installation / later update.
+  Do not claim it is installed. Optional user question requested current IP:port.
+  Keep same signing key and compare existing offline save bytes when reconnecting.
+  Reports: docs/gameplay-v41-report.json, starters-v41-{native,public-ui,
+  deployment}-report.json. Source ZIP must come from final committed HEAD and
+  exclude ignored assets/secrets. APK is the local user's development delivery.

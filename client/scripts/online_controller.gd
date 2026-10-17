@@ -14,6 +14,13 @@ var host_field: LineEdit
 var port_field: SpinBox
 var username_field: LineEdit
 var password_field: LineEdit
+var creation_panel: Control
+var body_choice: OptionButton
+var skin_choice: OptionButton
+var hair_choice: OptionButton
+var color_choice: OptionButton
+var creation_status: Label
+var character_preview: Control
 var character_name_field: LineEdit
 var character_list: ItemList
 var auth_box: Control
@@ -127,21 +134,22 @@ func build_ui(parent: Control) -> void:
 	character_list.fixed_icon_size = Vector2i(32, 32)
 	character_box.add_child(character_list)
 	game._button(character_box, "Enter selected character", Vector2(0, 132), Vector2(700, 52), _enter_selected, true)
-	character_name_field = _field(character_box, "", Vector2(0, 199), Vector2(410, 48))
-	character_name_field.placeholder_text = "New character name"
-	character_name_field.max_length = 12
-	game._button(character_box, "Create character", Vector2(426, 199), Vector2(274, 48), _create_character)
+	game._button(character_box, "Create a new character…", Vector2(0, 199), Vector2(700, 48), func() -> void:
+		creation_panel.show()
+		_update_creation_preview()
+	)
 	character_box.hide()
 	status_label = game._label(card, "Connect to your world or create a new account.", Vector2(30, 479), 17, game.TEXT)
 	status_label.size = Vector2(700, 61)
 	status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	game._label(card, "Offline progress stays separate from your online characters.", Vector2(30, 553), 14, game.MUTED)
 	panel.hide()
+	_build_character_creation(parent)
 	server_label = game._label(parent, "", Vector2(390, 67), 15, game.MUTED)
 	server_label.hide()
 	loot_button = preload("res://scripts/hud_icon_button.gd").new()
 	loot_button.set("kind", "hand")
-	loot_button.position = Vector2(-94, -406)
+	loot_button.position = Vector2(-94, -406) + game.COMBAT_HUD_SHIFT
 	loot_button.size = Vector2(68, 68)
 	loot_button.pressed.connect(request_collect)
 	parent.add_child(loot_button)
@@ -149,6 +157,57 @@ func build_ui(parent: Control) -> void:
 	loot_button.clip_text = true
 	loot_button.add_theme_font_size_override("font_size", 17)
 	loot_button.hide()
+
+func _build_character_creation(parent: Control) -> void:
+	creation_panel = game._modal(parent, Vector2(820, 600))
+	var card: Control = creation_panel.get_child(0) as Control
+	game._label(card, "CREATE YOUR CHARACTER", Vector2(30, 22), 27, game.GOLD)
+	game._button(card, "×", Vector2(736, 14), Vector2(54, 48), func() -> void: creation_panel.hide())
+	game._label(card, "Name", Vector2(30, 79), 17, game.MUTED)
+	character_name_field = _field(card, "", Vector2(30, 105), Vector2(420, 48))
+	character_name_field.placeholder_text = "4–12 letters"
+	character_name_field.max_length = 12
+	body_choice = _appearance_choice(card, "Body", 170, ["Female", "Male"])
+	body_choice.select(1)
+	hair_choice = _appearance_choice(card, "Hair", 242, [])
+	for style: int in range(1, 21): hair_choice.add_item("Style %d" % style, style)
+	color_choice = _appearance_choice(card, "Hair color", 314, [])
+	# Numeric labels preserve the original palette order without inventing names.
+	for color: int in range(10): color_choice.add_item("Color %d" % (color + 1), color)
+	skin_choice = _appearance_choice(card, "Skin color", 386, ["White", "Tan", "Pale", "Orc"])
+	character_preview = preload("res://scripts/character_preview.gd").new()
+	character_preview.game = game
+	character_preview.position = Vector2(478, 128)
+	character_preview.size = Vector2(300, 290)
+	card.add_child(character_preview)
+	game._label(card, "Tap character to turn", Vector2(521, 427), 16, game.MUTED)
+	var starter: Label = game._label(card, "Start with 1,000 Gold, peasant clothes, a Dagger,\nan Oak Shield and Heal Self.", Vector2(30, 474), 17, game.TEXT)
+	starter.size = Vector2(748, 44)
+	game._button(card, "Back", Vector2(30, 533), Vector2(180, 46), func() -> void: creation_panel.hide())
+	game._button(card, "Create character", Vector2(226, 533), Vector2(562, 46), _create_character, true)
+	creation_status = game._label(card, "", Vector2(478, 68), 16, game.GOLD)
+	creation_status.size = Vector2(300, 70)
+	creation_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	creation_panel.hide()
+
+func _appearance_choice(card: Control, title: String, top: float, labels: Array) -> OptionButton:
+	game._label(card, title, Vector2(30, top), 17, game.MUTED)
+	var choice: OptionButton = OptionButton.new()
+	choice.position = Vector2(200, top - 7)
+	choice.size = Vector2(250, 52)
+	choice.add_theme_font_size_override("font_size", 20)
+	for index: int in range(labels.size()): choice.add_item(str(labels[index]), index)
+	choice.item_selected.connect(func(_index: int) -> void: _update_creation_preview())
+	card.add_child(choice)
+	return choice
+
+func creation_appearance() -> Dictionary:
+	return {"gender": body_choice.get_selected_id(), "hairstyle": hair_choice.get_selected_id(), "haircolor": color_choice.get_selected_id(), "race": skin_choice.get_selected_id()}
+
+func _update_creation_preview() -> void:
+	if character_preview == null: return
+	character_preview.appearance = creation_appearance()
+	character_preview.queue_redraw()
 
 func _field(parent: Node, value: String, at: Vector2, dimensions: Vector2) -> LineEdit:
 	var field: LineEdit = LineEdit.new()
@@ -177,6 +236,7 @@ func show_login() -> void:
 	panel.show()
 
 func _close_panel() -> void:
+	creation_panel.hide()
 	login_retry_at = 0
 	panel.hide()
 	if not active: game._show_welcome()
@@ -196,6 +256,7 @@ func _authenticate(operation: String, retrying: bool = false) -> void:
 	if error != OK: _set_status("Could not open this server address.")
 
 func _set_status(value: String) -> void:
+	if creation_status != null: creation_status.text = value
 	last_error = value
 	if status_label != null: status_label.text = value
 
@@ -293,6 +354,7 @@ func _on_message(message: Dictionary) -> void:
 			_on_closed("Disconnected from the world.")
 
 func _show_characters(characters: Array) -> void:
+	creation_panel.hide()
 	selected_characters.clear()
 	character_list.clear()
 	for raw: Variant in characters:
@@ -313,13 +375,20 @@ func _enter_selected() -> void:
 	_set_status("Entering the world…")
 	session.request("enter", {"character_id": int(character.get("id", 0))})
 
+func _character_letters(value: String) -> bool:
+	for index: int in range(value.length()):
+		if value.unicode_at(index) < 97 or value.unicode_at(index) > 122: return false
+	return true
+
 func _create_character() -> void:
 	var name: String = character_name_field.text.strip_edges().to_lower()
-	if name.is_empty():
-		_set_status("Choose a name for your character.")
+	if name.length() < 4 or name.length() > 12 or not _character_letters(name):
+		_set_status("Choose a name with 4–12 letters.")
 		return
 	_set_status("Creating your character…")
-	session.request("create_character", {"name": name, "gender": 1, "hairstyle": 1, "haircolor": 0, "race": 0})
+	var fields: Dictionary = creation_appearance()
+	fields.name = name
+	session.request("create_character", fields)
 
 func _enter_world(data: Dictionary) -> void:
 	game.chat_ui.clear()
@@ -649,6 +718,7 @@ func _facing(value: Variant) -> String:
 	return ["south", "west", "north", "east"][clampi(int(value), 0, 3)]
 
 func _on_closed(reason: String) -> void:
+	creation_panel.hide()
 	game.inn_ui.panel.hide()
 	game.music.leave_world()
 	if game.sfx != null: game.sfx.stop()

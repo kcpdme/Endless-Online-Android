@@ -1,0 +1,21 @@
+{
+  "body_cases": [
+    {
+      "actual_bag_equip_buttons": true,
+      "exact_starter_bag": true,
+      "gender": 0,
+      "heal_self_learned_and_shortcut": true,
+      "selected_appearance_native": true
+    },
+    {
+      "actual_bag_equip_buttons": true,
+      "exact_starter_bag": true,
+      "gender": 1,
+      "heal_self_learned_and_shortcut": true,
+      "selected_appearance_native": true
+    }
+  ],
+  "operator_accounts_used": false,
+  "result": "passed",
+  "transport": "Godot TLS WebSocket -> native EO -> persistent SQLite"
+}

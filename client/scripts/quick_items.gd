@@ -20,7 +20,7 @@ func build(owner_game: Node, parent: Control) -> void:
 	for index: int in range(2):
 		var slot: int = index
 		var button: Button = Button.new()
-		button.position = Vector2(-324, -254 + index * 92)
+		button.position = Vector2(-324, -254 + index * 92) + game.COMBAT_HUD_SHIFT
 		button.size = Vector2(76, 76)
 		button.focus_mode = Control.FOCUS_NONE
 		button.expand_icon = true

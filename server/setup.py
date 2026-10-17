@@ -45,7 +45,7 @@ def main():
     deps = state / 'deps'; deps.mkdir(exist_ok=True)
     source = state / 'source'; build = state / 'build'; build.mkdir(exist_ok=True)
     checkout('etheos', source)
-    patches = [ROOT / 'patches' / name for name in ('etheos-password-v3.patch', 'etheos-redeem.patch', 'etheos-character-hp.patch', 'etheos-spikes.patch', 'etheos-mobile-spells.patch', 'etheos-mobile-feedback.patch', 'etheos-skill-training.patch', 'etheos-drop-rate.patch', 'etheos-protect-service-npcs.patch')]
+    patches = [ROOT / 'patches' / name for name in ('etheos-password-v3.patch', 'etheos-redeem.patch', 'etheos-character-hp.patch', 'etheos-spikes.patch', 'etheos-mobile-spells.patch', 'etheos-mobile-feedback.patch', 'etheos-skill-training.patch', 'etheos-drop-rate.patch', 'etheos-protect-service-npcs.patch', 'etheos-starter-kit.patch')]
     for patch in patches:
         applied = subprocess.run(['git','-C',str(source),'apply','--reverse','--check',str(patch)],capture_output=True).returncode == 0
         if not applied: run('git','-C',source,'apply',patch)
@@ -106,7 +106,10 @@ MaxConnectionsPerIP = 12
 StartMap = 5
 StartX = 40
 StartY = 40
-StartItems = 21,1;80,1;143,1
+StartItems = 1,1000;144,1;21,1;453,1
+StartItemsMale = 1,1000;144,1;21,1;453,1
+StartItemsFemale = 1,1000;151,1;21,1;453,1
+StartSpells = 1,0
 DBType = sqlite
 DBHost = database.sdb
 DBUser =

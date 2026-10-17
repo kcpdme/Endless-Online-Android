@@ -45,6 +45,11 @@ var player_hit_flash: float = 0.0
 var character_panel: Control
 var bag_button: HudIconButton
 var character_button: HudIconButton
+const AUTO_ATTACK_HOLD_MSEC: int = 600
+const COMBAT_HUD_SHIFT: Vector2 = Vector2(-72, -36)
+var auto_attack: bool = false
+var attack_held_at: int = 0
+var attack_hold_can_latch: bool = false
 var attack_touch_id: int = -1
 var owned_touches: Dictionary = {}
 var hero_equipped: Dictionary = {}
@@ -306,7 +311,12 @@ func _process(delta: float) -> void:
 		_advance_walk(delta)
 		if not moving: walk_remainder = maxf(0.0, delta - remaining)
 	if not _modal_open():
-		if attack_touch_id != -1 and attack_clock <= 0.0 and (enemy_health > 0 or online_mode) and (not online_mode or (_input_direction() == Vector2i.ZERO and route.is_empty())):
+		if attack_touch_id != -1 and attack_hold_can_latch and Time.get_ticks_msec() - attack_held_at >= AUTO_ATTACK_HOLD_MSEC:
+			auto_attack = true
+			attack_hold_can_latch = false
+			attack_button.automatic = true
+			_toast("Auto attack on · tap weapon for manual")
+		if (attack_touch_id != -1 or auto_attack) and attack_clock <= 0.0 and (enemy_health > 0 or online_mode) and (not online_mode or (_input_direction() == Vector2i.ZERO and route.is_empty())):
 			_attack()
 			if attack_clock > 0.0 and attack_previous > 0.0: attack_clock = maxf(0.0, attack_clock - attack_remainder)
 		if not moving:
@@ -444,14 +454,25 @@ func _modal_open() -> bool:
 
 func _begin_attack(pointer_id: int) -> void:
 	if online_mode: route.clear()
+	# A press while latched returns to manual and cannot immediately re-latch.
+	attack_hold_can_latch = not auto_attack
+	auto_attack = false
+	attack_button.automatic = false
+	attack_held_at = Time.get_ticks_msec()
 	if enemy_health > 0 or online_mode:
 		attack_touch_id = pointer_id
 		attack_button.holding = true
 	_attack()
 
-func _release_attack() -> void:
+func _end_attack_gesture() -> void:
 	attack_touch_id = -1
-	if attack_button != null: attack_button.holding = false
+	attack_hold_can_latch = false
+	if attack_button != null: attack_button.holding = auto_attack
+
+func _release_attack() -> void:
+	auto_attack = false
+	_end_attack_gesture()
+	if attack_button != null: attack_button.automatic = false
 
 func _cancel_controls(force_stop: bool = false) -> void:
 	_release_attack()
@@ -519,7 +540,7 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventScreenTouch and not event.pressed:
 		var owned: bool = owned_touches.has(event.index)
 		if quick_items != null: quick_items.release(event.index)
-		if event.index == attack_touch_id: _release_attack()
+		if event.index == attack_touch_id: _end_attack_gesture()
 		if event.index == touch_move_id: _cancel_movement()
 		if owned:
 			owned_touches.erase(event.index)
@@ -528,7 +549,7 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and not event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		if quick_items != null: quick_items.release(-2)
 		if attack_touch_id == -2:
-			_release_attack()
+			_end_attack_gesture()
 			get_viewport().set_input_as_handled()
 			return
 		if touch_move_id == -2:
@@ -1042,7 +1063,7 @@ func _build_ui() -> void:
 	bottom_hint.set_anchors_preset(Control.PRESET_BOTTOM_LEFT, true)
 	bag_button = HudIconButton.new()
 	bag_button.kind = "bag"
-	bag_button.position = Vector2(-262, -100)
+	bag_button.position = Vector2(-262, -100) + COMBAT_HUD_SHIFT
 	bag_button.size = Vector2(76, 76)
 	bag_button.tooltip_text = "Inventory bag"
 	bag_button.pressed.connect(_toggle_inventory)
@@ -1050,7 +1071,7 @@ func _build_ui() -> void:
 	bag_button.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT, true)
 	sit_button = HudIconButton.new()
 	sit_button.kind = "sit"
-	sit_button.position = Vector2(-174, -88)
+	sit_button.position = Vector2(-174, -88) + COMBAT_HUD_SHIFT
 	sit_button.size = Vector2(68, 68)
 	sit_button.tooltip_text = "Sit / Stand"
 	sit_button.pressed.connect(func() -> void:
@@ -1059,7 +1080,7 @@ func _build_ui() -> void:
 	root.add_child(sit_button)
 	sit_button.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT, true)
 	attack_button = WeaponButton.new()
-	attack_button.position = Vector2(-188, -252)
+	attack_button.position = Vector2(-188, -252) + COMBAT_HUD_SHIFT
 	attack_button.size = Vector2(164, 164)
 	root.add_child(attack_button)
 	attack_button.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT, true)
@@ -1129,13 +1150,13 @@ func _build_welcome(parent: Node) -> void:
 	var card: Control = welcome.get_child(0) as Control
 	_label(card, "AN ENDLESS KIND OF ADVENTURE", Vector2(34, 30), 14, GOLD)
 	_label(card, "Aster Vale", Vector2(30, 65), 48)
-	var description: Label = _label(card, "A familiar world. A new beginning.\nExplore Aeven, face a training slime,\nand equip your first blade.", Vector2(34, 139), 21, MUTED)
+	var description: Label = _label(card, "Enter a shared online world.\nCreate your character, explore Aeven,\nand adventure with other players.", Vector2(34, 139), 21, MUTED)
 	description.add_theme_constant_override("line_spacing", 7)
 	_label(card, "YOUR ADVENTURE BEGINS HERE", Vector2(34, 255), 14, GOLD)
-	_label(card, "Hold the weapon to attack. Drag the joystick to move.\nBag for items; character icon for equipment." if OS.has_feature("mobile") else "WASD / arrows to move. Hold the weapon to attack.\nI for your bag. C for your character.", Vector2(34, 283), 16, TEXT)
-	var play: Button = _button(card, "Explore offline", Vector2(34, 354), Vector2(260, 58), _begin_play, true)
+	_label(card, "Tap weapon to attack; hold for auto, tap to stop.\nBag for items; character icon for equipment." if OS.has_feature("mobile") else "WASD / arrows to move. Hold weapon for auto.\nI for your bag. C for your character.", Vector2(34, 283), 16, TEXT)
+	var play: Button = _button(card, "Explore offline", Vector2(306, 354), Vector2(260, 58), _begin_play)
 	play.name = "PlayButton"
-	_button(card, "Play online", Vector2(306, 354), Vector2(260, 58), online.show_login, true)
+	_button(card, "Play online", Vector2(34, 354), Vector2(260, 58), online.show_login, true)
 
 func _show_welcome() -> void:
 	welcome.show()
@@ -1574,7 +1595,9 @@ func _handle_back() -> void:
 	_cancel_controls()
 	if quick_items != null: quick_items.cancel_hold()
 	owned_touches.clear()
-	if online != null and online.panel != null and online.panel.visible:
+	if online != null and online.creation_panel != null and online.creation_panel.visible:
+		online.creation_panel.hide()
+	elif online != null and online.panel != null and online.panel.visible:
 		online._close_panel()
 	elif stats_ui != null and stats_ui.is_open():
 		stats_ui.hide()

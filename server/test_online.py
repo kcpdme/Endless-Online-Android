@@ -43,15 +43,15 @@ def main():
         second,other=provision();sessions.append(second)
         first.enter(fixture['character_id']);second.enter(other['character_id']);before=first.refresh()['self'];world=json.loads((root/'client/content/world.json').read_text())
         report['account_creation_login_character_welcome']=True;report['initial_map']=before['map_id'];assert before['map_id']==5
-        assert ({row['id'] for row in first.inventory}|set(first.equipment.values()))>={21,80,143},'Real starting inventory missing'
-        for item,slot in [(21,'weapon'),(80,'boots'),(143,'armor')]:
+        assert ({row['id'] for row in first.inventory}|set(first.equipment.values()))>={1,21,144,453},'Real starting inventory missing'
+        for item,slot in [(21,'weapon'),(453,'offhand'),(144,'armor')]:
             if first.equipment.get(slot)!=item:first.equip(item)
-        assert first.equipment['weapon']==21 and first.equipment['boots']==80 and first.equipment['armor']==143
+        assert first.equipment['weapon']==21 and first.equipment['offhand']==453 and first.equipment['armor']==144
         first.equip(21,remove=True);assert first.equipment['weapon']==0 and any(i['id']==21 for i in first.inventory)
         first.equip(21);report['server_inventory_equip_unequip']=True
-        first.equip(80,remove=True);uid=first.drop(80);assert any(i['uid']==uid and i['id']==80 for i in first.state['items'])
-        first.pickup(uid);assert any(i['id']==80 and i['amount']==1 for i in first.inventory);first.equip(80)
-        report['ground_item_roundtrip']={'verified':True,'item_id':80,'uid':uid,'source':'Owned starter boots dropped, picked up and re-equipped through real EO acknowledgements'}
+        first.equip(453,remove=True);uid=first.drop(453);assert any(i['uid']==uid and i['id']==453 for i in first.state['items'])
+        first.pickup(uid);assert any(i['id']==453 and i['amount']==1 for i in first.inventory);first.equip(453)
+        report['ground_item_roundtrip']={'verified':True,'item_id':453,'uid':uid,'source':'Owned starter Oak Shield dropped, picked up and re-equipped through real EO acknowledgements'}
         for direction in [3,0,1,2]:
             state=first.walk(direction);after=state['self']
             if (after['x'],after['y'])!=(before['x'],before['y']):break

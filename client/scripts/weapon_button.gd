@@ -2,6 +2,10 @@ extends Button
 ## An opaque action icon over a translucent touch surface; cooldown lives on the rim.
 var weapon: Texture2D
 var collecting: bool = false
+var automatic: bool = false:
+	set(value):
+		automatic = value
+		queue_redraw()
 var holding: bool = false:
 	set(value):
 		holding = value
@@ -57,6 +61,11 @@ func _draw() -> void:
 			draw_style_box(_icon_style(Color("efcea0")), Rect2(center + Vector2(-16 + finger * 8, -23), Vector2(9, 23)))
 		draw_style_box(_icon_style(Color("e7c394")), Rect2(center + Vector2(-21, -3), Vector2(14, 22)))
 	draw_set_transform(Vector2.ZERO)
+	if automatic:
+		var font: Font = ThemeDB.fallback_font
+		var label: String = "AUTO"
+		var width: float = font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, 16).x
+		draw_string(font, Vector2(size.x / 2.0 - width / 2.0, size.y - 20.0), label, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("ffe08a"))
 
 func _icon_style(color: Color) -> StyleBoxFlat:
 	var style: StyleBoxFlat = StyleBoxFlat.new()

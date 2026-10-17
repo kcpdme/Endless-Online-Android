@@ -1,0 +1,20 @@
+--- a/src/world.cpp
++++ b/src/world.cpp
+@@ -1723,9 +1723,16 @@
+ 		startmapval = buffer;
+ 	}
+ 
++	// Choose the matching starter outfit inside native character creation.
++	// Existing servers retain StartItems when no gender override is configured.
++	const char *starterkey = gender ? "StartItemsMale" : "StartItemsFemale";
++	std::string startitems = this->config.find(starterkey) == this->config.end() ? "" : static_cast<std::string>(this->config[starterkey]);
++	if (startitems.empty())
++		startitems = static_cast<std::string>(this->config["StartItems"]);
++
+ 	this->db->Query("INSERT INTO `characters` (`name`, `account`, `gender`, `hairstyle`, `haircolor`, `race`, `inventory`, `bank`, `paperdoll`, `spells`, `quest`, `vars`@) VALUES ('$','$',#,#,#,#,'$','','$','$','',''@)",
+ 		startmapinfo.c_str(), name.c_str(), player->username.c_str(), gender, hairstyle, haircolor, race,
+-		static_cast<std::string>(this->config["StartItems"]).c_str(), static_cast<std::string>(gender?this->config["StartEquipMale"]:this->config["StartEquipFemale"]).c_str(),
++		startitems.c_str(), static_cast<std::string>(gender?this->config["StartEquipMale"]:this->config["StartEquipFemale"]).c_str(),
+ 		static_cast<std::string>(this->config["StartSpells"]).c_str(), startmapval.c_str());
+ 
+ 	return new Character(name, this);

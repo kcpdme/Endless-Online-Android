@@ -18,7 +18,7 @@ adb reverse tcp:8079 tcp:8079
 
 The Android client then connects to `127.0.0.1:8079`. This adapter is a local development transport, with unencrypted JSON credentials restricted to this local connection. A public Android service needs TLS, authentication/abuse controls and a separate deployment design before internet access is enabled.
 
-The local server configuration starts new characters on Aeven, map 5, at 40,40, with actual item IDs 21 (Dagger), 80 (Blue Boots) and 143 (Soldier Plate) in their inventory. They start unequipped; the server validates equipping. The plate is a male item; the first slice's character art uses a male character. Existing characters receive no inventory grant. Loopback reconnect delay is disabled and up to 12 connections per IP are allowed because all adapter sessions share one loopback address.
+The local server configuration starts new characters on Aeven, map 5, at 40,40, with 1,000 Gold (1), Dagger (21), Oak Shield (453), and Peasant Suit (144, male) or Peasant Clothes (151, female) in their inventory. They start unequipped; the server validates equipping. Heal Self (spell 1, level 0) is learned at creation. `etheos-starter-kit.patch` selects native StartItemsMale/StartItemsFemale overrides, falling back to StartItems. `configure_starters.py` applies the policy to an existing backed-up runtime; restart the native world afterwards. Existing characters receive no inventory grant. Loopback reconnect delay is disabled and up to 12 connections per IP are allowed because all adapter sessions share one loopback address.
 
 ## JSON-lines protocol
 
