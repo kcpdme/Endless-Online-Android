@@ -732,7 +732,7 @@ func player_name_offset(name: String) -> Vector2:
 	var width: float = ThemeDB.fallback_font.get_string_size(name, HORIZONTAL_ALIGNMENT_LEFT, -1, 11).x
 	return Vector2(-width / 2.0, -66)
 
-func npc_name_layout(graphic: Dictionary, direction: String, fighting: bool) -> Dictionary:
+func npc_name_layout(graphic: Dictionary, direction: String, _fighting: bool) -> Dictionary:
 	# Use the original visible standing art, including its render offset. This
 	# keeps names close to heads and stable while a walking/attack pose changes.
 	var frame: Dictionary = game._frame(graphic, direction, "idle", 0.0)
@@ -740,7 +740,9 @@ func npc_name_layout(graphic: Dictionary, direction: String, fighting: bool) -> 
 	var offset: Array = frame.get("offset", [0, 0]) as Array
 	var visible: Array = frame.get("visible_bounds", [0, 0, region[2], region[3]]) as Array
 	var head: Vector2 = Vector2(float(offset[0]) - float(region[2]) / 2.0 + float(visible[0]) + float(visible[2]) / 2.0, float(offset[1]) - float(region[3]) + float(visible[1]))
-	return {"head": head, "name": head + Vector2(0, -13 if fighting else -5), "health": Rect2(head + Vector2(-36 if float(region[2]) > 100 else -17, -8), Vector2(72 if float(region[2]) > 100 else 34, 5))}
+	# NPCRenderer.HorizontalCenter cancels the sprite's asymmetric X offset.
+	# Keep the name at its idle height; combat adds a strip above the name.
+	return {"head": head, "name": Vector2(0, head.y - 5), "health": Rect2(Vector2(-36 if float(region[2]) > 100 else -17, head.y - 25), Vector2(72 if float(region[2]) > 100 else 34, 5))}
 
 func draw_entity(entity: Dictionary) -> void:
 	var record: Dictionary = entity.data as Dictionary
@@ -1209,6 +1211,9 @@ func character_graphic(record: Dictionary) -> Dictionary:
 	var layered: Dictionary = characters.get("equipment_layers", {}) as Dictionary
 	if int(layered.get("version", 0)) >= 2:
 		var definitions: Dictionary = layered.get("layers", {}) as Dictionary
+		var ranged: bool = false
+		for graphic_id: Variant in layered.get("ranged_weapon_graphics", []):
+			if int(graphic_id) == int(equipment_graphics[8]): ranged = true; break
 		var female: String = "f:" if int(record.get("gender", 1)) == 0 else ""
 		var race: int = clampi(int(record.get("race", 0)), 0, 6)
 		var hairstyle: int = clampi(int(record.get("hairstyle", 1)), 0, 20)
@@ -1237,7 +1242,7 @@ func character_graphic(record: Dictionary) -> Dictionary:
 		var front: Dictionary = definitions.get("weapon_front:%s%d" % [female, int(equipment_graphics[8])], {}) as Dictionary
 		if not front.is_empty(): parts.append(front)
 		if not offhand.is_empty(): parts.append({"directional_offhand": offhand, "behind": false})
-		if not parts.is_empty(): return {"layers": parts, "appearance": {"armor_graphic": int(equipment_graphics[4]), "boots_graphic": int(equipment_graphics[0]), "weapon_graphic": int(equipment_graphics[8]), "head_graphic": int(equipment_graphics[6]), "offhand_graphic": int(equipment_graphics[7])}}
+		if not parts.is_empty(): return {"layers": parts, "ranged": ranged, "appearance": {"armor_graphic": int(equipment_graphics[4]), "boots_graphic": int(equipment_graphics[0]), "weapon_graphic": int(equipment_graphics[8]), "head_graphic": int(equipment_graphics[6]), "offhand_graphic": int(equipment_graphics[7])}}
 	if int(equipment_graphics[6]) != 0 or int(equipment_graphics[7]) != 0: return {}
 	if int(equipment_graphics[0]) not in [0, 1] or int(equipment_graphics[4]) not in [0, 1]: return {}
 	if int(equipment_graphics[8]) not in [0, 4]:
@@ -1277,9 +1282,9 @@ func draw_npc_combat_overlays() -> void:
 		game.draw_rect(Rect2(strip.position, Vector2(strip.size.x * health, strip.size.y)), Color("a6cb6f") if health > .3 else Color("dc6855"))
 		var text: String = str(info.get("name", "NPC"))
 		var font: Font = ThemeDB.fallback_font
-		var origin: Vector2 = at + (layout.name as Vector2) - Vector2(font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 11).x / 2, 0)
-		game.draw_string_outline(font, origin, text, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, 3, Color.BLACK)
-		game.draw_string(font, origin, text, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, game.TEXT)
+		var origin: Vector2 = at + (layout.name as Vector2) - Vector2(font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 10).x / 2, 0)
+		game.draw_string_outline(font, origin, text, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, 3, Color.BLACK)
+		game.draw_string(font, origin, text, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, game.TEXT)
 
 func npc_health_fraction(index: int) -> float:
 	var health: Dictionary = npc_health.get(index, {}) as Dictionary

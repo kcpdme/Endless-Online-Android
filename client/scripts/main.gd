@@ -775,6 +775,7 @@ func _draw_decoration(entry: Dictionary) -> void:
 	draw_texture_rect_region(texture, Rect2(at + offset, size), Rect2(Vector2(frame_index * size.x, 0), size), color)
 
 func _frame(character: Dictionary, direction: String, state: String, phase: float = -1.0) -> Dictionary:
+	if state == "attack" and bool(character.get("ranged", false)): state = "ranged_attack"
 	if character.has("directional_offhand"):
 		var offhand: Dictionary = character.directional_offhand
 		var behind: bool = bool(offhand.get("on_back", false)) and direction in ["south", "east"]
@@ -814,7 +815,7 @@ func _frame(character: Dictionary, direction: String, state: String, phase: floa
 		var frames: Array = raw as Array
 		var frame_rate: float = frames.size() / online.MOVE_SECONDS if online_mode and state == "frames" else 9.0
 		var frame_index: int = int((phase if phase >= 0.0 else animation_clock) * frame_rate) % frames.size() if phase >= 0.0 or (moving and state != "idle") or bool(character.get("animate_idle", false)) else 0
-		if state == "attack":
+		if state in ["attack", "ranged_attack"]:
 			if online_mode: frame_index = mini(int((phase if phase >= 0.0 else ONLINE_ATTACK_SWING_DURATION - swing_clock) / (0.24 if frames.size() == 2 else 0.12)), frames.size() - 1)
 			else: frame_index = mini(int((phase / 0.36 if phase >= 0.0 else 1.0 - swing_clock / ATTACK_SWING_DURATION) * frames.size()), frames.size() - 1)
 		return frames[frame_index] as Dictionary
@@ -848,7 +849,7 @@ func _draw_player() -> void:
 		# Explicitly identified placeholder if the optional character conversion is unavailable.
 		draw_circle(player_world + Vector2(0, -18), 9, Color("82bfa2"))
 		draw_circle(player_world + Vector2(0, -32), 6, GOLD)
-	if swing_clock > 0.0:
+	if swing_clock > 0.0 and not bool(_active_hero().get("ranged", false)):
 		var aim: Vector2 = (tile_position(enemy_tile) - player_world).normalized()
 		if online_mode:
 			var directions: Dictionary = {"south": Vector2i(0, 1), "west": Vector2i(-1, 0), "north": Vector2i(0, -1), "east": Vector2i(1, 0)}

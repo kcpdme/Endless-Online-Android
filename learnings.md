@@ -16,7 +16,7 @@ Godot 4.7.2, typed GDScript and 2D isometric rendering are sufficient. A Unity/3
 rewrite and a larger server have not been needed for the measured regressions.
 
 Baseline before this update: commit `8c9e541`, APK 0.10.0/code 10. The current
-build is 0.27.1/code 31. See the final v0.21 section for current chat/presence and the v0.20 sections for equipment/HUD/Junk support. v0.12 added level/EXP, Nearby Send closure and
+build is 0.27.2/code 32. See the final v0.21 section for current chat/presence and the v0.20 sections for equipment/HUD/Junk support. v0.12 added level/EXP, Nearby Send closure and
 native consumables; v0.13 adds native skills and touch targeting. v0.11 added native bank/lockers, player inspection and
 trading, local/global/private chat, a dynamic joystick, and the heart/TP HUD,
 as well as placing NPC names near visible heads and fixing observer equipment/
@@ -1698,3 +1698,34 @@ conditions. Other players need0.24.0 for the queue/phase and numeric-ID fixes.
   speech confirmed). Android0.27.1/code31 is a client-only update;
   no server deployment or operator account changes. See the v31 phone report
   for installation, matching APK hash, launch and save-preservation evidence.
+
+## v0.27.2: bow shooting and NPC label correction
+
+- Scope is only ranged attack rendering and NPC label/health placement. Native
+  combat/movement timing, skills, menus, account data and server stay as before.
+- Original WeaponMetadataProvider marks graphics42,43,49,50,58,73 as ranged.
+  Scav Bow73 previously used melee attack art. Equipment layer export now adds
+  ranged_attack poses: standing then GFX008/7 shooting body, armor21/22, boots11/12,
+  weapon18/19 with Skin/Hair/Armor/Boots/Weapon renderer offsets for each facing
+  and gender. Headgear follows the hair offset; arrows/back items follow the
+  original shield renderer. No melee split-blade overlay or gold arc for bows.
+- character_graphic marks ranged equipment and _frame selects ranged_attack
+  for local and observed attacks. Existing attack cadence remains unchanged.
+- NPCRenderer.HorizontalCenter cancels asymmetric metadata X offsets. Use that
+  tile center for names/health strips, fixing Overlord's off-center label. Keep
+  the name at its idle height and10px size during battle; put HP strip above
+  the whole name, not below it. No numeric percentage suffix.
+- tools/test_catalog has independent original source-pixel fixtures for male/
+  female shooting bodies, Scav Bow and armor in all four directions. New Godot
+  bow_and_npc_labels checks preparation/release selection, observers, unchanged
+  melee, boss centering, stable idle/combat label and bar above text. See the
+  v32 phone report for final validation/installation evidence.
+- All29 catalog/import tests pass. Compared pre-update atlas pixels against
+  the first32frames of all1055 generated layers: every idle/walking/melee/cast
+  pixel is identical. Rendered four directions in work/v32-bow-*.png; the
+  separated-bow visual fixture keeps the boss clear of the player for review.
+  Original equipment atlases retain their prior cells, with new ranged poses
+  appended. Manifest remains equipment_layers.version2 plus ranged metadata.
+- Normalize metadata graphic IDs to int before comparing: Godot JSON numbers
+  are floats, and Variant array membership with an int missed ranged graphics
+  until explicit numeric normalization. The real-manifest Godot test catches it.

@@ -4,7 +4,8 @@ import json
 import os
 from pathlib import Path
 import unittest
-from PIL import Image, ImageChops
+import zipfile
+from PIL import Image, ImageChops, ImageOps
 from export_catalog import parse_items, parse_npcs, pub_records, npc_frame_offset, NPC_RENDER_METADATA, WEAPON_APPEARANCE_ITEMS
 
 ROOT=Path(__file__).resolve().parents[1]
@@ -23,6 +24,39 @@ class RuntimeCatalogTests(unittest.TestCase):
     def setUp(self):
         self.catalog=json.loads((CONTENT/'catalog.json').read_text())
         self.manifest=json.loads((CONTENT/'manifest.json').read_text())
+    def test_ranged_layers_use_original_shooting_resources_and_offsets(self):
+        from import_eo import PEBitmaps,read_member
+        layers=self.manifest['characters']['equipment_layers']
+        self.assertEqual(layers['ranged_weapon_graphics'],[42,43,49,50,58,73])
+        # Independently calculated original renderer fixtures: 18x58 parent
+        # at (87,126), gfx008/7 body, gfx017/7218-19 Scav Bow, gfx013/21-22 armor.
+        skin_dest={1:[(76,127),(91,127),(89,126),(78,126)],
+                   0:[(78,127),(89,127),(87,126),(80,126)]}
+        bow_dest=[(47,107),(77,107),(75,106),(49,106)]
+        armor_dest=[(73,114),(85,114),(83,113),(75,113)]
+        with zipfile.ZipFile(ROOT/'reference/gfx.zip') as archive:
+            sources={gfx:PEBitmaps(read_member(archive,f'gfx/gfx{gfx:03}.egf')) for gfx in (8,13,17)}
+            for gender in (1,0):
+                key='skin:0' if gender else 'skin:f:0'
+                for index,direction in enumerate(('south','east','north','west')):
+                    back=int(index>=2);flip=index in (1,2)
+                    sheet=sources[8].image(7);sx=gender*50+back*25+int(gender==0)
+                    source=sheet.crop((sx,0,sx+25,58))
+                    expected=Image.new('RGBA',(192,192))
+                    expected.alpha_composite(ImageOps.mirror(source) if flip else source,skin_dest[gender][index])
+                    frame=layers['layers'][key]['ranged_attack'][direction][1]
+                    with Image.open(CONTENT/frame['path'].removeprefix('res://content/')) as atlas:
+                        x,y,w,h=frame['region']
+                        self.assertEqual(atlas.crop((x,y,x+w,y+h)).tobytes(),expected.tobytes(),(key,direction))
+            for index,direction in enumerate(('south','east','north','west')):
+                back=int(index>=2);flip=index in (1,2)
+                for key,gfx,gid,destination in [('weapon_back:73',17,7218+back,bow_dest[index]),('armor:1',13,21+back,armor_dest[index])]:
+                    source=sources[gfx].image(gid);expected=Image.new('RGBA',(192,192))
+                    expected.alpha_composite(ImageOps.mirror(source) if flip else source,destination)
+                    frame=layers['layers'][key]['ranged_attack'][direction][1]
+                    with Image.open(CONTENT/frame['path'].removeprefix('res://content/')) as atlas:
+                        x,y,w,h=frame['region']
+                        self.assertEqual(atlas.crop((x,y,x+w,y+h)).tobytes(),expected.tobytes(),(key,direction))
     def test_equipment_layers_preserve_original_composition_and_robe(self):
         data=self.manifest['characters']['equipment_layers']
         self.assertEqual(data['missing'],[])

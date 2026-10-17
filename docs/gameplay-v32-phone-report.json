@@ -1,0 +1,32 @@
+{
+  "result": "installed; wireless debugging disconnected during startup verification",
+  "version": "0.27.2",
+  "version_code": 32,
+  "device": "Galaxy S23 Ultra",
+  "install": "passed",
+  "apk_sha256": "4b120056040268b79f6de2b5065c46be399483ab4f541eda3f9f0cc1f4bad551",
+  "installed_apk_matches_final_sha256": true,
+  "save_preserved_byte_for_byte": true,
+  "launch_intent": "started successfully",
+  "post_install_pid_and_logcat_verification": "incomplete: wireless ADB disconnected after installed APK checksum verification",
+  "apk_signature_verified": true,
+  "alignment_16k_verified": true,
+  "native_world_changes": false,
+  "operator_accounts_modified": false,
+  "desktop_render_review": [
+    "bow shooting in all four directions",
+    "centered Apozen Overlord name at idle height",
+    "combat HP strip above NPC name"
+  ],
+  "regressions": [
+    "bow_and_npc_labels headless and rendered",
+    "paperdoll_mobile",
+    "combat_mobile"
+  ],
+  "original_pose_pixels": {
+    "layers_verified": 1055,
+    "all_previous_pose_pixels_unchanged": true
+  },
+  "catalog_import_tests_passed": 29,
+  "timestamp": "2026-10-17T10:33:44.924700+00:00"
+}

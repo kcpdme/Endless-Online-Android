@@ -13,7 +13,9 @@ from import_eo import PEBitmaps,read_member,write_json,export_hero
 HIDE_HAIR={16,17,18,19,20,21,25,26,28,30,31,34,35,36,37,38,40,41,44,46,47}
 FACE_MASK={7,8,9,10,11,12,13,14,15,32,33,48,50}
 BACK_SHIELDS={10,11,14,15,16,18,19}
-STATES=(('idle',1),('frames',4),('attack',2),('cast',1))
+# WeaponMetadataProvider's ranged rendering set, including Scav Bow.
+RANGED_WEAPONS={42,43,49,50,58,73}
+STATES=(('idle',1),('frames',4),('attack',2),('cast',1),('ranged_attack',2))
 DIRECTIONS=(('south',0,False),('east',0,True),('north',1,True),('west',1,False))
 
 def hat_bitmap(raw,graphic):
@@ -26,12 +28,12 @@ def hat_bitmap(raw,graphic):
 def export_layers(out,image,items,raw_image=None):
     layers={};missing=[]
     def store(key,hero,images):
-        atlas=Image.new('RGBA',(192*8,192*4));visible=False
+        atlas=Image.new('RGBA',(192*8,192*math.ceil(len(images)/8)));visible=False
         path=f'characters/layer_{key.replace(":","_")}.png'
         for index,(frame,im) in enumerate(images):
             visible=visible or bool(im.getbbox());x=index%8*192;y=index//8*192
             atlas.alpha_composite(im,(x,y));frame.update(region=[x,y,192,192],path='res://content/'+path)
-        assert len(images)==32
+        assert len(images) in (32,40)
         if visible or key.startswith('weapon_front:'):
             atlas.save(out/path);layers[key]=hero
         else:missing.append({'layer':key,'reason':'blank original art'})
@@ -41,11 +43,12 @@ def export_layers(out,image,items,raw_image=None):
         if name=='skin' and race:key+=f':{race}'
         if name=='hair' and (hairstyle,haircolor)!=(1,0):key+=f':{hairstyle}:{haircolor}'
         try:
-            hero=export_hero(out,image,graphic if name=='armor' else 0,graphic if name=='boots' else 0,graphic if name.startswith('weapon') else 0,'layer_'+key.replace(':','_'),component=name,gender=gender,race=race,hairstyle=hairstyle,haircolor=haircolor)
+            hero=export_hero(out,image,graphic if name=='armor' else 0,graphic if name=='boots' else 0,graphic if name.startswith('weapon') else 0,'layer_'+key.replace(':','_'),component=name,gender=gender,race=race,hairstyle=hairstyle,haircolor=haircolor,include_ranged=not name.startswith('weapon') or graphic in RANGED_WEAPONS)
         except KeyError as error:
             missing.append({'layer':key,'resource':str(error)});return
         images=[]
         for state,_ in STATES:
+            if state not in hero:continue
             for direction,_,_ in DIRECTIONS:
                 raw=hero[state][direction]
                 for frame in [raw] if isinstance(raw,dict) else raw:
@@ -65,6 +68,7 @@ def export_layers(out,image,items,raw_image=None):
                     frames=[]
                     for index in range(count):
                         walking=state=='frames';second=state=='attack' and index==1
+                        shooting=state=='ranged_attack' and index==1
                         canvas=Image.new('RGBA',(192,192));px=87;py=126
                         if name=='head':
                             gid=(graphic-1)*10+1+back*2
@@ -72,18 +76,22 @@ def export_layers(out,image,items,raw_image=None):
                             art=hat_bitmap(raw,graphic) if raw_image else raw
                             # All original hair sheets are 28x54; hats share their anchor.
                             x=-6+(2 if flip else 0);y=-12-gender
-                            if second:
+                            if shooting:
+                                x+=(3 if gender else 1)*(1 if flip else -1)
+                                y+=gender*int(not back)
+                            elif second:
                                 x+=4 if flip else -4
                                 if back:x+=(-2 if flip else 2)*gender
                                 y+=1 if back else 5-gender
                             x+=-2 if flip else 0;y-=3
                         else:
                             on_back=graphic in BACK_SHIELDS
-                            gid=(3 if state=='attack' else 1)+back if on_back else (3+index+back*4 if walking else 13+index+back*2 if state=='attack' else 11+back if state=='cast' else 1+back)
+                            gid=(3 if state in ('attack','ranged_attack') else 1)+back if on_back else (13+back*2 if shooting else 3+index+back*4 if walking else 13+index+back*2 if state=='attack' else 11+back if state=='cast' else 1+back)
                             art=image(20-gender,(graphic-1)*50+gid)
                             if on_back:
                                 x=-math.floor(abs(art.width-18)/2);y=-math.floor(58/3)-gender
                                 if second:x+=2 if flip else -2
+                                elif shooting:x+=(1+2*gender)*(1 if flip else -1)
                             else:
                                 x=math.floor(abs(art.width-18)/2);y=math.floor(abs(art.height-58)/2)+5-gender-int(walking)
                                 x+=(-27-2*int(second)+2) if not flip else (-12+2*int(second)-3)
@@ -103,7 +111,7 @@ def export_layers(out,image,items,raw_image=None):
             for graphic in ids:
                 if name in ('head','offhand'):accessory(name,graphic,gender)
                 else:layer(name,graphic,gender=gender)
-    return {'version':2,'layers':layers,'missing':missing,'supported_body':{'genders':[0,1],'races':list(range(7)),'hairstyles':list(range(21)),'haircolors':list(range(10))},'order':['offhand_back','weapon_back','skin','boots','armor','head_and_hair','weapon_front','offhand_front']}
+    return {'version':2,'layers':layers,'missing':missing,'ranged_weapon_graphics':sorted(RANGED_WEAPONS),'supported_body':{'genders':[0,1],'races':list(range(7)),'hairstyles':list(range(21)),'haircolors':list(range(10))},'order':['offhand_back','weapon_back','skin','boots','armor','head_and_hair','weapon_front','offhand_front']}
 
 def main():
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--graphics-zip',type=Path,required=True);p.add_argument('--output',type=Path,default=Path('client/content'));a=p.parse_args()
