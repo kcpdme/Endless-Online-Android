@@ -1,0 +1,97 @@
+diff --git a/src/fwd/packet.hpp b/src/fwd/packet.hpp
+index 94c47b8..846c4a0 100644
+--- a/src/fwd/packet.hpp
++++ b/src/fwd/packet.hpp
+@@ -62,6 +62,7 @@ enum PacketFamily : unsigned char
+ 	PACKET_CITIZEN = 49,
+ 	PACKET_QUEST = 50,
+ 	PACKET_BOOK = 51,
++	PACKET_REDEEM = 230, // Aster Vale durable account rewards
+ 	PACKET_F_INIT = 255
+ };
+ 
+diff --git a/src/handlers/Item.cpp b/src/handlers/Item.cpp
+index 3822fac..651a677 100644
+--- a/src/handlers/Item.cpp
++++ b/src/handlers/Item.cpp
+@@ -11,6 +11,8 @@
+ #include "../eodata.hpp"
+ #include "../map.hpp"
+ #include "../party.hpp"
++#include "../player.hpp"
++#include "../database.hpp"
+ #include "../quest.hpp"
+ #include "../world.hpp"
+ 
+@@ -489,6 +491,71 @@ void Item_Get(Character *character, PacketReader &reader)
+ 	}
+ }
+ 
++// The world owns both the inventory grant and the durable per-account ledger.
++// Never accept item IDs, quantities or an account name from the client.
++void Redeem_Request(Character *character, PacketReader &reader)
++{
++    auto reply = [&](int status) {
++        PacketBuilder packet(PACKET_REDEEM, PACKET_REPLY);
++        packet.AddChar(status);
++        if (status == 0)
++        {
++            packet.AddChar(character->weight);
++            packet.AddChar(character->maxweight);
++            for (int id : {375, 1, 421})
++            {
++                packet.AddShort(id);
++                packet.AddInt(character->HasItem(id));
++            }
++        }
++        character->Send(packet);
++    };
++    const std::string code = util::uppercase(util::trim(reader.GetBreakString()));
++    if (code != "KCPD108") { reply(1); return; }
++    if (character->trading || !character->CanInteractItems()) { reply(3); return; }
++    const int ids[] = {375, 1, 421};
++    const int amounts[] = {1000, 50000, 1};
++    const int maximum = character->world->config["MaxItem"];
++    for (int i = 0; i < 3; ++i)
++        if (ids[i] >= int(character->world->eif->data.size()) || amounts[i] > maximum - character->HasItem(ids[i]))
++        { reply(4); return; }
++
++    auto &db = *character->world->db;
++    const auto inventory = character->inventory;
++    bool transaction = false;
++    try
++    {
++        db.Query("CREATE TABLE IF NOT EXISTS `aster_coupon_redemptions` ("
++            "`account` VARCHAR(32) NOT NULL, `code` VARCHAR(32) NOT NULL, "
++            "`character` VARCHAR(32) NOT NULL, PRIMARY KEY (`account`, `code`))");
++        if (!db.BeginTransaction()) { reply(3); return; }
++        transaction = true;
++        auto used = db.Query("SELECT `code` FROM `aster_coupon_redemptions` WHERE `account` = '$' AND `code` = '$'",
++            character->player->username.c_str(), code.c_str());
++        if (!used.empty()) { db.Rollback(); transaction = false; reply(2); return; }
++        for (int i = 0; i < 3; ++i)
++            if (!character->AddItem(ids[i], amounts[i])) throw std::runtime_error("Reward unavailable");
++        character->Save();
++        db.Query("INSERT INTO `aster_coupon_redemptions` (`account`, `code`, `character`) VALUES ('$','$','$')",
++            character->player->username.c_str(), code.c_str(), character->real_name.c_str());
++        db.Commit();
++        transaction = false;
++    }
++    catch (...)
++    {
++        if (transaction) db.Rollback();
++        character->inventory = inventory;
++        character->CalculateStats();
++        reply(3);
++        return;
++    }
++    reply(0);
++}
++
++PACKET_HANDLER_REGISTER(PACKET_REDEEM)
++    Register(PACKET_REQUEST, Redeem_Request, Playing, 1.0);
++PACKET_HANDLER_REGISTER_END(PACKET_REDEEM)
++
+ PACKET_HANDLER_REGISTER(PACKET_ITEM)
+ 	Register(PACKET_USE, Item_Use, Playing);
+ 	Register(PACKET_DROP, Item_Drop, Playing);

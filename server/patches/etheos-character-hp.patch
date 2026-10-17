@@ -1,0 +1,23 @@
+diff --git a/src/character.cpp b/src/character.cpp
+index f80ca3c..9c74755 100644
+--- a/src/character.cpp
++++ b/src/character.cpp
+@@ -1593,6 +1593,18 @@ void Character::CalculateStats(bool trigger_quests)
+ 	this->FormulaVars(formula_vars);
+ 
+ 	this->maxhp += static_cast<short>(rpn_eval(rpn_parse(this->world->formulas_config["hp"]), formula_vars));
++    // Optional operator test-character HP floors; ordinary characters retain the
++    // original formula and equipment bonuses. Values never come from packets.
++    auto hp_floors = this->world->config.find("CharacterHPFloors");
++    if (hp_floors != this->world->config.end())
++    {
++        for (const auto &entry : util::explode(',', static_cast<std::string>(hp_floors->second)))
++        {
++            const auto parts = util::explode(':', entry);
++            if (parts.size() == 2 && util::lowercase(util::trim(parts[0])) == this->real_name)
++                this->maxhp = std::max<short>(this->maxhp, util::clamp<int>(util::to_int(parts[1]), 1, 32000));
++        }
++    }
+ 	this->maxtp += static_cast<short>(rpn_eval(rpn_parse(this->world->formulas_config["tp"]), formula_vars));
+ 	this->maxsp += static_cast<short>(rpn_eval(rpn_parse(this->world->formulas_config["sp"]), formula_vars));
+ 	this->maxweight = static_cast<short>(rpn_eval(rpn_parse(this->world->formulas_config["weight"]), formula_vars));

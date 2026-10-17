@@ -1,0 +1,15 @@
+{
+  "invalid_code_no_grant": true,
+  "exact_native_rewards": {
+    "big_health_potions": 1000,
+    "gold": 50000,
+    "lens_of_truth": 1
+  },
+  "persisted_before_logout": true,
+  "duplicate_no_grant": true,
+  "reconnect_does_not_reset_coupon": true,
+  "second_character_same_account_cannot_redeem": true,
+  "result": "passed",
+  "native_protocol": "Redeem 230/1 -> 230/3",
+  "operator_accounts_touched": false
+}

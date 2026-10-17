@@ -1,0 +1,52 @@
+{
+  "result": "passed",
+  "operation": "v24-rewards-loadout-20261017-v1",
+  "backup_created": true,
+  "copied_from": "skylar",
+  "copied_to": "ravigameboy",
+  "copied_stats": [
+    "level",
+    "exp",
+    "str",
+    "int",
+    "wis",
+    "agi",
+    "con",
+    "cha",
+    "statpoints",
+    "skillpoints",
+    "class",
+    "karma",
+    "spells",
+    "tp"
+  ],
+  "bag_equipment_skills_locker_and_bank_gold_copied": true,
+  "target_extra_belongings_retained": true,
+  "account_credentials_identity_location_appearance_quests_preserved": true,
+  "each_added": {
+    "big_health_potions": 10000,
+    "lens_of_truth": 1,
+    "oron": 1
+  },
+  "characters": {
+    "skylar": {
+      "big_health_potions": 10000,
+      "lens_of_truth": 1,
+      "oron": 1,
+      "bag_gold": 0,
+      "level": 120,
+      "hp": 1000,
+      "minimum_max_hp": 1000
+    },
+    "ravigameboy": {
+      "big_health_potions": 10000,
+      "lens_of_truth": 1,
+      "oron": 1,
+      "bag_gold": 50000,
+      "level": 120,
+      "hp": 1000,
+      "minimum_max_hp": 1000
+    }
+  },
+  "coupon_not_consumed_by_operator_grants": true
+}

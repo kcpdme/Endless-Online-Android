@@ -1,0 +1,31 @@
+{
+  "result": "passed",
+  "version": "0.22.0",
+  "version_code": 24,
+  "native_base_commit": "d6b6395d5ae28e1b20cd72f33fbf23ba921e7919",
+  "native_patches": [
+    {
+      "path": "server/patches/etheos-character-hp.patch",
+      "sha256": "73cc4f28bfeee8c8f9ec56f3cfb2d64b7124ea08fc75e05176c9e35fc917f980"
+    },
+    {
+      "path": "server/patches/etheos-password-v3.patch",
+      "sha256": "6181ced463d59cb73edc4ff718cb222d27642b0ee2b90c0c2367f3fcef176cfe"
+    },
+    {
+      "path": "server/patches/etheos-redeem.patch",
+      "sha256": "9f9311c2a8b610467cf052648ea90b404095e3eb466ded67ba90a72fdf14762a"
+    }
+  ],
+  "python_state_cases": 47,
+  "gameplay_smoke_passed": true,
+  "world_smoke_passed": true,
+  "network_regressions_passed": true,
+  "shop_close_regression_reproduced_before_fix": true,
+  "shop_close_regression_passed_after_fix": true,
+  "redeem_window_visually_inspected": true,
+  "android_signature_and_16k_alignment_passed": true,
+  "apk_sha256": "db2750c0d29cabfc7fff1a0cbf5356e33c65f98c858c92ec0fd589085dd149e8",
+  "nearby_bubbles_verified_from_second_client": true,
+  "nearby_bubbles_public_wss_two_clients_passed": true
+}

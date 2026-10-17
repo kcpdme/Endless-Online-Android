@@ -16,7 +16,7 @@ Godot 4.7.2, typed GDScript and 2D isometric rendering are sufficient. A Unity/3
 rewrite and a larger server have not been needed for the measured regressions.
 
 Baseline before this update: commit `8c9e541`, APK 0.10.0/code 10. The current
-build is 0.21.1/code 23. See the final v0.21 section for current chat/presence and the v0.20 sections for equipment/HUD/Junk support. v0.12 added level/EXP, Nearby Send closure and
+build is 0.22.0/code 24. See the final v0.21 section for current chat/presence and the v0.20 sections for equipment/HUD/Junk support. v0.12 added level/EXP, Nearby Send closure and
 native consumables; v0.13 adds native skills and touch targeting. v0.11 added native bank/lockers, player inspection and
 trading, local/global/private chat, a dynamic joystick, and the heart/TP HUD,
 as well as placing NPC names near visible heads and fixing observer equipment/
@@ -1253,3 +1253,75 @@ SHA256 matches the build, signature/16KiB alignment valid, offline save unchange
 byte-for-byte and no startup script/crash errors. Report:
 docs/gameplay-v23-phone-report.json. Download files use
 outputs/endless-online-android-v0.21.1*. No server restart or account change.
+
+
+## v0.22.0 / code 24 — native coupons, character grants and Shop Bob close
+
+- Hamburger menu now has **Redeem Code**, implemented in `redeem_window.gd`.
+  `KCPD108` gives 1,000 Big Health Potions (375), 50,000 Gold (1), and one Lens
+  of Truth (421). It is once **per account**, including other characters on the
+  same account. Operator grants do not consume the coupon.
+- `server/rewards.py` normalizes/validates codes, waits for the native reply and
+  applies acknowledged item totals. Native extension family/action **230/1 →
+  230/3** is implemented by `patches/etheos-redeem.patch` in Item.cpp and the
+  packet enum. Account comes from authenticated `Player::username`; reward
+  definitions never come from clients. A primary key `(account,code)` in
+  `aster_coupon_redemptions` prevents repeat rewards. Character Save and ledger
+  INSERT commit together. Failure restores live inventory and rolls back DB.
+  Preserve this table with account/world backups.
+- `setup.py` now applies **three** independent pinned-source patches and records
+  every hash: password v3, redeem, and `etheos-character-hp.patch`.
+- Character HP patch supports operator config `CharacterHPFloors = name:1000,...`.
+  It applies a minimum max HP after the original formula/equipment math and
+  before current HP clamps. Ordinary characters retain original rules. Hosted
+  config lists only Skylar and Ravigameboy. Both were filled to 1,000 HP. This
+  survives equip/recalculation/reconnect without changing CON or other stats.
+- Hosted world binary was compiled on Debian (local binary is not portable to
+  its GLIBC). Ignored host build: `/home/admin/eo-v24-native/{source,build}`.
+  Runtime `/opt/aster-vale/runtime/etheos`, adapter modules in app/server.
+- Authorized offline clone/grants completed with graceful three-service stop,
+  full SQLite/source/binary/config backups, and all other row fields and account
+  records checked. Operation marker **v24-rewards-loadout-20261017-v1** is in
+  native table `aster_operator_operations`; matching private backup directory
+  under `/opt/aster-vale/backups/`. Never rerun a non-idempotent grant.
+- Ravigameboy copied Skylar's fresh level 120, EXP, six base attributes, class,
+  points, karma, learned skills/TP, bag, paperdoll, locker and bank Gold. Existing
+  target excess belongings were retained in the bag/locker. Each then received
+  **10,000 Big Health Potions + one Lens of Truth + one Oron (460)**. Identities,
+  appearance, position, quests, passwords and account rows were preserved.
+  Read current live/DB state before future grants; the user actively plays.
+- Shop Bob close bug reproduced at 1544×720: close X overlaps the Chat HUD.
+  Godot Control GUI hit testing follows scene-tree order, not drawn `z_index`.
+  Chat HUD was built later than the shop and intercepted taps. `_modal` marks
+  curtains; `_build_ui` now moves every modal root after all HUD nodes so its
+  visible input priority matches its rendering. Shop close also clears queued
+  interaction and blocks leftover touch/mouse events for 180ms. Owned releases
+  still clean up before this guard. Do not put a global delay on every modal
+  hide: programmatic modal changes should not block unrelated controls.
+- Tests: 47 server state cases; actual native invalid/success/repeat/reconnect/
+  second-character coupon checks, immediate persistence, forced SQL failure
+  rollback and capacity failure; Godot real GUI touch menu/claim/duplicate/back;
+  same UI against public WSS; HP floor test across equip/reconnect; gameplay,
+  map/world and network regressions; reproduced Shop Bob synthetic/native input
+  regression and fresh deliberate Chat tap. Sanitized evidence is in
+  `docs/rewards-v24-*.json` and `docs/vitals-v24-native-report.json`.
+- Test details: EO character IDs are session-generated. On every fresh login,
+  select fixtures by character **name**, then use that login's ID. A saved
+  previous session ID can silently fail Welcome. SQLite has no busy timeout:
+  let dev fixture sessions finish logging out before external test DB writes,
+  especially DROP TRIGGER; otherwise a concurrent native logout Save can fail.
+  Local test WS URL must end in `/ws`, e.g. `ws://127.0.0.1:8183/ws`.
+- APK 0.22.0/code 24 uses the existing package/signing key; installation keeps
+  existing phone save data. Delivery, hash, device proof and final commit are
+  recorded in the release outputs/private handoff and `git log`.
+
+- Follow-up in the same v24 release: Nearby speech was already broadcast natively
+  with Talk_Player (18/8), but bubbles were painted inside each character's
+  depth-sorted draw. Walls, roofs, later sprites and overlay2 could paint over
+  them. Both self and peer speech now draw together at the end of the world draw,
+  after scenery and combat numbers, using current interpolated character positions.
+  Expired bubbles are pruned after the existing 5.5 seconds. Global/whisper text
+  stays in its channel and does not replace Nearby speech. Actual two-Godot-client
+  native sends/replies and expiry are covered in `nearby_bubbles_live.gd` and
+  `docs/chat-bubbles-v24-live-report.json`; an observer screenshot was inspected. The same two-client speech/reply/expiry
+  test also passed through public WSS (`docs/chat-bubbles-v24-public-report.json`).

@@ -45,11 +45,10 @@ def main():
     deps = state / 'deps'; deps.mkdir(exist_ok=True)
     source = state / 'source'; build = state / 'build'; build.mkdir(exist_ok=True)
     checkout('etheos', source)
-    patch = ROOT / 'patches/etheos-password-v3.patch'
-    # A repeated setup must preserve the reviewed patch, but never silently
-    # accept a different upstream source or a partially applied patch.
-    applied = subprocess.run(['git','-C',str(source),'apply','--reverse','--check',str(patch)],capture_output=True).returncode == 0
-    if not applied: run('git','-C',source,'apply',patch)
+    patches = [ROOT / 'patches' / name for name in ('etheos-password-v3.patch', 'etheos-redeem.patch', 'etheos-character-hp.patch')]
+    for patch in patches:
+        applied = subprocess.run(['git','-C',str(source),'apply','--reverse','--check',str(patch)],capture_output=True).returncode == 0
+        if not applied: run('git','-C',source,'apply',patch)
     (source / 'json').mkdir(exist_ok=True)
     shutil.copy2(download(*JSON, deps / 'json.hpp'), source / 'json/json.hpp')
     checkout('bcrypt', build / 'bcrypt-src')
@@ -137,7 +136,7 @@ WorldDumpFile = ./world.bak.json
     shutil.copy2(build / 'etheos', runtime / 'etheos')
     shutil.copy2(build / 'native-auth', runtime / 'native-auth')
     report = {'source_pins':{k:{'url':v[0],'commit':v[1]} for k,v in PINS.items()},
-              'local_source_patches':[{'path':str(patch.relative_to(ROOT.parent)),'sha256':hashlib.sha256(patch.read_bytes()).hexdigest()}],
+              'local_source_patches':[{'path':str(patch.relative_to(ROOT.parent)),'sha256':hashlib.sha256(patch.read_bytes()).hexdigest()} for patch in patches],
               'sample':{'url':SAMPLE[0],'sha256':SAMPLE[1]}, 'sqlite':{'url':SQLITE[0],'sha256':SQLITE[1]}, 'nlohmann_json':{'url':JSON[0],'sha256':JSON[1]},
               'numbered_maps':len(maps),'highest_map_id':max(int(x.stem) for x in maps),
               'quest_conversion':'Generated .eqf copies with logged conservative legacy-syntax fixes. Original .txt bytes preserved. Real parser validation recorded separately.',

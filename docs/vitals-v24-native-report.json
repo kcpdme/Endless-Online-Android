@@ -1,0 +1,9 @@
+{
+  "result": "passed",
+  "native_hp": 1000,
+  "native_max_hp": 1000,
+  "equipment_recalculation_preserves_floor": true,
+  "reconnect_preserves_floor": true,
+  "attributes_not_changed": true,
+  "operator_accounts_touched": false
+}

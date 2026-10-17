@@ -197,6 +197,7 @@ func _set_status(value: String) -> void:
 
 func _on_message(message: Dictionary) -> void:
 	game.chat_ui.response(message)
+	game.redeem_ui.response(message)
 	var operation: String = str(message.get("op", message.get("event", "")))
 	if not bool(message.get("ok", true)):
 		waiting_for_walk = false
@@ -259,6 +260,9 @@ func _on_message(message: Dictionary) -> void:
 				else: game._toast("The worn item could not be removed. Your replacement remains in the bag.")
 		"world", "refresh", "snapshot", "attack", "pickup", "equip", "spend_stat", "shop_buy", "shop_sell", "shop_craft", "bank_deposit", "bank_withdraw", "bank_upgrade", "locker_deposit", "locker_withdraw", "trade_request", "trade_accept", "trade_decline", "trade_add", "trade_remove", "trade_agree", "trade_cancel", "chat_send", "item_use", "skill_learn", "skill_forget", "skill_level":
 			_apply_snapshot(data)
+		"redeem_code":
+			_apply_snapshot(data)
+			game._toast("Rewards claimed — check your bag!")
 		"item_drop", "item_junk":
 			drop_ui.panel.hide()
 			drop_ui.submitting = false
@@ -457,6 +461,8 @@ func _process(delta: float) -> void:
 		login_retry_at = 0
 		if panel.visible and not active: _authenticate("login", true)
 	if not active: return
+	for key: Variant in chat_bubbles.keys():
+		if Time.get_ticks_msec() >= int((chat_bubbles[key] as Dictionary).until): chat_bubbles.erase(key)
 	_flush_face()
 	_process_interaction()
 	warp_notice_clock = maxf(0.0, warp_notice_clock - delta)
@@ -571,6 +577,8 @@ func request_face(direction: String) -> void:
 		game.facing = direction
 		player["direction"] = _direction(direction)
 		pending_face = direction
+	for key: Variant in chat_bubbles.keys():
+		if Time.get_ticks_msec() >= int((chat_bubbles[key] as Dictionary).until): chat_bubbles.erase(key)
 	_flush_face()
 
 func _flush_face() -> void:
@@ -598,6 +606,7 @@ func _facing(value: Variant) -> String:
 	return ["south", "west", "north", "east"][clampi(int(value), 0, 3)]
 
 func _on_closed(reason: String) -> void:
+	game.redeem_ui.disconnected()
 	if drop_ui != null: drop_ui.panel.hide()
 	active = false
 	_reset_movement()
@@ -740,7 +749,6 @@ func draw_entity(entity: Dictionary) -> void:
 			game.draw_string(ThemeDB.fallback_font, at + Vector2(-32, -42), "Appearance pending", HORIZONTAL_ALIGNMENT_LEFT, -1, 9, game.MUTED)
 		var name: String = str(record.get("name", "Player"))
 		game.draw_string(ThemeDB.fallback_font, at + player_name_offset(name), name, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color("b9e2c5"))
-		draw_chat_bubble(int(record.get("player_id", 0)), at)
 	elif str(entity.kind) == "online_item":
 		var definitions: Dictionary = catalog.get("items", {}) as Dictionary
 		var info: Dictionary = definitions.get(str(int(record.get("id", 0))), {}) as Dictionary
@@ -752,6 +760,19 @@ func draw_entity(entity: Dictionary) -> void:
 		if texture != null: game.draw_texture(texture, at - texture.get_size() / 2.0)
 
 	if str(entity.kind) != "online_item": game.skills_ui.draw_effect(effect_kind, effect_id, at, true)
+
+func chat_bubble_position(pid: int) -> Vector2:
+	if pid == int(player.get("player_id", 0)): return game.player_world
+	for peer: Dictionary in players:
+		if int(peer.get("player_id", 0)) == pid:
+			return _remote_position("player:%d" % pid, game.tile_position(Vector2i(int(peer.x), int(peer.y))))
+	return Vector2.INF
+
+func draw_chat_bubbles() -> void:
+	if not active: return
+	for key: Variant in chat_bubbles.keys():
+		var at: Vector2 = chat_bubble_position(int(key))
+		if at.is_finite(): draw_chat_bubble(int(key), at)
 
 func draw_chat_bubble(pid: int, at: Vector2) -> void:
 	var bubble: Dictionary = chat_bubbles.get(pid, {}) as Dictionary

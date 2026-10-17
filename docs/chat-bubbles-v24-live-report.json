@@ -1,0 +1,11 @@
+{
+  "actual_native_two_client_nearby_broadcast": true,
+  "bubble_anchors_match_character_positions": true,
+  "expired_bubbles_removed": true,
+  "global_does_not_replace_nearby_speech": true,
+  "operator_accounts_modified": false,
+  "reply_visible_to_both": true,
+  "result": "passed",
+  "speaker_and_observer_receive_speech": true,
+  "speech_drawn_after_world_and_combat_layers": true
+}

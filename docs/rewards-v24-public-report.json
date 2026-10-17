@@ -1,0 +1,10 @@
+{
+  "android_back_closes": true,
+  "double_submission_blocked": true,
+  "duplicate_rejected_without_inventory_change": true,
+  "hamburger_entry_touch": true,
+  "invalid_code_feedback": true,
+  "modal_blocks_world": true,
+  "native_rewards_in_bag": true,
+  "result": "passed"
+}

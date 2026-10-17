@@ -33,7 +33,7 @@ The generated config binds **127.0.0.1:8078**, explicitly disables public server
 - SQLite 3.46.1: https://www.sqlite.org/2024/sqlite-amalgamation-3460100.zip, SHA256 `77823cb110929c2bcb0f5d48e4833b5c59a8a6e40cdea3936b99e199dbbe5784`. Public domain.
 - Authoritative world maps/PUB/config content: https://etheosstorage.blob.core.windows.net/data/sample-data.zip, SHA256 `fad601ce11a4ed8d991b80b1cf31fcba237d01c566b4dc40cabb86b28861cc4e`.
 
-The build disables upstream precompiled headers and force-includes the upstream `src/stdafx.h` umbrella header instead. This retains required standard-library includes with the current compiler. Setup applies the checked-in `patches/etheos-password-v3.patch` to the pinned source; other native game rules remain upstream.
+The build disables upstream precompiled headers and force-includes the upstream `src/stdafx.h` umbrella header instead. This retains required standard-library includes with the current compiler. Setup applies the checked-in password, account coupon, and optional character HP floor patches to the pinned source. Patch hashes are recorded in the generated content report.
 
 Reference content is downloaded into local ignored state. The existence of a download does not establish publication rights for the original game content. The optional economy import below stages the supplied original shops and drops separately, with explicit config overrides. The separately recovered quest archive is not used by this baseline.
 
@@ -138,3 +138,39 @@ are preserved. Open, learn, forget and skill-point training use native16-family
 requests/acknowledgements; the adapter never grants skills. Group/party casts,
 bard effects and player-targeted offensive spells are not exposed yet.
 See `docs/TESTING.md` for local/public native and Godot UI regressions.
+
+## Account rewards and test-character HP
+
+The hamburger menu's **Redeem Code** window calls `redeem_code`. The Python
+adapter forwards the code to native `Redeem_Request` (family 230, action 1);
+clients cannot choose accounts, rewards, quantities or character names.
+`KCPD108` grants item 375 ×1,000 (Big Health Potion), item 1 ×50,000 (Gold), and
+item 421 ×1 (Lens of Truth), once per account across all its characters.
+
+The native server saves the character and inserts the account/code pair into
+`aster_coupon_redemptions` in one database transaction before acknowledging.
+Inventory limits or database errors leave both inventory and redemption status
+unchanged. A lost acknowledgement is recovered by reconnecting; retrying cannot
+grant twice. The ledger is created on first valid redemption and belongs in all
+world database backups. Item weight remains the original native rule; operator
+and coupon grants can exceed carrying weight, which affects later pickups.
+
+For explicitly designated test characters only, `config.local.ini` may contain
+`CharacterHPFloors = characterone:1000,charactertwo:1000`. The server preserves
+original attribute/equipment calculations and applies the minimum maximum HP
+before clamping current HP. Set current `characters.hp` during an offline grant
+when full health is also required. Unlisted characters retain original rules.
+Never edit a live character row: stop the world gracefully first and back up its
+database. The hosted Skylar/Ravigameboy grant is recorded separately, with a
+transactional operation marker so retries cannot add another 10,000 potions.
+
+Verification with the actual native server:
+
+```sh
+python3 -m unittest discover -s server -p '*_state.py'
+python3 server/test_rewards.py --report /tmp/rewards-report.json
+```
+
+`--fault-tests` adds dev-only SQLite failure/capacity fixtures to a local test
+world. It must not be used during normal player sessions. GUI coverage is in
+`client/tests/rewards_live.gd` and `client/tests/shop_close_regression.gd`.

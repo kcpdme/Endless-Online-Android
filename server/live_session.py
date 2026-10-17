@@ -15,9 +15,10 @@ from economy import EconomyMixin
 from services import ServicesMixin
 from consumables import ConsumablesMixin
 from skills import SkillsMixin
+from rewards import RewardsMixin
 
 
-class LiveSession(SkillsMixin, ConsumablesMixin, ServicesMixin, EconomyMixin, Session):
+class LiveSession(RewardsMixin, SkillsMixin, ConsumablesMixin, ServicesMixin, EconomyMixin, Session):
     def __init__(self,*args):
         self.init_services();self.init_skills()
         self.pending_moves=deque();self.position_seq=0;self.last_input_seq=0
@@ -153,6 +154,7 @@ class LiveSession(SkillsMixin, ConsumablesMixin, ServicesMixin, EconomyMixin, Se
         super().apply_event(f,a,p)
         self.apply_service_packet(f,a,p)
         self.apply_item_packet(f,a,p)
+        self.apply_reward_packet(f,a,p)
         if self.state:self.apply_skill_packet(f,a,p)
         if not self.state:return
         r=Reader(p)

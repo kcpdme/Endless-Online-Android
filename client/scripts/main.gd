@@ -111,6 +111,8 @@ var equip_button: Button
 var attack_button: WeaponButton
 var toast_time: float = 0.0
 var waypoint: Vector2i = Vector2i(-1, -1)
+var modal_input_until: int = 0
+var redeem_ui: RefCounted
 var menu: Control
 var started_from_save: bool = false
 var debug_snapshot_time: float = -1.0
@@ -370,7 +372,7 @@ func _joystick_begin(pointer: Vector2, pointer_id: int) -> void:
 	stick = Vector2.ZERO
 
 func _modal_open() -> bool:
-	return (online != null and online.panel != null and online.panel.visible) or (inventory != null and inventory.visible) or (menu != null and menu.visible) or (character_panel != null and character_panel.visible) or (stats_ui != null and stats_ui.is_open()) or (shop_ui != null and shop_ui.panel.visible) or (services_ui != null and services_ui.panel.visible) or (chat_ui != null and chat_ui.panel.visible) or (skills_ui != null and skills_ui.panel.visible) or (quick_items != null and quick_items.panel.visible)
+	return (redeem_ui != null and redeem_ui.panel.visible) or (online != null and online.panel != null and online.panel.visible) or (inventory != null and inventory.visible) or (menu != null and menu.visible) or (character_panel != null and character_panel.visible) or (stats_ui != null and stats_ui.is_open()) or (shop_ui != null and shop_ui.panel.visible) or (services_ui != null and services_ui.panel.visible) or (chat_ui != null and chat_ui.panel.visible) or (skills_ui != null and skills_ui.panel.visible) or (quick_items != null and quick_items.panel.visible)
 
 func _begin_attack(pointer_id: int) -> void:
 	if online_mode: route.clear()
@@ -398,9 +400,10 @@ func _screen_to_world(point: Vector2) -> Vector2:
 	return get_global_transform_with_canvas().affine_inverse() * point
 
 func _input(event: InputEvent) -> void:
+	var dismissing_modal: bool = Time.get_ticks_msec() < modal_input_until
 	# Standard GUI owns the feed/composer before world targeting and floating stick.
 	var owned_chat_release: bool = (event is InputEventScreenTouch and not event.pressed and owned_touches.has(event.index)) or (event is InputEventMouseButton and not event.pressed and (touch_move_id == -2 or attack_touch_id == -2))
-	if chat_ui != null and not _modal_open() and not owned_chat_release:
+	if chat_ui != null and not dismissing_modal and not _modal_open() and not owned_chat_release:
 		if chat_ui.quick_channel.get_popup().visible: return
 		if event is InputEventScreenTouch or event is InputEventMouseButton:
 			if chat_ui.hud_contains(event.position): return
@@ -413,7 +416,7 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.device == InputEvent.DEVICE_ID_EMULATION:
 		var native_control: bool = started and not _modal_open() and ((skills_ui != null and skills_ui.contains(event.position) >= 0) or (quick_items != null and quick_items.contains(event.position) >= 0) or attack_button.contains_point(event.position) or bag_button.contains_point(event.position) or chat_button.contains_point(event.position) or character_button.contains_point(event.position) or _joystick_zone().has_point(event.position) or (online_mode and (skills_ui.armed > 0 or not online.map_entity_target(_screen_to_world(event.position)).is_empty())) or (online_mode and online.loot_button.visible and online.loot_button.get_global_rect().has_point(event.position)))
 		# Godot may synthesize the mouse press before delivering its native touch.
-		if native_control or not owned_touches.is_empty():
+		if dismissing_modal or native_control or not owned_touches.is_empty():
 			get_viewport().set_input_as_handled()
 			return
 	if event is InputEventScreenTouch and not event.pressed:
@@ -435,6 +438,11 @@ func _input(event: InputEvent) -> void:
 			_cancel_movement()
 			get_viewport().set_input_as_handled()
 			return
+	# A modal dismissal can precede the native half of the same Android tap.
+	# Finish owned releases above, then absorb that leftover gesture.
+	if dismissing_modal and (event is InputEventScreenTouch or event is InputEventScreenDrag or event is InputEventMouseButton):
+		get_viewport().set_input_as_handled()
+		return
 	if not started or _modal_open(): return
 	if event is InputEventScreenTouch and event.pressed:
 		var item_slot: int = quick_items.contains(event.position) if quick_items != null else -1
@@ -699,6 +707,8 @@ func _draw() -> void:
 		var color: Color = Color("ffaaaa") if bool(number.get("player_hit", false)) else MUTED if caption == "Miss" else GOLD
 		draw_string_outline(font, origin, caption, HORIZONTAL_ALIGNMENT_LEFT, -1, 18, 3, Color.BLACK)
 		draw_string(font, origin, caption, HORIZONTAL_ALIGNMENT_LEFT, -1, 18, color)
+	# Speech is an overlay above every sprite, wall, roof and combat number.
+	if online_mode: online.draw_chat_bubbles()
 
 func _draw_diamond(center: Vector2, color: Color) -> void:
 	var points: PackedVector2Array = PackedVector2Array([center + Vector2(0, -15), center + Vector2(30, 0), center + Vector2(0, 15), center + Vector2(-30, 0), center + Vector2(0, -15)])
@@ -803,7 +813,6 @@ func _draw_player() -> void:
 		draw_arc(player_world + Vector2(0, -15), 25.0, aim.angle() - 0.75, aim.angle() + 0.75, 12, Color(1.0, 0.86, 0.56, swing_clock / ATTACK_SWING_DURATION), 2.0, true)
 
 	if online_mode: skills_ui.draw_effect("player", int(online.player.get("player_id", 0)), player_world, true)
-	if online_mode: online.draw_chat_bubble(int(online.player.get("player_id", 0)), player_world)
 
 func _draw_enemy() -> void:
 	var at: Vector2 = tile_position(enemy_tile)
@@ -963,14 +972,21 @@ func _build_ui() -> void:
 	_build_paperdoll(root)
 	stats_ui = CharacterStats.new()
 	stats_ui.build(self, root)
+	redeem_ui = preload("res://scripts/redeem_window.gd").new()
+	redeem_ui.build(self, root)
 	_build_menu(root)
 	online.build_ui(root)
 	chat_ui = preload("res://scripts/chat_window.gd").new()
 	chat_ui.build(self, root)
+	# Godot GUI hit testing follows tree order, even when z_index draws a
+	# curtain above a later-created HUD button. Keep all modal roots last.
+	for child: Node in root.get_children():
+		if child.has_meta("game_modal"): root.move_child(child, -1)
 
 func _modal(parent: Node, size: Vector2) -> Control:
 	var curtain: ColorRect = ColorRect.new()
 	# Modal cards must cover later-created HUD controls (chat/menu included).
+	curtain.set_meta("game_modal", true)
 	curtain.z_index = 10
 	curtain.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	curtain.color = Color(0.02, 0.055, 0.065, 0.72)
@@ -1228,14 +1244,15 @@ func _toggle_equip() -> void:
 	_toast("%s %s." % [_item_name(selected_item), "equipped" if _is_equipped(selected_item) else "returned to your bag"])
 
 func _build_menu(parent: Node) -> void:
-	menu = _modal(parent, Vector2(540, 432))
+	menu = _modal(parent, Vector2(540, 500))
 	var card: Control = menu.get_child(0) as Control
 	_label(card, "ASTER VALE", Vector2(30, 28), 14, GOLD)
 	_label(card, "A moment’s rest", Vector2(28, 61), 32)
 	_label(card, "Your journey is saved automatically.\nTake a breath, then return to explore.", Vector2(30, 120), 17, MUTED)
 	_button(card, "Return to the vale", Vector2(30, 218), Vector2(480, 58), func() -> void: menu.hide(), true)
-	_button(card, "Reset journey", Vector2(30, 291), Vector2(480, 54), _confirm_reset)
-	_button(card, "Welcome screen", Vector2(30, 356), Vector2(480, 48), func() -> void:
+	_button(card, "Redeem Code", Vector2(30, 286), Vector2(480, 54), func() -> void: redeem_ui.open())
+	_button(card, "Reset journey", Vector2(30, 350), Vector2(480, 54), _confirm_reset)
+	_button(card, "Welcome screen", Vector2(30, 417), Vector2(480, 48), func() -> void:
 		menu.hide()
 		started = false
 		_show_welcome()
@@ -1390,6 +1407,9 @@ func _show_content_error() -> void:
 	push_error("Aster Vale content unavailable. Run tools/import_content.py.")
 
 func _handle_back() -> void:
+	if redeem_ui != null and redeem_ui.panel.visible:
+		redeem_ui.close()
+		return
 	if online != null and online.drop_ui != null and online.drop_ui.panel.visible:
 		online.drop_ui.panel.hide()
 		return

@@ -110,6 +110,10 @@ func build(owner_game: Node, parent: Control) -> void:
 	panel.hide()
 
 func close() -> void:
+	if panel.visible:
+		game.modal_input_until = Time.get_ticks_msec() + 180
+		game.online.interaction.clear()
+		game.get_viewport().set_input_as_handled()
 	panel.hide()
 
 func confirm_transaction(event: Dictionary) -> void:
