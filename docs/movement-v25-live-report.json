@@ -1,0 +1,10 @@
+{
+  "dynamic_joystick_directions": 4,
+  "keyboard_directions": 8,
+  "no_steps_after_release": true,
+  "observer_positions_match_all_holds": true,
+  "operator_accounts_modified": false,
+  "result": "passed",
+  "server_corrections": 0,
+  "straight_steps_per_hold": 3
+}

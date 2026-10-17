@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Native Marble counter shop and real engine touch targeting inside the joystick zone."""
+"""Native Marble counter shop and real engine touch targeting outside the reserved movement area."""
 import argparse,json,os,pathlib,sqlite3,subprocess,tempfile,time
 from test_online import provision
 from run import state_path

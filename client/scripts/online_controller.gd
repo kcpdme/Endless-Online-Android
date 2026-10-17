@@ -48,7 +48,6 @@ var players: Array[Dictionary] = []
 var npcs: Array[Dictionary] = []
 var drops: Array[Dictionary] = []
 var last_error: String = ""
-var diagonal_toggle: bool = false
 var warp_notice_clock: float = 0.0
 var catalog: Dictionary = {}
 var request_operations: Dictionary = {}
@@ -475,9 +474,8 @@ func _process(delta: float) -> void:
 
 func request_step(direction: Vector2i) -> void:
 	if not active or defeated or recovering or transition_pending or game.moving: return
+	if direction not in [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]: return
 	var single: Vector2i = direction
-	if direction.x != 0 and direction.y != 0:
-		single = Vector2i(direction.x, 0) if diagonal_toggle else Vector2i(0, direction.y)
 	var target: Vector2i = game.player_tile + single
 	if not game._can_step(game.player_tile, single):
 		request_face(game._direction_name(single))
@@ -498,7 +496,6 @@ func request_step(direction: Vector2i) -> void:
 		passage = true
 		if int(warp.get("door", 0)) > 0: fields["open_door"] = true
 		break
-	if direction.x != 0 and direction.y != 0: diagonal_toggle = not diagonal_toggle
 	next_input_seq += 1
 	network_metrics.moves = int(network_metrics.moves) + 1
 	fields.merge({"input_seq": next_input_seq, "map_id": int(game.world.id), "x": target.x, "y": target.y})
@@ -1033,7 +1030,7 @@ func _process_interaction() -> void:
 		interaction.clear()
 		collect_pending = false
 		return
-	if game.stick != Vector2.ZERO:
+	if game._input_direction() != Vector2i.ZERO:
 		interaction.clear()
 		return
 	if game.moving or not game.route.is_empty() or not _action_ready() or game._modal_open(): return

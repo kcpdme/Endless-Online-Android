@@ -1,0 +1,18 @@
+{
+  "result": "passed",
+  "version": "0.23.0",
+  "version_code": 25,
+  "dynamic_joystick_without_arrows": true,
+  "original_native_four_way_movement": true,
+  "physical_and_logical_wasd_and_arrow_keys": true,
+  "newest_held_key_and_release_fallback": true,
+  "keyboard_echo_cannot_open_focused_hud_dropdown": true,
+  "typing_and_focus_loss_stop_movement": true,
+  "joystick_captures_before_npc_and_armed_skill_targeting": true,
+  "long_drag_retains_capture_and_stays_on_screen": true,
+  "modal_input_protected": true,
+  "gameplay_world_network_regressions_passed": true,
+  "native_left_side_spell_and_marble_shop_checks_passed": true,
+  "native_server_or_operator_account_changes": false,
+  "apk_sha256": "6d99fbef39ddf5ad8c9842982dd6a8083aaf636527aade30488fcaddf43567b7"
+}

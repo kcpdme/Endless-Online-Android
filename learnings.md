@@ -16,7 +16,7 @@ Godot 4.7.2, typed GDScript and 2D isometric rendering are sufficient. A Unity/3
 rewrite and a larger server have not been needed for the measured regressions.
 
 Baseline before this update: commit `8c9e541`, APK 0.10.0/code 10. The current
-build is 0.22.0/code 24. See the final v0.21 section for current chat/presence and the v0.20 sections for equipment/HUD/Junk support. v0.12 added level/EXP, Nearby Send closure and
+build is 0.23.0/code 25. See the final v0.21 section for current chat/presence and the v0.20 sections for equipment/HUD/Junk support. v0.12 added level/EXP, Nearby Send closure and
 native consumables; v0.13 adds native skills and touch targeting. v0.11 added native bank/lockers, player inspection and
 trading, local/global/private chat, a dynamic joystick, and the heart/TP HUD,
 as well as placing NPC names near visible heads and fixing observer equipment/
@@ -1325,3 +1325,54 @@ outputs/endless-online-android-v0.21.1*. No server restart or account change.
   native sends/replies and expiry are covered in `nearby_bubbles_live.gd` and
   `docs/chat-bubbles-v24-live-report.json`; an observer screenshot was inspected. The same two-client speech/reply/expiry
   test also passed through public WSS (`docs/chat-bubbles-v24-public-report.json`).
+
+
+## v0.23.0 / code 25 — dynamic joystick priority and original four-way keyboard movement
+
+Final user preference: **dynamic translucent joystick without arrows**, above
+world/NPC input, plus working WASD and arrow keys. An interim fixed-arrow design
+was tested but was replaced before release. Do not restore fixed arrows.
+
+- Root movement issue: `_input_direction` converted keyboard cardinal presses
+  through eight screen sectors; online `request_step` alternated axes for each
+  diagonal request. This made a held direction zigzag and collide differently
+  from the original Windows ArrowKeyController. Keyboard now selects one native
+  tile axis (W/Up=north, S/Down=south, A/Left=west, D/Right=east). Physical and
+  logical keycodes both work, latest held direction wins, and releasing it falls
+  back to another held key. Echoes/releases are consumed during gameplay so a
+  focused HUD dropdown cannot steal held arrow input. Text fields retain typing.
+- Online `request_step` rejects zero/noncardinal input. No diagonal alternation
+  remains. Prediction, 400ms committed-tile animation, asynchronous native ACKs,
+  NPC collision and original blocked-facing behavior remain in use.
+- `joystick.gd` draws only translucent circles and a thumb knob (radius128).
+  Its reserved activation rectangle is 344×344 at the bottom left. Initial touch
+  is neutral; dragging selects one of the same four native tile directions.
+  Long drags slide the base, clamped inside the HUD safe bounds. Release clears
+  future input and finishes an already-committed online tile. The visual is on
+  HUD z_index5 above world sprites, beneath modal curtains.
+- Main input captures the movement area before chat/world/skill/NPC hit tests.
+  A covered NPC or armed spell cannot steal that press. Captured drags/releases
+  remain owned even outside the area. Outside the reserved area, NPC interaction
+  and left-side spell targeting work normally. Opening dialogs/focus loss clears
+  held movement; closing dialogs cannot revive a stale keyboard/finger.
+- `_process_interaction` cancels pending NPC interaction for keyboard movement
+  as well as joystick movement. Previously it only checked `game.stick`.
+- Gameplay smoke was updated for dynamic neutral/drag/capture/screen bounds.
+  `movement_controls.gd` covers physical/logical WASD/arrows, held-key priority,
+  echo with a focused dropdown, typing/focus/release, real overlapping NPC hit
+  geometry with a spell armed, long drags, and modal protection.
+  `movement_controls_live.gd` holds every WASD/arrow key and all four joystick
+  drags for three tiles; a second native session verifies every endpoint and
+  release stops future steps. Local and public WSS tests report **0 corrections**
+  in `docs/movement-v25-{live,public}-report.json`. Dynamic screenshot inspected
+  under ignored `work/v25-screens/`.
+- Native fixtures use map40 (20,10), observer (20,14), which has no NPCs/relog
+  relocation. Map33 forcibly relogs at (10,84), so staging coordinates there can
+  invalidate a movement test by placing the character against a real boundary.
+- No hosted native/gateway deployment or operator-account mutation was required.
+  APK version0.23.0/code25 keeps the package/signing key and phone progress.
+
+Additional v25 validation: real Marble head tap/buy/sell across the counter and
+left-of-character Small Fire targeting outside the reserved movement area passed
+(`docs/movement-v25-interactions-report.json`). Unit, local and public native
+movement reports reflect the final **dynamic, no-arrow** implementation.

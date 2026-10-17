@@ -112,3 +112,11 @@ Add the remaining NPC/guild/party services and quests, and audit the remaining l
 ## Content rights
 
 Original game content is used in local development builds. Original EO maps, graphics, quests and audio have not been established as licensed for publication in a new game. Obtain permission or replace them before distributing publicly. New code uses MIT; upstream software retains its original licenses. See [THIRD_PARTY.md](THIRD_PARTY.md).
+
+
+Movement controls use the original four EO tile directions. Hold **WASD** or
+**arrow keys** on a keyboard, or drag the large translucent dynamic joystick on
+Android. Release to stop issuing steps. The joystick has no arrow glyphs, captures
+its reserved bottom-left area above NPC targeting, and retains the finger during
+long drags. Tap NPCs or target skills outside that area. Dialogs and chat typing
+suspend movement.

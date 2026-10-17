@@ -59,15 +59,15 @@ func _run() -> void:
 			if npc_head(npc).x < game.player_world.x: break
 	if not check(not rat.is_empty(), "No real native rat within skill range"): return
 	world_point = npc_head(rat)
-	# Frame a real visible NPC under the same lower-left activation region that
-	# used to steal the press. Only the camera changes; native world positions do not.
+	# Keep the NPC left of the character, outside the reserved movement area.
+	# Only the camera changes; native world positions do not.
 	game.camera.offset = world_point - game.player_world + Vector2(180, 0)
 	game.camera.reset_smoothing()
 	game.camera.force_update_scroll()
 	await process_frame
 	await process_frame
 	point = game.get_global_transform_with_canvas() * npc_head(rat)
-	if not check(game._joystick_zone().has_point(point), "Regression target must lie inside the joystick activation area"): return
+	if not check(not game._joystick_zone().has_point(point) and point.x < root.get_visible_rect().size.x / 2.0, "Left-side spell target must remain accessible outside the movement area"): return
 	var ui: RefCounted = game.skills_ui
 	ui.press(ui.slots.find(4))
 	await process_frame
@@ -85,8 +85,8 @@ func _run() -> void:
 		if str(message.get("op", "")) == "spell_cast": casts += 1
 	if not check(casts == 1 and game.player_tile == before and game.route.is_empty(), "Emulated mouse duplicated the cast or moved the player"): return
 	await capture("v14-left-zone-cast")
-	var empty: Vector2 = game._joystick_zone().position + Vector2(40, 370)
-	if not check(c.map_entity_target(game._screen_to_world(empty)).is_empty(), "Joystick regression start must be empty ground"): return
+	var empty: Vector2 = game._joystick_zone().get_center()
+	if not check(game._joystick_zone().has_point(empty), "Movement touch must be in its reserved area"): return
 	finger(empty, true, 42)
 	await process_frame
 	if not check(game.joystick.active and game.touch_move_id == 42, "Empty left-side ground must still start dynamic joystick"): return
@@ -98,7 +98,7 @@ func _run() -> void:
 	finger(drag.position, false, 42)
 	await process_frame
 	if not check(not game.joystick.active and game.stick == Vector2.ZERO and game.touch_move_id == -1, "Joystick release must still stop input"): return
-	var report: Dictionary = {"result": "passed", "marble_head_touch_from_skylar_map125_tile6_4": true, "counter_shop_opens_without_path_or_movement": true, "native_buy_and_sell_across_counter": true, "real_touch_skill_target_inside_left_joystick_zone": true, "exactly_one_cast_with_emulated_mouse": true, "empty_ground_dynamic_joystick_and_release_preserved": true, "operator_accounts_modified": false}
+	var report: Dictionary = {"result": "passed", "marble_head_touch_from_skylar_map125_tile6_4": true, "counter_shop_opens_without_path_or_movement": true, "native_buy_and_sell_across_counter": true, "real_touch_skill_target_left_of_character_outside_movement_area": true, "exactly_one_cast_with_emulated_mouse": true, "empty_ground_dynamic_joystick_and_release_preserved": true, "operator_accounts_modified": false}
 	var file: FileAccess = FileAccess.open(OS.get_environment("ASTER_VALE_TEST_REPORT"), FileAccess.WRITE)
 	file.store_string(JSON.stringify(report, "  ") + "\n")
 	print("TOUCH INTERACTIONS LIVE PASS: ", JSON.stringify(report))

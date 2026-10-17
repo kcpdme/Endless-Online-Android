@@ -60,7 +60,7 @@ var inventory_summary: Label
 var step_origin_tile: Vector2i = Vector2i.ZERO
 var step_duration: float = 0.24
 var touch_move_id: int = -1
-var joystick_pointer_offset: Vector2 = Vector2.ZERO
+var movement_keys: Array[int] = []
 var player_tile: Vector2i = Vector2i.ZERO
 var player_world: Vector2 = Vector2.ZERO
 var step_from: Vector2 = Vector2.ZERO
@@ -268,6 +268,7 @@ func _process(delta: float) -> void:
 		toast_time = maxf(0.0, toast_time - delta)
 		toast_label.visible = toast_time > 0.0
 		toast_label.modulate.a = minf(1.0, toast_time / 0.2)
+	if joystick != null: joystick.visible = started and not _modal_open() and not welcome.visible
 	if not started:
 		queue_redraw()
 		return
@@ -303,25 +304,30 @@ func _process(delta: float) -> void:
 			damage_numbers.remove_at(i)
 	queue_redraw()
 
+func _movement_key(event: InputEventKey) -> int:
+	for key: int in [int(event.physical_keycode), int(event.keycode)]:
+		if key in [KEY_W, KEY_A, KEY_S, KEY_D, KEY_UP, KEY_LEFT, KEY_DOWN, KEY_RIGHT]: return key
+	return 0
+
+func _editing_text() -> bool:
+	var focus: Control = get_viewport().gui_get_focus_owner()
+	return focus is LineEdit or focus is TextEdit
+
 func _input_direction() -> Vector2i:
-	if chat_ui != null and chat_ui.typing(): return Vector2i.ZERO
-	var input: Vector2 = stick
-	if Input.is_physical_key_pressed(KEY_W) or Input.is_physical_key_pressed(KEY_UP):
-		input.y -= 1.0
-	if Input.is_physical_key_pressed(KEY_S) or Input.is_physical_key_pressed(KEY_DOWN):
-		input.y += 1.0
-	if Input.is_physical_key_pressed(KEY_A) or Input.is_physical_key_pressed(KEY_LEFT):
-		input.x -= 1.0
-	if Input.is_physical_key_pressed(KEY_D) or Input.is_physical_key_pressed(KEY_RIGHT):
-		input.x += 1.0
-	return _screen_direction(input)
+	if _editing_text() or (chat_ui != null and chat_ui.typing()): return Vector2i.ZERO
+	if not movement_keys.is_empty():
+		match movement_keys.back():
+			KEY_W, KEY_UP: return Vector2i.UP
+			KEY_S, KEY_DOWN: return Vector2i.DOWN
+			KEY_A, KEY_LEFT: return Vector2i.LEFT
+			KEY_D, KEY_RIGHT: return Vector2i.RIGHT
+	return _screen_direction(stick)
 
 func _screen_direction(input: Vector2) -> Vector2i:
 	if input.length_squared() < 0.035: return Vector2i.ZERO
-	# Eight screen directions mapped through the diamond grid, clockwise from right.
-	var sectors: Array[Vector2i] = [Vector2i(1, -1), Vector2i(1, 0), Vector2i(1, 1), Vector2i(0, 1), Vector2i(-1, 1), Vector2i(-1, 0), Vector2i(-1, -1), Vector2i(0, -1)]
-	var sector: int = posmod(roundi(input.angle() / (PI / 4.0)), 8)
-	return sectors[sector]
+	# Original EO moves on four tile axes. Never alternate two axes for a key.
+	if absf(input.x) > absf(input.y): return Vector2i.RIGHT if input.x > 0 else Vector2i.LEFT
+	return Vector2i.DOWN if input.y > 0 else Vector2i.UP
 
 func _can_step(origin: Vector2i, direction: Vector2i) -> bool:
 	if not _walkable(origin + direction): return false
@@ -348,6 +354,7 @@ func _step(direction: Vector2i) -> void:
 	moving = true
 
 func _cancel_movement(force_stop: bool = false) -> void:
+	movement_keys.clear()
 	stick = Vector2.ZERO
 	touch_move_id = -1
 	route.clear()
@@ -361,15 +368,13 @@ func _cancel_movement(force_stop: bool = false) -> void:
 	if joystick != null: joystick.reset()
 
 func _joystick_zone() -> Rect2:
-	var bounds: Rect2 = _hud_bounds()
-	return Rect2(bounds.position + Vector2(12, bounds.size.y - minf(432.0, bounds.size.y * 0.64)), Vector2(minf(560.0, bounds.size.x * 0.43), minf(420.0, bounds.size.y * 0.62)))
+	return joystick.activation_area()
 
 func _joystick_begin(pointer: Vector2, pointer_id: int) -> void:
 	_cancel_movement()
 	touch_move_id = pointer_id
 	joystick.begin(pointer)
-	joystick_pointer_offset = Vector2.ZERO
-	stick = Vector2.ZERO
+	stick = joystick.vector
 
 func _modal_open() -> bool:
 	return (redeem_ui != null and redeem_ui.panel.visible) or (online != null and online.panel != null and online.panel.visible) or (inventory != null and inventory.visible) or (menu != null and menu.visible) or (character_panel != null and character_panel.visible) or (stats_ui != null and stats_ui.is_open()) or (shop_ui != null and shop_ui.panel.visible) or (services_ui != null and services_ui.panel.visible) or (chat_ui != null and chat_ui.panel.visible) or (skills_ui != null and skills_ui.panel.visible) or (quick_items != null and quick_items.panel.visible)
@@ -401,7 +406,30 @@ func _screen_to_world(point: Vector2) -> Vector2:
 
 func _input(event: InputEvent) -> void:
 	var dismissing_modal: bool = Time.get_ticks_msec() < modal_input_until
-	# Standard GUI owns the feed/composer before world targeting and floating stick.
+	if event is InputEventKey:
+		var key: int = _movement_key(event)
+		if key != 0:
+			var gameplay_key: bool = started and not _modal_open() and not _editing_text() and not (chat_ui != null and chat_ui.typing())
+			if not event.pressed: movement_keys.erase(key)
+			elif not event.echo and gameplay_key:
+				movement_keys.erase(key)
+				movement_keys.append(key)
+				route.clear()
+				waypoint = Vector2i(-1, -1)
+			# Held arrow repeats must not navigate or open a focused HUD widget.
+			if gameplay_key: get_viewport().set_input_as_handled()
+			return
+	# The joystick activation area owns presses before chat/world/NPC hit tests.
+	var pad_press: bool = (event is InputEventScreenTouch and event.pressed) or (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT)
+	if pad_press and started and not dismissing_modal and not _modal_open() and joystick.contains_point(event.position):
+		if not (event is InputEventMouseButton and event.device == InputEvent.DEVICE_ID_EMULATION):
+			if chat_ui != null: chat_ui.blur_quick()
+			var pointer: int = event.index if event is InputEventScreenTouch else -2
+			if event is InputEventScreenTouch: owned_touches[pointer] = true
+			if touch_move_id == -1: _joystick_begin(event.position, pointer)
+		get_viewport().set_input_as_handled()
+		return
+	# Standard GUI owns the feed/composer outside the movement area.
 	var owned_chat_release: bool = (event is InputEventScreenTouch and not event.pressed and owned_touches.has(event.index)) or (event is InputEventMouseButton and not event.pressed and (touch_move_id == -2 or attack_touch_id == -2))
 	if chat_ui != null and not dismissing_modal and not _modal_open() and not owned_chat_release:
 		if chat_ui.quick_channel.get_popup().visible: return
@@ -414,7 +442,7 @@ func _input(event: InputEvent) -> void:
 	# Own native controls suppress their separately generated mouse events, including
 	# HUD presses that open a modal. A release can never become a second action.
 	if event is InputEventMouseButton and event.device == InputEvent.DEVICE_ID_EMULATION:
-		var native_control: bool = started and not _modal_open() and ((skills_ui != null and skills_ui.contains(event.position) >= 0) or (quick_items != null and quick_items.contains(event.position) >= 0) or attack_button.contains_point(event.position) or bag_button.contains_point(event.position) or chat_button.contains_point(event.position) or character_button.contains_point(event.position) or _joystick_zone().has_point(event.position) or (online_mode and (skills_ui.armed > 0 or not online.map_entity_target(_screen_to_world(event.position)).is_empty())) or (online_mode and online.loot_button.visible and online.loot_button.get_global_rect().has_point(event.position)))
+		var native_control: bool = started and not _modal_open() and ((skills_ui != null and skills_ui.contains(event.position) >= 0) or (quick_items != null and quick_items.contains(event.position) >= 0) or attack_button.contains_point(event.position) or bag_button.contains_point(event.position) or chat_button.contains_point(event.position) or character_button.contains_point(event.position) or joystick.contains_point(event.position) or (online_mode and (skills_ui.armed > 0 or not online.map_entity_target(_screen_to_world(event.position)).is_empty())) or (online_mode and online.loot_button.visible and online.loot_button.get_global_rect().has_point(event.position)))
 		# Godot may synthesize the mouse press before delivering its native touch.
 		if dismissing_modal or native_control or not owned_touches.is_empty():
 			get_viewport().set_input_as_handled()
@@ -482,8 +510,7 @@ func _input(event: InputEvent) -> void:
 			_toggle_paperdoll()
 			get_viewport().set_input_as_handled()
 			return
-		# An armed spell owns targeting across the entire world, including the
-		# floating-stick area. Ordinary sprite taps also precede joystick capture.
+		# Outside the movement area, an armed spell or visible NPC owns world targeting.
 		if online_mode and (skills_ui.armed > 0 or touch_move_id == -1) and online.map_press(_screen_to_world(event.position), true):
 			owned_touches[event.index] = true
 			get_viewport().set_input_as_handled()
@@ -492,16 +519,11 @@ func _input(event: InputEvent) -> void:
 			owned_touches[event.index] = true
 			get_viewport().set_input_as_handled()
 			return
-		if touch_move_id == -1 and _joystick_zone().has_point(event.position):
-			owned_touches[event.index] = true
-			_joystick_begin(event.position, event.index)
-			get_viewport().set_input_as_handled()
-			return
 	if event is InputEventScreenDrag:
 		if event.index == attack_touch_id:
 			if not attack_button.contains_point(event.position): _release_attack()
 		elif event.index == touch_move_id:
-			stick = joystick.update_pointer(event.position + joystick_pointer_offset)
+			stick = joystick.update_pointer(event.position)
 		if owned_touches.has(event.index):
 			get_viewport().set_input_as_handled()
 			return
@@ -523,13 +545,10 @@ func _input(event: InputEvent) -> void:
 		if online_mode and (skills_ui.armed > 0 or touch_move_id == -1) and online.map_press(_screen_to_world(event.position), true):
 			get_viewport().set_input_as_handled()
 			return
-		if touch_move_id == -1 and _joystick_zone().has_point(event.position):
-			_joystick_begin(event.position, -2)
-			get_viewport().set_input_as_handled()
 	if event is InputEventMouseMotion:
 		if attack_touch_id == -2 and not attack_button.contains_point(event.position): _release_attack()
 		if touch_move_id == -2:
-			stick = joystick.update_pointer(event.position + joystick_pointer_offset)
+			stick = joystick.update_pointer(event.position)
 			get_viewport().set_input_as_handled()
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -926,7 +945,7 @@ func _build_ui() -> void:
 	character_button.set_anchors_preset(Control.PRESET_TOP_RIGHT, true)
 	joystick = Joystick.new()
 	root.add_child(joystick)
-	joystick.resting_position = Vector2(32, -252)
+	joystick.resting_position = Vector2(24, -282)
 	joystick.reset()
 	var bottom_hint: Label = _label(root, "Drag to move  ·  Release to stop" if OS.has_feature("mobile") else "Tap ground to explore  ·  WASD / arrows to move", Vector2(228, -55), 16, TEXT)
 	bottom_hint.hide()
