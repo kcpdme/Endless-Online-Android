@@ -52,11 +52,12 @@ class SkillsMixin:
         else:raise EOError('This skill needs a different target; group skills require party support')
         me=self.state['self']
         if abs(target['x']-me['x'])+abs(target['y']-me['y'])>11:raise EOError('The target is too far away')
+        if target_kind=='self' and spell['type']==0 and me.get('hp',0)>=me.get('maxhp',1):raise EOError('Your health is already full. Nothing was cast.')
         self.timestamp+=1
         duration=spell['cast_time']*.48
         self.casting=dict(spell_id=spell_id,target_kind=target_kind,target_id=target_id,seconds=duration,
                           release_at=time.monotonic()+duration,timeout_at=time.monotonic()+duration+5,
-                          timestamp=self.timestamp,released=False)
+                          timestamp=self.timestamp,released=False,target_x=target['x'],target_y=target['y'],target_npc_id=target.get('id',0))
         self.send(12,1,number(spell_id,2)+number(self.timestamp,3))
         self.events.append(dict(kind='spell_chant',player_id=self.player_id,spell_id=spell_id,seconds=duration))
         self.dirty=True
@@ -64,7 +65,7 @@ class SkillsMixin:
 
     def cancel_spell(self):
         cast=getattr(self,'casting',None)
-        if cast and not cast['released']:
+        if cast:
             # Native Target_Other's invalid target branch calls CancelSpell.
             self.send(12,31,number(0,1)+number(0,1)+number(0,2)+number(cast['spell_id'],2)+number(0,2)+number(self.timestamp,3))
             self.events.append(dict(kind='spell_cancelled',player_id=self.player_id))
@@ -76,6 +77,14 @@ class SkillsMixin:
         if not cast:return
         now=time.monotonic()
         if not cast['released'] and now>=cast['release_at']:
+            if cast['target_kind']=='npc':
+                target=next((n for n in self.state['npcs'] if n['index']==cast['target_id']),None)
+                if not target:
+                    self.cancel_spell();self.events.append(dict(kind='spell_failed',message='The target is no longer here.'));return
+                if abs(target['x']-self.state['self']['x'])+abs(target['y']-self.state['self']['y'])>11:
+                    self.cancel_spell();self.events.append(dict(kind='spell_failed',message='The target is out of range.'));return
+            if self.state['self'].get('tp',0)<spell_definitions()[cast['spell_id']]['tp']:
+                self.cancel_spell();self.events.append(dict(kind='spell_failed',message='Not enough TP.'));return
             # Timestamp units are 10 ms, independent of transport/polling jitter.
             ticks=spell_definitions()[cast['spell_id']]['cast_time']*48
             release_timestamp=cast['timestamp']+ticks
@@ -84,8 +93,8 @@ class SkillsMixin:
             else:self.send(12,31,number(2 if cast['target_kind']=='npc' else 1,1)+number(1,1)+number(1,2)+number(cast['spell_id'],2)+number(cast['target_id'],2)+number(release_timestamp,3))
             cast['released']=True
         elif now>=cast['timeout_at']:
-            self.casting=None;self.dirty=True
-            self.events.append(dict(kind='spell_failed',message='Cast ended without an effect. The target may have moved, died or become invalid.'))
+            self.cancel_spell()
+            self.events.append(dict(kind='spell_failed',message='The server did not confirm this skill. Try again.'))
 
     def skillmaster_open(self,npc_index):
         self._standing();npc_index=int(npc_index)
@@ -127,8 +136,10 @@ class SkillsMixin:
             event.update(kind='spell_chant',player_id=pid,spell_id=ident,seconds=spell.get('cast_time',1)*.48)
         elif f==44 and a in (3,2,16):
             ident=r.num(2);pid=r.num(2);direction=r.num();index=r.num(2)
+            pending=getattr(self,'casting',None) or {}
             npc=next((n for n in self.state['npcs'] if n['index']==index),{})
-            event.update(kind='npc_damage' if a==3 else 'npc_killed',player_id=pid,npc_index=index,spell_id=ident,x=npc.get('x',0),y=npc.get('y',0))
+            if not npc and pending.get('target_id')==index:npc=dict(x=pending.get('target_x',0),y=pending.get('target_y',0),id=pending.get('target_npc_id',0))
+            event.update(kind='npc_damage' if a==3 else 'npc_killed',player_id=pid,npc_index=index,spell_id=ident,npc_id=npc.get('id',0),x=npc.get('x',0),y=npc.get('y',0))
             if a==3:event.update(damage=r.num(3),hp_percent=r.num(2))
             else:
                 drop=dict(uid=r.num(2),id=r.num(2),x=r.num(),y=r.num(),amount=r.num(4));event.update(drop=drop,damage=r.num(3),x=drop['x'],y=drop['y'])
@@ -136,16 +147,18 @@ class SkillsMixin:
             # Kill PID is the loot winner, not necessarily the caster. A matching
             # private pending cast identifies our TP; an observer never adopts it.
             own=(a==3 and pid==self.player_id) or (a!=3 and cast and cast['released'] and cast['spell_id']==ident and cast['target_kind']=='npc' and cast['target_id']==index)
-            if own:values['tp']=tp;self.casting=None
+            if own:values['tp']=tp;self.casting=None;event['own_cast']=True
             if a!=3 and len(r.rest())>=4:
                 values['experience']=r.num(4)
+                if 'experience' in self.stats:event['exp_gain']=max(0,values['experience']-self.stats['experience'])
                 if a==2 and len(r.rest())>=11:
                     values['level']=r.num();event['level_up']=values['level']
                     for key in ('stat_points','skill_points','max_hp','max_tp','max_sp'):values[key]=r.num(2)
         elif (f,a)==(12,30):
             pid=r.num(2);ident=r.num(2);gain=r.num(4);percent=r.num()
             event.update(kind='spell_heal',player_id=pid,target_id=pid,spell_id=ident,hp_gain=gain,hp_percent=percent)
-            if pid==self.player_id and len(r.rest())>=4:values.update(hp=r.num(2),tp=r.num(2));self.casting=None
+            if pid==self.player_id and len(r.rest())>=4:
+                values.update(hp=r.num(2),tp=r.num(2));event['hp_gain']=max(0,values['hp']-self.state['self'].get('hp',values['hp']));self.casting=None
         elif (f,a)==(12,31):
             victim=r.num(2);pid=r.num(2);r.num();ident=r.num(2);gain=r.num(4);percent=r.num()
             event.update(kind='spell_heal',player_id=pid,target_id=victim,spell_id=ident,hp_gain=gain,hp_percent=percent)

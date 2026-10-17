@@ -1,0 +1,51 @@
+{
+  "result": "passed",
+  "version": "0.27.0",
+  "version_code": 30,
+  "python_state_tests": 64,
+  "godot_checks": [
+    "paperdoll_mobile",
+    "combat_mobile",
+    "network_regressions",
+    "movement_controls",
+    "movement_timing",
+    "short_movement",
+    "gameplay_smoke"
+  ],
+  "rendered_visual_inspection": [
+    "paperdoll",
+    "scrollable_item_details",
+    "green_stat_buttons",
+    "boss_damage_health_overlay"
+  ],
+  "baseline": {
+    "moving_potion_seconds": 0.4460324998944998,
+    "idle_potion_mean_seconds": 0.023599500069394708,
+    "stationary_thunder_native_hit": true,
+    "full_health_native_heal_can_reply": true
+  },
+  "fixes": {
+    "health_mana_native_priority_preserves_walk_attack_deadline": true,
+    "potion_pipeline_max": 4,
+    "potion_full_health_race_ack_no_consumption": true,
+    "profile_header_unclipped_and_item_details_button_removed": true,
+    "paperdoll_single_tap_details_returns_on_close_and_back": true,
+    "paperdoll_double_tap_unequips_once": true,
+    "paperdoll_remove_button_and_inline_item_stats_removed": true,
+    "green_increment_buttons_with_spendable_points": true,
+    "native_exp_gain_for_melee_and_spell_kills": true,
+    "boss_head_anchored_damage_and_percent_health_above_world": true,
+    "self_heal_full_health_guard_and_native_result_clears_local_cast": true,
+    "no_cast_progress_rectangle": true,
+    "small_thunder_caster_receives_hit_outside_visibility": true,
+    "dead_or_departed_target_cancels_promptly": true
+  },
+  "native_patches": 6,
+  "patches_apply_and_remain_detectable": true,
+  "operator_accounts_modified": false,
+  "limitations": [
+    "Timing measurements use the isolated native server; public network latency and streaming add delay.",
+    "NPC HP is the actual native percentage, not an invented exact remaining HP number.",
+    "The stationary disposable boss fixture can legitimately respawn immediately; assertions require the original child-despawn event, not permanent absence."
+  ]
+}

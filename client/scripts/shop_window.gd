@@ -132,7 +132,7 @@ func open(data: Dictionary) -> void:
 	selection_by_mode.clear()
 	game.inventory.hide()
 	game.character_panel.hide()
-	game.stats_ui.hide()
+	game.stats_ui.dismiss()
 	game._cancel_controls()
 	panel.show()
 	refresh()

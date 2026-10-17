@@ -1,5 +1,14 @@
 # Validation scope
 
+v0.27 has64server state cases and an actual GUI touch test
+`res://tests/paperdoll_mobile.gd` for item detail Back, double-tap unequip, header
+bounds, green stats, full-health healing, Thunder completion and boss/EXP feedback.
+`combat_mobile.gd` now covers a bounded4potion pipeline. Native isolated evidence
+is in `combat-v30-native-report.json`; comparison/visual checks are in
+`gameplay-v30-report.json`. The disposable stationary boss fixture may respawn
+immediately: require its child despawn event, not permanent NPC absence.
+
+
 v0.26.1 checks original480ms Self Heal chant and local480ms cast-pose recovery,
 with no added acknowledgement-time lock. State tests total54; combat_mobile
 covers late ACK/rejection and ongoing walking. Native timing comparison is in

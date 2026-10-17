@@ -28,6 +28,16 @@ class StreamStateTests(unittest.TestCase):
         s.apply_event(29,3,number(0,1)+b'\xff'+number(1,1)+number(256,2)+number(40,1)+number(41,1)+number(0,1))
         self.assertEqual({n['id'] for n in s.state['npcs']},{99,256}) # genuine native respawn restores it
 
+    def test_melee_kill_exp_and_boss_feedback_are_native_values(self):
+        s=fixture();s.stats['experience']=1000;s.state['npcs']=[dict(id=257,index=47,x=49,y=15,direction=2)]
+        s.apply_event(26,3,number(100,2)+number(0,1)+number(47,2)+number(2000,3)+number(94,2)+number(1,1))
+        self.assertEqual(s.events[-1]['npc_id'],257);self.assertEqual(s.events[-1]['hp_percent'],94)
+        payload=number(100,2)+number(0,1)+number(47,2)+number(0,2)+number(0,2)+number(49,1)+number(15,1)+number(0,4)+number(2000,3)+number(7666,4)
+        s.apply_event(26,16,payload);self.assertEqual(s.events[-1]['exp_gain'],6666)
+        self.assertEqual(s.stats['experience'],7666);self.assertEqual(s.events[-1]['npc_id'],257)
+        other=fixture();other.stats['experience']=100;other.apply_event(26,16,payload[:-4])
+        self.assertEqual(other.stats['experience'],100);self.assertNotIn('exp_gain',other.events[-1])
+
     def test_spikes_update_hp_and_stream_every_nonlethal_hit(self):
         s=fixture();s.stats={'hp':1000,'max_hp':1000}
         for hp in [950,900,850]:

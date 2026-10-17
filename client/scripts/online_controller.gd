@@ -59,6 +59,7 @@ var loot_attempt_after: Dictionary = {}
 var pickup_pending: Dictionary = {}
 var pending_equip: Dictionary = {}
 var pending_item_use: bool = false
+var pending_potion_requests: Dictionary = {}
 var loot_button: Button
 var drop_permissions: Dictionary = {}
 var resume_username: String = ""
@@ -220,7 +221,8 @@ func _on_message(message: Dictionary) -> void:
 			drop_ui.refresh()
 		if operation == "spend_stat": game.stats_ui.stop_repeat()
 		if operation in ["item_use", "potion_use"]:
-			pending_item_use = false
+			if operation == "potion_use": pending_potion_requests.erase(int(message.get("id", -1)))
+			else: pending_item_use = false
 			game._refresh_ui()
 		if game.shop_ui != null: game.shop_ui.refresh()
 		if game.services_ui != null: game.services_ui.refresh()
@@ -524,6 +526,7 @@ func _start_step(tile: Vector2i, direction: String) -> void:
 
 func _reset_movement() -> void:
 	pending_item_use = false
+	pending_potion_requests.clear()
 	pending_face = ""
 	npc_hit_until.clear()
 	previous_npc_tiles.clear()
@@ -621,7 +624,7 @@ func _on_closed(reason: String) -> void:
 	panel.hide()
 	game.inventory.hide()
 	game.character_panel.hide()
-	game.stats_ui.hide()
+	game.stats_ui.dismiss()
 	game.menu.hide()
 	_set_status(reason)
 	game._toast(reason)
@@ -737,7 +740,7 @@ func npc_name_layout(graphic: Dictionary, direction: String, fighting: bool) -> 
 	var offset: Array = frame.get("offset", [0, 0]) as Array
 	var visible: Array = frame.get("visible_bounds", [0, 0, region[2], region[3]]) as Array
 	var head: Vector2 = Vector2(float(offset[0]) - float(region[2]) / 2.0 + float(visible[0]) + float(visible[2]) / 2.0, float(offset[1]) - float(region[3]) + float(visible[1]))
-	return {"head": head, "name": head + Vector2(0, -13 if fighting else -5), "health": Rect2(head + Vector2(-17, -8), Vector2(34, 5))}
+	return {"head": head, "name": head + Vector2(0, -13 if fighting else -5), "health": Rect2(head + Vector2(-36 if float(region[2]) > 100 else -17, -8), Vector2(72 if float(region[2]) > 100 else 34, 5))}
 
 func draw_entity(entity: Dictionary) -> void:
 	var record: Dictionary = entity.data as Dictionary
@@ -765,13 +768,7 @@ func draw_entity(entity: Dictionary) -> void:
 		var layout: Dictionary = npc_name_layout(graphic, direction, health >= 0.0)
 		var name: String = str(info.get("name", "NPC %s" % npc_id))
 		var text_width: float = ThemeDB.fallback_font.get_string_size(name, HORIZONTAL_ALIGNMENT_LEFT, -1, 10).x
-		game.draw_string(ThemeDB.fallback_font, at + (layout.name as Vector2) - Vector2(text_width / 2.0, 0), name, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, game.TEXT)
-		if health >= 0.0:
-			var strip: Rect2 = layout.health as Rect2
-			strip.position += at
-			game.draw_rect(strip.grow(1), Color("121b18"))
-			game.draw_rect(strip, Color("50322e"))
-			game.draw_rect(Rect2(strip.position, Vector2(strip.size.x * health, strip.size.y)), Color("a6cb6f") if health > 0.3 else Color("dc6855"))
+		if health < 0.0: game.draw_string(ThemeDB.fallback_font, at + (layout.name as Vector2) - Vector2(text_width / 2.0, 0), name, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, game.TEXT)
 	elif str(entity.kind) == "online_player":
 		var graphic: Dictionary = character_graphic(record)
 		if not graphic.is_empty(): game._draw_character_frame(graphic, at, direction, state, Color.WHITE, phase if state in ["frames", "attack"] else -1.0)
@@ -896,8 +893,14 @@ func bag_action(kind: String) -> void:
 	else:
 		if not _action_ready(): return
 		game._cancel_controls()
-	pending_item_use = true
-	if session.request("potion_use" if potion else "item_use", {"item_id": item_id(kind)}) < 0: pending_item_use = false
+	if potion:
+		if pending_potion_requests.size() >= 4: return
+		var request_id: int = session.request("potion_use", {"item_id": item_id(kind)})
+		if request_id >= 0: pending_potion_requests[request_id] = item_id(kind)
+	else:
+		pending_item_use = true
+		if session.request("item_use", {"item_id": item_id(kind)}) < 0: pending_item_use = false
+
 	if int(item_info(kind).get("type", -1)) == 4: game.inventory.hide()
 	game.equip_button.disabled = true
 
@@ -1178,11 +1181,6 @@ func refresh_game_ui() -> void:
 	if game.paperdoll.information_labels.size() >= 2:
 		game.paperdoll.information_labels[0].text = str(player.get("name", "Player"))
 		game.paperdoll.information_labels[1].text = str(game.world.get("name", ""))
-	game.equipment_detail.text = str(info.get("name", "Empty " + selected + " slot"))
-	if worn:
-		game.equipment_detail.text += "  ·  Damage %d–%d  ·  Armor %d" % [int(info.get("min_damage", 0)), int(info.get("max_damage", 0)), int(info.get("armor", 0))]
-	game.remove_button.disabled = not worn
-	game.remove_button.text = "Remove " + str(info.get("name", "item")) if worn else "Empty slot"
 	game.attack_button.weapon = game._item_texture("weapon") if game.equipped else null
 	game.attack_button.collecting = false
 	game.attack_button.queue_redraw()
@@ -1238,6 +1236,40 @@ func character_graphic(record: Dictionary) -> Dictionary:
 	var variants: Dictionary = characters.get("hero_variants", {}) as Dictionary
 	return variants.get(key, {}) as Dictionary
 
+func _finish_potion(item: int) -> void:
+	for request_id: Variant in pending_potion_requests:
+		if int(pending_potion_requests[request_id]) == item:
+			pending_potion_requests.erase(request_id)
+			return
+
+func npc_graphic(record: Dictionary) -> Dictionary:
+	var info: Dictionary = (catalog.get("npcs", {}) as Dictionary).get(str(int(record.get("id", 0))), {}) as Dictionary
+	return (((game.manifest.get("characters", {}) as Dictionary).get("npcs", {}) as Dictionary).get(str(int(info.get("graphic", 0))), {})) as Dictionary
+
+func npc_feedback_anchor(record: Dictionary, fallback: Vector2i) -> Vector2:
+	var index: int = int(record.get("index", -1))
+	var at: Vector2 = _remote_position("npc:%d" % index, game.tile_position(fallback))
+	var layout: Dictionary = npc_name_layout(npc_graphic(record), _facing(record.get("direction", 0)), true)
+	return at + (layout.head as Vector2) + Vector2(0, -28)
+
+func draw_npc_combat_overlays() -> void:
+	for record: Dictionary in npcs:
+		var health: float = npc_health_fraction(int(record.index))
+		if health < 0.0: continue
+		var at: Vector2 = _remote_position("npc:%d" % int(record.index), game.tile_position(Vector2i(int(record.x), int(record.y))))
+		var info: Dictionary = (catalog.get("npcs", {}) as Dictionary).get(str(int(record.id)), {}) as Dictionary
+		var layout: Dictionary = npc_name_layout(npc_graphic(record), _facing(record.get("direction", 0)), true)
+		var strip: Rect2 = layout.health as Rect2
+		strip.position += at
+		game.draw_rect(strip.grow(1), Color("121b18"))
+		game.draw_rect(strip, Color("50322e"))
+		game.draw_rect(Rect2(strip.position, Vector2(strip.size.x * health, strip.size.y)), Color("a6cb6f") if health > .3 else Color("dc6855"))
+		var text: String = "%s · %d%%" % [str(info.get("name", "NPC")), int(round(health * 100))]
+		var font: Font = ThemeDB.fallback_font
+		var origin: Vector2 = at + (layout.name as Vector2) - Vector2(font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 11).x / 2, 0)
+		game.draw_string_outline(font, origin, text, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, 3, Color.BLACK)
+		game.draw_string(font, origin, text, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, game.TEXT)
+
 func npc_health_fraction(index: int) -> float:
 	var health: Dictionary = npc_health.get(index, {}) as Dictionary
 	if health.is_empty() or Time.get_ticks_msec() >= int(health.get("until", 0)): return -1.0
@@ -1272,6 +1304,7 @@ func _process_events(events: Array) -> void:
 			game.damage_numbers.append({"position": game.player_world + Vector2(0, -62), "value": "-%d" % int(event.get("damage", 0)) if int(event.get("damage", 0)) > 0 else "Miss", "time": 0.85, "player_hit": true})
 			if bool(event.get("dead", false)):
 				defeated = true
+				game.skills_ui.cancel_cast()
 				pending_inputs.clear()
 				waiting_for_walk = false
 				game._cancel_controls(true)
@@ -1285,16 +1318,23 @@ func _process_events(events: Array) -> void:
 			var tile: Vector2i = previous_npc_tiles.get(index, Vector2i(-1, -1)) as Vector2i
 			for npc: Dictionary in npcs:
 				if int(npc.index) == index: tile = Vector2i(int(npc.x), int(npc.y))
+			if tile.x < 0 and event.has("x") and event.has("y"): tile = Vector2i(int(event.x), int(event.y))
 			if tile.x < 0 and kind == "npc_killed":
 				var dropped: Dictionary = event.get("drop", {}) as Dictionary
 				if dropped.has("x") and dropped.has("y"): tile = Vector2i(int(dropped.x), int(dropped.y))
 			var damage: int = int(event.get("damage", 0))
 			if damage > 0: npc_hit_until[index] = Time.get_ticks_msec() + 150
-			if tile.x >= 0: game.damage_numbers.append({"position": game.tile_position(tile) + Vector2(0, -44), "value": str(damage) if damage > 0 else "Miss", "time": 0.8})
+			if tile.x >= 0:
+				var record: Dictionary = {"id": int(event.get("npc_id", 0)), "index": index, "direction": int(event.get("npc_direction", 0))}
+				for npc: Dictionary in npcs:
+					if int(npc.index) == index: record = npc
+				game.damage_numbers.append({"position": npc_feedback_anchor(record, tile), "value": str(damage) if damage > 0 else "Miss", "time": 0.8})
 			if kind == "npc_killed":
 				var drop: Dictionary = event.get("drop", {}) as Dictionary
 				if int(drop.get("uid", 0)) > 0:
 					drop_permissions[int(drop.uid)] = {"owner": int(event.get("player_id", 0)), "until": Time.get_ticks_msec() + 30000}
+				if int(event.get("exp_gain", 0)) > 0:
+					game.damage_numbers.append({"position": game.player_world + Vector2(0, -106), "value": "+%d EXP" % int(event.exp_gain), "time": 1.2, "exp_gain": true})
 				if event.has("level_up"): game._toast("Level %d reached! Stat points are available in Character Stats." % int(event.level_up))
 		if kind == "pickup":
 			network_metrics.pickups = int(network_metrics.pickups) + 1
@@ -1308,7 +1348,7 @@ func _process_events(events: Array) -> void:
 		if kind == "item_junk":
 			game._toast("Junked %s ×%d." % [str(item_info("item:%d" % int(event.get("item_id", 0))).get("name", "Item")), int(event.get("amount", 0))])
 		if kind == "item_use_failed":
-			pending_item_use = false
+			_finish_potion(int(event.get("item_id", 0)))
 			game._toast(str(event.get("message", "The potion was not used.")))
 		if kind == "npc_despawn":
 			for index: Variant in event.get("indexes", []):
@@ -1317,8 +1357,10 @@ func _process_events(events: Array) -> void:
 				npc_hit_until.erase(int(index))
 				if interaction.get("kind", "") == "npc" and int(interaction.get("id", -1)) == int(index): interaction.clear()
 		if kind == "item_used":
-			pending_item_use = false
-			game._toast("Used %s." % str(item_info("item:%d" % int(event.get("item_id", 0))).get("name", "item")))
+			if int(event.get("item_type", 3)) == 3: _finish_potion(int(event.get("item_id", 0)))
+			else: pending_item_use = false
+			if int(event.get("consumed", 1)) > 0: game._toast("Used %s." % str(item_info("item:%d" % int(event.get("item_id", 0))).get("name", "item")))
+			else: game._toast("HP/TP already restored. Potion kept.")
 			if int(event.get("hp_gain", 0)) > 0: game.damage_numbers.append({"position": game.player_world + Vector2(0, -62), "value": "+%d" % int(event.hp_gain), "time": 0.85})
 		if kind == "online_players": game.chat_ui.receive_roster(event)
 		if kind == "chat":

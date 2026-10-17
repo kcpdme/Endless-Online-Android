@@ -247,7 +247,7 @@ func open(recipient: String = "") -> void:
 	game.character_panel.hide()
 	game.menu.hide()
 	game.shop_ui.close()
-	game.stats_ui.hide()
+	game.stats_ui.dismiss()
 	game.services_ui.panel.hide()
 	game.skills_ui.panel.hide()
 	game.quick_items.panel.hide()

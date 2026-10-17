@@ -42,8 +42,6 @@ var paperdoll: ClassicPaperdoll
 var stats_ui: CharacterStats
 var player_hit_flash: float = 0.0
 var character_panel: Control
-var equipment_detail: Label
-var remove_button: Button
 var bag_button: HudIconButton
 var character_button: HudIconButton
 var attack_touch_id: int = -1
@@ -739,13 +737,14 @@ func _draw() -> void:
 	if online_mode: skills_ui.draw_orphans()
 	for decoration: Dictionary in decorations:
 		if str(decoration.layer) == "overlay2" and visible_rect.has_point(tile_position(decoration.tile)): _draw_decoration(decoration)
+	if online_mode: online.draw_npc_combat_overlays()
 	for number: Dictionary in damage_numbers:
 		var at: Vector2 = number.position as Vector2
 		at.y -= (0.8 - float(number.time)) * 28.0
 		var caption: String = str(number.value)
 		var font: Font = ThemeDB.fallback_font
 		var origin: Vector2 = at - Vector2(font.get_string_size(caption, HORIZONTAL_ALIGNMENT_LEFT, -1, 18).x / 2.0, 0)
-		var color: Color = Color("ffaaaa") if bool(number.get("player_hit", false)) else MUTED if caption == "Miss" else GOLD
+		var color: Color = Color("ffaaaa") if bool(number.get("player_hit", false)) else MUTED if caption == "Miss" else Color("a4edb0") if bool(number.get("exp_gain", false)) else GOLD
 		draw_string_outline(font, origin, caption, HORIZONTAL_ALIGNMENT_LEFT, -1, 18, 3, Color.BLACK)
 		draw_string(font, origin, caption, HORIZONTAL_ALIGNMENT_LEFT, -1, 18, color)
 	# Speech is an overlay above every sprite, wall, roof and combat number.
@@ -1188,29 +1187,24 @@ func _build_paperdoll(parent: Node) -> void:
 	character_panel = _modal(parent, Vector2(840, 680))
 	var card: Control = character_panel.get_child(0) as Control
 	_wood_card(card)
-	_label(card, "CHARACTER", Vector2(40, 8), 16, GOLD)
-	_button(card, "Item details", Vector2(440, 2), Vector2(180, 28), func() -> void: stats_ui.show_item(selected_item))
-	_button(card, "Stats", Vector2(640, 2), Vector2(160, 28), func() -> void: stats_ui.show_stats())
+	_label(card, "CHARACTER", Vector2(40, 20), 26, GOLD)
+	_button(card, "Stats", Vector2(620, 14), Vector2(180, 48), func() -> void: stats_ui.show_stats())
 	paperdoll = ClassicPaperdoll.new()
 	paperdoll.game = self
-	paperdoll.position = Vector2(40, 34)
+	paperdoll.position = Vector2(40, 80)
 	paperdoll.size = Vector2(380, 290)
 	paperdoll.scale = Vector2(2, 2)
-	paperdoll.equipment_selected.connect(_select_item)
+	paperdoll.equipment_selected.connect(func(kind: String) -> void:
+		_select_item(kind)
+		if _is_equipped(kind): stats_ui.show_item(kind, character_panel, true)
+	)
+	paperdoll.equipment_activated.connect(func(kind: String) -> void:
+		_select_item(kind)
+		if _owns_item(kind) and _is_equipped(kind): _toggle_equip()
+	)
 	paperdoll.close_requested.connect(func() -> void: character_panel.hide())
 	card.add_child(paperdoll)
 	equipment_slots = paperdoll.slots
-	equipment_detail = _label(card, "Select worn equipment to inspect it.", Vector2(40, 623), 14, TEXT)
-	equipment_detail.size = Vector2(470, 48)
-	equipment_detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	remove_button = _button(card, "Remove", Vector2(520, 625), Vector2(280, 42), func() -> void:
-		if _owns_item(selected_item) and _is_equipped(selected_item): _toggle_equip()
-	)
-	remove_button.add_theme_stylebox_override("normal", _wood_style(Color("d5a35c"), Color("f2cf8a")))
-	remove_button.add_theme_stylebox_override("hover", _wood_style(Color("e4b873"), Color("f2cf8a")))
-	remove_button.add_theme_stylebox_override("pressed", _wood_style(Color("b07a3e"), Color("f2cf8a")))
-	remove_button.add_theme_stylebox_override("disabled", _wood_style(Color("51381f"), Color("87633c")))
-	remove_button.add_theme_color_override("font_color", Color("31200e"))
 	character_panel.hide()
 
 func _wood_style(color: Color, border: Color = Color("a97d43"), width: int = 2) -> StyleBoxFlat:
@@ -1396,12 +1390,6 @@ func _refresh_ui() -> void:
 			slot.add_theme_stylebox_override("normal", _wood_style(Color("936a37") if chosen else Color("6b4927"), Color("edce87") if chosen else Color("a97d43")))
 	if paperdoll != null:
 		paperdoll.refresh(selected_item)
-		if equipment_detail != null:
-			var worn: bool = _owns_item(selected_item) and _is_equipped(selected_item)
-			equipment_detail.text = _item_name(selected_item) + "  ·  Equipped" if worn else ("Empty " + selected_item + " slot" if not selected_item.is_empty() else "Select equipment to inspect it.")
-			remove_button.disabled = not worn
-			remove_button.text = "Remove " + _item_name(selected_item) if worn else "Empty slot"
-
 	if attack_button != null:
 		attack_button.weapon = _item_texture("weapon") if equipped else null
 		attack_button.collecting = loot_visible

@@ -7,6 +7,21 @@ from services import item_definitions, runtime_path
 USABLE_TYPES = (3, 4, 6, 22, 23, 24, 25)
 
 class ConsumablesMixin:
+    def potion_queue(self):
+        pending=getattr(self,'pending_potion',None)
+        return pending.get('queue',[pending]) if pending else []
+
+    def set_potion_queue(self,queue):
+        self.pending_potion=dict(id=queue[0]['id'],until=queue[0]['until'],queue=queue) if queue else None
+        self.using_item=queue[0]['id'] if queue else None
+
+    def finish_potion(self,item_id):
+        queue=list(self.potion_queue())
+        for entry in queue:
+            if entry['id']==item_id:
+                queue.remove(entry);self.set_potion_queue(queue);return True
+        return False
+
     def use_potion(self, item_id):
         if item_definitions().get(int(item_id),{}).get('type')!=3:raise EOError('Select a health or mana potion')
         return self.use_item(item_id,asynchronous=True)
@@ -31,11 +46,17 @@ class ConsumablesMixin:
         if kind==24 and me['haircolor']==item['graphic_value']:raise EOError('Your hair already has this color. Nothing was consumed.')
         if kind==25 and not any(item_definitions().get(i,{}).get('special')==5 for i in self.equipment.values()):raise EOError('You have no cursed equipment to cure. Nothing was consumed.')
         if kind==3 and asynchronous:
-            if getattr(self,'pending_potion',None):raise EOError('Wait for the potion acknowledgement')
-            self.pending_potion=dict(id=item_id,until=time.monotonic()+5)
-            self.using_item=item_id
+            queue=list(self.potion_queue())
+            if len(queue)>=4:raise EOError('Wait for the queued potions')
+            if sum(e['id']==item_id for e in queue)>=self.item_amount(item_id):raise EOError('All remaining potions are already queued')
+            hp=min(me['maxhp'],me['hp']+sum(e.get('hp',0) for e in queue))
+            tp=min(me['maxtp'],me['tp']+sum(e.get('tp',0) for e in queue))
+            if not ((item['hp']>0 and hp<me['maxhp']) or (item['tp']>0 and tp<me['maxtp'])):raise EOError('Queued potions already cover your missing HP/TP')
+            queue.append(dict(id=item_id,hp=item['hp'],tp=item['tp'],until=time.monotonic()+5))
+            self.set_potion_queue(queue)
             self.send(14,10,number(item_id,2))
             return {'sent':True,'item_id':item_id}
+        if self.potion_queue():raise EOError('Wait for your potions to finish before using another item')
         self.using_item=item_id
         try:
             self.send(14,10,number(item_id,2))
@@ -50,24 +71,25 @@ class ConsumablesMixin:
         finally:self.using_item=None;self.item_use_rejected=False
 
     def apply_item_packet(self,f,a,p):
-        if (f,a)==(14,5) and getattr(self,'using_item',None):
-            if Reader(p).num(2)==self.using_item:
-                if getattr(self,'pending_potion',None):
-                    self.pending_potion=None;self.using_item=None;self.dirty=True
-                    self.events.append(dict(kind='item_use_failed',message='The potion is no longer in your bag.'))
-                    return
+        if (f,a)==(14,5):
+            item_id=Reader(p).num(2)
+            if self.finish_potion(item_id):
+                self.dirty=True
+                self.events.append(dict(kind='item_use_failed',item_id=item_id,message='The potion is no longer in your bag.'))
+                return
+            if getattr(self,'using_item',None)==item_id:
                 self.item_use_rejected=True
                 raise EOError('The server says this item is no longer in your bag')
         if (f,a)!=(14,3):return
         r=Reader(p);kind=r.num();item_id=r.num(2)
         if kind not in USABLE_TYPES:raise EOError('Unsupported item acknowledgement')
         remaining=r.num(4);weight=r.num();maximum=r.num()
+        consumed=max(0,self.item_amount(item_id)-remaining)
         self._set_amount(item_id,remaining);self.weight=weight;self.max_weight=maximum
         values=dict(weight=weight,max_weight=maximum)
         event=dict(kind='item_used',item_id=item_id,item_type=kind,remaining=remaining)
         if kind==3:
-            if getattr(self,'pending_potion',None) and self.pending_potion['id']==item_id:
-                self.pending_potion=None;self.using_item=None
+            self.finish_potion(item_id);event['consumed']=consumed
             event['hp_gain']=r.num(4);values.update(hp=r.num(2),tp=r.num(2))
         elif kind==24:
             color=r.num();self.state['self']['haircolor']=color;event['haircolor']=color

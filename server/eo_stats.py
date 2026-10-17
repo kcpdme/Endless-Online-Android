@@ -55,6 +55,7 @@ def apply_packet(session,f,a,p):
     elif f==26 and a in (2,16) and len(p)>=22:
         # Kill payload18, recipient EXP4, then optional level-up totals11.
         r.take(18);values['experience']=r.num(4)
+        if 'experience' in session.stats:event['exp_gain']=max(0,values['experience']-session.stats['experience'])
         if a==2 and len(r.rest())>=11:
             values['level']=r.num()
             for key in ('stat_points','skill_points','max_hp','max_tp','max_sp'):values[key]=r.num(2)

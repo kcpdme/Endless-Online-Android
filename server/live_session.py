@@ -70,10 +70,11 @@ class LiveSession(RewardsMixin, SkillsMixin, ConsumablesMixin, ServicesMixin, Ec
 
     def poll_actions(self):
         self.poll_spells()
-        pending=getattr(self,'pending_potion',None)
-        if pending and time.monotonic()>=pending['until']:
-            self.pending_potion=None;self.using_item=None;self.dirty=True
-            self.events.append(dict(kind='item_use_failed',message='Potion was not acknowledged. Check your HP/TP and bag.'))
+        queue=self.potion_queue()
+        expired=[e for e in queue if time.monotonic()>=e['until']]
+        if expired:
+            self.set_potion_queue([e for e in queue if e not in expired]);self.dirty=True
+            for e in expired:self.events.append(dict(kind='item_use_failed',item_id=e['id'],message='Potion was not acknowledged. Check your HP/TP and bag.'))
         now=time.monotonic()
         for uid,until in list(self.pending_pickups.items()):
             if until<=now:
@@ -161,6 +162,10 @@ class LiveSession(RewardsMixin, SkillsMixin, ConsumablesMixin, ServicesMixin, Ec
         self.apply_reward_packet(f,a,p)
         if self.state:self.apply_skill_packet(f,a,p)
         if not self.state:return
+        event=self.events[-1]
+        if event.get('kind') in ('npc_damage','npc_killed'):
+            npc=next((n for n in self.state['npcs'] if n['index']==event['npc_index']),{})
+            if npc:event.update(npc_id=npc['id'],x=npc['x'],y=npc['y'],npc_direction=npc.get('direction',0))
         r=Reader(p)
         if (f,a)==(25,3):
             old_position=(self.state['self']['x'],self.state['self']['y']) if self.state.get('self') else None
@@ -245,6 +250,8 @@ class LiveSession(RewardsMixin, SkillsMixin, ConsumablesMixin, ServicesMixin, Ec
                 self._upsert('items','uid',dict(drop))
                 self.drop_guards[drop['uid']]=(event['player_id'],time.monotonic()+30)
             self.dirty=True
+            cast=getattr(self,'casting',None)
+            if cast and cast['target_kind']=='npc' and cast['target_id']==event['npc_index']:self.cancel_spell()
         elif (f,a) in ((31,16),(31,17)) and self.events[-1].get('kind') in ('player_damage','peer_damage'):
             self.dirty=True
             if self.events[-1].get('dead') and self.events[-1]['kind']=='player_damage':

@@ -5,7 +5,7 @@ from test_live_state import fixture
 from eo_session import EOError,Reader,number
 
 def setup():
-    s=fixture();s.init_skills();s.spells=[dict(id=1,level=0),dict(id=4,level=0)]
+    s=fixture();s.init_skills();s.spells=[dict(id=1,level=0),dict(id=4,level=0),dict(id=5,level=0)]
     s.state['self'].update(hp=10,maxhp=30,tp=20,maxtp=30,level=1)
     s.state['npcs']=[dict(id=1,index=2,x=41,y=40)]
     s.stats.update(hp=10,tp=20,skill_points=2)
@@ -37,9 +37,33 @@ class SkillsStateTests(unittest.TestCase):
             s.cast_spell(1,'self')
         self.assertIsNotNone(s.casting,'Native SpellCooldownTime owns recovery; gateway must not reject a valid new preparation')
 
+    def test_full_health_self_heal_is_not_sent_or_left_casting(self):
+        s=setup();s.state['self']['hp']=30
+        with self.assertRaisesRegex(EOError,'already full'):s.cast_spell(1,'self')
+        self.assertIsNone(s.casting);self.assertEqual(s.sent,[]);self.assertEqual(s.stats['tp'],20)
+    def test_heal_ack_still_completes_if_potion_filled_hp_during_chant(self):
+        s=setup();s.cast_spell(1,'self');s.state['self']['hp']=30
+        s.apply_event(12,30,payload((100,2),(1,2),(4,4),(100,1),(30,2),(19,2)))
+        self.assertIsNone(s.casting);self.assertEqual(s.events[-1]['hp_gain'],0);self.assertEqual(s.stats['tp'],19)
+    def test_small_thunder_native_hit_and_no_dropped_reply_for_pruned_target(self):
+        s=setup();s.cast_spell(5,'npc',2);s.casting['released']=True;s.state['npcs'].clear()
+        s.apply_event(44,3,payload((5,2),(100,2),(0,1),(2,2),(3,3),(99,2),(18,2)))
+        self.assertIsNone(s.casting);self.assertEqual(s.stats['tp'],18)
+        self.assertEqual(s.events[-1]['x'],41);self.assertTrue(s.events[-1]['own_cast'])
+    def test_target_died_during_chant_cancels_before_release(self):
+        s=setup();s.cast_spell(5,'npc',2);s.state['npcs'].clear();s.casting['release_at']=0;s.poll_spells()
+        self.assertIsNone(s.casting);self.assertEqual(s.events[-1]['kind'],'spell_failed')
+        self.assertIn('no longer',s.events[-1]['message'])
+    def test_spell_kill_announces_native_exp_difference_only_to_recipient(self):
+        s=setup();s.stats['experience']=1000
+        p=payload((5,2),(100,2),(0,1),(2,2),(0,2),(0,2),(41,1),(40,1),(0,4),(3,3),(18,2),(1100,4))
+        s.apply_event(44,16,p);self.assertEqual(s.events[-1]['exp_gain'],100)
+        observer=setup();observer.player_id=200;observer.stats['experience']=500
+        observer.apply_event(44,16,p[:-4]);self.assertNotIn('exp_gain',observer.events[-1]);self.assertEqual(observer.stats['experience'],500)
+
     def test_unknown_tp_target_and_range_refused_before_sending(self):
         s=setup()
-        for args in [(5,'npc',2),(1,'npc',2),(4,'npc',99),(4,'player',100)]:
+        for args in [(6,'npc',2),(1,'npc',2),(4,'npc',99),(4,'player',100)]:
             with self.assertRaises(EOError):s.cast_spell(*args)
         s.state['self']['tp']=0
         with self.assertRaisesRegex(EOError,'TP'):s.cast_spell(4,'npc',2)
@@ -74,7 +98,7 @@ class SkillsStateTests(unittest.TestCase):
         p=payload((4,2),(200,2),(0,1),(2,2),(0,2),(0,2),(41,1),(40,1),(0,4),(10,3),(99,2))
         s.apply_event(44,16,p)
         self.assertEqual(s.stats['tp'],20)
-        self.assertIsNotNone(s.casting)
+        self.assertIsNone(s.casting) # another player killed the selected target; stop waiting
 
     def test_self_heal_native_hp_tp_and_observer_effect(self):
         s=setup();s.cast_spell(1,'self')

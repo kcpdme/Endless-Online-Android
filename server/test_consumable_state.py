@@ -13,10 +13,40 @@ class ConsumableStateTests(unittest.TestCase):
             before=time.monotonic();reply=s.use_potion(2);self.assertLess(time.monotonic()-before,.02)
             self.assertTrue(reply['sent']);self.assertEqual(s.item_amount(2),2)
             self.assertEqual(s.stats.get('hp'),None);self.assertEqual(s.sent[-1][:2],(14,10))
-            with self.assertRaisesRegex(EOError,'acknowledgement'):s.use_potion(2)
+            self.assertEqual(len(s.potion_queue()),1)
         s.apply_event(14,3,number(3,1)+number(2,2)+number(1,4)+number(3,1)+number(70,1)+number(20,4)+number(21,2)+number(0,2))
         self.assertIsNone(s.pending_potion);self.assertEqual(s.item_amount(2),1);self.assertEqual(s.stats['hp'],21)
         self.assertEqual(len(s.pending_moves),1);self.assertIsNotNone(s.casting)
+    def test_four_rapid_taps_pipeline_without_optimistic_consumption(self):
+        s=fixture();s.inventory=[dict(id=2,amount=20)];s.state['self'].update(hp=1,maxhp=1000,tp=0,maxtp=20)
+        with patch('consumables.item_definitions',return_value={2:dict(type=3,hp=20,tp=0)}):
+            for _ in range(4):self.assertTrue(s.use_potion(2)['sent'])
+            with self.assertRaisesRegex(EOError,'queued'):s.use_potion(2)
+        self.assertEqual(len(s.sent),4);self.assertEqual(s.item_amount(2),20)
+        for i in range(4):
+            s.apply_event(14,3,number(3,1)+number(2,2)+number(19-i,4)+number(3,1)+number(70,1)+number(20,4)+number(21+20*i,2)+number(0,2))
+        self.assertIsNone(s.pending_potion);self.assertEqual(s.item_amount(2),16);self.assertEqual(s.stats['hp'],81)
+    def test_queued_potions_do_not_overconsume_past_full_health(self):
+        s=fixture();s.inventory=[dict(id=2,amount=20)];s.state['self'].update(hp=40,maxhp=50,tp=0,maxtp=20)
+        with patch('consumables.item_definitions',return_value={2:dict(type=3,hp=20,tp=0)}):
+            s.use_potion(2)
+            with self.assertRaisesRegex(EOError,'cover'):s.use_potion(2)
+        self.assertEqual(len(s.sent),1);self.assertEqual(s.item_amount(2),20)
+
+    def test_native_noop_potion_ack_keeps_item_and_releases_pending(self):
+        s=fixture();s.inventory=[dict(id=2,amount=2)];s.state['self'].update(hp=50,maxhp=50,tp=0,maxtp=20)
+        s.set_potion_queue([dict(id=2,until=99999999,hp=20,tp=0)])
+        s.apply_event(14,3,number(3,1)+number(2,2)+number(2,4)+number(3,1)+number(70,1)+number(0,4)+number(50,2)+number(0,2))
+        self.assertIsNone(s.pending_potion);self.assertEqual(s.item_amount(2),2)
+        self.assertEqual(s.events[-1]['consumed'],0);self.assertEqual(s.stats['hp'],50)
+
+    def test_legacy_item_use_cannot_mistake_an_earlier_potion_reply(self):
+        s=fixture();s.inventory=[dict(id=2,amount=2)];s.state['self'].update(hp=1,maxhp=50,tp=0,maxtp=20)
+        s.set_potion_queue([dict(id=2,until=99999999,hp=20,tp=0)])
+        with patch('consumables.item_definitions',return_value={2:dict(type=3,hp=20,tp=0)}):
+            with self.assertRaisesRegex(EOError,'potions to finish'):s.use_item(2)
+        self.assertEqual(s.sent,[]);self.assertEqual(s.item_amount(2),2)
+
     def test_async_potion_rejection_does_not_disconnect_or_change_inventory(self):
         s=fixture();s.pending_potion={'id':2,'until':99999999};s.using_item=2;s.inventory=[dict(id=2,amount=2)]
         s.apply_event(14,5,number(2,2))

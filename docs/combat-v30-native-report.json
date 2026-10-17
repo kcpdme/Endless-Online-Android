@@ -1,0 +1,26 @@
+{
+  "result": "passed",
+  "version": "0.27.0",
+  "moving_potion_seconds": 0.017472023144364357,
+  "four_potion_native_ack_seconds": 0.058463238179683685,
+  "inventory_hp_updates_native_only": true,
+  "full_health_heal_not_left_pending": true,
+  "small_thunder": {
+    "native_hit_received": true,
+    "observer_received": true,
+    "steps": 6,
+    "corrections": 0,
+    "tp_spent": 2,
+    "caster_finished_after_moving_out_of_visibility": true
+  },
+  "boss": {
+    "damage": 22500,
+    "hp_percent": 33,
+    "exp_gained": 6666,
+    "children_despawn_event_for_observer": true
+  },
+  "operator_accounts_modified": false,
+  "isolated_runtime": true,
+  "racing_potion_noop_native_ack_keeps_item": true,
+  "heal_filled_during_chant_native_zero_gain_ack": true
+}

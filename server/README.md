@@ -33,7 +33,7 @@ The generated config binds **127.0.0.1:8078**, explicitly disables public server
 - SQLite 3.46.1: https://www.sqlite.org/2024/sqlite-amalgamation-3460100.zip, SHA256 `77823cb110929c2bcb0f5d48e4833b5c59a8a6e40cdea3936b99e199dbbe5784`. Public domain.
 - Authoritative world maps/PUB/config content: https://etheosstorage.blob.core.windows.net/data/sample-data.zip, SHA256 `fad601ce11a4ed8d991b80b1cf31fcba237d01c566b4dc40cabb86b28861cc4e`.
 
-The build disables upstream precompiled headers and force-includes the upstream `src/stdafx.h` umbrella header instead. This retains required standard-library includes with the current compiler. Setup applies the checked-in password, account coupon, optional character HP floor, bounded spike damage, and mobile spell patches to the pinned source. Patch hashes are recorded in the generated content report.
+The build disables upstream precompiled headers and force-includes the upstream `src/stdafx.h` umbrella header instead. This retains required standard-library includes with the current compiler. Setup applies the checked-in password, account coupon, optional character HP floor, bounded spike damage, mobile spell, and mobile potion/combat feedback patches to the pinned source. Patch hashes are recorded in the generated content report.
 
 Reference content is downloaded into local ignored state. The existence of a download does not establish publication rights for the original game content. The optional economy import below stages the supplied original shops and drops separately, with explicit config overrides. The separately recovered quest archive is not used by this baseline.
 

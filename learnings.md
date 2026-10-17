@@ -16,7 +16,7 @@ Godot 4.7.2, typed GDScript and 2D isometric rendering are sufficient. A Unity/3
 rewrite and a larger server have not been needed for the measured regressions.
 
 Baseline before this update: commit `8c9e541`, APK 0.10.0/code 10. The current
-build is 0.26.1/code 29. See the final v0.21 section for current chat/presence and the v0.20 sections for equipment/HUD/Junk support. v0.12 added level/EXP, Nearby Send closure and
+build is 0.27.0/code 30. See the final v0.21 section for current chat/presence and the v0.20 sections for equipment/HUD/Junk support. v0.12 added level/EXP, Nearby Send closure and
 native consumables; v0.13 adds native skills and touch targeting. v0.11 added native bank/lockers, player inspection and
 trading, local/global/private chat, a dynamic joystick, and the heart/TP HUD,
 as well as placing NPC names near visible heads and fixing observer equipment/
@@ -1591,3 +1591,94 @@ conditions. Other players need0.24.0 for the queue/phase and numeric-ID fixes.
   inventory, cooldown configuration and binary stay unchanged. Ignored scripts:
   work/hosting/{test_v29_heal*,upgrade_v29,deploy_v29}.py. APK0.26.1/code29 uses
   the same package/signing key and save-preserving reinstall workflow.
+
+
+## v0.27.0 / code30 — responsive potions, paperdoll and complete combat feedback
+
+- User requested8fixes: fast potions; unclipped profile; tap equipment for details
+  and return on close; double tap unequip/no Remove/footer labels; kill EXP/boss
+  damage+health; unstuck full-HP Self Heal/no casting rectangle; Small Thunder
+  native completion; green spendable stat increments. All included together.
+- Native baseline isolated timing: idle potion22–37ms, moving446ms because the
+  global action queue waits for walking400ms/attack500ms. Sixth reproducible
+  patch etheos-mobile-feedback.patch adds MobileFastPotions=false (our setup/live
+  yes). On the world thread, pick a queued Item_Use only when its EIF type is
+  Heal and the character is alive; execute the ordinary native handler after
+  authentication/sequence validation without moving queue.next. Other packets,
+  walking/attack timing, trade/ownership/HP checks remain native. PacketQueueMax
+  still bounds input. New moving-potion measurement17ms; public network delay
+  and45ms streaming interval are additional.
+- Rapid taps now pipeline up to4potions rather than dropping taps until each
+  round-trip ACK. Server pending_potion remains a compatibility dictionary with
+  id/until plus queue entries {id,hp,tp,until}; potion_queue/set_potion_queue/
+  finish_potion maintain it. Projected gains validate only whether another
+  queued use is useful/owned; they NEVER change displayed HP or item counts.
+  Native Item_Reply controls quantities/HP/TP. Each rejection/timeout removes one
+  request; client keeps request-id→item-id pending_potion_requests. Blocking
+  legacy item_use waits until pending potions finish so its14/3 waiter cannot
+  accidentally consume a different item's earlier ACK.
+- Native Item_Use previously sent no reply for zero healing, e.g. a party heal
+  filled HP while a potion was in flight. Sixth patch now sends the standard
+  zero-gain unchanged-quantity Item_Reply; no item is consumed or quest advanced.
+  Adapter event.consumed detects this; client releases pending and says potion
+  kept. Native test verifies this race, plus a potion filling HP during Self
+  Heal's chant: heal sends0actualgain and correctly completes. Early full-health
+  Self Heal is refused client/server without spending TP; a brief spell-name
+  flash says HP full. Do not make it wait for a nonexistent health increase.
+- Small Thunder5 already worked stationary, including genuine misses0damage.
+  Moving casting exposed native NPC::Damage broadcasting only to characters
+  still in range; a caster who moved out before damage resolved got no reply and
+  eventually a generic timeout. Sixth patch always sends the result to `from`
+  as well as nearby observers. Native kill already includes damagelist members.
+  An actual6step Thunder cast now completes after leaving NPC visibility, with
+  TP cost2, observer hit and0corrections. Adapter retains last target coordinates
+  for an out-of-view result, checks departed/out-of-range/TP before release,
+  cancels promptly if another player kills the target, and explicitly cancels
+  native state on timeout (including released casts). Client also clears its
+  matching cast from real heal/hit/kill events even if casting:null is omitted
+  because begin/end happened between streaming snapshots. Death cancels local
+  casting. Spell durations and native600ms cooldown are unchanged.
+- Removed the HUD cast ProgressBar completely; only targeting has a small text
+  hint. Original spell-name bubbles/effects remain. Full-health local flash
+  clears any armed target; invalid RPC/cancellation unlocks the shortcut.
+- Original NPCDeathHandler compares native recipient cumulative EXP with the
+  prior total. eo_stats.py now adds exp_gain on melee kills; skills.py does the
+  same for spell kills. Only packets with a private EXP suffix can grant/display
+  a gain. Client floats +N EXP above the player's head, without a kill ribbon.
+  NPC kill/hit events retain ENFid/coordinates before removal. Boss damage
+  anchors above opaque sprite bounds; active health strips/names render after
+  roof/other sprites with native % text. Large sprites get72px strips, normal
+  sprites34px. Native Overlord test22500damage→33%, kill+6666EXP and original
+  child despawn event. Never infer an exact currentHP from rounded percentages.
+- Own paperdoll is840×680 with a proper48px Stats header button; removed header
+  Item details and old footer equipment-name/damage/armor/Remove button. Classic
+  bitmap and equipment slots stay2× at(40,80), fully within the card. A280ms tap
+  timer distinguishes single from double: single opens details; double sends
+  one native unequip. Timer stops on hiding so closing cannot open stale details.
+  Inspection of someone else's doll can show details but never unequips them.
+- CharacterStats.show_item accepts return_to/equipped. Close button/Android Back
+  restores the originating paperdoll (own or inspection). Stats closes back to
+  own doll. `dismiss()` closes all without restoring an old parent when opening
+  chat/shop/services or disconnecting; `hide()` is intentional Back navigation.
+  Item title wraps within its card; details are one readable scrollable column.
+  Available + buttons use green normal/hover/pressed and muted disabled styles;
+  held-stat allocation continues to use real server acknowledgements.
+- 64Python state cases; new paperdoll_mobile actual Godot GUI touch test covers
+  single-tap/back, double-tap exact-one request, header bounds, green buttons,
+  full-health guard, event-only Thunder completion, boss anchor and EXP. Existing
+  combat, movement, chat, short input and gameplay smoke pass. Rendered desktop
+  screenshots inspected in ignored work/v30-{paperdoll,item,stats,bosscombat}.png.
+  Sanitized reports docs/{combat-v30-native,gameplay-v30}-report.json. All6patches
+  apply to a clean pin and remain detectable on repeat setup. Local native binary
+  can still be stale until rebuilt; hosted Debian native binary was rebuilt and
+  tested in a disposable runtime before deployment.
+- Private fixture map40 contains one stationary boss; map136 uses stationary
+  spawn_type7, which sets spawn_time0 and can legitimately respawn immediately.
+  Do not assert perpetual absence after killing the fixture boss. Verify actual
+  NPC_Junk child removal and permit subsequent genuine Range_Reply respawns.
+  Live world data/maps were never replaced by disposable fixture maps.
+- Deployment backs up binary/config/DB/four Python files, verifies before/after
+  source hashes and native binary identity, enables MobileFastPotions=yes and
+  restarts world/gateway/WebSocket. No operator accounts/stats/inventory edited.
+  Ignored work/hosting/*v30* scripts contain setup, tests and deployment. Android
+  version0.27.0/code30 keeps package/signing key and save-preserving -r update.

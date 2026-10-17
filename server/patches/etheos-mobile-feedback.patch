@@ -1,0 +1,106 @@
+--- a/src/eoserver.cpp
++++ b/src/eoserver.cpp
+@@ -8,6 +8,9 @@
+ 
+ #include "config.hpp"
+ #include "eoclient.hpp"
++#include "character.hpp"
++#include "eodata.hpp"
++#include "player.hpp"
+ #include "packet.hpp"
+ #include "sln.hpp"
+ #include "timer.hpp"
+@@ -97,16 +100,37 @@
+ 			continue;
+ 		}
+ 
+-		if (size != 0 && client->queue.next <= now)
+-		{
+-			std::unique_ptr<ActionQueue_Action> action = std::move(client->queue.queue.front());
+-			client->queue.queue.pop();
++		// Health/mana items have no action delay in the original Item_Use handler.
++		// Mobile movement must not put their healing behind a400/500ms walk/attack.
++		std::unique_ptr<ActionQueue_Action> potion;
++		if (size != 0 && client->queue.next > now && server->world->config["MobileFastPotions"]
++		 && client->player && client->player->character && client->player->character->hp > 0)
++		{
++			std::queue<std::unique_ptr<ActionQueue_Action>> waiting;
++			while (!client->queue.queue.empty())
++			{
++				auto entry = std::move(client->queue.queue.front());
++				client->queue.queue.pop();
++				PacketReader check = entry->reader;
++				if (!potion && check.Family() == PACKET_ITEM && check.Action() == PACKET_USE
++				 && check.Remaining() >= 2 && server->world->eif->Get(check.GetShort()).type == EIF::Heal)
++					potion = std::move(entry);
++				else waiting.push(std::move(entry));
++			}
++			client->queue.queue = std::move(waiting);
++		}
++		bool expedited = bool(potion);
++		if (expedited || (size != 0 && client->queue.next <= now))
++		{
++			std::unique_ptr<ActionQueue_Action> action;
++			if (expedited) action = std::move(potion);
++			else { action = std::move(client->queue.queue.front()); client->queue.queue.pop(); }
+ 
+ #ifndef DEBUG_EXCEPTIONS
+ 			try
+ 			{
+ #endif // DEBUG_EXCEPTIONS
+-				Handlers::Handle(action->reader.Family(), action->reader.Action(), client, action->reader, !action->auto_queue);
++				Handlers::Handle(action->reader.Family(), action->reader.Action(), client, action->reader, expedited || !action->auto_queue);
+ #ifndef DEBUG_EXCEPTIONS
+ 			}
+ 			catch (Socket_Exception& e)
+@@ -152,7 +176,7 @@
+ 			}
+ #endif // DEBUG_EXCEPTIONS
+ 
+-			client->queue.next = now + action->time;
++			if (!expedited) client->queue.next = now + action->time;
+ 		}
+ 	}
+ }
+--- a/src/eoserv_config.cpp
++++ b/src/eoserv_config.cpp
+@@ -42,6 +42,7 @@
+ 	eoserv_config_default(config, "MaxConnectionsPerPC", 1);
+ 	eoserv_config_default(config, "HangupDelay"        , 10.0);
+ 	eoserv_config_default(config, "QuietConnectionErrors", false);
++	eoserv_config_default(config, "MobileFastPotions", false);
+ 	eoserv_config_default(config, "MaxLoginAttempts"   , 3);
+ 	eoserv_config_default(config, "LoginQueueSize"     , 10);
+ 	eoserv_config_default(config, "CheckVersion"       , true);
+--- a/src/npc.cpp
++++ b/src/npc.cpp
+@@ -497,7 +497,7 @@
+ 
+ 		UTIL_FOREACH(this->map->characters, character)
+ 		{
+-			if (character->InRange(this))
++			if (character == from || character->InRange(this))
+ 			{
+ 				character->Send(builder);
+ 			}
+--- a/src/handlers/Item.cpp
++++ b/src/handlers/Item.cpp
+@@ -112,7 +112,18 @@
+ 			tpgain = std::max(tpgain, 0);
+ 
+ 			if (hpgain == 0 && tpgain == 0)
++			{
++				// A party heal can fill HP while a potion is in flight. Confirm
++				// the native no-op without consuming it or leaving input pending.
++				reply.AddInt(character->HasItem(id));
++				reply.AddChar(static_cast<unsigned char>(character->weight));
++				reply.AddChar(static_cast<unsigned char>(character->maxweight));
++				reply.AddInt(0);
++				reply.AddShort(character->hp);
++				reply.AddShort(character->tp);
++				character->Send(reply);
+ 				break;
++			}
+ 
+ 			character->hp += hpgain;
+ 			character->tp += tpgain;

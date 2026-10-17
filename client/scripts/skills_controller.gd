@@ -20,7 +20,6 @@ var chants: Dictionary = {}
 var effects: Array[Dictionary] = []
 var ready_at: int = 0
 var cast_hint: Label
-var cast_bar: ProgressBar
 var character_id: int = -1
 var last_rows: String = ""
 
@@ -57,15 +56,6 @@ func build(owner_game: Node, parent: Control) -> void:
 	cast_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	cast_hint.set_anchors_preset(Control.PRESET_CENTER_BOTTOM, true)
 	cast_hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	cast_bar = ProgressBar.new()
-	cast_bar.position = Vector2(-120, -238)
-	cast_bar.size = Vector2(240, 6)
-	cast_bar.show_percentage = false
-	cast_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	parent.add_child(cast_bar)
-	cast_bar.set_anchors_preset(Control.PRESET_CENTER_BOTTOM, true)
-	cast_bar.add_theme_stylebox_override("background", game._style(Color(0, 0, 0, 0.5), Color.TRANSPARENT, 3))
-	cast_bar.add_theme_stylebox_override("fill", game._style(Color("89caec"), Color.TRANSPARENT, 3))
 	panel = game._modal(parent, Vector2(850, 600))
 	var card: Control = panel.get_child(0) as Control
 	game._wood_card(card)
@@ -178,8 +168,15 @@ func target(tile: Vector2i) -> bool:
 func cast(ident: int, kind: String, target_id: int) -> void:
 	if not casting.is_empty() or Time.get_ticks_msec() < ready_at: return
 	if not game.online.mobile_action_ready(): return
+	var spell: Dictionary = info(ident)
+	armed = 0
+	if kind == "self" and int(spell.get("type", -1)) == 0 and int(game.online.player.get("hp", 0)) >= int(game.online.player.get("max_hp", 1)):
+		flash_spell(ident, "HP full")
+		refresh()
+		return
 	game._release_attack()
 	armed = 0
+	flash_spell(ident)
 	var seconds: float = float(info(ident).get("cast_time", 1)) * 0.48
 	casting = {"spell_id": ident, "until": Time.get_ticks_msec() + int(seconds * 1000), "seconds": seconds}
 	ready_at = int(casting.until) + CAST_POSE_MSEC
@@ -232,12 +229,8 @@ func refresh() -> void:
 		button.tooltip_text = "Skills" if index == 2 else str(spell.get("name", "Assign a skill"))
 		button.modulate = Color("ffe39c") if armed == ident and ident > 0 else Color.WHITE
 		button.disabled = index < 2 and (game.online.defeated or not casting.is_empty() or Time.get_ticks_msec() < ready_at)
-	cast_hint.visible = active and game.started and not game._modal_open() and (armed > 0 or not casting.is_empty())
-	cast_bar.visible = cast_hint.visible and not casting.is_empty()
-	if not casting.is_empty():
-		cast_hint.text = str(info(int(casting.get("spell_id", 0))).get("name", "Casting")) + "…"
-		cast_bar.value = 100.0 * (1.0 - clampf(float(int(casting.get("until", 0)) - Time.get_ticks_msec()) / maxf(1.0, float(casting.get("seconds", 0.48)) * 1000.0), 0.0, 1.0))
-	elif armed > 0: cast_hint.text = str(info(armed).get("name", "Skill")) + " · Choose a target"
+	cast_hint.visible = active and game.started and not game._modal_open() and armed > 0
+	if armed > 0: cast_hint.text = str(info(armed).get("name", "Skill")) + " · Choose a target"
 	if not panel.visible: return
 	heading.text = str(master.get("name", "SKILLS"))
 	var rows: Dictionary = {}
@@ -283,6 +276,11 @@ func change(action: String) -> void:
 	if selected == 0: return
 	game.online.session.request("skill_" + action, {"spell_id": selected})
 
+func flash_spell(ident: int, suffix: String = "") -> void:
+	var text: String = str(info(ident).get("shout", info(ident).get("name", "Skill")))
+	if not suffix.is_empty(): text += " · " + suffix
+	game.online.chat_bubbles[int(game.online.player.get("player_id", 0))] = {"text": text, "until": Time.get_ticks_msec() + 900}
+
 func event(event_data: Dictionary) -> void:
 	var kind: String = str(event_data.get("kind", ""))
 	var pid: int = int(event_data.get("player_id", 0))
@@ -297,6 +295,8 @@ func event(event_data: Dictionary) -> void:
 		if kind == "spell_failed": game._toast(str(event_data.get("message", "Cast cancelled")))
 		return
 	if not event_data.has("spell_id") or kind not in ["npc_damage", "npc_killed", "spell_heal"]: return
+	if int(event_data.get("player_id", -1)) == int(game.online.player.get("player_id", -2)) or bool(event_data.get("own_cast", false)):
+		if int(casting.get("spell_id", -1)) == int(event_data.spell_id): casting.clear()
 	var target_kind: String = "npc" if kind in ["npc_damage", "npc_killed"] else "player"
 	var ident: int = int(event_data.get("npc_index", 0)) if target_kind == "npc" else int(event_data.get("target_id", pid))
 	var at: Vector2 = game.tile_position(Vector2i(int(event_data.get("x", 0)), int(event_data.get("y", 0)))) if target_kind == "npc" else player_position(ident)
@@ -305,7 +305,7 @@ func event(event_data: Dictionary) -> void:
 		fx.merge({"kind": target_kind, "id": ident, "at": at, "start": Time.get_ticks_msec()})
 		effects.append(fx)
 	chants.erase(pid)
-	if kind == "spell_heal": game.damage_numbers.append({"position": at + Vector2(0, -62), "value": "+%d" % int(event_data.get("hp_gain", 0)), "time": 0.85})
+	if kind == "spell_heal" and int(event_data.get("hp_gain", 0)) > 0: game.damage_numbers.append({"position": at + Vector2(0, -62), "value": "+%d" % int(event_data.get("hp_gain", 0)), "time": 0.85})
 
 func player_position(pid: int) -> Vector2:
 	if pid == int(game.online.player.get("player_id", 0)): return game.player_world

@@ -45,7 +45,7 @@ def main():
     deps = state / 'deps'; deps.mkdir(exist_ok=True)
     source = state / 'source'; build = state / 'build'; build.mkdir(exist_ok=True)
     checkout('etheos', source)
-    patches = [ROOT / 'patches' / name for name in ('etheos-password-v3.patch', 'etheos-redeem.patch', 'etheos-character-hp.patch', 'etheos-spikes.patch', 'etheos-mobile-spells.patch')]
+    patches = [ROOT / 'patches' / name for name in ('etheos-password-v3.patch', 'etheos-redeem.patch', 'etheos-character-hp.patch', 'etheos-spikes.patch', 'etheos-mobile-spells.patch', 'etheos-mobile-feedback.patch')]
     for patch in patches:
         applied = subprocess.run(['git','-C',str(source),'apply','--reverse','--check',str(patch)],capture_output=True).returncode == 0
         if not applied: run('git','-C',source,'apply',patch)
@@ -100,6 +100,7 @@ SLN = no
 ServerName = Aster Vale Local Development
 FirstCharacterAdmin = no
 AllowMovingSpells = yes
+MobileFastPotions = yes
 IPReconnectLimit = 0
 MaxConnectionsPerIP = 12
 StartMap = 5

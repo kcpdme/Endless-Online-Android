@@ -138,8 +138,8 @@ values; they do not locally subtract estimated health.
 `potion_use {item_id}` sends the original native Item_Use for health/mana
 potions and immediately returns a transport receipt. It is nonblocking alongside
 walks and spell chants. Native Item_Reply updates exact inventory and HP/TP;
-`item_use_failed` releases the shortcut after rejection/timeout. Only one potion
-may await acknowledgement. Other consumables retain `item_use` and standing
+`item_use_failed` releases the shortcut after rejection/timeout. Up to four potions may await acknowledgement, bounded by ownership and useful
+projected gains; authoritative HP/counts remain unchanged until native replies. Other consumables retain `item_use` and standing
 checks. Trade, death and map-transition guards remain in force.
 
 The fifth native patch, `etheos-mobile-spells.patch`, adds AllowMovingSpells.
@@ -170,3 +170,26 @@ SpellCastCooldown=600ms and SpellCooldownTime remain unchanged and enforce
 about1.07seconds between repeated heal effects. Isolated first-heal timing was
 about507ms including dispatch; public network delay is additional. HP/TP are
 updated only from native replies. See docs/heal-v29-timing-report.json.
+
+
+### Mobile potion priority and combat receipts (v0.27)
+
+The sixth native patch, `etheos-mobile-feedback.patch`, adds MobileFastPotions
+(defaultfalse; our setup/live configyes). Healing Item_Use can execute on the
+world thread during a walk/attack wait without resetting that action's deadline.
+Other item types stay in the normal queue. Native use still checks ownership,
+trade and healing and returns actual HP/TP/counts. Zero-gain races now receive a
+standard unchanged-count Item_Reply. The gateway pipelines at mostfour useful,
+owned potions; a blocking item_use waits for their acknowledgements.
+
+NPC::Damage always includes the caster in its result broadcast, even when a
+moving caster left visibility during the chant. This prevents valid Small Thunder
+hits from leaving TP/casting pending. Native skill timing/cooldown is unchanged.
+Dead/departed targets cancel promptly, and actual effect events clear local
+casting even if no separate casting:null delta was sent. Full-health Self Heal
+is rejected without TP use; no large cast bar is shown.
+
+Kill packets with private EXP appendages generate exp_gain from the authoritative
+new total minus the previous total. Both melee and spell kills support it;
+observers without that suffix do not gain EXP. Boss damage and rounded native HP
+percentages are drawn above the visible head and above other scenery.

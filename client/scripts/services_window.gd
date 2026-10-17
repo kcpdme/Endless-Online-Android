@@ -73,7 +73,7 @@ func open(kind: String, data: Dictionary) -> void:
 	state = data.duplicate(true)
 	game.inventory.hide()
 	game.character_panel.hide()
-	game.stats_ui.hide()
+	game.stats_ui.dismiss()
 	game.shop_ui.close()
 	game._cancel_controls()
 	quantity.max_value = 2000000000
@@ -251,6 +251,5 @@ func _extra() -> void:
 		game.chat_ui.open(str(state.get("name", "")))
 
 func _inspect_item(kind: String) -> void:
-	var id: int = int((inspected.get("equipment", {}) as Dictionary).get(game.online._slot_name(kind), 0))
-	var info: Dictionary = game.online.item_info("item:%d" % id)
-	details.text = "%s\n\nDamage  %d–%d\nArmor  +%d\nHP  +%d     TP  +%d\nAccuracy  +%d\nEvade  +%d\n\nSTR +%d   INT +%d   WIS +%d\nAGI +%d   CON +%d   CHA +%d\n\nLevel required: %d" % [str(info.get("name", "Empty slot")), int(info.get("min_damage", 0)), int(info.get("max_damage", 0)), int(info.get("armor", 0)), int(info.get("hp", 0)), int(info.get("tp", 0)), int(info.get("accuracy", 0)), int(info.get("evade", 0)), int(info.get("strength", 0)), int(info.get("intelligence", 0)), int(info.get("wisdom", 0)), int(info.get("agility", 0)), int(info.get("constitution", 0)), int(info.get("charisma", 0)), int(info.get("level_requirement", 0))]
+	var id: int = int((state.get("equipment", {}) as Dictionary).get(game.online._slot_name(kind), 0))
+	if id > 0: game.stats_ui.show_item("item:%d" % id, panel, true)

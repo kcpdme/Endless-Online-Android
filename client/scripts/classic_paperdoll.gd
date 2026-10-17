@@ -2,6 +2,10 @@ extends Control
 ## Original 380 × 290 EO male paperdoll bitmap and exact equipment hit regions.
 ## The original silhouette stays visible; no live character is painted over the art.
 signal equipment_selected(kind: String)
+signal equipment_activated(kind: String)
+const DOUBLE_TAP_SECONDS: float = 0.28
+var pending_kind: String = ""
+var tap_timer: Timer
 signal close_requested
 
 var inspection: Dictionary = {}
@@ -15,6 +19,17 @@ func _ready() -> void:
 	custom_minimum_size = Vector2(380, 290)
 	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	mouse_filter = Control.MOUSE_FILTER_STOP
+	tap_timer = Timer.new()
+	tap_timer.one_shot = true
+	tap_timer.timeout.connect(func() -> void:
+		var kind: String = pending_kind
+		pending_kind = ""
+		if is_visible_in_tree() and not kind.is_empty(): equipment_selected.emit(kind)
+	)
+	add_child(tap_timer)
+	visibility_changed.connect(func() -> void:
+		if not is_visible_in_tree(): pending_kind = ""; tap_timer.stop()
+	)
 	var data: Dictionary = _paperdoll_data()
 	var path: String = str(data.get("background", ""))
 	if not path.is_empty() and ResourceLoader.exists(path):
@@ -38,7 +53,7 @@ func _ready() -> void:
 		button.add_theme_stylebox_override("normal", _outline(false))
 		button.add_theme_stylebox_override("hover", _outline(true, Color(0.98, 0.88, 0.53, 0.80)))
 		button.add_theme_stylebox_override("pressed", _outline(true, Color(1.0, 0.94, 0.70, 1.0)))
-		button.pressed.connect(func() -> void: equipment_selected.emit(kind))
+		button.pressed.connect(func() -> void: select_equipment(kind))
 		add_child(button)
 		slots[kind] = button
 	var rows: Array[String] = ["Wayfarer", "Aeven", "-", "-", "-", "-", "-", "-"]
@@ -68,6 +83,17 @@ func _ready() -> void:
 	close_button.pressed.connect(func() -> void: close_requested.emit())
 	add_child(close_button)
 	refresh(selected_kind)
+
+func select_equipment(kind: String) -> void:
+	# Resolve one tap after the double-tap window, before opening a modal over it.
+	if pending_kind == kind and not tap_timer.is_stopped():
+		pending_kind = ""
+		tap_timer.stop()
+		if inspection.is_empty(): equipment_activated.emit(kind)
+		else: equipment_selected.emit(kind)
+		return
+	pending_kind = kind
+	tap_timer.start(DOUBLE_TAP_SECONDS)
 
 func _paperdoll_data() -> Dictionary:
 	if game == null: return {}
