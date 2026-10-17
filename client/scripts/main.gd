@@ -51,9 +51,8 @@ var hero_equipped: Dictionary = {}
 var bag_slots: Array[Button] = []
 var offline_bag_slots: Array[Button] = []
 var bag_grid: Control
-var bag_navigation: Control
+var bag_scroll: ScrollContainer
 var offline_bag_panel: Control
-var inventory_preview: TextureRect
 var equipment_slots: Dictionary = {}
 var selected_item: String = "weapon"
 var item_title: Label
@@ -103,7 +102,6 @@ var coin_label: Label
 var toast_label: Label
 var location_label: Label
 var health_label: Label
-var inventory_detail: Label
 var equip_button: Button
 var attack_button: WeaponButton
 var toast_time: float = 0.0
@@ -1004,45 +1002,22 @@ func _build_inventory(parent: Node) -> void:
 		bag_slots.append(slot)
 	offline_bag_panel = bag
 	offline_bag_slots = bag_slots.duplicate()
+	bag_scroll = ScrollContainer.new()
+	bag_scroll.position = Vector2(28, 120)
+	bag_scroll.size = Vector2(1068, 408)
+	bag_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	bag_scroll.scroll_deadzone = 12
+	card.add_child(bag_scroll)
 	bag_grid = preload("res://scripts/bag_grid.gd").new()
 	bag_grid.game = self
-	bag_grid.position = Vector2(28, 150)
-	bag_grid.size = Vector2(672, 192)
-	card.add_child(bag_grid)
+	bag_grid.custom_minimum_size = Vector2(1056, 384)
+	bag_scroll.add_child(bag_grid)
 	bag_grid.hide()
-	bag_navigation = Control.new()
-	bag_navigation.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	card.add_child(bag_navigation)
-	_button(bag_navigation, "‹", Vector2(28, 366), Vector2(60, 46), func() -> void: bag_grid.change_page(-1))
-	bag_grid.page_label = _label(bag_navigation, "Bag 1 / 1", Vector2(102, 377), 20, GOLD)
-	_button(bag_navigation, "›", Vector2(272, 366), Vector2(60, 46), func() -> void: bag_grid.change_page(1))
-	_button(bag_navigation, "Move to next bag", Vector2(390, 366), Vector2(310, 46), func() -> void: bag_grid.move_to_next_bag())
-	_label(bag_navigation, "Drag an item to rearrange your bag.\nLarge belongings need a little more room.", Vector2(28, 448), 20, MUTED)
-	var detail: Panel = _panel(card, Vector2(728, 92), Vector2(364, 456), Color("644424"))
-	detail.add_theme_stylebox_override("panel", _wood_style(Color("644424"), Color("bf9555"), 3))
-	item_title = _label(detail, "", Vector2(16, 10), 23)
-	item_title.size = Vector2(332, 54)
-	item_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	inventory_preview = TextureRect.new()
-	inventory_preview.position = Vector2(74, 72)
-	inventory_preview.size = Vector2(216, 198)
-	inventory_preview.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	inventory_preview.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	inventory_preview.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	inventory_preview.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	detail.add_child(inventory_preview)
-	var scroll: ScrollContainer = ScrollContainer.new()
-	scroll.position = Vector2(16, 286)
-	scroll.size = Vector2(332, 100)
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	detail.add_child(scroll)
-	inventory_detail = Label.new()
-	inventory_detail.add_theme_font_size_override("font_size", 18)
-	inventory_detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	inventory_detail.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.add_child(inventory_detail)
-	_button(detail, "Item details / larger view", Vector2(16, 398), Vector2(332, 42), func() -> void: stats_ui.show_item(selected_item))
-	equip_button = _button(card, "", Vector2(728, 564), Vector2(364, 52), func() -> void:
+	item_title = _label(card, "", Vector2(28, 548), 22)
+	item_title.size = Vector2(710, 32)
+	item_title.clip_text = true
+	_label(card, "Drag items to rearrange your bag.", Vector2(28, 591), 17, MUTED)
+	equip_button = _button(card, "", Vector2(754, 558), Vector2(338, 52), func() -> void:
 		if _owns_item(selected_item) and not _is_equipped(selected_item): _toggle_equip()
 	, true)
 	_inventory_theme(card)
@@ -1233,26 +1208,16 @@ func _refresh_ui() -> void:
 		quest_label.text = "First steps complete  ✓\nExplore Aeven at your own pace"
 	coin_label.text = "%d Gold" % coins
 	location_label.text = "%s  /  %d, %d" % [str(world.get("name", "Aeven")), player_tile.x, player_tile.y]
-	if inventory_detail != null:
+	if item_title != null:
 		var worn: bool = _is_equipped(selected_item)
 		var owned: bool = _owns_item(selected_item)
 		item_title.text = _item_name(selected_item) if owned else "Your bag"
-		var detail: String = "2 damage per strike" if selected_item == "weapon" else "Starting outfit • changes your appearance"
-		inventory_detail.text = "In your bag  ·  " + detail + "\nSelect an item, then equip it."
-		if selected_item == "coins": inventory_detail.text = "%d gold coins" % coins
-		if not owned:
-			inventory_detail.text = "No item selected.\nRemove worn equipment from your character to store it here."
-		elif worn:
-			inventory_detail.text = "Equipped on your character.\nOpen the character icon to remove it."
-		if selected_item == "weapon":
-			inventory_detail.text = "%d in your bag  ·  %d equipped\n2 damage per strike" % [_offline_bag_amount("weapon"), 1 if equipped else 0]
 		equip_button.disabled = not owned or worn or selected_item == "coins"
 		equip_button.text = "Equip " + _item_name(selected_item) if owned and not worn else "Select an item from your bag"
 		bag_grid.hide()
-		bag_navigation.hide()
+		bag_scroll.hide()
 		offline_bag_panel.show()
 		bag_slots = offline_bag_slots.duplicate()
-		inventory_preview.texture = _item_texture(selected_item)
 		inventory_summary.text = "%d coins  ·  24 bag slots" % coins
 		var kinds: Array[String] = ["coins", "weapon", "armor", "boots"]
 		for index: int in range(bag_slots.size()):

@@ -16,7 +16,7 @@ Godot 4.7.2, typed GDScript and 2D isometric rendering are sufficient. A Unity/3
 rewrite and a larger server have not been needed for the measured regressions.
 
 Baseline before this update: commit `8c9e541`, APK 0.10.0/code 10. The current
-build is 0.16.0/code 16. v0.12 added level/EXP, Nearby Send closure and
+build is 0.17.0/code 17. v0.12 added level/EXP, Nearby Send closure and
 native consumables; v0.13 adds native skills and touch targeting. v0.11 added native bank/lockers, player inspection and
 trading, local/global/private chat, a dynamic joystick, and the heart/TP HUD,
 as well as placing NPC names near visible heads and fixing observer equipment/
@@ -911,3 +911,32 @@ reinstall and zero startup script/crash errors. Report:
 `docs/shop-inventory-v16-phone-report.json`. Private logs/save backups remain
 under ignored `work/`. Download files use
 `outputs/endless-online-android-v0.16.0.{apk,-source.zip,-SHA256SUMS.txt}`.
+
+
+## v0.17 — one large bag, no separate inventory preview or pages
+
+User explicitly rejected the v0.16 inventory side preview/details and multiple
+bag pages. The inventory now uses a single full-width 22-column grid with eight
+visible rows (48px cells) in the same wooden modal. Extra rows, if needed, extend
+the same scrollable bag rather than creating another bag. Removed the preview,
+attribute/details panel, page arrows and Move to next bag action. A small selected
+item name and Use/Equip action remain below the grid; original footprints,
+quantity badges and rearranging remain unchanged. Shop View and paperdoll/stats
+windows keep their existing separate behavior.
+
+`bag_grid.gd` now saves positions as [x,y]. It migrates v0.16 [page,x,y] layouts:
+first-page positions stay where valid, and items from all other former pages
+repack into free cells of the same bag. Server quantities/equipment are not
+changed by migration. Native touch drag, overlap rejection, reload persistence,
+legacy page migration, original transaction feedback and robe rendering passed
+with isolated dev accounts. Report: `docs/inventory-v17-live-report.json`.
+Screenshot: ignored `work/v17-inventory-shots/v17-classic-movable-bag.png`.
+Gameplay/world smoke checks passed; no native server changes are required.
+Build version is 0.17.0/code 17. Deliver/install with the same signing key and
+preserve the phone save, as in prior versions.
+
+Final v0.17 installed and launched on Galaxy S23 Ultra. The installed base.apk
+matches the final download APK by SHA256; version 17/0.17.0, signing/16KiB
+alignment, byte-identical offline save preservation and startup logs verified.
+Phone report: `docs/shop-inventory-v17-phone-report.json`. No operator character
+or production service was changed.

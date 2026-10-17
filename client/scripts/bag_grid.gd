@@ -1,7 +1,8 @@
 extends Control
-## Original EO 14×4 bag, EIF footprints and character-local item positions.
-const COLUMNS: int = 14
-const ROWS: int = 4
+## One continuous bag with original EIF footprints and character-local positions.
+const COLUMNS: int = 22
+const MIN_ROWS: int = 8
+var rows: int = MIN_ROWS
 const CELL: int = 48
 const FILE: String = "user://bag_layouts.json"
 var game: Node
@@ -10,9 +11,6 @@ var items: Array[Dictionary] = []
 var buttons: Dictionary = {}
 var profile: String = ""
 var signature: String = ""
-var page: int = 0
-var pages: int = 1
-var page_label: Label
 var drag_id: int = 0
 var drag_touch: int = -1
 var drag_start: Vector2
@@ -34,23 +32,23 @@ func dimensions(id: int) -> Vector2i:
 	return Vector2i(1 + code / 4, 1 + code % 4)
 
 func rectangle(id: int) -> Rect2:
-	var p: Array = positions.get(str(id), [0, 0, 0]) as Array
-	return Rect2(Vector2(int(p[1]), int(p[2])) * CELL, Vector2(dimensions(id)) * CELL)
+	var p: Array = positions.get(str(id), [0, 0]) as Array
+	return Rect2(Vector2(int(p[0]), int(p[1])) * CELL, Vector2(dimensions(id)) * CELL)
 
-func fits(id: int, target_page: int, tile: Vector2i) -> bool:
+func fits(id: int, tile: Vector2i) -> bool:
 	var footprint: Vector2i = dimensions(id)
-	if target_page < 0 or tile.x < 0 or tile.y < 0 or tile.x + footprint.x > COLUMNS or tile.y + footprint.y > ROWS: return false
+	if tile.x < 0 or tile.y < 0 or tile.x + footprint.x > COLUMNS or tile.y + footprint.y > rows: return false
 	var rect: Rect2i = Rect2i(tile, footprint)
 	for item: Dictionary in items:
 		var other: int = int(item.id)
 		if other == id or not positions.has(str(other)): continue
 		var p: Array = positions[str(other)] as Array
-		if int(p[0]) == target_page and rect.intersects(Rect2i(Vector2i(int(p[1]), int(p[2])), dimensions(other))): return false
+		if rect.intersects(Rect2i(Vector2i(int(p[0]), int(p[1])), dimensions(other))): return false
 	return true
 
-func move_item(id: int, target_page: int, tile: Vector2i) -> bool:
-	if not positions.has(str(id)) or not fits(id, target_page, tile): return false
-	positions[str(id)] = [target_page, tile.x, tile.y]
+func move_item(id: int, tile: Vector2i) -> bool:
+	if not positions.has(str(id)) or not fits(id, tile): return false
+	positions[str(id)] = [tile.x, tile.y]
 	_save()
 	_layout()
 	return true
@@ -71,28 +69,29 @@ func refresh() -> void:
 		profile = next_profile
 		var data: Variant = JSON.parse_string(FileAccess.get_file_as_string(FILE)) if FileAccess.file_exists(FILE) else {}
 		positions = (data as Dictionary).get(profile, {}).duplicate() if data is Dictionary else {}
-		page = 0
 	items = next_items
 	signature = next_signature
 	# Validate saved positions, retaining valid slots before placing new items.
+	rows = maxi(MIN_ROWS, items.size() * 4)
 	var pending: Dictionary = positions.duplicate()
 	positions.clear()
 	for item: Dictionary in items:
 		var id: int = int(item.id)
 		var p: Variant = pending.get(str(id))
-		if p is Array and p.size() == 3 and int(p[0]) < 128 and fits(id, int(p[0]), Vector2i(int(p[1]), int(p[2]))): positions[str(id)] = [int(p[0]), int(p[1]), int(p[2])]
+		# Keep first-page positions; repack all former extra pages into this bag.
+		if p is Array and p.size() == 3:
+			p = [p[1], p[2]] if int(p[0]) == 0 else null
+		if p is Array and p.size() == 2 and fits(id, Vector2i(int(p[0]), int(p[1]))): positions[str(id)] = [int(p[0]), int(p[1])]
 	for item: Dictionary in items:
 		var id: int = int(item.id)
 		if positions.has(str(id)): continue
 		var placed: bool = false
-		for candidate: int in range(items.size() + 1):
-			for y: int in range(ROWS):
-				for x: int in range(COLUMNS):
-					if fits(id, candidate, Vector2i(x, y)):
-						positions[str(id)] = [candidate, x, y]
-						placed = true
-						break
-				if placed: break
+		for y: int in range(rows):
+			for x: int in range(COLUMNS):
+				if fits(id, Vector2i(x, y)):
+					positions[str(id)] = [x, y]
+					placed = true
+					break
 			if placed: break
 	for child: Node in get_children():
 		remove_child(child)
@@ -134,16 +133,16 @@ func refresh() -> void:
 	_layout()
 
 func _layout() -> void:
-	pages = 1
-	for p: Array in positions.values(): pages = maxi(pages, int(p[0]) + 1)
-	page = clampi(page, 0, pages - 1)
+	rows = MIN_ROWS
+	for key: String in positions:
+		rows = maxi(rows, int(positions[key][1]) + dimensions(int(key)).y)
+	custom_minimum_size = Vector2(COLUMNS * CELL, rows * CELL)
 	for key: String in buttons:
 		var id: int = int(key)
 		var button: Button = buttons[key] as Button
 		button.position = rectangle(id).position + Vector2(2, 2)
 		button.size = rectangle(id).size - Vector2(4, 4)
-		button.visible = int(positions[key][0]) == page
-	if page_label != null: page_label.text = "Bag %d / %d" % [page + 1, pages]
+		button.show()
 	_style_selection()
 
 func _style_selection() -> void:
@@ -151,24 +150,6 @@ func _style_selection() -> void:
 		var chosen: bool = game.selected_item == "item:" + key
 		(buttons[key] as Button).add_theme_stylebox_override("normal", game._wood_style(Color("896232") if chosen else Color(0.18, 0.10, 0.035, 0.35), Color("f4d089") if chosen else Color("9a7342"), 2 if chosen else 1))
 	queue_redraw()
-
-func change_page(delta: int) -> void:
-	cancel_drag()
-	page = posmod(page + delta, pages)
-	_layout()
-
-func move_to_next_bag() -> void:
-	var id: int = game.online.item_id(str(game.selected_item))
-	if not positions.has(str(id)):
-		game._toast("Select a belonging in your bag first.")
-		return
-	for candidate: int in range(page + 1, pages + 1):
-		for y: int in range(ROWS):
-			for x: int in range(COLUMNS):
-				if move_item(id, candidate, Vector2i(x, y)):
-					page = candidate
-					_layout()
-					return
 
 func _save() -> void:
 	if profile.is_empty(): return
@@ -179,13 +160,13 @@ func _save() -> void:
 	if file != null: file.store_string(JSON.stringify(data))
 
 func _draw() -> void:
-	for y: int in range(ROWS):
+	for y: int in range(rows):
 		for x: int in range(COLUMNS): draw_rect(Rect2(x * CELL, y * CELL, CELL, CELL).grow(-1), Color("a57e48"), false, 1)
 	if dragging and drag_id > 0:
 		var origin: Vector2 = drag_at - drag_offset
 		var tile: Vector2i = Vector2i((origin / CELL).round())
 		var footprint: Vector2 = Vector2(dimensions(drag_id)) * CELL
-		draw_rect(Rect2(Vector2(tile) * CELL, footprint).grow(-2), Color(0.65, 0.85, 0.45, 0.45) if fits(drag_id, page, tile) else Color(1, 0.25, 0.15, 0.4))
+		draw_rect(Rect2(Vector2(tile) * CELL, footprint).grow(-2), Color(0.65, 0.85, 0.45, 0.45) if fits(drag_id, tile) else Color(1, 0.25, 0.15, 0.4))
 		var texture: Texture2D = (buttons[str(drag_id)] as Button).icon
 		if texture != null:
 			var factor: float = minf((footprint.x - 8) / texture.get_width(), (footprint.y - 8) / texture.get_height())
@@ -201,7 +182,7 @@ func cancel_drag() -> void:
 func _begin(point: Vector2, finger: int) -> void:
 	if drag_id > 0: return
 	for key: String in buttons:
-		if int(positions[key][0]) == page and rectangle(int(key)).has_point(point):
+		if rectangle(int(key)).has_point(point):
 			drag_id = int(key)
 			drag_touch = finger
 			drag_start = point
@@ -218,7 +199,10 @@ func _motion(point: Vector2) -> void:
 
 func _finish(point: Vector2) -> void:
 	if dragging:
-		if not move_item(drag_id, page, Vector2i(((point - drag_offset) / CELL).round())): game._toast("That item needs a clear space in your bag.")
+		if not (get_parent() as Control).get_global_rect().has_point(get_global_transform_with_canvas() * point):
+			cancel_drag()
+			return
+		if not move_item(drag_id, Vector2i(((point - drag_offset) / CELL).round())): game._toast("That item needs a clear space in your bag.")
 	cancel_drag()
 
 func _input(event: InputEvent) -> void:
@@ -228,10 +212,10 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventScreenTouch:
 		var touch: InputEventScreenTouch = event as InputEventScreenTouch
 		var point: Vector2 = get_global_transform_with_canvas().affine_inverse() * touch.position
-		if touch.pressed and Rect2(Vector2.ZERO, size).has_point(point):
+		if touch.pressed and Rect2(Vector2.ZERO, size).has_point(point) and (get_parent() as Control).get_global_rect().has_point(touch.position):
 			touch_until = Time.get_ticks_msec() + 500
 			_begin(point, touch.index)
-			get_viewport().set_input_as_handled()
+			if drag_id > 0: get_viewport().set_input_as_handled()
 		elif not touch.pressed and touch.index == drag_touch:
 			_finish(point)
 			touch_until = Time.get_ticks_msec() + 500

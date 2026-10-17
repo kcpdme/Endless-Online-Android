@@ -24,12 +24,12 @@ func _run() -> void:
 	if not check(not game.toast_label.text.contains("Purchased"), "A queued request must not claim a purchase"): return
 	if not check(await wait_for(func() -> bool: return amount(360) == 2 and c.session.is_idle()), "Native buy failed"): return
 	if not check(game.toast_label.visible and game.toast_label.z_index > ui.panel.z_index and game.toast_label.text.contains("Purchased War Axe ×2") and game.toast_label.text.contains("bag"), "Confirmed purchase must announce the item and its bag destination above the shop"): return
-	await capture("v16-purchase-confirmed")
+	await capture("v17-purchase-confirmed")
 	game.stats_ui.show_item("item:407")
 	await process_frame
 	await process_frame
 	if not check(game.stats_ui.item_art.texture != null and game.stats_ui.item_art.size == Vector2(240, 330), "Large original artwork preview missing"): return
-	await capture("v16-robe-large-preview")
+	await capture("v17-robe-large-preview")
 	game.stats_ui.hide()
 	ui.mode = "craft"
 	ui.refresh()
@@ -39,22 +39,27 @@ func _run() -> void:
 	for row: Control in ui.ingredient_rows:
 		var edge: float = row.get_global_rect().end.x
 		if not check(edge <= ui.details_scroll.get_global_rect().end.x - 30, "Have / Need too close to scrollbar"): return
-	await capture("v16-craft-quantity-margin")
+	await capture("v17-craft-quantity-margin")
 	ui.close()
 	game.inventory.show()
 	game._select_item("item:407")
 	var grid: Control = game.bag_grid
 	if not check(grid.dimensions(407) == Vector2i(2, 3) and grid.dimensions(281) == Vector2i(1, 4) and grid.items.size() == c.inventory_items().size(), "Original item footprints or authoritative bag entries missing"): return
-	if not check(grid.pages >= 2, "Overflow belongings must remain reachable"): return
-	# Reserve a clear page in this deliberately crowded dev fixture, then move by finger.
-	if not check(grid.move_item(407, grid.pages, Vector2i.ZERO), "Could not place robe on an additional bag page"): return
-	grid.page = int(grid.positions["407"][0])
-	grid._layout()
-	var from: Vector2i = Vector2i(int(grid.positions["407"][1]), int(grid.positions["407"][2]))
+	if not check(grid.size.x >= 1000 and grid.rows >= 8, "Bag must fill the former preview area"): return
+	# Migrate a previous paged layout without hiding or changing server items.
+	var legacy: FileAccess = FileAccess.open("user://bag_layouts.json", FileAccess.WRITE)
+	legacy.store_string(JSON.stringify({grid.profile: {"1": [0, 0, 0], "407": [3, 0, 0]}}))
+	legacy.close()
+	grid.profile = ""
+	grid.signature = ""
+	grid.refresh()
+	for button: Button in grid.buttons.values():
+		if not check(button.visible, "Every item must be in the same bag"): return
+	var from: Vector2i = Vector2i(int(grid.positions["407"][0]), int(grid.positions["407"][1]))
 	var destination: Vector2i = Vector2i(-1, -1)
-	for y: int in range(4):
-		for x: int in range(14):
-			if Vector2i(x, y) != from and grid.fits(407, grid.page, Vector2i(x, y)): destination = Vector2i(x, y)
+	for y: int in range(6):
+		for x: int in range(22):
+			if Vector2i(x, y) != from and grid.fits(407, Vector2i(x, y)): destination = Vector2i(x, y)
 	if not check(destination.x >= 0, "Fixture has no clear robe destination"): return
 	var begin: Vector2 = grid.get_global_transform_with_canvas() * (Vector2(from) * 48 + Vector2(20, 20))
 	var end: Vector2 = grid.get_global_transform_with_canvas() * (Vector2(destination) * 48 + Vector2(20, 20))
@@ -74,25 +79,20 @@ func _run() -> void:
 	touch_event.pressed = false
 	Input.parse_input_event(touch_event)
 	await process_frame
-	if not check(grid.positions["407"] == [grid.page, destination.x, destination.y], "Native finger drag failed to move the six-cell robe"): return
+	if not check(grid.positions["407"] == [destination.x, destination.y], "Native finger drag failed to move the six-cell robe"): return
 	var moved: Array = grid.positions["407"].duplicate()
 	var coin: Array = grid.positions["1"] as Array
-	if not check(not grid.move_item(407, int(coin[0]), Vector2i(int(coin[1]), int(coin[2]))) and grid.positions["407"] == moved, "Overlapping drop must roll back"): return
+	if not check(not grid.move_item(407, Vector2i(int(coin[0]), int(coin[1]))) and grid.positions["407"] == moved, "Overlapping drop must roll back"): return
 	grid.profile = ""
 	grid.signature = ""
 	grid.refresh()
 	if not check(grid.positions["407"] == moved and amount(360) == 2 and amount(407) == 1 and amount(1) == 46000, "Layout reload changed inventory or lost positions"): return
-	grid.page = int(moved[0])
-	grid._layout()
 	game.toast_time = 0
 	grid._begin(Vector2(destination) * 48 + Vector2(20, 20), 72)
 	grid.notification(NOTIFICATION_APPLICATION_FOCUS_OUT)
 	if not check(grid.drag_id == 0 and not grid.dragging, "Focus loss must cancel a held item"): return
-	grid.move_to_next_bag()
-	if not check(int(grid.positions["407"][0]) > int(moved[0]), "Move to next bag must preserve and relocate the selected item"): return
-	grid.page = 0
-	grid._layout()
-	await capture("v16-classic-movable-bag")
+	game.toast_label.hide()
+	await capture("v17-classic-movable-bag")
 	game.inventory.hide()
 	# Equip on the isolated native character; observe independently, never log into Skylar.
 	if int((c.player.equipment as Dictionary).get("armor", 0)) > 0:
@@ -109,7 +109,7 @@ func _run() -> void:
 		for state: String in ["idle", "frames", "attack", "cast"]:
 			if not check(not game._frame(appearance, direction, state).is_empty(), "Missing dressed pose"): return
 	game.facing = "south"
-	await capture("v16-plaot-robes-in-world")
+	await capture("v17-plaot-robes-in-world")
 	actor = (load("res://scripts/online_session.gd") as Script).new()
 	root.add_child(actor)
 	actor.message_received.connect(func(message: Dictionary) -> void: actor_replies[int(message.get("id", -1))] = message)
@@ -122,7 +122,7 @@ func _run() -> void:
 	for peer: Dictionary in entry.get("players", []):
 		if int(peer.get("player_id", -1)) == int(c.player.player_id): observer_saw = int((peer.equipment_graphics as Array)[4]) == 40 and not c.character_graphic(peer).is_empty()
 	if not check(observer_saw, "Independent native observer did not see Plaot appearance"): return
-	var report: Dictionary = {"result": "passed", "confirmed_native_purchase_feedback_only": true, "craft_quantities_30px_scrollbar_margin": true, "native_touch_drag_six_cell_robe": true, "overlap_rejected": true, "focus_loss_cancels_drag": true, "move_selected_to_next_bag": true, "character_layout_survives_reload": true, "server_quantities_unchanged_by_rearrangement": true, "all_inventory_entries_reachable_across_pages": true, "large_original_gear_preview": true, "plaot_robe_all_directions_walk_attack_cast": true, "independent_native_observer_sees_robe": true, "operator_accounts_modified": false}
+	var report: Dictionary = {"result": "passed", "confirmed_native_purchase_feedback_only": true, "craft_quantities_30px_scrollbar_margin": true, "native_touch_drag_six_cell_robe": true, "overlap_rejected": true, "focus_loss_cancels_drag": true, "one_full_width_bag_without_preview_or_pages": true, "character_layout_survives_reload": true, "server_quantities_unchanged_by_rearrangement": true, "legacy_page_items_migrated_into_one_bag": true, "large_original_gear_preview": true, "plaot_robe_all_directions_walk_attack_cast": true, "independent_native_observer_sees_robe": true, "operator_accounts_modified": false}
 	var file: FileAccess = FileAccess.open(OS.get_environment("ASTER_VALE_TEST_REPORT"), FileAccess.WRITE)
 	file.store_string(JSON.stringify(report, "  ") + "\n")
 	print("INVENTORY LIVE PASS: ", JSON.stringify(report))

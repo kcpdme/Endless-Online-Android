@@ -1046,26 +1046,15 @@ func refresh_game_ui() -> void:
 	game.health_label.visible = false
 	game.health_label.text = "HP %d / %d" % [int(player.get("hp", 0)), int(player.get("max_hp", player.get("maxhp", 0)))]
 	var items: Array[Dictionary] = inventory_items()
-	game.inventory_summary.text = "%d belongings  ·  14 × 4 spaces in each bag" % items.size()
+	game.inventory_summary.text = "%d belongings" % items.size()
 	game.offline_bag_panel.hide()
-	game.bag_navigation.show()
+	game.bag_scroll.show()
 	game.bag_grid.refresh()
 	var selected: String = str(game.selected_item)
 	var info: Dictionary = item_info(selected)
-	game.inventory_preview.texture = _catalog_texture(str(info.get("icon", "")))
 	var worn: bool = is_equipped(selected)
 	var owned: bool = owns_item(selected)
 	game.item_title.text = str(info.get("name", "Your inventory"))
-	var details: Array[String] = ["Equipped" if worn else "In your bag"]
-	if int(info.get("max_damage", 0)) > 0:
-		details.append("Damage %d–%d" % [int(info.get("min_damage", 0)), int(info.get("max_damage", 0))])
-	for field: String in ["armor", "accuracy", "evade", "hp", "tp", "strength", "intelligence", "wisdom", "agility", "constitution", "charisma"]:
-		if int(info.get(field, 0)) != 0: details.append("%s +%d" % [field.capitalize(), int(info[field])])
-	if owned: details.append("Weight %d" % int(info.get("weight", 0)))
-	if int(info.get("level_requirement", 0)) > 0: details.append("Requires level %d" % int(info.level_requirement))
-	for attribute: String in ["strength", "intelligence", "wisdom", "agility", "constitution", "charisma"]:
-		if int(info.get(attribute + "_requirement", 0)) > 0: details.append("Requires %s %d" % [attribute, int(info[attribute + "_requirement"])])
-	game.inventory_detail.text = "  ·  ".join(details) if owned else "Select an item to inspect it."
 	var usable: bool = consumable(selected)
 	game.equip_button.disabled = not owned or worn or (not usable and int(info.get("type", 0)) not in range(10, 22)) or not _action_ready()
 	game.equip_button.text = ("Use " if usable else "Equip ") + str(info.get("name", "item")) if owned and not worn else "Select an item from your bag"
