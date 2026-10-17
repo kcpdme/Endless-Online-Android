@@ -9,7 +9,7 @@ def fixture():
     f=shop_fixture()
     s,other=provision();s.close();time.sleep(.7)
     with sqlite3.connect(state_path()/'runtime/database.sdb') as db:
-        db.execute("UPDATE characters SET inventory=inventory || '407,1;80,1;19,1;22,1;32,1;37,1;38,1;281,1;' WHERE account=? AND name=?",(f['username'],f['character_name']))
+        db.execute("UPDATE characters SET inventory='1,50000;407,1;80,1;281,1;4,7;318,8;320,8;322,10;'  WHERE account=? AND name=?",(f['username'],f['character_name']))
         db.execute('UPDATE characters SET map=125,x=7,y=4 WHERE account=? AND name=?',(other['username'],other['character_name']))
     f['observer']=other
     return f

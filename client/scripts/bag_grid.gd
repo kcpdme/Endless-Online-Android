@@ -1,10 +1,10 @@
 extends Control
 ## One continuous bag with original EIF footprints and character-local positions.
-const COLUMNS: int = 22
-const MIN_ROWS: int = 8
+const COLUMNS: int = 12
+const MIN_ROWS: int = 4
 var rows: int = MIN_ROWS
-const CELL: int = 48
-const FILE: String = "user://bag_layouts.json"
+const CELL: Vector2 = Vector2(88, 96)
+const FILE: String = "user://bag_layouts_12x4.json"
 var game: Node
 var positions: Dictionary = {}
 var items: Array[Dictionary] = []
@@ -72,7 +72,7 @@ func refresh() -> void:
 	items = next_items
 	signature = next_signature
 	# Validate saved positions, retaining valid slots before placing new items.
-	rows = maxi(MIN_ROWS, items.size() * 4)
+	rows = MIN_ROWS
 	var pending: Dictionary = positions.duplicate()
 	positions.clear()
 	for item: Dictionary in items:
@@ -82,7 +82,14 @@ func refresh() -> void:
 		if p is Array and p.size() == 3:
 			p = [p[1], p[2]] if int(p[0]) == 0 else null
 		if p is Array and p.size() == 2 and fits(id, Vector2i(int(p[0]), int(p[1]))): positions[str(id)] = [int(p[0]), int(p[1])]
-	for item: Dictionary in items:
+	var placement_order: Array[Dictionary] = items.duplicate()
+	placement_order.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		if int(a.id) == 1 or int(b.id) == 1: return int(a.id) == 1
+		var ad: Vector2i = dimensions(int(a.id))
+		var bd: Vector2i = dimensions(int(b.id))
+		return ad.y > bd.y if ad.y != bd.y else ad.x > bd.x
+	)
+	for item: Dictionary in placement_order:
 		var id: int = int(item.id)
 		if positions.has(str(id)): continue
 		var placed: bool = false
@@ -107,7 +114,7 @@ func refresh() -> void:
 		button.icon = game.online._catalog_texture(str(info.get("icon", "")))
 		button.expand_icon = true
 		button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		button.add_theme_constant_override("icon_max_width", dimensions(id).x * CELL - 10)
+		button.add_theme_constant_override("icon_max_width", dimensions(id).x * CELL.x - 10)
 		button.add_theme_color_override("icon_normal_color", Color(1, 1, 1, 0))
 		button.tooltip_text = str(info.get("name", "Item"))
 		add_child(button)
@@ -121,7 +128,7 @@ func refresh() -> void:
 		button.add_child(artwork)
 		var quantity: Label = game._label(button, str(int(item.amount)) if id == 1 or int(item.amount) > 1 else "", Vector2(3, 0), 18, game.TEXT)
 		quantity.name = "Quantity"
-		quantity.size = Vector2(dimensions(id).x * CELL - 10, 25)
+		quantity.size = Vector2(dimensions(id).x * CELL.x - 10, 25)
 		quantity.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		quantity.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		quantity.add_theme_color_override("font_shadow_color", Color.BLACK)
@@ -134,15 +141,15 @@ func refresh() -> void:
 
 func _layout() -> void:
 	rows = MIN_ROWS
-	for key: String in positions:
-		rows = maxi(rows, int(positions[key][1]) + dimensions(int(key)).y)
-	custom_minimum_size = Vector2(COLUMNS * CELL, rows * CELL)
+	custom_minimum_size = Vector2(COLUMNS, rows) * CELL
 	for key: String in buttons:
 		var id: int = int(key)
 		var button: Button = buttons[key] as Button
+		button.visible = positions.has(key)
+		if not button.visible: continue
 		button.position = rectangle(id).position + Vector2(2, 2)
 		button.size = rectangle(id).size - Vector2(4, 4)
-		button.show()
+	game.refresh_bag_overflow()
 	_style_selection()
 
 func _style_selection() -> void:
@@ -161,7 +168,7 @@ func _save() -> void:
 
 func _draw() -> void:
 	for y: int in range(rows):
-		for x: int in range(COLUMNS): draw_rect(Rect2(x * CELL, y * CELL, CELL, CELL).grow(-1), Color("a57e48"), false, 1)
+		for x: int in range(COLUMNS): draw_rect(Rect2(Vector2(x, y) * CELL, CELL).grow(-1), Color("a57e48"), false, 1)
 	if dragging and drag_id > 0:
 		var origin: Vector2 = drag_at - drag_offset
 		var tile: Vector2i = Vector2i((origin / CELL).round())
@@ -182,7 +189,7 @@ func cancel_drag() -> void:
 func _begin(point: Vector2, finger: int) -> void:
 	if drag_id > 0: return
 	for key: String in buttons:
-		if rectangle(int(key)).has_point(point):
+		if positions.has(key) and rectangle(int(key)).has_point(point):
 			drag_id = int(key)
 			drag_touch = finger
 			drag_start = point
@@ -206,6 +213,9 @@ func _finish(point: Vector2) -> void:
 	cancel_drag()
 
 func _input(event: InputEvent) -> void:
+	if game.online.drop_ui != null and game.online.drop_ui.panel.visible:
+		cancel_drag()
+		return
 	if not is_visible_in_tree():
 		cancel_drag()
 		return

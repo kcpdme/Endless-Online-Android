@@ -102,6 +102,8 @@ var coin_label: Label
 var toast_label: Label
 var location_label: Label
 var health_label: Label
+var drop_button: Button
+var bag_overflow: OptionButton
 var equip_button: Button
 var attack_button: WeaponButton
 var toast_time: float = 0.0
@@ -1017,11 +1019,31 @@ func _build_inventory(parent: Node) -> void:
 	item_title.size = Vector2(710, 32)
 	item_title.clip_text = true
 	_label(card, "Drag items to rearrange your bag.", Vector2(28, 591), 17, MUTED)
-	equip_button = _button(card, "", Vector2(754, 558), Vector2(338, 52), func() -> void:
+	drop_button = _button(card, "Drop", Vector2(754, 558), Vector2(160, 52), func() -> void: online.drop_ui.open(selected_item))
+	bag_overflow = OptionButton.new()
+	bag_overflow.position = Vector2(420, 583)
+	bag_overflow.size = Vector2(310, 36)
+	bag_overflow.item_selected.connect(func(index: int) -> void:
+		if index > 0: _select_item("item:%d" % bag_overflow.get_item_id(index))
+	)
+	card.add_child(bag_overflow)
+	bag_overflow.hide()
+	equip_button = _button(card, "", Vector2(932, 558), Vector2(160, 52), func() -> void:
 		if _owns_item(selected_item) and not _is_equipped(selected_item): _toggle_equip()
 	, true)
 	_inventory_theme(card)
 	inventory.hide()
+
+func refresh_bag_overflow() -> void:
+	if bag_overflow == null: return
+	bag_overflow.clear()
+	var missing: Array[int] = []
+	for item: Dictionary in bag_grid.items:
+		if not bag_grid.positions.has(str(item.id)): missing.append(int(item.id))
+	bag_overflow.visible = not missing.is_empty()
+	bag_overflow.add_item("Items needing space (%d)" % missing.size(), 0)
+	for id: int in missing: bag_overflow.add_item(str(online.item_info("item:%d" % id).get("name", "Item")), id)
+	bag_overflow.select(0)
 
 func _wood_card(card: Control) -> void:
 	card.add_theme_stylebox_override("panel", _wood_style(Color("886034"), Color("39230f"), 5))
@@ -1213,7 +1235,9 @@ func _refresh_ui() -> void:
 		var owned: bool = _owns_item(selected_item)
 		item_title.text = _item_name(selected_item) if owned else "Your bag"
 		equip_button.disabled = not owned or worn or selected_item == "coins"
-		equip_button.text = "Equip " + _item_name(selected_item) if owned and not worn else "Select an item from your bag"
+		equip_button.text = "Equip"
+		drop_button.disabled = true
+		bag_overflow.hide()
 		bag_grid.hide()
 		bag_scroll.hide()
 		offline_bag_panel.show()
@@ -1290,6 +1314,9 @@ func _show_content_error() -> void:
 	push_error("Aster Vale content unavailable. Run tools/import_content.py.")
 
 func _handle_back() -> void:
+	if online != null and online.drop_ui != null and online.drop_ui.panel.visible:
+		online.drop_ui.panel.hide()
+		return
 	if not content_ready: return
 	_cancel_controls()
 	owned_touches.clear()

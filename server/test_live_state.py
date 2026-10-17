@@ -1,5 +1,6 @@
 """Regression for original EO movement ownership and nonblocking collection."""
 import time, unittest
+from unittest.mock import patch
 from collections import deque
 from copy import deepcopy
 from eo_session import EOError,number,Reader
@@ -17,6 +18,21 @@ def fixture():
     return s
 
 class StreamStateTests(unittest.TestCase):
+    def test_native_drop_ack_updates_ground_stack_and_weight_without_refresh(self):
+        s=fixture();s.inventory=[dict(id=360,amount=2)]
+        s.apply_event(14,24,number(360,2)+number(1,3)+number(1,4)+number(77,2)+number(40,1)+number(40,1)+number(6,1)+number(70,1))
+        self.assertEqual(s.inventory,[dict(id=360,amount=1)])
+        self.assertEqual(s.state['items'],[dict(uid=77,id=360,amount=1,x=40,y=40)])
+        self.assertEqual((s.weight,s.max_weight),(6,70));self.assertFalse(s.sent)
+    def test_drop_rejects_unowned_excess_quantity_and_lore_before_send(self):
+        s=fixture();s.inventory=[dict(id=360,amount=2)]
+        with patch('services.item_definitions',return_value={360:dict(special=0)}):
+            for amount in (-1,0,3,16194277):
+                with self.assertRaises(EOError):s.drop_item(360,amount)
+            with self.assertRaises(EOError):s.drop_item(999,1)
+        with patch('services.item_definitions',return_value={360:dict(special=4)}):
+            with self.assertRaisesRegex(EOError,'cannot be dropped'):s.drop_item(360,1)
+        self.assertFalse(s.sent);self.assertEqual(s.inventory,[dict(id=360,amount=2)])
     def test_first_attack_timestamp_honors_requested_facing_without_face_wait(self):
         s=fixture();s.timestamp=0;s.strike(2)
         self.assertEqual(len(s.sent),1)

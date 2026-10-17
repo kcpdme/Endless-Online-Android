@@ -228,6 +228,10 @@ class LiveSession(SkillsMixin, ConsumablesMixin, ServicesMixin, EconomyMixin, Se
             self._upsert('items','uid',dict(uid=uid,id=item_id,amount=amount,x=r.num(),y=r.num()))
         elif (f,a)==(14,4):
             uid=r.num(2);self.state['items']=[i for i in self.state['items'] if i['uid']!=uid];self.dirty=True
+        elif (f,a)==(14,24):
+            item_id=r.num(2);amount=r.num(3);r.num(4);uid=r.num(2);x=r.num();y=r.num()
+            self._upsert('items','uid',dict(uid=uid,id=item_id,amount=amount,x=x,y=y))
+            self._weight(r)
         elif (f,a)==(14,27):
             uid=r.num(2);r.num(2);taken=r.num(3)
             self.pending_pickups.pop(uid,None);self.drop_guards.pop(uid,None);self.metrics['pickups']+=1

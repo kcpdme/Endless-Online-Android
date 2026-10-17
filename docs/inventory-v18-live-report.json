@@ -1,0 +1,18 @@
+{
+  "character_layout_survives_reload": true,
+  "compact_equip_and_use_labels": true,
+  "confirmed_native_purchase_feedback_only": true,
+  "craft_quantities_30px_scrollbar_margin": true,
+  "fixed_12_columns_4_rows_larger_cells": true,
+  "focus_loss_cancels_drag": true,
+  "independent_native_observer_sees_robe": true,
+  "large_original_gear_preview": true,
+  "legacy_page_items_migrated_into_one_bag": true,
+  "native_quantity_drop_and_pickup_roundtrip": true,
+  "native_touch_drag_six_cell_robe": true,
+  "operator_accounts_modified": false,
+  "overlap_rejected": true,
+  "plaot_robe_all_directions_walk_attack_cast": true,
+  "result": "passed",
+  "server_quantities_unchanged_by_rearrangement": true
+}

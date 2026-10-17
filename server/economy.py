@@ -12,6 +12,17 @@ class EconomyMixin:
         if not self.state or self.warp or self.stats.get('dead') or self.pending_moves:
             raise EOError('Stop moving before interacting')
 
+    def drop_item(self, item_id, amount=1):
+        from services import item_definitions
+        self._standing();item_id=int(item_id);amount=int(amount)
+        if amount <= 0 or amount > 16194276 or amount > self.item_amount(item_id):raise EOError('Choose a quantity you have in your bag')
+        if item_definitions().get(item_id,{}).get('special')==4:raise EOError('This item cannot be dropped')
+        self.send(14,24,number(item_id,2)+number(amount,3)+b'\xff\xff')
+        payload=self._wait_service(14,{24})
+        r=Reader(payload)
+        if r.num(2)!=item_id or r.num(3)<=0:raise EOError('Unexpected drop acknowledgement; reconnect')
+        return self.snapshot()
+
     def _near_shop(self):
         self._standing()
         if not self.shop or self.shop['map_id'] != self.state['map_id']:

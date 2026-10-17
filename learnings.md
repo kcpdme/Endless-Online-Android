@@ -16,7 +16,7 @@ Godot 4.7.2, typed GDScript and 2D isometric rendering are sufficient. A Unity/3
 rewrite and a larger server have not been needed for the measured regressions.
 
 Baseline before this update: commit `8c9e541`, APK 0.10.0/code 10. The current
-build is 0.17.0/code 17. v0.12 added level/EXP, Nearby Send closure and
+build is 0.18.0/code 18. v0.12 added level/EXP, Nearby Send closure and
 native consumables; v0.13 adds native skills and touch targeting. v0.11 added native bank/lockers, player inspection and
 trading, local/global/private chat, a dynamic joystick, and the heart/TP HUD,
 as well as placing NPC names near visible heads and fixing observer equipment/
@@ -940,3 +940,52 @@ matches the final download APK by SHA256; version 17/0.17.0, signing/16KiB
 alignment, byte-identical offline save preservation and startup logs verified.
 Phone report: `docs/shop-inventory-v17-phone-report.json`. No operator character
 or production service was changed.
+
+
+## v0.18 — fixed 12×4 bag and native Drop
+
+User clarified that the existing wooden window should have exactly 12 columns
+and four rows, with enlarged individual cells. Grid is now fixed at 1056×384
+inside the same 1120×640 modal: cells are 88×96. No added rows or bag pages.
+Original EIF footprints still apply (robe2×3, long weapon1×4). Layouts save in
+`user://bag_layouts_12x4.json`; first placement sorts larger items first to avoid
+fragmentation. Original ownership/quantities never change due to layout. If an
+old oversized test inventory cannot fit, its unplaced items remain reachable
+through a conditional Items needing space selector in the footer, allowing
+Equip/Use/Drop to make room without extra bag pages or losing server items.
+Skylar's current owned stacks fit within the requested grid.
+
+Action text is simply Equip or Use. Added Drop alongside it. The original
+InventoryController.DoItemDrop uses an amount dialog for stacked items; the
+new drop_window.gd provides that quantity choice and sends Item_Drop only after
+tapping Drop. Gold can be dropped by quantity; Lore items cannot. Cancel/Back
+sends nothing, duplicate submissions are blocked, and network closure hides the
+dialog. Only native acknowledgement updates bag and ground items/weight; the
+native world enforces map, quantity and drop restrictions. No world refresh is
+needed for the new drop operation.
+
+Server: EconomyMixin.drop_item, gateway item_drop dispatch and LiveSession's
+native Item_Drop acknowledgement handling. Deployed only economy.py,
+gateway.py and live_session.py to production after confirming the previous
+remote hashes matched Git HEAD. Source backups and restart script are in ignored
+work/hosting/upgrade_v18.py and /opt/aster-vale/backups. Only gateway/websocket
+adapters restart; native world and operator character data remain unchanged.
+The local gateway process was also restarted (see its current listener PID).
+
+Validation: 37 server state tests, gameplay/world smoke, real native stack
+partial-drop/ground/pickup roundtrip, exact four-row layout, compact action
+labels, native touch rearranging, persistence and original robe appearance.
+Report: docs/inventory-v18-live-report.json. Screenshots: work/v18-inventory-shots.
+Build is 0.18.0/code18; use the existing signing key and preserve phone saves.
+
+The new Drop/confirmation buttons were exercised with injected native finger
+press/release, not only emitted button signals. Bag drag input must yield while
+the quantity dialog is visible, otherwise it intercepts taps meant for the dialog.
+Drop/pickup also passed end to end through public `wss://eo.kcpd.top/ws` using a
+fresh isolated dev fixture. Report: `docs/inventory-v18-public-report.json`.
+
+Final v0.18 installed and launched on Galaxy S23 Ultra; installed base.apk SHA256
+matches the download build, version18/0.18.0 verified, valid signature/16KiB
+alignment, byte-identical offline save, and no startup script/crash errors.
+Report: `docs/shop-inventory-v18-phone-report.json`. Release files use
+`outputs/endless-online-android-v0.18.0*`. Operator accounts remain unchanged.

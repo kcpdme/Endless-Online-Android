@@ -1,6 +1,7 @@
 extends Node
 ## Owns online UI/session state. No passwords, server position, or items enter the offline save.
 const OnlineSession = preload("res://scripts/online_session.gd")
+var drop_ui: RefCounted
 var game: Node
 var session: OnlineSession
 var panel: Control
@@ -74,6 +75,8 @@ func _ready() -> void:
 		if parsed is Dictionary: catalog = parsed as Dictionary
 
 func build_ui(parent: Control) -> void:
+	drop_ui = preload("res://scripts/drop_window.gd").new()
+	drop_ui.build(game, parent)
 	panel = game._modal(parent, Vector2(760, 606))
 	var card: Control = panel.get_child(0) as Control
 	game._label(card, "YOUR OWN ONLINE WORLD", Vector2(30, 20), 13, game.GOLD)
@@ -199,6 +202,9 @@ func _on_message(message: Dictionary) -> void:
 		if operation == "collect": pickup_pending.clear()
 		if operation in ["equip", "unequip"]: pending_equip.clear()
 		if operation == "spell_cast": game.skills_ui.casting.clear()
+		if operation == "item_drop":
+			drop_ui.submitting = false
+			drop_ui.refresh()
 		if operation == "item_use": game._refresh_ui()
 		if game.shop_ui != null: game.shop_ui.refresh()
 		if game.services_ui != null: game.services_ui.refresh()
@@ -241,6 +247,10 @@ func _on_message(message: Dictionary) -> void:
 					session.request("equip", {"item_id": int(replacement.item_id), "subloc": int(replacement.subloc)})
 				else: game._toast("The worn item could not be removed. Your replacement remains in the bag.")
 		"world", "refresh", "snapshot", "attack", "pickup", "equip", "spend_stat", "shop_buy", "shop_sell", "shop_craft", "bank_deposit", "bank_withdraw", "bank_upgrade", "locker_deposit", "locker_withdraw", "trade_request", "trade_accept", "trade_decline", "trade_add", "trade_remove", "trade_agree", "trade_cancel", "chat_send", "item_use", "skill_learn", "skill_forget", "skill_level":
+			_apply_snapshot(data)
+		"item_drop":
+			drop_ui.panel.hide()
+			drop_ui.submitting = false
 			_apply_snapshot(data)
 		"skillmaster_open":
 			_apply_snapshot(data)
@@ -560,6 +570,7 @@ func _facing(value: Variant) -> String:
 	return ["south", "west", "north", "east"][clampi(int(value), 0, 3)]
 
 func _on_closed(reason: String) -> void:
+	if drop_ui != null: drop_ui.panel.hide()
 	active = false
 	_reset_movement()
 	game._cancel_controls(true)
@@ -771,6 +782,11 @@ func owns_item(kind: String) -> bool:
 	for item: Dictionary in inventory_items():
 		if int(item.get("id", 0)) == id: return true
 	return false
+
+func bag_amount(id: int) -> int:
+	for item: Dictionary in inventory_items():
+		if int(item.id) == id: return int(item.amount)
+	return 0
 
 func select_bag_item(index: int) -> void:
 	var items: Array[Dictionary] = inventory_items()
@@ -1057,7 +1073,9 @@ func refresh_game_ui() -> void:
 	game.item_title.text = str(info.get("name", "Your inventory"))
 	var usable: bool = consumable(selected)
 	game.equip_button.disabled = not owned or worn or (not usable and int(info.get("type", 0)) not in range(10, 22)) or not _action_ready()
-	game.equip_button.text = ("Use " if usable else "Equip ") + str(info.get("name", "item")) if owned and not worn else "Select an item from your bag"
+	game.equip_button.text = "Use" if usable else "Equip"
+	game.drop_button.disabled = not _action_ready() or bag_amount(item_id(selected)) <= 0 or int(info.get("special", 0)) == 4
+	drop_ui.refresh()
 	game.paperdoll.refresh(selected)
 	if game.paperdoll.information_labels.size() >= 2:
 		game.paperdoll.information_labels[0].text = str(player.get("name", "Player"))
@@ -1159,6 +1177,8 @@ func _process_events(events: Array) -> void:
 			game._toast("Picked up %s ×%d." % [str(item_info("item:%d" % int(event.get("item_id", 0))).get("name", "Item")), int(event.get("amount", 0))])
 		if kind == "shop_transaction":
 			game.shop_ui.confirm_transaction(event)
+		if kind == "drop":
+			game._toast("Dropped %s ×%d." % [str(item_info("item:%d" % int(event.get("item_id", 0))).get("name", "Item")), int(event.get("amount", 0))])
 		if kind == "item_used":
 			game._toast("Used %s." % str(item_info("item:%d" % int(event.get("item_id", 0))).get("name", "item")))
 			if int(event.get("hp_gain", 0)) > 0: game.damage_numbers.append({"position": game.player_world + Vector2(0, -62), "value": "+%d" % int(event.hp_gain), "time": 0.85})
