@@ -33,6 +33,13 @@ class StreamStateTests(unittest.TestCase):
         with patch('services.item_definitions',return_value={360:dict(special=4)}):
             with self.assertRaisesRegex(EOError,'cannot be dropped'):s.drop_item(360,1)
         self.assertFalse(s.sent);self.assertEqual(s.inventory,[dict(id=360,amount=2)])
+    def test_face_is_native_direction_only_and_can_follow_committed_walk(self):
+        s=fixture();s.pending_moves.append(dict(seq=1));before=s.timestamp
+        self.assertTrue(s.face(2)['sent'])
+        self.assertEqual((s.sent[0][0],s.sent[0][1]),(7,8))
+        self.assertEqual(Reader(s.sent[0][2]).num(),2)
+        self.assertEqual(s.state['self']['direction'],2);self.assertEqual(s.timestamp,before)
+        with self.assertRaises(EOError):s.face(4)
     def test_first_attack_timestamp_honors_requested_facing_without_face_wait(self):
         s=fixture();s.timestamp=0;s.strike(2)
         self.assertEqual(len(s.sent),1)

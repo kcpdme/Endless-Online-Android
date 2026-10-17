@@ -16,7 +16,7 @@ Godot 4.7.2, typed GDScript and 2D isometric rendering are sufficient. A Unity/3
 rewrite and a larger server have not been needed for the measured regressions.
 
 Baseline before this update: commit `8c9e541`, APK 0.10.0/code 10. The current
-build is 0.18.0/code 18. v0.12 added level/EXP, Nearby Send closure and
+build is 0.19.0/code 19. v0.12 added level/EXP, Nearby Send closure and
 native consumables; v0.13 adds native skills and touch targeting. v0.11 added native bank/lockers, player inspection and
 trading, local/global/private chat, a dynamic joystick, and the heart/TP HUD,
 as well as placing NPC names near visible heads and fixing observer equipment/
@@ -989,3 +989,71 @@ matches the download build, version18/0.18.0 verified, valid signature/16KiB
 alignment, byte-identical offline save, and no startup script/crash errors.
 Report: `docs/shop-inventory-v18-phone-report.json`. Release files use
 `outputs/endless-online-android-v0.18.0*`. Operator accounts remain unchanged.
+
+
+## v0.19 — 15×5 bag, unobtrusive notices, facing, damage and held stats
+
+User requests supersede earlier bag dimensions: current grid is exactly 15
+columns and five rows in the same 1056×384 area (70.4×76.8 logical-pixel cells).
+Positions save in `user://bag_layouts_15x5.json`, reading the character's v0.18
+12×4 layout as a fallback so existing valid arrangements carry forward. Drop,
+quantity selection and the compact Equip/Use labels remain available.
+
+Toasts are now plain text with an empty StyleBox, two-second duration and a
+brief final fade. Their timer runs BEFORE the `not started` return, fixing
+Game server disconnected messages that previously stayed forever. Removed
+NPC-kill/drop announcement toasts and the offline slime-kill toast; native drop
+ownership tracking and level-up messages remain. Pickup/purchase/drop notices
+still confirm acknowledged actions, with no large ribbon.
+
+Original ArrowKeyController.FaceOrAttemptWalk calls Face before validating a
+walk. The Android client returned when the tile was blocked without changing
+facing, and request_attack redirected to an arbitrary adjacent NPC when none
+was ahead. Blocked joystick directions now turn in place, using the original
+Face_Player packet (7,8). Facing updates locally immediately; repeated rapid
+turns coalesce to the latest direction at a 125ms send interval. Attack uses the
+chosen direction and does not silently aim at another adjacent NPC. Move and
+attack packets clear an obsolete queued facing. Face is nonblocking, keeps
+attack timestamps unchanged, can follow a committed walk, and never requires a
+world Refresh. Existing movement/attack cadence stays at 400/520ms. Deployed
+only gateway.py/live_session.py; native world and operator characters unchanged.
+Upgrade/backups: ignored work/hosting/upgrade_v19.py and native backup directory.
+Local gateway listener PID changed; inspect ss rather than reusing an old PID.
+
+Damage issue confirmed in actual GL rendering: old draw_string alignment width
+18 clipped `12345` to about 5px of visible text; unrestricted drawing showed 48px.
+Private probe: work/font_width_probe.gd and work/font-width-probe.png. Floats now
+measure/center and draw the complete native value with an outline, render zero
+as Miss like the original HealthBarRenderer, and distinguish incoming damage
+with a different color. NPCs briefly flash on confirmed positive damage. The
+old code also searched only the post-update NPC list, losing the killing blow
+after NPC removal. Cache previous NPC tiles for the event, preserving the last
+hit number. Do not inflate damage: native NPC::Damage limits to remaining HP
+when LimitDamage=yes. Skylar was read only (class0/STR39, existing Ultima Blade);
+no account, equipment, formula or combat balance changes were made.
+
+Stats + now spend once on press, repeat after 350ms and every 160ms while held,
+and stop on release, pointer exit, panel hide, focus loss, exhausted points or
+server rejection. At most one acknowledged stat request is in flight; only
+native totals change displayed attributes/remaining points. Buttons remain
+held through their own in-flight stat request rather than disabling/resetting
+the gesture every time. All six attributes use the same flow.
+
+Validation: 38 server state tests, gameplay/world smoke, expanded network
+regressions for blocked facing/explicit attack direction/Miss/last-hit value,
+real native Rat chase with zero corrections and zero full Refresh during chase,
+native peer observation of turning in place, and actual finger holding INT+
+with confirmed points conservation and no allocations after release. Local and
+public WSS integration also verify the 15×5 bag, native Drop/pickup, old layout
+handling and notice expiry while gameplay is stopped. Reports:
+`docs/gameplay-v19-{live,public}-report.json` and
+`docs/combat-chase-v19-report.json`. Private screenshots:
+`work/v19-gameplay-shots` and `work/v19-public-gameplay-shots`.
+Build version: 0.19.0/code 19, same Android signing key and package.
+
+
+Final APK0.19.0/code19 installed and launched on Galaxy S23 Ultra. Installed
+base.apk matches the download APK by SHA256; signature/16KiB alignment,
+byte-identical offline save and zero startup script/crash errors verified.
+Phone report: `docs/gameplay-v19-phone-report.json`. Release files use
+`outputs/endless-online-android-v0.19.0*`.

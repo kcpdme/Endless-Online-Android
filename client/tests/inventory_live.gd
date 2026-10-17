@@ -36,12 +36,12 @@ func _run() -> void:
 	if not check(not game.toast_label.text.contains("Purchased"), "A queued request must not claim a purchase"): return
 	if not check(await wait_for(func() -> bool: return amount(360) == 2 and c.session.is_idle()), "Native buy failed"): return
 	if not check(game.toast_label.visible and game.toast_label.z_index > ui.panel.z_index and game.toast_label.text.contains("Purchased War Axe ×2") and game.toast_label.text.contains("bag"), "Confirmed purchase must announce the item and its bag destination above the shop"): return
-	await capture("v18-purchase-confirmed")
+	await capture("v19-purchase-confirmed")
 	game.stats_ui.show_item("item:407")
 	await process_frame
 	await process_frame
 	if not check(game.stats_ui.item_art.texture != null and game.stats_ui.item_art.size == Vector2(240, 330), "Large original artwork preview missing"): return
-	await capture("v18-robe-large-preview")
+	await capture("v19-robe-large-preview")
 	game.stats_ui.hide()
 	ui.mode = "craft"
 	ui.refresh()
@@ -51,7 +51,7 @@ func _run() -> void:
 	for row: Control in ui.ingredient_rows:
 		var edge: float = row.get_global_rect().end.x
 		if not check(edge <= ui.details_scroll.get_global_rect().end.x - 30, "Have / Need too close to scrollbar"): return
-	await capture("v18-craft-quantity-margin")
+	await capture("v19-craft-quantity-margin")
 	ui.close()
 	game.inventory.show()
 	game._select_item("item:360")
@@ -73,9 +73,9 @@ func _run() -> void:
 	game._select_item("item:407")
 	var grid: Control = game.bag_grid
 	if not check(grid.dimensions(407) == Vector2i(2, 3) and grid.dimensions(281) == Vector2i(1, 4) and grid.items.size() == c.inventory_items().size(), "Original item footprints or authoritative bag entries missing"): return
-	if not check(grid.size.x >= 1000 and grid.rows == 4, "Bag must keep exactly twelve columns and four rows"): return
+	if not check(grid.size.x >= 1000 and grid.rows == 5, "Bag must keep exactly fifteen columns and five rows"): return
 	# Migrate a previous paged layout without hiding or changing server items.
-	var legacy: FileAccess = FileAccess.open("user://bag_layouts_12x4.json", FileAccess.WRITE)
+	var legacy: FileAccess = FileAccess.open("user://bag_layouts_15x5.json", FileAccess.WRITE)
 	legacy.store_string(JSON.stringify({grid.profile: {"1": [0, 0, 0], "407": [3, 0, 0]}}))
 	legacy.close()
 	grid.profile = ""
@@ -86,8 +86,8 @@ func _run() -> void:
 	# Pick a clear 2×3 destination before the native finger drag.
 	var from: Vector2i = Vector2i(int(grid.positions["407"][0]), int(grid.positions["407"][1]))
 	var destination: Vector2i = Vector2i(-1, -1)
-	for y: int in range(2):
-		for x: int in range(11):
+	for y: int in range(3):
+		for x: int in range(14):
 			if Vector2i(x, y) != from and grid.fits(407, Vector2i(x, y)): destination = Vector2i(x, y)
 	if not check(destination.x >= 0, "Fixture has no clear robe destination"): return
 	var begin: Vector2 = grid.get_global_transform_with_canvas() * (Vector2(from) * grid.CELL + Vector2(20, 20))
@@ -121,7 +121,7 @@ func _run() -> void:
 	grid.notification(NOTIFICATION_APPLICATION_FOCUS_OUT)
 	if not check(grid.drag_id == 0 and not grid.dragging, "Focus loss must cancel a held item"): return
 	game.toast_label.hide()
-	await capture("v18-classic-movable-bag")
+	await capture("v19-classic-movable-bag")
 	game.inventory.hide()
 	# Equip on the isolated native character; observe independently, never log into Skylar.
 	if int((c.player.equipment as Dictionary).get("armor", 0)) > 0:
@@ -138,7 +138,7 @@ func _run() -> void:
 		for state: String in ["idle", "frames", "attack", "cast"]:
 			if not check(not game._frame(appearance, direction, state).is_empty(), "Missing dressed pose"): return
 	game.facing = "south"
-	await capture("v18-plaot-robes-in-world")
+	await capture("v19-plaot-robes-in-world")
 	actor = (load("res://scripts/online_session.gd") as Script).new()
 	root.add_child(actor)
 	actor.message_received.connect(func(message: Dictionary) -> void: actor_replies[int(message.get("id", -1))] = message)
@@ -151,7 +151,39 @@ func _run() -> void:
 	for peer: Dictionary in entry.get("players", []):
 		if int(peer.get("player_id", -1)) == int(c.player.player_id): observer_saw = int((peer.equipment_graphics as Array)[4]) == 40 and not c.character_graphic(peer).is_empty()
 	if not check(observer_saw, "Independent native observer did not see Plaot appearance"): return
-	var report: Dictionary = {"result": "passed", "confirmed_native_purchase_feedback_only": true, "craft_quantities_30px_scrollbar_margin": true, "native_touch_drag_six_cell_robe": true, "overlap_rejected": true, "focus_loss_cancels_drag": true, "fixed_12_columns_4_rows_larger_cells": true, "native_quantity_drop_and_pickup_roundtrip": true, "compact_equip_and_use_labels": true, "character_layout_survives_reload": true, "server_quantities_unchanged_by_rearrangement": true, "legacy_page_items_migrated_into_one_bag": true, "large_original_gear_preview": true, "plaot_robe_all_directions_walk_attack_cast": true, "independent_native_observer_sees_robe": true, "operator_accounts_modified": false}
+	c.request_face("north")
+	await create_timer(.3).timeout
+	var observed: Dictionary = await rpc("refresh")
+	var facing_seen: bool = false
+	for peer: Dictionary in observed.get("players", []):
+		if int(peer.get("player_id", -1)) == int(c.player.player_id): facing_seen = int(peer.direction) == 2
+	if not check(facing_seen and game.facing == "north", "Native observer must see turning in place"): return
+	game.stats_ui.show_stats()
+	await process_frame
+	var stats_before: int = int(c.player.stats.intelligence)
+	var points_before: int = int(c.player.stats.stat_points)
+	var plus: Button = game.stats_ui.add_buttons[1]
+	var hold: InputEventScreenTouch = InputEventScreenTouch.new()
+	hold.index = 79
+	hold.position = plus.get_global_rect().get_center()
+	hold.pressed = true
+	Input.parse_input_event(hold)
+	if not check(await wait_for(func() -> bool: return int(c.player.stats.intelligence) >= stats_before + 4), "Holding + must spend repeated native stat points"): return
+	hold.pressed = false
+	Input.parse_input_event(hold)
+	await create_timer(.7).timeout
+	var gained: int = int(c.player.stats.intelligence) - stats_before
+	if not check(points_before - int(c.player.stats.stat_points) == gained and game.stats_ui.held_stat == 0, "Held stat allocation must use confirmed totals and stop on release"): return
+	var settled: int = int(c.player.stats.intelligence)
+	await create_timer(.4).timeout
+	if not check(int(c.player.stats.intelligence) == settled, "Stat allocation continued after release"): return
+	await capture("v19-held-stat-result")
+	game.stats_ui.hide()
+	game.started = false
+	game._toast("Game server disconnected")
+	await create_timer(2.2).timeout
+	if not check(not game.toast_label.visible and is_zero_approx(game.toast_time), "Disconnected notification must expire even while gameplay is stopped"): return
+	var report: Dictionary = {"result": "passed", "confirmed_native_purchase_feedback_only": true, "craft_quantities_30px_scrollbar_margin": true, "native_touch_drag_six_cell_robe": true, "overlap_rejected": true, "focus_loss_cancels_drag": true, "fixed_15_columns_5_rows": true, "native_quantity_drop_and_pickup_roundtrip": true, "compact_equip_and_use_labels": true, "character_layout_survives_reload": true, "server_quantities_unchanged_by_rearrangement": true, "legacy_page_items_migrated_into_one_bag": true, "large_original_gear_preview": true, "plaot_robe_all_directions_walk_attack_cast": true, "independent_native_observer_sees_robe": true, "native_observer_sees_turn_in_place": true, "held_plus_uses_native_acknowledged_points_and_stops": true, "text_notification_expires_while_disconnected": true, "operator_accounts_modified": false}
 	var file: FileAccess = FileAccess.open(OS.get_environment("ASTER_VALE_TEST_REPORT"), FileAccess.WRITE)
 	file.store_string(JSON.stringify(report, "  ") + "\n")
 	print("INVENTORY LIVE PASS: ", JSON.stringify(report))

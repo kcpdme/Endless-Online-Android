@@ -255,12 +255,14 @@ func _process(delta: float) -> void:
 		var snapshot: Image = get_viewport().get_texture().get_image()
 		snapshot.save_png("user://prototype-screenshot.png")
 		print("Screenshot saved: ", ProjectSettings.globalize_path("user://prototype-screenshot.png"))
+	if stats_ui != null: stats_ui.process_repeat(delta)
+	if toast_time > 0.0:
+		toast_time = maxf(0.0, toast_time - delta)
+		toast_label.visible = toast_time > 0.0
+		toast_label.modulate.a = minf(1.0, toast_time / 0.2)
 	if not started:
 		queue_redraw()
 		return
-	if toast_time > 0.0:
-		toast_time -= delta
-		toast_label.visible = toast_time > 0.0
 	if not online_mode and enemy_health <= 0 and not loot_visible:
 		enemy_respawn -= delta
 		if enemy_respawn <= 0.0:
@@ -276,13 +278,13 @@ func _process(delta: float) -> void:
 	if not _modal_open():
 		if attack_touch_id != -1 and attack_clock <= 0.0 and (enemy_health > 0 or online_mode) and (not online_mode or (_input_direction() == Vector2i.ZERO and route.is_empty())):
 			_attack()
-		if not moving and (not online_mode or online.can_issue_walk()):
+		if not moving:
 			var direction: Vector2i = _input_direction()
 			if direction != Vector2i.ZERO:
 				route.clear()
 				waypoint = Vector2i(-1, -1)
 				_step(direction)
-			elif not route.is_empty():
+			elif not route.is_empty() and (not online_mode or online.can_issue_walk()):
 				var next_tile: Vector2i = route.pop_front()
 				_step(next_tile - player_tile)
 	camera.position = player_world
@@ -583,7 +585,6 @@ func _attack() -> void:
 		loot_visible = true
 		loot_tile = enemy_tile
 		enemy_respawn = 6.0
-		_toast("Slime defeated! Walk over the glowing loot to collect.")
 	_refresh_ui()
 	_save_progress()
 
@@ -651,7 +652,12 @@ func _draw() -> void:
 	for number: Dictionary in damage_numbers:
 		var at: Vector2 = number.position as Vector2
 		at.y -= (0.8 - float(number.time)) * 28.0
-		draw_string(ThemeDB.fallback_font, at, str(number.value), HORIZONTAL_ALIGNMENT_CENTER, 18, 18, GOLD)
+		var caption: String = str(number.value)
+		var font: Font = ThemeDB.fallback_font
+		var origin: Vector2 = at - Vector2(font.get_string_size(caption, HORIZONTAL_ALIGNMENT_LEFT, -1, 18).x / 2.0, 0)
+		var color: Color = Color("ffaaaa") if bool(number.get("player_hit", false)) else MUTED if caption == "Miss" else GOLD
+		draw_string_outline(font, origin, caption, HORIZONTAL_ALIGNMENT_LEFT, -1, 18, 3, Color.BLACK)
+		draw_string(font, origin, caption, HORIZONTAL_ALIGNMENT_LEFT, -1, 18, color)
 
 func _draw_diamond(center: Vector2, color: Color) -> void:
 	var points: PackedVector2Array = PackedVector2Array([center + Vector2(0, -15), center + Vector2(30, 0), center + Vector2(0, 15), center + Vector2(-30, 0), center + Vector2(0, -15)])
@@ -874,7 +880,7 @@ func _build_ui() -> void:
 	toast_label.set_anchors_preset(Control.PRESET_CENTER_BOTTOM, true)
 	toast_label.size = Vector2(640, 62)
 	toast_label.z_index = 30
-	toast_label.add_theme_stylebox_override("normal", _wood_style(Color("493018"), GOLD))
+	toast_label.add_theme_stylebox_override("normal", StyleBoxEmpty.new())
 	toast_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	toast_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	toast_label.add_theme_color_override("font_shadow_color", Color.BLACK)
@@ -1276,7 +1282,8 @@ func _toast(value: String) -> void:
 	if toast_label == null: return
 	toast_label.text = value
 	toast_label.show()
-	toast_time = 5.5
+	toast_time = 2.0
+	toast_label.modulate.a = 1.0
 
 func _save_progress() -> void:
 	if online_mode: return
@@ -1348,6 +1355,7 @@ func _notification(what: int) -> void:
 	if what == NOTIFICATION_APPLICATION_FOCUS_OUT or what == NOTIFICATION_APPLICATION_PAUSED:
 		if content_ready:
 			_cancel_controls()
+			if stats_ui != null: stats_ui.stop_repeat()
 			owned_touches.clear()
 	if what == NOTIFICATION_APPLICATION_PAUSED or what == NOTIFICATION_WM_CLOSE_REQUEST:
 		if content_ready and started: _save_progress()

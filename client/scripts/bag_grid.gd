@@ -1,10 +1,10 @@
 extends Control
 ## One continuous bag with original EIF footprints and character-local positions.
-const COLUMNS: int = 12
-const MIN_ROWS: int = 4
+const COLUMNS: int = 15
+const MIN_ROWS: int = 5
 var rows: int = MIN_ROWS
-const CELL: Vector2 = Vector2(88, 96)
-const FILE: String = "user://bag_layouts_12x4.json"
+const CELL: Vector2 = Vector2(70.4, 76.8)
+const FILE: String = "user://bag_layouts_15x5.json"
 var game: Node
 var positions: Dictionary = {}
 var items: Array[Dictionary] = []
@@ -68,7 +68,11 @@ func refresh() -> void:
 	if profile != next_profile:
 		profile = next_profile
 		var data: Variant = JSON.parse_string(FileAccess.get_file_as_string(FILE)) if FileAccess.file_exists(FILE) else {}
-		positions = (data as Dictionary).get(profile, {}).duplicate() if data is Dictionary else {}
+		var saved: Dictionary = data as Dictionary if data is Dictionary else {}
+		if not saved.has(profile) and FileAccess.file_exists("user://bag_layouts_12x4.json"):
+			var legacy: Variant = JSON.parse_string(FileAccess.get_file_as_string("user://bag_layouts_12x4.json"))
+			if legacy is Dictionary: saved[profile] = (legacy as Dictionary).get(profile, {})
+		positions = (saved.get(profile, {}) as Dictionary).duplicate()
 	items = next_items
 	signature = next_signature
 	# Validate saved positions, retaining valid slots before placing new items.

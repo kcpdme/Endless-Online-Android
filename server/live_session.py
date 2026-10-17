@@ -76,6 +76,13 @@ class LiveSession(SkillsMixin, ConsumablesMixin, ServicesMixin, EconomyMixin, Se
                 self.events.append(dict(kind='pickup_failed',uid=uid,message='Cannot pick up: check bag weight or wait for drop protection to expire.'))
                 self.dirty=True
 
+    def face(self,direction):
+        direction=int(direction)
+        if direction not in range(4):raise EOError('Invalid facing direction')
+        if not self.state or self.warp or self.stats.get('dead') or self.trade or getattr(self,'casting',None):return {'sent':False}
+        self.send(7,8,number(direction,1));self.state['self']['direction']=direction
+        return {'sent':True,'direction':direction}
+
     def strike(self,direction):
         direction=int(direction)
         if direction not in range(4) or not self.state:raise EOError('Enter the world before attacking')

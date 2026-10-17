@@ -88,6 +88,7 @@ class Handler(socketserver.StreamRequestHandler):
         if op=='move':return s.move(int(r['direction']),int(r['input_seq']),int(r['map_id']),int(r['x']),int(r['y']),bool(r.get('open_door',False)))
         if op=='refresh':s.refresh();return s.snapshot()
         if op=='walk':s.walk(int(r['direction']),bool(r.get('open_door',False)));return s.snapshot()
+        if op=='face':return s.face(int(r['direction']))
         if op=='strike':return s.strike(int(r['direction']))
         if op=='spend_stat':return s.spend_stat(int(r['stat_id']))
         if op=='attack':s.attack(r.get('direction'));return s.snapshot()

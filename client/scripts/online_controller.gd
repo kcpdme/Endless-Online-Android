@@ -29,6 +29,10 @@ var defeated: bool = false
 var npc_attack_until: Dictionary = {}
 var peer_attacks: Dictionary = {}
 var npc_health: Dictionary = {}
+var npc_hit_until: Dictionary = {}
+var previous_npc_tiles: Dictionary = {}
+var last_face_at: int = -125
+var pending_face: String = ""
 var transition_pending: bool = false
 var next_input_seq: int = 0
 var confirmed_input_seq: int = 0
@@ -205,6 +209,7 @@ func _on_message(message: Dictionary) -> void:
 		if operation == "item_drop":
 			drop_ui.submitting = false
 			drop_ui.refresh()
+		if operation == "spend_stat": game.stats_ui.stop_repeat()
 		if operation == "item_use": game._refresh_ui()
 		if game.shop_ui != null: game.shop_ui.refresh()
 		if game.services_ui != null: game.services_ui.refresh()
@@ -236,7 +241,7 @@ func _on_message(message: Dictionary) -> void:
 			_enter_world(data)
 		"stream":
 			streaming = bool(data.get("enabled", false))
-		"move", "strike", "collect", "spell_cast", "spell_cancel":
+		"move", "face", "strike", "collect", "spell_cast", "spell_cancel":
 			pass # Receipt only. The subsequent native Walk_Reply confirms acceptance.
 		"unequip":
 			_apply_snapshot(data)
@@ -394,6 +399,8 @@ func _apply_snapshot(data: Dictionary, entering: bool = false) -> void:
 		_sync_inventory()
 	if data.has("players"): players = _dict_array(data.players)
 	else: players = _merge_updates(players, data.get("players_upsert", []), data.get("players_remove", []), "player_id")
+	previous_npc_tiles.clear()
+	for npc: Dictionary in npcs: previous_npc_tiles[int(npc.index)] = Vector2i(int(npc.x), int(npc.y))
 	if data.has("npcs"): npcs = _dict_array(data.npcs)
 	else: npcs = _merge_updates(npcs, data.get("npcs_upsert", []), data.get("npcs_remove", []), "index")
 	if data.has("items"): drops = _dict_array(data.items)
@@ -444,6 +451,7 @@ func _process(delta: float) -> void:
 		login_retry_at = 0
 		if panel.visible and not active: _authenticate("login", true)
 	if not active: return
+	_flush_face()
 	_process_interaction()
 	warp_notice_clock = maxf(0.0, warp_notice_clock - delta)
 	walk_clock = maxf(0.0, walk_clock - delta)
@@ -454,12 +462,15 @@ func _process(delta: float) -> void:
 		session._fail("Movement confirmation timed out. Please reconnect.")
 
 func request_step(direction: Vector2i) -> void:
-	if not can_issue_walk(): return
+	if not active or defeated or recovering or transition_pending or game.moving: return
 	var single: Vector2i = direction
 	if direction.x != 0 and direction.y != 0:
-		diagonal_toggle = not diagonal_toggle
 		single = Vector2i(direction.x, 0) if diagonal_toggle else Vector2i(0, direction.y)
 	var target: Vector2i = game.player_tile + single
+	if not game._can_step(game.player_tile, single):
+		request_face(game._direction_name(single))
+		return
+	if not can_issue_walk(): return
 	var fields: Dictionary = {"direction": _direction(game._direction_name(single))}
 	var passage: bool = false
 	for warp: Dictionary in game.world.get("warps", []):
@@ -475,12 +486,11 @@ func request_step(direction: Vector2i) -> void:
 		passage = true
 		if int(warp.get("door", 0)) > 0: fields["open_door"] = true
 		break
-	if not game._can_step(game.player_tile, single):
-		game.route.clear()
-		return
+	if direction.x != 0 and direction.y != 0: diagonal_toggle = not diagonal_toggle
 	next_input_seq += 1
 	network_metrics.moves = int(network_metrics.moves) + 1
 	fields.merge({"input_seq": next_input_seq, "map_id": int(game.world.id), "x": target.x, "y": target.y})
+	pending_face = ""
 	if session.request("move", fields) < 0: return
 	pending_inputs.append({"seq": next_input_seq, "direction": single, "sent_at": Time.get_ticks_msec()})
 	waiting_for_walk = true
@@ -501,6 +511,9 @@ func _start_step(tile: Vector2i, direction: String) -> void:
 	game.moving = true
 
 func _reset_movement() -> void:
+	pending_face = ""
+	npc_hit_until.clear()
+	previous_npc_tiles.clear()
 	npc_health.clear()
 	pending_equip.clear()
 	if loot_button != null: loot_button.hide()
@@ -529,18 +542,12 @@ func request_attack() -> bool:
 	game.skills_ui.armed = 0
 	if not game.skills_ui.casting.is_empty(): return false
 	if not active or defeated or recovering or game.moving or transition_pending or session.has_blocking_requests() or session.pending.size() >= MAX_PREDICTIONS: return false
-	# Aim at the faced adjacent hostile; otherwise select an adjacent attackable NPC.
-	var target_direction: int = _direction(game.facing)
+	# Original attacks follow the chosen facing; do not redirect to another NPC.
 	var adjacent: Array[Dictionary] = []
 	for npc: Dictionary in npcs:
-		var tile: Vector2i = Vector2i(int(npc.x), int(npc.y))
-		var info: Dictionary = (catalog.get("npcs", {}) as Dictionary).get(str(int(npc.id)), {}) as Dictionary
-		if game._distance(game.player_tile, tile) == 1 and int(info.get("type", -1)) in [1, 2, 3]: adjacent.append(npc)
+		if game._distance(game.player_tile, Vector2i(int(npc.x), int(npc.y))) == 1: adjacent.append(npc)
 	var offsets: Array[Vector2i] = [Vector2i(0, 1), Vector2i(-1, 0), Vector2i(0, -1), Vector2i(1, 0)]
-	var faced: bool = false
-	for npc: Dictionary in adjacent:
-		if Vector2i(int(npc.x), int(npc.y)) == game.player_tile + offsets[target_direction]: faced = true
-	if not faced and not adjacent.is_empty(): game.facing = game._direction_name(Vector2i(int(adjacent[0].x), int(adjacent[0].y)) - game.player_tile)
+	pending_face = ""
 	var sent: bool = session.request("strike", {"direction": _direction(game.facing)}) >= 0
 	if sent:
 		var target_tile: Vector2i = game.player_tile + offsets[_direction(game.facing)]
@@ -551,6 +558,21 @@ func request_attack() -> bool:
 			health["until"] = Time.get_ticks_msec() + 8000
 			npc_health[index] = health
 	return sent
+
+func request_face(direction: String) -> void:
+	if not active or defeated or recovering or game.moving or transition_pending or not game.skills_ui.casting.is_empty(): return
+	if game.facing != direction:
+		game.facing = direction
+		player["direction"] = _direction(direction)
+		pending_face = direction
+	_flush_face()
+
+func _flush_face() -> void:
+	if pending_face.is_empty() or Time.get_ticks_msec() - last_face_at < 125 or session.pending.size() >= MAX_PREDICTIONS: return
+	if not active or defeated or recovering or transition_pending or game.moving or not game.skills_ui.casting.is_empty(): pending_face = ""; return
+	last_face_at = Time.get_ticks_msec()
+	session.request("face", {"direction": _direction(pending_face)})
+	pending_face = ""
 
 func spend_stat(stat_id: int) -> void:
 	if _action_ready():
@@ -685,7 +707,7 @@ func draw_entity(entity: Dictionary) -> void:
 		var characters: Dictionary = game.manifest.get("characters", {}) as Dictionary
 		var npc_graphics: Dictionary = characters.get("npcs", {}) as Dictionary
 		var graphic: Dictionary = npc_graphics.get(str(int(info.get("graphic", 0))), {}) as Dictionary
-		if not graphic.is_empty(): game._draw_character_frame(graphic, at, direction, state, Color.WHITE, phase if state in ["frames", "attack"] else -1.0)
+		if not graphic.is_empty(): game._draw_character_frame(graphic, at, direction, state, Color("ffb8a0") if Time.get_ticks_msec() < int(npc_hit_until.get(int(record.index), 0)) else Color.WHITE, phase if state in ["frames", "attack"] else -1.0)
 		else: game.draw_circle(at + Vector2(0, -12), 5.0, Color("e7bd70"))
 		var health: float = npc_health_fraction(int(record.get("index", -1)))
 		var layout: Dictionary = npc_name_layout(graphic, direction, health >= 0.0)
@@ -949,7 +971,9 @@ func map_click(tile: Vector2i, preferred_kind: String = "") -> void:
 			interaction = {"kind": "skillmaster" if type == 14 else "bank" if type == 9 else "shop", "id": int(npc.index)}
 		elif type in [1, 2, 3]:
 			if game._distance(game.player_tile, tile) == 1:
-				game.facing = game._direction_name(tile - game.player_tile)
+				var direction: String = game._direction_name(tile - game.player_tile)
+				if game.attack_clock > 0.0: request_face(direction)
+				else: game.facing = direction
 				game._attack()
 			else: _approach(tile, 1)
 		else: game._toast("%s: this NPC service is not available yet." % str(info.get("name", "NPC")))
@@ -1159,16 +1183,19 @@ func _process_events(events: Array) -> void:
 			var index: int = int(event.get("npc_index", -1))
 			if kind == "npc_damage": npc_health[index] = {"percent": clampi(int(event.get("hp_percent", 100)), 0, 100), "until": Time.get_ticks_msec() + 8000}
 			else: npc_health.erase(index)
+			var tile: Vector2i = previous_npc_tiles.get(index, Vector2i(-1, -1)) as Vector2i
 			for npc: Dictionary in npcs:
-				if int(npc.get("index", -1)) == int(event.get("npc_index", -2)):
-					var tile: Vector2i = Vector2i(int(npc.get("x", 0)), int(npc.get("y", 0)))
-					game.damage_numbers.append({"position": game.tile_position(tile) + Vector2(0, -44), "value": str(int(event.get("damage", 0))), "time": 0.8})
+				if int(npc.index) == index: tile = Vector2i(int(npc.x), int(npc.y))
+			if tile.x < 0 and kind == "npc_killed":
+				var dropped: Dictionary = event.get("drop", {}) as Dictionary
+				if dropped.has("x") and dropped.has("y"): tile = Vector2i(int(dropped.x), int(dropped.y))
+			var damage: int = int(event.get("damage", 0))
+			if damage > 0: npc_hit_until[index] = Time.get_ticks_msec() + 150
+			if tile.x >= 0: game.damage_numbers.append({"position": game.tile_position(tile) + Vector2(0, -44), "value": str(damage) if damage > 0 else "Miss", "time": 0.8})
 			if kind == "npc_killed":
 				var drop: Dictionary = event.get("drop", {}) as Dictionary
 				if int(drop.get("uid", 0)) > 0:
 					drop_permissions[int(drop.uid)] = {"owner": int(event.get("player_id", 0)), "until": Time.get_ticks_msec() + 30000}
-					game._toast(("%s ×%d dropped. Tap Pick up." if int(event.get("player_id", 0)) == int(player.get("player_id", -1)) else "%s ×%d is reserved for another player.") % [str(item_info("item:%d" % int(drop.id)).get("name", "Item")), int(drop.amount)])
-				else: game._toast("Enemy defeated.")
 				if event.has("level_up"): game._toast("Level %d reached! Stat points are available in Character Stats." % int(event.level_up))
 		if kind == "pickup":
 			network_metrics.pickups = int(network_metrics.pickups) + 1

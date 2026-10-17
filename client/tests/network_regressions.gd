@@ -1,8 +1,10 @@
 extends SceneTree
 class SessionCapture extends "res://scripts/online_session.gd":
 	var calls: Array[String] = []
+	var arguments: Array[Dictionary] = []
 	func request(operation: String, _fields: Dictionary = {}) -> int:
 		calls.append(operation)
+		arguments.append(_fields.duplicate())
 		return calls.size()
 var failed: bool = false
 func _initialize() -> void: call_deferred("_run")
@@ -101,7 +103,34 @@ func _run() -> void:
 	game.online.player["equipment"] = {}
 	game.online.bag_action("item:2")
 	check(capture.calls.has("item_use"), "Potion bag action must request native item use rather than equipment")
-	game.online_mode = false
+	game.online_mode = true
+	game.online.active = true
+	game.online.defeated = false
+	game.skills_ui.casting.clear()
+	game.online.pending_inputs.clear()
+	game.online.recovering = false
+	game.online.transition_pending = false
+	game.online.walk_clock = 0.0
+	game.moving = false
+	game.attack_clock = 0.0
+	game.player_tile = Vector2i(40, 40)
+	game.facing = "west"
+	game.online.npcs.assign([{"id": 2, "index": 77, "x": 41, "y": 40}, {"id": 2, "index": 78, "x": 40, "y": 41}])
+	var position_before: Vector2i = game.player_tile
+	game.online.request_step(Vector2i(1, 0))
+	check(game.facing == "east" and game.player_tile == position_before and capture.calls[-1] == "face", "Blocked NPC must allow turning without walking through it")
+	game.facing = "north"
+	game.online.request_attack()
+	check(int(capture.arguments[-1].direction) == 2 and game.facing == "north", "Attack must not auto-redirect to another adjacent NPC")
+	game.damage_numbers.clear()
+	game.online.npcs.clear()
+	game.online.previous_npc_tiles[77] = Vector2i(41, 40)
+	game._toast("keep")
+	game.online._process_events([{"kind": "npc_killed", "npc_index": 77, "player_id": 1, "damage": 12345, "drop": {"uid": 0}}])
+	check(game.damage_numbers.size() == 1 and str(game.damage_numbers[0].value) == "12345", "Killing blow must retain the full server damage after NPC removal")
+	check(game.toast_label.text == "keep", "Enemy kills must not generate notifications")
+	game.online._process_events([{"kind": "npc_damage", "npc_index": 77, "damage": 0, "hp_percent": 100}])
+	check(str(game.damage_numbers[-1].value) == "Miss", "Native zero damage must show Miss")
 	game.started = false
 	game.queue_free()
 	await process_frame

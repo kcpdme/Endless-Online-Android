@@ -14,6 +14,8 @@ var points: Label
 var classic_fields: Dictionary = {}
 var values: Array[Label] = []
 var add_buttons: Array[Button] = []
+var held_stat: int = 0
+var repeat_wait: float = 0.0
 var vitals: Control
 
 func build(owner_game: Node, parent: Control) -> void:
@@ -40,7 +42,10 @@ func build(owner_game: Node, parent: Control) -> void:
 		value.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		values.append(value)
 		var stat_id: int = index + 1
-		var increase: Button = game._button(card, "+", Vector2(252, 130 + index * 36), Vector2(38, 30), func() -> void: game.online.spend_stat(stat_id))
+		var increase: Button = game._button(card, "+", Vector2(252, 130 + index * 36), Vector2(38, 30), func() -> void: pass)
+		increase.button_down.connect(func() -> void: begin_repeat(stat_id))
+		increase.button_up.connect(stop_repeat)
+		increase.mouse_exited.connect(stop_repeat)
 		increase.add_theme_font_size_override("font_size", 16)
 		for state: String in ["normal", "hover", "pressed", "disabled"]:
 			var style: StyleBoxFlat = game._wood_style(Color("75512b"))
@@ -60,6 +65,9 @@ func build(owner_game: Node, parent: Control) -> void:
 		classic_fields[key] = label
 	points = game._label(card, "", Vector2(40, 380), 18, game.GOLD)
 	details = game._label(card, "Equipment bonuses are included. Use + to spend earned stat points.", Vector2(40, 420), 17, game.MUTED)
+	panel.visibility_changed.connect(func() -> void:
+		if not panel.visible: stop_repeat()
+	)
 	panel.hide()
 	item_panel = game._modal(parent, Vector2(840, 650))
 	var item_card: Control = item_panel.get_child(0) as Control
@@ -86,6 +94,25 @@ func build(owner_game: Node, parent: Control) -> void:
 	game._label(item_card, "Item bonuses come from the original game data.
 Your combined totals are shown in Character Stats.", Vector2(36, 570), 17, game.MUTED)
 	item_panel.hide()
+
+func begin_repeat(stat_id: int) -> void:
+	held_stat = stat_id
+	repeat_wait = 0.35
+	game.online.spend_stat(stat_id)
+
+func stop_repeat() -> void:
+	held_stat = 0
+	repeat_wait = 0.0
+
+func process_repeat(delta: float) -> void:
+	if held_stat == 0: return
+	if not panel.visible or not game.online.active or int((game.online.player.get("stats", {}) as Dictionary).get("stat_points", 0)) <= 0:
+		stop_repeat()
+		return
+	repeat_wait = maxf(0.0, repeat_wait - delta)
+	if repeat_wait <= 0.0 and game.online._action_ready():
+		game.online.spend_stat(held_stat)
+		repeat_wait = 0.16
 
 func show_item(kind: String) -> void:
 	if not game.online_mode or game.online.item_info(kind).is_empty(): return
@@ -149,7 +176,7 @@ func refresh() -> void:
 	points.text = "Stat points: %d     Skill points: %d     Max SP: %d" % [int(stats.get("stat_points", 0)), int(stats.get("skill_points", 0)), int(stats.get("max_sp", 0))]
 	for index: int in range(ATTRIBUTES.size()):
 		values[index].text = str(int(stats.get(ATTRIBUTES[index], 0)))
-		add_buttons[index].disabled = int(stats.get("stat_points", 0)) <= 0 or not game.online._action_ready()
+		add_buttons[index].disabled = int(stats.get("stat_points", 0)) <= 0 or not game.online.active or game.online.defeated
 	var fields: Dictionary = {"hp": "%d / %d" % [hp, max_hp], "tp": "%d / %d" % [tp, max_tp], "damage": "%d–%d" % [int(stats.get("min_damage", 0)), int(stats.get("max_damage", 0))], "name": str(p.get("name", "")), "guild": str(stats.get("guild", "")), "level": str(int(p.get("level", 0))), "weight": "%d / %d" % [int(stats.get("weight", 0)), int(stats.get("max_weight", 0))], "gold": str(game.coins), "element": "—", "tnl": "—"}
 	for key: String in ["accuracy", "armor", "evade", "stat_points", "skill_points", "experience", "karma"]: fields[key] = str(int(stats.get(key, 0)))
 	# Original level table: next level cubed * 133.1; display remaining EXP.

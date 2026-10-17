@@ -1,0 +1,21 @@
+{
+  "attacks": 2,
+  "attacks_without_extra_ack_wait": 0,
+  "client": {
+    "corrections": 0,
+    "moves": 3,
+    "pickups": 0
+  },
+  "full_refreshes_during_chase": 0,
+  "native_rat_battle_health_strip": true,
+  "real_rat_chased_and_killed": true,
+  "result": "passed",
+  "server": {
+    "collects": 0.0,
+    "corrections": 0.0,
+    "moves": 3.0,
+    "pickups": 0.0,
+    "refreshes": 1.0,
+    "walk_acks": 3.0
+  }
+}
