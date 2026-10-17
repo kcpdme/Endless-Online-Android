@@ -111,6 +111,7 @@ class Handler(socketserver.StreamRequestHandler):
         if op in ('bank_deposit','bank_withdraw'):return s.bank_change(op=='bank_withdraw',int(r['amount']))
         if op=='locker_open':return s.locker_open(int(r['x']),int(r['y']))
         if op in ('locker_deposit','locker_withdraw'):return s.locker_change(op=='locker_withdraw',int(r['item_id']),int(r.get('amount',1)))
+        if op=='online_players':return s.request_online_players()
         if op=='chat_send':return s.chat_send(str(r['channel']),str(r['message']),str(r.get('target','')))
         if op=='inspect_player':return s.inspect_player(int(r['player_id']))
         if isinstance(op,str) and op.startswith('trade_'):return s.trade_action(op.removeprefix('trade_'),int(r.get('player_id',0)),int(r.get('item_id',0)),int(r.get('amount',0)),bool(r.get('agree',True)))

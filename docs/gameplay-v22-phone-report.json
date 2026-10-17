@@ -1,0 +1,17 @@
+{
+  "result": "passed",
+  "version": "0.21.0",
+  "version_code": 22,
+  "device": "Galaxy S23 Ultra",
+  "installed_apk_matches_final_sha256": true,
+  "apk_sha256": "e77475362cd6c701f326b89ceefd8f49742afff75a1e997d685682ac83d074c1",
+  "save_preserved_byte_for_byte": true,
+  "launched_process_running": true,
+  "startup_script_or_crash_errors": 0,
+  "apk_signature_verified": true,
+  "alignment_16k_verified": true,
+  "production_health": "ok",
+  "chat_gateway_deployed_native_world_not_restarted": true,
+  "operator_account_mutations": false,
+  "timestamp": "2026-10-17T05:57:33.616396+00:00"
+}

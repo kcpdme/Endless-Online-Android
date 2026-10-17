@@ -1,0 +1,19 @@
+{
+  "chat_text_is_not_markup": true,
+  "global_feed_remains_visible": true,
+  "hidden_online_character_not_exposed": true,
+  "joystick_release_over_chat_cleans_up": true,
+  "keyboard_layout_keeps_message_input_visible": true,
+  "layout_1280_and_1544": true,
+  "native_cross_map_private_conversation": true,
+  "native_global_across_maps_visible_without_modal": true,
+  "native_online_title_metadata": true,
+  "native_server_wide_online_roster": true,
+  "operator_accounts_modified": false,
+  "quick_global_native_echo_and_keyboard_release": true,
+  "reply_shortcut": true,
+  "result": "passed",
+  "server_rejection_restores_draft": true,
+  "touch_online_name_addresses_whisper": true,
+  "touch_quick_composer_does_not_move_or_attack": true
+}

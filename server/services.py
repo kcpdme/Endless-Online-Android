@@ -52,7 +52,7 @@ def bank_settings():
 
 class ServicesMixin:
     def init_services(self):
-        self.bank=None; self.locker=None; self.trade=None; self.trade_request=None;self.last_chat=0
+        self.bank=None; self.locker=None; self.trade=None; self.trade_request=None;self.last_chat=0;self.online_roster=None;self.roster_requested=0
 
     def _wait_service(self, family, actions, timeout=2):
         deadline=time.monotonic()+timeout
@@ -187,6 +187,31 @@ class ServicesMixin:
             offers[str(pid)]=items
         return offers
 
+    def request_online_players(self):
+        if not self.state:raise EOError('Enter the world before viewing online players')
+        if self.warp or self.pending_moves:raise EOError('Finish this step before refreshing online players')
+        now=time.monotonic()
+        if now-self.roster_requested<5:
+            if self.online_roster is not None:
+                self.events.append(dict(kind='online_players',players=self.online_roster));self.dirty=True
+            return dict(requested=False)
+        self.send(22,1);self.roster_requested=now
+        return dict(requested=True)
+
+    @staticmethod
+    def parse_online_players(payload):
+        r=Reader(payload)
+        if r.num()!=8:raise EOError('Unexpected native online list')
+        count=r.num(2)
+        if count>10000 or r.take(1)!=b'\xff':raise EOError('Invalid native online list')
+        players=[]
+        for _ in range(count):
+            display_name=r.text();title=r.text();r.num();icon=r.num();class_id=r.num()
+            guild=r.text().strip()
+            players.append(dict(name=display_name.split(' ',1)[0],display_name=display_name,title=title,icon=icon,class_id=class_id,guild=guild))
+        if r.rest():raise EOError('Unexpected native online list fields')
+        return sorted(players,key=lambda p:p['name'].lower())
+
     def chat_send(self,channel,message,target=''):
         if not self.state: raise EOError('Enter the world before chatting')
         message=str(message).strip();target=str(target).strip().lower()
@@ -207,7 +232,10 @@ class ServicesMixin:
 
     def apply_service_packet(self,f,a,p):
         r=Reader(p)
-        if f==18:
+        if (f,a)==(255,255) and p[:1]==number(8,1):
+            self.online_roster=self.parse_online_players(p)
+            self.events.append(dict(kind='online_players',players=self.online_roster))
+        elif f==18:
             event=dict(kind='chat',channel='system',name='Server')
             if a==8:
                 pid=r.num(2);peer=next((c for c in self.state['characters'] if c['player_id']==pid),{})

@@ -246,6 +246,7 @@ func _walkable(tile: Vector2i) -> bool:
 func _process(delta: float) -> void:
 	if skills_ui != null: skills_ui.tick()
 	if quick_items != null: quick_items.refresh()
+	if chat_ui != null: chat_ui.tick()
 	time_alive += delta
 	animation_clock += delta
 	attack_clock = maxf(0.0, attack_clock - delta)
@@ -301,6 +302,7 @@ func _process(delta: float) -> void:
 	queue_redraw()
 
 func _input_direction() -> Vector2i:
+	if chat_ui != null and chat_ui.typing(): return Vector2i.ZERO
 	var input: Vector2 = stick
 	if Input.is_physical_key_pressed(KEY_W) or Input.is_physical_key_pressed(KEY_UP):
 		input.y -= 1.0
@@ -396,6 +398,16 @@ func _screen_to_world(point: Vector2) -> Vector2:
 	return get_global_transform_with_canvas().affine_inverse() * point
 
 func _input(event: InputEvent) -> void:
+	# Standard GUI owns the feed/composer before world targeting and floating stick.
+	var owned_chat_release: bool = (event is InputEventScreenTouch and not event.pressed and owned_touches.has(event.index)) or (event is InputEventMouseButton and not event.pressed and (touch_move_id == -2 or attack_touch_id == -2))
+	if chat_ui != null and not _modal_open() and not owned_chat_release:
+		if chat_ui.quick_channel.get_popup().visible: return
+		if event is InputEventScreenTouch or event is InputEventMouseButton:
+			if chat_ui.hud_contains(event.position): return
+			if chat_ui.typing() and event.pressed:
+				chat_ui.blur_quick()
+				get_viewport().set_input_as_handled()
+				return
 	# Own native controls suppress their separately generated mouse events, including
 	# HUD presses that open a modal. A release can never become a second action.
 	if event is InputEventMouseButton and event.device == InputEvent.DEVICE_ID_EMULATION:
@@ -513,10 +525,16 @@ func _input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 
 func _unhandled_input(event: InputEvent) -> void:
+	if chat_ui != null and chat_ui.typing():
+		if event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE: chat_ui.blur_quick()
+		return
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_ESCAPE:
 			_handle_back()
 		if not started: return
+		if event.keycode == KEY_ENTER and online_mode and not _modal_open():
+			chat_ui.quick_entry.grab_focus()
+			return
 		if event.keycode == KEY_SPACE: _attack()
 		if event.keycode == KEY_I: _toggle_inventory()
 		if event.keycode == KEY_C: _toggle_paperdoll()
@@ -1376,6 +1394,9 @@ func _handle_back() -> void:
 		online.drop_ui.panel.hide()
 		return
 	if not content_ready: return
+	if chat_ui != null and chat_ui.typing():
+		chat_ui.blur_quick()
+		return
 	_cancel_controls()
 	if quick_items != null: quick_items.cancel_hold()
 	owned_touches.clear()
@@ -1411,6 +1432,7 @@ func _notification(what: int) -> void:
 			_cancel_controls()
 			if stats_ui != null: stats_ui.stop_repeat()
 			if quick_items != null: quick_items.cancel_hold()
+			if chat_ui != null: chat_ui.blur_quick()
 			owned_touches.clear()
 	if what == NOTIFICATION_APPLICATION_PAUSED or what == NOTIFICATION_WM_CLOSE_REQUEST:
 		if content_ready and started: _save_progress()

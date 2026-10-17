@@ -16,7 +16,7 @@ Godot 4.7.2, typed GDScript and 2D isometric rendering are sufficient. A Unity/3
 rewrite and a larger server have not been needed for the measured regressions.
 
 Baseline before this update: commit `8c9e541`, APK 0.10.0/code 10. The current
-build is 0.20.1/code 21. See the final v0.20 section for current equipment/HUD/Junk support. v0.12 added level/EXP, Nearby Send closure and
+build is 0.21.0/code 22. See the final v0.21 section for current chat/presence and the v0.20 sections for equipment/HUD/Junk support. v0.12 added level/EXP, Nearby Send closure and
 native consumables; v0.13 adds native skills and touch targeting. v0.11 added native bank/lockers, player inspection and
 trading, local/global/private chat, a dynamic joystick, and the heart/TP HUD,
 as well as placing NPC names near visible heads and fixing observer equipment/
@@ -1151,3 +1151,80 @@ Installed and launched v0.20.1 on Galaxy S23 Ultra; final base.apk SHA256,
 version21/0.20.1, signature/16KiB alignment, byte-identical offline save and no
 startup script/crash errors verified. Report: docs/gameplay-v21-phone-report.json.
 Downloads use outputs/endless-online-android-v0.20.1*.
+
+
+## v0.21 / code22 — native world-wide Online list and modern game chat
+
+The original client uses OnlinePlayerActions.RequestOnlinePlayers(fullList)
+and the Init PlayersList handler; OnlineListPanel's name action prepares a
+whisper. ChatActions keeps separate Local/Global/PM histories and an outgoing
+local echo because native broadcasts exclude the sender. The native server's
+Global_Open/Close handlers are no-ops; global messages already broadcast across
+maps. The previous Android UI only showed them inside a modal, making them
+appear absent during play.
+
+New server `online_players` operation uses native Players_Request(22,1), with
+no database reads or Refresh. Native Init(255,255), reply code8, contains count2,
+FF, then name-break/title-break/unknown1/icon1/class1/guild3-break per player.
+ServicesMixin.parse_online_players preserves public title/class/guild/icon,
+sorts names, and emits an `online_players` event. The server applies original
+hide-online/admin rules, verified using a real isolated hidden character.
+Requests are asynchronous, limited/cached to five seconds, and deferred during
+committed movement/warp to avoid confusing an Init map-download response with
+the roster. The full chat Online tab refreshes only while visible, every ten
+seconds, supports search and one-touch whisper selection. Nearby players are
+not used as a substitute for the world roster.
+
+`chat_window.gd` now has Nearby/Global/Whispers/Online tabs; private conversations
+filter by recipient, with a recent contacts list, timestamps, unread badges and
+clickable names. A bottom-center 504×52 translucent quick composer selects
+Nearby/Global and opens private chat; a bounded four-message feed immediately
+shows native local/global/private/system events without opening the modal.
+Global entries stay until displaced by newer messages. Full session history is
+bounded to250 entries and is cleared on character entry; no private chat is
+written to disk. RichTextLabel uses add_text and push_meta, never parses chat as
+BBCode. Native Latin1/128-character/rate-limit/not-found/mute rules stay in force.
+Sending through the native server keeps its normal sender echo; it does not
+claim a recipient delivery receipt. Rejected requests restore an empty draft.
+One chat send may be in flight; new text typed while pending is preserved.
+
+Quick shortcuts: /g or /global, /s or /nearby, /w name message, /r reply, and
+original !name message. Enter focuses quick chat on desktop. Quick Send dismisses
+the keyboard; Nearby Send in the full window still closes it, preserving the
+user's earlier preference. Chat sends and roster requests do not trigger a native world Refresh.
+
+The HUD's normal GUI input must precede world targeting/floating joystick;
+owned movement/attack releases must STILL reach cleanup, including when the
+finger ends over chat or a channel popup. Quick focus cancels controls and
+suppresses WASD/world actions. Empty feed backgrounds are hidden. Controls use
+anchors plus offsets: assigning Control.position.y after centering can move the
+HUD off-screen; quick_root.offset_top/bottom adjust keyboard lift correctly.
+Keyboard height lifts the quick HUD; `_layout` compacts the full chat above the
+keyboard, keeping its input and Send visible. Store last_keyboard_lift so a new
+message cannot reset the layout for one frame. `blur_quick` hides the virtual
+keyboard ONLY if quick_entry had focus; calling hide every inactive frame would
+break the login keyboard. Android Back/focus loss handle chat/controls cleanup.
+
+Deployment changed only server/gateway.py and server/services.py; originals
+matched Git HEAD first and were backed up under /opt/aster-vale/backups. Scripts:
+ignored work/hosting/{deploy,upgrade,provision}_v22.py. Only gateway/WebSocket
+adapters restarted, not the native world. No operator characters changed.
+Skylar's separately requested Scav Bow/Fire Arrows/Lens grant is recorded in the
+ignored private operator handoff and its native backup, not in this UI update.
+
+Validation: 42 server state regressions, gameplay/world smoke, existing network
+regressions and the native services UI (bank/locker/inspection/trade/local chat/
+whisper). New actual Godot finger presses through Input.parse_input_event verify
+the Online tab, a real cross-map whisper and reply, native hidden-player filtering,
+global feed visibility without a modal, literal markup, quick composer input and
+keyboard release, /r, rejection draft restoration, 1280/1544 layouts and compact
+keyboard layout. Reports docs/chat-v22-{live,public}-report.json and
+docs/services-v22-live-report.json. Private visual QA in work/v22-chat-shots and
+work/v22-public-chat-shots. Build0.21.0/code22 retains the package/signing key.
+
+Final v0.21.0/code22 installed and launched on Galaxy S23 Ultra. Installed
+base.apk SHA256 matches final APK, code/name verified, signature/16KiB alignment
+valid, offline save byte-identical and no startup script/crash errors. Report:
+`docs/gameplay-v22-phone-report.json`. Download files use
+`outputs/endless-online-android-v0.21.0*`. Source/graphics state and live Python
+adapter hashes match the tested build/deployment; native world was not restarted.

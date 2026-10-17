@@ -196,6 +196,7 @@ func _set_status(value: String) -> void:
 	if status_label != null: status_label.text = value
 
 func _on_message(message: Dictionary) -> void:
+	game.chat_ui.response(message)
 	var operation: String = str(message.get("op", message.get("event", "")))
 	if not bool(message.get("ok", true)):
 		waiting_for_walk = false
@@ -246,7 +247,7 @@ func _on_message(message: Dictionary) -> void:
 			_enter_world(data)
 		"stream":
 			streaming = bool(data.get("enabled", false))
-		"move", "face", "strike", "collect", "spell_cast", "spell_cancel":
+		"move", "face", "strike", "collect", "spell_cast", "spell_cancel", "online_players":
 			pass # Receipt only. The subsequent native Walk_Reply confirms acceptance.
 		"unequip":
 			_apply_snapshot(data)
@@ -1240,6 +1241,7 @@ func _process_events(events: Array) -> void:
 		if kind == "item_used":
 			game._toast("Used %s." % str(item_info("item:%d" % int(event.get("item_id", 0))).get("name", "item")))
 			if int(event.get("hp_gain", 0)) > 0: game.damage_numbers.append({"position": game.player_world + Vector2(0, -62), "value": "+%d" % int(event.hp_gain), "time": 0.85})
+		if kind == "online_players": game.chat_ui.receive_roster(event)
 		if kind == "chat":
 			game.chat_ui.receive(event)
 			if str(event.get("channel", "")) == "local" and int(event.get("player_id", 0)) > 0:

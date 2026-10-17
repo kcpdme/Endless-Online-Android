@@ -42,6 +42,22 @@ class ServicesStateTests(unittest.TestCase):
         data=s.inspect_player(200)
         self.assertEqual(data['equipment']['weapon'],281);self.assertEqual(s.equipment,{'weapon':21})
 
+    def test_native_roster_uses_global_players_request_and_preserves_public_metadata(self):
+        s=fixture();s.request_online_players()
+        self.assertEqual(s.sent,[(22,1,b'')])
+        row=lambda name,title,icon,clas,guild:string(name)+string(title)+number(0,1)+number(icon,1)+number(clas,1)+string(guild)
+        payload=number(8,1)+number(2,2)+b'\xff'+row('zeta','Traveler',0,5,'ABC')+row('alpha','',0,0,'   ')
+        s.apply_event(255,255,payload)
+        self.assertEqual([r['name'] for r in s.online_roster],['alpha','zeta'])
+        self.assertEqual(s.online_roster[1]['guild'],'ABC');self.assertEqual(s.online_roster[1]['class_id'],5)
+        self.assertTrue(s.dirty);self.assertEqual(s.events[-1]['kind'],'online_players')
+        s.request_online_players();self.assertEqual(len(s.sent),1)
+        self.assertEqual(s.events[-1]['players'],s.online_roster)
+    def test_malformed_roster_is_rejected_without_fabricating_online_names(self):
+        s=fixture()
+        for payload in (number(8,1)+number(1,2)+b'\xff', number(8,1)+number(0,2)+b'x'):
+            with self.assertRaises((RuntimeError,ValueError)):s.parse_online_players(payload)
+        self.assertIsNone(s.online_roster)
     def test_original_local_pid_and_private_name_chat_formats(self):
         s=fixture();s.state['characters']=[dict(player_id=200,name='another')]
         s.apply_event(18,8,number(200,2)+b'hello')
