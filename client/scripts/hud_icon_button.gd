@@ -20,7 +20,7 @@ func _ready() -> void:
 	button_down.connect(queue_redraw)
 	button_up.connect(queue_redraw)
 	resized.connect(queue_redraw)
-	tooltip_text = {"bag": "Inventory bag", "person": "Character equipment", "chat": "Chat"}.get(kind, "")
+	tooltip_text = {"bag": "Inventory bag", "person": "Character equipment", "chat": "Chat", "sit": "Sit / Stand"}.get(kind, "")
 
 func _has_point(point: Vector2) -> bool:
 	var radius: float = minf(size.x, size.y) * 0.5
@@ -48,6 +48,12 @@ func _draw() -> void:
 		draw_colored_polygon(hand, light)
 		draw_line(Vector2(-2, 5), Vector2(8, 2), gold, 2.0, true)
 		draw_line(Vector2(-1, 10), Vector2(9, 8), gold, 2.0, true)
+	elif kind == "sit":
+		# Seated person: opaque silhouette inside the same translucent HUD ring.
+		draw_circle(Vector2(-5, -19), 6.0, light)
+		draw_polyline(PackedVector2Array([Vector2(-7, -9), Vector2(-7, 6), Vector2(9, 6), Vector2(13, 22), Vector2(21, 22)]), light, 7.0, true)
+		draw_polyline(PackedVector2Array([Vector2(-20, -6), Vector2(-20, 13), Vector2(3, 13)]), gold, 3.0, true)
+		draw_line(Vector2(-17, 13), Vector2(-17, 24), gold, 3.0, true)
 	elif kind == "skills":
 		draw_colored_polygon(PackedVector2Array([Vector2(-19, -15), Vector2(-3, -12), Vector2(0, -9), Vector2(3, -12), Vector2(19, -15), Vector2(19, 15), Vector2(3, 17), Vector2(0, 20), Vector2(-3, 17), Vector2(-19, 15)]), light)
 		draw_line(Vector2(0, -9), Vector2(0, 17), ink, 2.0, true)

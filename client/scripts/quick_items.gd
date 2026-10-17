@@ -7,6 +7,8 @@ var buttons: Array[Button] = []
 var slots: Array[int] = [0, 0]
 var selected_slot: int = 0
 var identity: String = ""
+var settings_path: String = "user://quick_items.json"
+const Store = preload("res://scripts/shortcut_store.gd")
 var held_slot: int = -1
 var held_pointer: int = -99
 var held_at: int = 0
@@ -102,13 +104,7 @@ func open(index: int) -> void:
 
 func assign(ident: int) -> void:
 	slots[selected_slot] = ident
-	var data: Dictionary = {}
-	if FileAccess.file_exists("user://quick_items.json"):
-		var raw: Variant = JSON.parse_string(FileAccess.get_file_as_string("user://quick_items.json"))
-		if raw is Dictionary: data = raw
-	data[identity] = slots
-	var file: FileAccess = FileAccess.open("user://quick_items.json", FileAccess.WRITE)
-	if file != null: file.store_string(JSON.stringify(data))
+	Store.write_slots(settings_path, identity, slots)
 	panel.hide()
 	refresh()
 
@@ -117,25 +113,21 @@ func refresh() -> void:
 	if not active:
 		panel.hide()
 		cancel_hold()
-	var current: String = "%s:%d" % [game.online.host_field.text, int(game.online.player.get("character_id", -1))] if active else ""
-	if current != identity:
+	var current: String = game.online.profile_identity()
+	# Temporary disconnection/partial snapshots must not reset the binding.
+	if not current.is_empty() and current != identity:
 		identity = current
 		slots.assign([0, 0])
-		var has_saved: bool = false
-		if FileAccess.file_exists("user://quick_items.json"):
-			var saved: Variant = JSON.parse_string(FileAccess.get_file_as_string("user://quick_items.json"))
-			if saved is Dictionary:
-				var loaded: Array = saved.get(identity, []) as Array
-				if loaded.size() == 2:
-					has_saved = true
-					for index: int in range(2): slots[index] = int(loaded[index])
-		if active and not has_saved:
+		var saved: Array = Store.read_slots(settings_path, identity)
+		if saved.size() == 2: slots.assign(saved)
+		else:
 			for item: Dictionary in game.online.inventory_items():
 				var ident: int = int(item.id)
 				var info: Dictionary = game.online.item_info("item:%d" % ident)
 				if int(info.get("type", -1)) != 3 or game.online.bag_amount(ident) <= 0: continue
 				if slots[0] == 0 and int(info.get("hp", 0)) > 0: slots[0] = ident
 				elif slots[1] == 0 and int(info.get("tp", 0)) > 0: slots[1] = ident
+			Store.write_slots(settings_path, identity, slots)
 	if held_slot >= 0 and not held_opened and game._modal_open(): cancel_hold()
 	if held_slot >= 0 and not held_opened and Time.get_ticks_msec() - held_at >= 500:
 		held_opened = true

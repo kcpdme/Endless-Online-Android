@@ -17,10 +17,13 @@ class QuestsMixin:
         if quest_id:
             old=self.quest_dialog
             if not old or old['npc_index']!=npc_index or quest_id not in [q['id'] for q in old['quests']]:raise EOError('Choose one of this NPC’s offered quests')
-        self.quest_dialog=None;self.quest_context=context
+        self.quest_dialog=None;self.quest_context=context;self.inn=None
         try:
             self.send(50,10,number(npc_index,2)+number(quest_id,2));self._wait_service(50,{34})
             if not self.quest_dialog:raise EOError('This NPC has no available conversation')
+        except EOError as exc:
+            self.quest_context=None;self.quest_dialog=None
+            raise EOError('This NPC has no new quest dialogue right now. Finish the current quest objectives or talk to its starting NPC.') from exc
         except Exception:
             self.quest_context=None;self.quest_dialog=None
             raise

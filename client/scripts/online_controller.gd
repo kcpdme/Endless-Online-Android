@@ -265,7 +265,7 @@ func _on_message(message: Dictionary) -> void:
 				if int((player.get("equipment", {}) as Dictionary).get(str(replacement.slot), 0)) == 0:
 					session.request("equip", {"item_id": int(replacement.item_id), "subloc": int(replacement.subloc)})
 				else: game._toast("The worn item could not be removed. Your replacement remains in the bag.")
-		"quest_open", "quest_reply", "quest_close", "sit", "world", "refresh", "snapshot", "attack", "pickup", "equip", "spend_stat", "shop_buy", "shop_sell", "shop_craft", "bank_deposit", "bank_withdraw", "bank_upgrade", "locker_deposit", "locker_withdraw", "chest_deposit", "chest_take", "chest_close", "trade_request", "trade_accept", "trade_decline", "trade_add", "trade_remove", "trade_agree", "trade_cancel", "chat_send", "item_use", "skill_learn", "skill_forget", "skill_level":
+		"inn_open", "inn_quote", "inn_sleep", "inn_close", "quest_open", "quest_reply", "quest_close", "sit", "world", "refresh", "snapshot", "attack", "pickup", "equip", "spend_stat", "shop_buy", "shop_sell", "shop_craft", "bank_deposit", "bank_withdraw", "bank_upgrade", "locker_deposit", "locker_withdraw", "chest_deposit", "chest_take", "chest_close", "trade_request", "trade_accept", "trade_decline", "trade_add", "trade_remove", "trade_agree", "trade_cancel", "chat_send", "item_use", "skill_learn", "skill_forget", "skill_level":
 			_apply_snapshot(data)
 		"redeem_code":
 			_apply_snapshot(data)
@@ -444,6 +444,7 @@ func _apply_snapshot(data: Dictionary, entering: bool = false) -> void:
 	if data.has("trade"): trade = data.trade as Dictionary if data.trade is Dictionary else {}
 	game.skills_ui.receive(data)
 	game.quest_ui.receive(data)
+	game.inn_ui.receive(data)
 	game.services_ui.receive(data)
 	game.services_ui.refresh()
 	server_label.text = "● Connected  ·  %d nearby" % nearby_count()
@@ -643,6 +644,7 @@ func _facing(value: Variant) -> String:
 	return ["south", "west", "north", "east"][clampi(int(value), 0, 3)]
 
 func _on_closed(reason: String) -> void:
+	game.inn_ui.panel.hide()
 	game.music.leave_world()
 	game.quest_ui.panel.hide()
 	game.redeem_ui.disconnected()
@@ -881,6 +883,14 @@ func inventory_items() -> Array[Dictionary]:
 		if id != 1 and int(totals[id]) > 0: result.append({"id": id, "amount": int(totals[id])})
 	return result
 
+func profile_identity() -> String:
+	if not active or not game.online_mode: return ""
+	var name: String = str(player.get("name", "")).strip_edges().to_lower()
+	if name.is_empty(): return ""
+	var host: String = host_field.text.strip_edges().to_lower().trim_suffix("/")
+	if not host.begins_with("ws://") and not host.begins_with("wss://"): host += ":%d" % int(port_field.value)
+	return "%s/character/%s" % [host, name]
+
 func item_id(kind: String) -> int:
 	if kind.begins_with("item:"): return int(kind.get_slice(":", 1))
 	var equipment: Dictionary = player.get("equipment", {}) as Dictionary
@@ -948,19 +958,16 @@ func bag_action(kind: String) -> void:
 func equipment_request(kind: String) -> void:
 	if not _action_ready() or not pending_equip.is_empty() or not owns_item(kind): return
 	var info: Dictionary = item_info(kind)
-	if is_equipped(kind):
+	# Bag item IDs can also be worn. Only a paperdoll slot means Unequip;
+	# another copy in the bag must equip into an available paired slot.
+	if not kind.begins_with("item:") and is_equipped(kind):
 		if int(info.get("special", 0)) == 5:
 			game._toast("This item is cursed and cannot be removed.")
 			return
-		var equipment: Dictionary = player.get("equipment", {}) as Dictionary
-		var subloc: int = 1 if not kind.begins_with("item:") and _slot_name(kind).ends_with("2") else 0
-		if kind.begins_with("item:"):
-			for slot: Variant in equipment:
-				if int(equipment[slot]) == item_id(kind):
-					subloc = 1 if str(slot).ends_with("2") else 0
-					break
+		var subloc: int = 1 if _slot_name(kind).ends_with("2") else 0
 		session.request("unequip", {"item_id": item_id(kind), "subloc": subloc})
 	else:
+		if bag_amount(item_id(kind)) <= 0: return
 		var slots: Dictionary = {10: "weapon", 11: "offhand", 12: "armor", 13: "head", 14: "boots", 15: "gloves", 16: "accessory", 17: "belt", 18: "necklace", 19: "ring1", 20: "armlet1", 21: "bracer1"}
 		var slot: String = str(slots.get(int(info.get("type", 0)), ""))
 		if slot.is_empty():
@@ -1084,11 +1091,11 @@ func map_click(tile: Vector2i, preferred_kind: String = "") -> void:
 		if Vector2i(int(npc.x), int(npc.y)) != tile: continue
 		var info: Dictionary = (catalog.get("npcs", {}) as Dictionary).get(str(int(npc.id)), {}) as Dictionary
 		var type: int = int(info.get("type", -1))
-		if type in [6, 9, 14, 15]:
+		if type in [6, 7, 9, 14, 15]:
 			# Original EO dispatches a visible service NPC directly, including
 			# shopkeepers behind sealed counters. Never path onto their side.
 			game._cancel_controls()
-			interaction = {"kind": "quest" if type == 15 else "skillmaster" if type == 14 else "bank" if type == 9 else "shop", "id": int(npc.index)}
+			interaction = {"kind": "inn" if type == 7 else "quest" if type == 15 else "skillmaster" if type == 14 else "bank" if type == 9 else "shop", "id": int(npc.index)}
 		elif type in [1, 2, 3]:
 			if game._distance(game.player_tile, tile) == 1:
 				var direction: String = game._direction_name(tile - game.player_tile)
@@ -1165,7 +1172,7 @@ func _process_interaction() -> void:
 			var tile: Vector2i = Vector2i(int(target.x), int(target.y))
 			var distance: int = 1 if str(interaction.kind) in ["locker", "chest", "chair"] else 2 if str(interaction.kind) == "drop" else NPC_SERVICE_DISTANCE
 			if game._distance(game.player_tile, tile) > distance:
-				if str(interaction.kind) in ["shop", "bank", "skillmaster", "quest"]:
+				if str(interaction.kind) in ["shop", "bank", "skillmaster", "quest", "inn"]:
 					interaction.clear()
 					game._toast("This NPC has left your view.")
 					return
@@ -1174,7 +1181,7 @@ func _process_interaction() -> void:
 			if str(interaction.kind) == "chair": toggle_sit(tile)
 			elif str(interaction.kind) == "drop": _pickup(int(interaction.id))
 			elif str(interaction.kind) in ["locker", "chest", "chair"]: session.request("chest_open" if str(interaction.kind) == "chest" else "locker_open", {"x": int(target.x), "y": int(target.y)})
-			else: session.request("quest_open" if str(interaction.kind) == "quest" else "skillmaster_open" if str(interaction.kind) == "skillmaster" else "bank_open" if str(interaction.kind) == "bank" else "shop_open", {"npc_index": int(interaction.id)})
+			else: session.request("inn_open" if str(interaction.kind) == "inn" else "quest_open" if str(interaction.kind) == "quest" else "skillmaster_open" if str(interaction.kind) == "skillmaster" else "bank_open" if str(interaction.kind) == "bank" else "shop_open", {"npc_index": int(interaction.id)})
 		interaction.clear()
 		collect_pending = false
 	elif collect_pending:
@@ -1249,11 +1256,10 @@ func refresh_game_ui() -> void:
 	game.bag_grid.refresh()
 	var selected: String = str(game.selected_item)
 	var info: Dictionary = item_info(selected)
-	var worn: bool = is_equipped(selected)
 	var owned: bool = owns_item(selected)
 	game.item_title.text = str(info.get("name", "Your inventory"))
 	var usable: bool = consumable(selected)
-	game.equip_button.disabled = not owned or worn or (not usable and int(info.get("type", 0)) not in range(10, 22)) or not _action_ready()
+	game.equip_button.disabled = not owned or bag_amount(item_id(selected)) <= 0 or (not usable and int(info.get("type", 0)) not in range(10, 22)) or not _action_ready()
 	game.equip_button.text = "Use" if usable else "Equip"
 	game.drop_button.disabled = not _action_ready() or bag_amount(item_id(selected)) <= 0 or int(info.get("special", 0)) == 4
 	game.junk_button.disabled = not _action_ready() or bag_amount(item_id(selected)) <= 0
@@ -1365,7 +1371,8 @@ func _process_events(events: Array) -> void:
 		var event: Dictionary = raw as Dictionary
 		game.skills_ui.event(event)
 		var kind: String = str(event.get("kind", event.get("type", event.get("event", ""))))
-		if kind == "quest_hint": game._toast(str(event.get("message", "")))
+		if kind == "inn_recovered": game._toast("Rested at the inn · HP and TP restored.")
+		elif kind == "quest_hint": game._toast(str(event.get("message", "")))
 		elif kind == "class_changed":
 			var class_info: Dictionary = (catalog.get("classes", {}) as Dictionary).get(str(int(event.get("class_id", 0))), {}) as Dictionary
 			game._toast("Your class is now %s." % str(class_info.get("name", "changed")))

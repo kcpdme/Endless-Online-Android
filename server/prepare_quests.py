@@ -9,7 +9,7 @@ QUOTE_FIXES = {
     25: [('"Go to susan for a reward!)', '"Go to susan for a reward!")')],
 }
 
-DISABLED = {17: "EndWithoutReset references state Reset, but only GoReset is defined. Choosing a redirect requires gameplay review."}
+DISABLED = {}
 
 def prepare(directory):
     records=[]
@@ -39,6 +39,16 @@ def prepare(directory):
             pattern=r'(\b(?:state|goto)[ \t]+)'+re.escape(name)+r'(?=[ \t\r\n{};]|$)'
             text,count=re.subn(pattern,lambda m:m.group(1)+replacement,text,flags=re.I)
             changes.append({'kind':'normalize_state_identifier','before':name,'after':replacement,'references':count})
+        # Maze Master uses GoReset on every other cancellation branch. Its sole
+        # dangling Reset goto is the same cancellation, not a missing reward state.
+        if quest_id == 17:
+            text,count=re.subn(r'(TalkedToNpc\(\s*17\s*\)\s+goto\s+)Reset\b',r'\1GoReset',text,flags=re.I)
+            if count:changes.append({'kind':'repair_dangling_cancel_state','before':'Reset','after':'GoReset','references':count})
+        if quest_id == 46 and not re.search(r'^\s*state\s+Begin\s*\{',text,flags=re.I|re.M):
+            # Original Limbo script starts at Begin1. Keep it for saved progress,
+            # and supply the native entry point expected by Quest_Use.
+            text+='\nstate Begin\n{\n    action SetState("Begin1");\n}\n'
+            changes.append({'kind':'add_missing_entry_state','entry':'Begin','original_start':'Begin1'})
         target=path.with_suffix('.eqf')
         if quest_id in DISABLED:
             if target.exists():target.unlink()

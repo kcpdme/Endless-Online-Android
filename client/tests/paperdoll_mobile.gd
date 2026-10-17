@@ -76,6 +76,8 @@ func _run() -> void:
 	game._handle_back()
 	check(game.character_panel.visible,"Closing stats returns to character")
 	game.character_panel.hide()
+	# Bind the synthetic profile before overriding slots, as native enter does.
+	game.skills_ui.refresh()
 	game.skills_ui.slots.assign([1,5])
 	c.player.hp=1000
 	var before: int=wire.calls.size()

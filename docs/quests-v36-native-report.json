@@ -1,0 +1,549 @@
+{
+  "result": "passed",
+  "native_quest_starters_opened": 36,
+  "all_starters_have_original_dialogue": true,
+  "cases": [
+    {
+      "npc_id": 266,
+      "name": "Aeven Captain",
+      "vendor_id": 34,
+      "map_id": 2,
+      "x": 4,
+      "y": 7,
+      "source_present": true,
+      "result": "dialogue",
+      "pages": 2,
+      "links": 2,
+      "quests": [
+        34
+      ]
+    },
+    {
+      "npc_id": 271,
+      "name": "Old Farmer Jerzy (rep)",
+      "vendor_id": 36,
+      "map_id": 2,
+      "x": 3,
+      "y": 23,
+      "source_present": true,
+      "result": "dialogue",
+      "pages": 2,
+      "links": 2,
+      "quests": [
+        36
+      ]
+    },
+    {
+      "npc_id": 269,
+      "name": "Old Farmer Jorge",
+      "vendor_id": 35,
+      "map_id": 3,
+      "x": 6,
+      "y": 7,
+      "source_present": true,
+      "result": "dialogue",
+      "pages": 2,
+      "links": 2,
+      "quests": [
+        35
+      ]
+    },
+    {
+      "npc_id": 53,
+      "name": "Dan (daily)",
+      "vendor_id": 44,
+      "map_id": 5,
+      "x": 41,
+      "y": 48,
+      "source_present": true,
+      "result": "dialogue",
+      "pages": 1,
+      "links": 0,
+      "quests": [
+        44
+      ]
+    },
+    {
+      "npc_id": 54,
+      "name": "Jacob (rep)",
+      "vendor_id": 40,
+      "map_id": 5,
+      "x": 41,
+      "y": 48,
+      "source_present": true,
+      "result": "dialogue",
+      "pages": 3,
+      "links": 2,
+      "quests": [
+        40
+      ]
+    },
+    {
+      "npc_id": 75,
+      "name": "Candy (daily)",
+      "vendor_id": 45,
+      "map_id": 5,
+      "x": 41,
+      "y": 48,
+      "source_present": true,
+      "result": "dialogue",
+      "pages": 1,
+      "links": 0,
+      "quests": [
+        45
+      ]
+    },
+    {
+      "npc_id": 76,
+      "name": "Hactor (rep)",
+      "vendor_id": 41,
+      "map_id": 5,
+      "x": 41,
+      "y": 48,
+      "source_present": true,
+      "result": "dialogue",
+      "pages": 3,
+      "links": 2,
+      "quests": [
+        41
+      ]
+    },
+    {
+      "npc_id": 280,
+      "name": "Steve [daily)",
+      "vendor_id": 43,
+      "map_id": 5,
+      "x": 44,
+      "y": 84,
+      "source_present": true,
+      "result": "dialogue",
+      "pages": 1,
+      "links": 0,
+      "quests": [
+        43
+      ]
+    },
+    {
+      "npc_id": 166,
+      "name": "Wise Man",
+      "vendor_id": 4,
+      "map_id": 6,
+      "x": 9,
+      "y": 2,
+      "source_present": true,
+      "result": "dialogue",
+      "pages": 1,
+      "links": 2,
+      "quests": [
+        4
+      ]
+    },
+    {
+      "npc_id": 298,
+      "name": "Royal Guard",
+      "vendor_id": 51,
+      "map_id": 8,
+      "x": 5,
+      "y": 4,
+      "source_present": true,
+      "result": "dialogue",
+      "pages": 1,
+      "links": 2,
+      "quests": [
+        51
+      ]
+    },
+    {
+      "npc_id": 289,
+      "name": "Royal Gardener (rep)",
+      "vendor_id": 48,
+      "map_id": 8,
+      "x": 7,
+      "y": 27,
+      "source_present": true,
+      "result": "dialogue",
+      "pages": 3,
+      "links": 2,
+      "quests": [
+        48
+      ]
+    },
+    {
+      "npc_id": 292,
+      "name": "Boum (daily)",
+      "vendor_id": 50,
+      "map_id": 11,
+      "x": 22,
+      "y": 22,
+      "source_present": true,
+      "result": "dialogue",
+      "pages": 2,
+      "links": 2,
+      "quests": [
+        50
+      ]
+    },
+    {
+      "npc_id": 28,
+      "name": "Drunk",
+      "vendor_id": 39,
+      "map_id": 14,
+      "x": 10,
+      "y": 9,
+      "source_present": true,
+      "result": "dialogue",
+      "pages": 2,
+      "links": 2,
+      "quests": [
+        39
+      ]
+    },
+    {
+      "npc_id": 176,
+      "name": "Old Pirate",
+      "vendor_id": 5,
+      "map_id": 16,
+      "x": 27,
+      "y": 60,
+      "source_present": true,
+      "result": "dialogue",
+      "pages": 1,
+      "links": 2,
+      "quests": [
+        5
+      ]
+    },
+    {
+      "npc_id": 247,
+      "name": "Young Pirate",
+      "vendor_id": 21,
+      "map_id": 16,
+      "x": 27,
+      "y": 60,
+      "source_present": true,
+      "result": "dialogue",
+      "pages": 1,
+      "links": 3,
+      "quests": [
+        21
+      ]
+    },
+    {
+      "npc_id": 291,
+      "name": "Ash (daily)",
+      "vendor_id": 50,
+      "map_id": 28,
+      "x": 20,
+      "y": 23,
+      "source_present": true,
+      "result": "dialogue",
+      "pages": 2,
+      "links": 2,
+      "quests": [
+        50
+      ]
+    },
+    {
+      "npc_id": 281,
+      "name": "Limbo Sailor (rep)",
+      "vendor_id": 46,
+      "map_id": 34,
+      "x": 51,
+      "y": 57,
+      "source_present": true,
+      "result": "dialogue",
+      "pages": 2,
+      "links": 2,
+      "quests": [
+        46
+      ]
+    },
+    {
+      "npc_id": 189,
+      "name": "Guard (rep)",
+      "vendor_id": 10,
+      "map_id": 41,
+      "x": 22,
+      "y": 11,
+      "source_present": true,
+      "result": "dialogue",
+      "pages": 2,
+      "links": 0,
+      "quests": [
+        10
+      ]
+    },
+    {
+      "npc_id": 168,
+      "name": "Ayla (rep)",
+      "vendor_id": 2,
+      "map_id": 94,
+      "x": 6,
+      "y": 9,
+      "source_present": true,
+      "result": "dialogue",
+      "pages": 2,
+      "links": 2,
+      "quests": [
+        2
+      ]
+    },
+    {
+      "npc_id": 197,
+      "name": "Maze Master",
+      "vendor_id": 17,
+      "map_id": 139,
+      "x": 19,
+      "y": 8,
+      "source_present": true,
+      "result": "dialogue",
+      "pages": 2,
+      "links": 2,
+      "quests": [
+        17
+      ]
+    },
+    {
+      "npc_id": 273,
+      "name": "Old Farmer Greg",
+      "vendor_id": 38,
+      "map_id": 187,
+      "x": 37,
+      "y": 26,
+      "source_present": true,
+      "result": "dialogue",
+      "pages": 2,
+      "links": 3,
+      "quests": [
+        38
+      ]
+    },
+    {
+      "npc_id": 154,
+      "name": "Adventurer",
+      "vendor_id": 28,
+      "map_id": 190,
+      "x": 20,
+      "y": 24,
+      "source_present": true,
+      "result": "dialogue",
+      "pages": 2,
+      "links": 2,
+      "quests": [
+        28
+      ]
+    },
+    {
+      "npc_id": 259,
+      "name": "Collector",
+      "vendor_id": 29,
+      "map_id": 190,
+      "x": 21,
+      "y": 24,
+      "source_present": true,
+      "result": "dialogue",
+      "pages": 2,
+      "links": 0,
+      "quests": [
+        29
+      ]
+    },
+    {
+      "npc_id": 264,
+      "name": "Danny",
+      "vendor_id": 33,
+      "map_id": 190,
+      "x": 35,
+      "y": 20,
+      "source_present": true,
+      "result": "dialogue",
+      "pages": 3,
+      "links": 0,
+      "quests": [
+        33
+      ]
+    },
+    {
+      "npc_id": 261,
+      "name": "Funky Hair Dude",
+      "vendor_id": 31,
+      "map_id": 193,
+      "x": 1,
+      "y": 10,
+      "source_present": true,
+      "result": "dialogue",
+      "pages": 4,
+      "links": 0,
+      "quests": [
+        31
+      ]
+    },
+    {
+      "npc_id": 258,
+      "name": "Cave Researcher",
+      "vendor_id": 27,
+      "map_id": 194,
+      "x": 13,
+      "y": 21,
+      "source_present": true,
+      "result": "dialogue",
+      "pages": 3,
+      "links": 0,
+      "quests": [
+        27
+      ]
+    },
+    {
+      "npc_id": 290,
+      "name": "Snake Hunter (rep)",
+      "vendor_id": 49,
+      "map_id": 194,
+      "x": 23,
+      "y": 41,
+      "source_present": true,
+      "result": "dialogue",
+      "pages": 5,
+      "links": 2,
+      "quests": [
+        49
+      ]
+    },
+    {
+      "npc_id": 260,
+      "name": "Defender",
+      "vendor_id": 30,
+      "map_id": 197,
+      "x": 24,
+      "y": 6,
+      "source_present": true,
+      "result": "dialogue",
+      "pages": 4,
+      "links": 2,
+      "quests": [
+        30
+      ]
+    },
+    {
+      "npc_id": 263,
+      "name": "Eddy",
+      "vendor_id": 32,
+      "map_id": 199,
+      "x": 7,
+      "y": 6,
+      "source_present": true,
+      "result": "dialogue",
+      "pages": 2,
+      "links": 0,
+      "quests": [
+        32
+      ]
+    },
+    {
+      "npc_id": 153,
+      "name": "Co Worker (rep)",
+      "vendor_id": 20,
+      "map_id": 208,
+      "x": 10,
+      "y": 8,
+      "source_present": true,
+      "result": "dialogue",
+      "pages": 5,
+      "links": 2,
+      "quests": [
+        20
+      ]
+    },
+    {
+      "npc_id": 195,
+      "name": "Serf",
+      "vendor_id": 15,
+      "map_id": 220,
+      "x": 31,
+      "y": 6,
+      "source_present": true,
+      "result": "dialogue",
+      "pages": 1,
+      "links": 0,
+      "quests": [
+        15
+      ]
+    },
+    {
+      "npc_id": 272,
+      "name": "Peasant Woman (rep)",
+      "vendor_id": 37,
+      "map_id": 232,
+      "x": 7,
+      "y": 7,
+      "source_present": true,
+      "result": "dialogue",
+      "pages": 3,
+      "links": 2,
+      "quests": [
+        37
+      ]
+    },
+    {
+      "npc_id": 167,
+      "name": "Pjedro",
+      "vendor_id": 1,
+      "map_id": 239,
+      "x": 8,
+      "y": 9,
+      "source_present": true,
+      "result": "dialogue",
+      "pages": 2,
+      "links": 2,
+      "quests": [
+        1
+      ]
+    },
+    {
+      "npc_id": 254,
+      "name": "Wraith Guardian",
+      "vendor_id": 26,
+      "map_id": 273,
+      "x": 6,
+      "y": 9,
+      "source_present": true,
+      "result": "dialogue",
+      "pages": 1,
+      "links": 2,
+      "quests": [
+        26
+      ]
+    },
+    {
+      "npc_id": 251,
+      "name": "Peri Peri Farmer (rep)",
+      "vendor_id": 23,
+      "map_id": 274,
+      "x": 11,
+      "y": 7,
+      "source_present": true,
+      "result": "dialogue",
+      "pages": 2,
+      "links": 2,
+      "quests": [
+        23
+      ]
+    },
+    {
+      "npc_id": 221,
+      "name": "Susan (rep)",
+      "vendor_id": 25,
+      "map_id": 275,
+      "x": 46,
+      "y": 45,
+      "source_present": true,
+      "result": "dialogue",
+      "pages": 4,
+      "links": 2,
+      "quests": [
+        25
+      ]
+    }
+  ],
+  "operator_accounts_modified": false,
+  "wandering_susan_checked_in_fresh_instance": true
+}

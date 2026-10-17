@@ -1,0 +1,10 @@
+{
+  "result": "passed",
+  "public_health": true,
+  "tls_websocket_native_handshake": true,
+  "unauthenticated_inn_rejected": true,
+  "deployed_modules_match_final_source": true,
+  "native_world_restarted": true,
+  "operator_accounts_edited": false,
+  "backup": "/opt/aster-vale/backups/v36-gameplay-20261017T134146Z"
+}

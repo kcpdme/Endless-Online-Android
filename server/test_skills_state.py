@@ -119,4 +119,12 @@ class SkillsStateTests(unittest.TestCase):
         with self.assertRaisesRegex(EOError,'finish'):s.cast_spell(4,'npc',2)
         with self.assertRaisesRegex(EOError,'finish'):s.drop_item(2,1)
 
+class SkillTrainingFeedbackTests(unittest.TestCase):
+    def test_training_ack_reports_new_level_after_native_spending(self):
+        s=fixture();s.spells=[dict(id=1,level=7)];s.stats['skill_points']=3
+        s.apply_event(16,2,number(2,2)+number(1,2)+number(8,2))
+        self.assertEqual(s.spells,[dict(id=1,level=8)])
+        self.assertEqual(s.stats['skill_points'],2)
+        self.assertEqual((s.events[-1]['action'],s.events[-1]['old_level'],s.events[-1]['level']),('trained',7,8))
+
 if __name__=='__main__':unittest.main()

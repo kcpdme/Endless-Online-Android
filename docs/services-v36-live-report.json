@@ -1,0 +1,20 @@
+{
+  "cancel_preserves_native_quest": true,
+  "full_hp_tp_and_gold_acknowledged": true,
+  "inn_touch_quote_and_payment": true,
+  "linked_class_menu_opens": true,
+  "operator_characters_modified": false,
+  "quest_npcs": [
+    "Wise Man",
+    "Maze Master",
+    "Limbo Sailor",
+    "Ayla"
+  ],
+  "real_native_gateway_and_rendered_touch": true,
+  "result": "passed",
+  "sleep_bed": [
+    86,
+    4,
+    8
+  ]
+}

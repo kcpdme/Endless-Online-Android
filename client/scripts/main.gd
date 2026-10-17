@@ -118,6 +118,8 @@ var redeem_ui: RefCounted
 var music: Node
 var quest_ui: RefCounted
 var speech_layer: Control
+var sit_button: Button
+var inn_ui: RefCounted
 var menu: Control
 var started_from_save: bool = false
 var debug_snapshot_time: float = -1.0
@@ -280,6 +282,7 @@ func _process(delta: float) -> void:
 		toast_label.visible = toast_time > 0.0
 		toast_label.modulate.a = minf(1.0, toast_time / 0.2)
 	if joystick != null: joystick.visible = started and not _modal_open() and not welcome.visible
+	if sit_button != null: sit_button.visible = started and online_mode and online.active and not _modal_open() and not welcome.visible
 	if not started:
 		queue_redraw()
 		return
@@ -432,7 +435,7 @@ func _joystick_begin(pointer: Vector2, pointer_id: int) -> void:
 	stick = joystick.vector
 
 func _modal_open() -> bool:
-	return (quest_ui != null and quest_ui.panel.visible) or (redeem_ui != null and redeem_ui.panel.visible) or (online != null and online.panel != null and online.panel.visible) or (inventory != null and inventory.visible) or (menu != null and menu.visible) or (character_panel != null and character_panel.visible) or (stats_ui != null and stats_ui.is_open()) or (shop_ui != null and shop_ui.panel.visible) or (services_ui != null and services_ui.panel.visible) or (chat_ui != null and chat_ui.panel.visible) or (skills_ui != null and skills_ui.panel.visible) or (quick_items != null and quick_items.panel.visible)
+	return (inn_ui != null and inn_ui.panel.visible) or (quest_ui != null and quest_ui.panel.visible) or (redeem_ui != null and redeem_ui.panel.visible) or (online != null and online.panel != null and online.panel.visible) or (inventory != null and inventory.visible) or (menu != null and menu.visible) or (character_panel != null and character_panel.visible) or (stats_ui != null and stats_ui.is_open()) or (shop_ui != null and shop_ui.panel.visible) or (services_ui != null and services_ui.panel.visible) or (chat_ui != null and chat_ui.panel.visible) or (skills_ui != null and skills_ui.panel.visible) or (quick_items != null and quick_items.panel.visible)
 
 func _begin_attack(pointer_id: int) -> void:
 	if online_mode: route.clear()
@@ -503,7 +506,7 @@ func _input(event: InputEvent) -> void:
 	# Own native controls suppress their separately generated mouse events, including
 	# HUD presses that open a modal. A release can never become a second action.
 	if event is InputEventMouseButton and event.device == InputEvent.DEVICE_ID_EMULATION:
-		var native_control: bool = started and not _modal_open() and ((skills_ui != null and skills_ui.contains(event.position) >= 0) or (quick_items != null and quick_items.contains(event.position) >= 0) or attack_button.contains_point(event.position) or bag_button.contains_point(event.position) or chat_button.contains_point(event.position) or character_button.contains_point(event.position) or joystick.contains_point(event.position) or (online_mode and (skills_ui.armed > 0 or not online.map_entity_target(_screen_to_world(event.position)).is_empty())) or (online_mode and online.loot_button.visible and online.loot_button.get_global_rect().has_point(event.position)))
+		var native_control: bool = started and not _modal_open() and ((skills_ui != null and skills_ui.contains(event.position) >= 0) or (quick_items != null and quick_items.contains(event.position) >= 0) or attack_button.contains_point(event.position) or bag_button.contains_point(event.position) or sit_button.contains_point(event.position) or chat_button.contains_point(event.position) or character_button.contains_point(event.position) or joystick.contains_point(event.position) or (online_mode and (skills_ui.armed > 0 or not online.map_entity_target(_screen_to_world(event.position)).is_empty())) or (online_mode and online.loot_button.visible and online.loot_button.get_global_rect().has_point(event.position)))
 		# Godot may synthesize the mouse press before delivering its native touch.
 		if dismissing_modal or native_control or not owned_touches.is_empty():
 			get_viewport().set_input_as_handled()
@@ -556,6 +559,11 @@ func _input(event: InputEvent) -> void:
 			if attack_touch_id == -1: _begin_attack(event.index)
 			get_viewport().set_input_as_handled()
 			return
+		if sit_button.visible and sit_button.contains_point(event.position):
+			owned_touches[event.index] = true
+			if online_mode: online.toggle_sit()
+			get_viewport().set_input_as_handled()
+			return
 		if bag_button.contains_point(event.position):
 			owned_touches[event.index] = true
 			_toggle_inventory()
@@ -598,6 +606,10 @@ func _input(event: InputEvent) -> void:
 		var skill_slot: int = skills_ui.contains(event.position) if skills_ui != null else -1
 		if skill_slot >= 0:
 			skills_ui.press(skill_slot)
+			get_viewport().set_input_as_handled()
+			return
+		if sit_button.visible and sit_button.contains_point(event.position):
+			if online_mode: online.toggle_sit()
 			get_viewport().set_input_as_handled()
 			return
 		if attack_button.contains_point(event.position):
@@ -1028,6 +1040,16 @@ func _build_ui() -> void:
 	bag_button.pressed.connect(_toggle_inventory)
 	root.add_child(bag_button)
 	bag_button.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT, true)
+	sit_button = HudIconButton.new()
+	sit_button.kind = "sit"
+	sit_button.position = Vector2(-174, -88)
+	sit_button.size = Vector2(68, 68)
+	sit_button.tooltip_text = "Sit / Stand"
+	sit_button.pressed.connect(func() -> void:
+		if online_mode: online.toggle_sit()
+	)
+	root.add_child(sit_button)
+	sit_button.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT, true)
 	attack_button = WeaponButton.new()
 	attack_button.position = Vector2(-188, -252)
 	attack_button.size = Vector2(164, 164)
@@ -1060,6 +1082,8 @@ func _build_ui() -> void:
 	services_ui.build(self, root)
 	quest_ui = preload("res://scripts/quest_window.gd").new()
 	quest_ui.build(self, root)
+	inn_ui = preload("res://scripts/inn_window.gd").new()
+	inn_ui.build(self, root)
 	_build_paperdoll(root)
 	stats_ui = CharacterStats.new()
 	stats_ui.build(self, root)
@@ -1359,12 +1383,8 @@ func _build_menu(parent: Node) -> void:
 	card.add_child(music_volume)
 	_button(card, "Return to the vale", Vector2(30, 218), Vector2(480, 58), func() -> void: menu.hide(), true)
 	_button(card, "Redeem Code", Vector2(30, 286), Vector2(480, 54), func() -> void: redeem_ui.open())
-	_button(card, "Sit / Stand", Vector2(30, 350), Vector2(480, 54), func() -> void:
-		menu.hide()
-		if online_mode: online.toggle_sit()
-	)
-	_button(card, "Reset journey", Vector2(30, 414), Vector2(480, 54), _confirm_reset)
-	_button(card, "Welcome screen", Vector2(30, 481), Vector2(480, 48), func() -> void:
+	_button(card, "Reset journey", Vector2(30, 350), Vector2(480, 54), _confirm_reset)
+	_button(card, "Welcome screen", Vector2(30, 417), Vector2(480, 48), func() -> void:
 		menu.hide()
 		started = false
 		_show_welcome()
@@ -1536,6 +1556,8 @@ func _handle_back() -> void:
 		skills_ui.panel.hide()
 	elif chat_ui != null and chat_ui.panel.visible:
 		chat_ui.close()
+	elif inn_ui != null and inn_ui.panel.visible:
+		inn_ui.close()
 	elif quest_ui != null and quest_ui.panel.visible:
 		quest_ui.close()
 	elif services_ui != null and services_ui.panel.visible:

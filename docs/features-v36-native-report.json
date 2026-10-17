@@ -1,0 +1,27 @@
+{
+  "result": "passed",
+  "native_paired_identical_items": [
+    "rings",
+    "armlets",
+    "bracers"
+  ],
+  "single_gloves": true,
+  "remove_second_preserves_first": true,
+  "native_healing_before_training": 11,
+  "native_healing_after_training": 12,
+  "native_damage_before_training": 23,
+  "native_damage_after_training": 24,
+  "damage_uses_private_deterministic_formula": true,
+  "training_spends_one_native_point": true,
+  "original_inn_quote_and_payment": true,
+  "full_hp_tp_recovery": true,
+  "original_sleep_destination": [
+    86,
+    4,
+    8
+  ],
+  "equipment_and_levels_persist_relogin": true,
+  "temporary_character_id_changes_on_login": true,
+  "operator_accounts_modified": false,
+  "live_world_modified": false
+}

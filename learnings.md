@@ -16,7 +16,7 @@ Godot 4.7.2, typed GDScript and 2D isometric rendering are sufficient. A Unity/3
 rewrite and a larger server have not been needed for the measured regressions.
 
 Baseline before this update: commit `8c9e541`, APK 0.10.0/code 10. The current
-build is 0.28.0/code 35. See the final v0.21 section for current chat/presence and the v0.20 sections for equipment/HUD/Junk support. v0.12 added level/EXP, Nearby Send closure and
+build is 0.29.0/code 36. See the final v0.21 section for current chat/presence and the v0.20 sections for equipment/HUD/Junk support. v0.12 added level/EXP, Nearby Send closure and
 native consumables; v0.13 adds native skills and touch targeting. v0.11 added native bank/lockers, player inspection and
 trading, local/global/private chat, a dynamic joystick, and the heart/TP HUD,
 as well as placing NPC names near visible heads and fixing observer equipment/
@@ -1947,3 +1947,71 @@ conditions. Other players need0.24.0 for the queue/phase and numeric-ID fixes.
   preserved byte for byte and no startup script/crash errors. See
   `docs/gameplay-v35-phone-report.json`. Other players must install this APK too
   to receive the new speech renderer.
+
+
+## v0.29.0 / code 36 — sitting, quest data, paired gear, shortcuts, training, inns
+
+- Added opaque seated-person icon next to bag; removed Hamburger Sit/Stand row.
+  Native touch and mouse handling own the gesture, so NPCs cannot consume it.
+  Original F11, chair/floor native acknowledgements and all old poses remain.
+- Ring, armlet and bracer each have two native paperdoll slots. Gloves have one
+  slot for the pair, as in the original. The old bag check treated any worn item
+  ID as unavailable and could send Unequip for a second bag copy. Bag item actions
+  now use available counts and the alternate native subloc; paperdoll slot actions
+  remove only the selected slot. Native duplicate-item/secondary-removal tested.
+- EO Character::id is allocated by World::GenerateCharacterID on every login,
+  NOT a persistent database identifier. Never key preferences by character_id.
+  `online.profile_identity()` uses normalized endpoint + character name.
+  `shortcut_store.gd` persists two item and two skill bindings in separate JSON
+  files per stable identity. Disconnect/partial snapshots do not clear slots;
+  zero item quantity keeps its binding. Different characters remain separate.
+  Old ID-keyed item bindings cannot be reliably attributed after the ID changes;
+  configure them once in this version and later reconnects retain them.
+- User explicitly chose +1 HP healing / +1 spell damage per trained level.
+  The pinned server had stored skill levels without applying them to effects.
+  `etheos-skill-training.patch` adds native level to self/friendly/party healing
+  and NPC/PK spell damage before existing defence/hit calculations. Level0 is
+  unchanged, TP/chant unchanged, native cap100 and skill-point spending preserved.
+  UI shows current healing/damage bonus and next +1, scrollable details and native
+  training acknowledgement. Tests measured heal11->12 and deterministic damage
+  23->24; deterministic formula/large-rat changes were PRIVATE fixtures only.
+- Real quest probe found Limbo Sailor46 loaded without a Begin state, causing
+  native Runtime Error and client disconnect. Add Begin -> SetState(Begin1),
+  preserving saved Begin1 states. Maze Master17 could not load due to dangling
+  goto Reset; route to its existing GoReset cancel state. All36 supplied quest
+  starters opened original native dialogue. Wandering Susan was verified in a
+  fresh private world after moving outside the first probe's view.
+- Seven NPCs have NO supplied dialogue in any original script: King52, Jessica13,
+  Wolf Leader14, Pig Farmer24, Prisoner53, Shady Stefano54, Eddie Matador55.
+  See `docs/missing-original-quest-dialogues.json`. Need original .eqf/.txt files
+  defining their vendor dialogs/dependencies; don't invent original stories,
+  rewards or pretend these missing quests are implemented. Other secondary NPCs
+  in existing quests become available at their original progress conditions.
+- `server/inns.py` and `inn_window.gd` add original Citizen49 Open/Request/Accept
+  sleep flow. Original full recovery is through the innkeeper's paid sleep
+  quote/confirmation, followed by native HP/TP restoration and sleep warp. Bed
+  artwork is also handled by existing chair specs where the map defines them;
+  touching arbitrary furniture does not grant free full recovery.
+- The home config previously had only the default Aeven spawn, NO innkeepers.
+  `import_inns.py` converts supplied EODelta home.ini to native Version2/vendor
+  IDs and `name.sleep = map,x,y`, preserving current Aeven default5,40,40 and
+  level tiers. Five original innkeepers/questions/beds restored: Aeven150 vendor2
+  ->86,4,8; Estaq156 vendor3 ->200,6,4; Anundo159 vendor4 ->204,2,4;
+  Centaur160 vendor5 ->206,2,2; Halowdale161 vendor6 ->218,10,5. Native sleep price
+  rules remain unchanged. Only real native Accept updates Gold/full HP/TP.
+- Validation:127 Python tests passed;13 Godot suites passed assertions. Actual
+  rendered native touch test opened Wise Man/Class menu, Maze Master, Limbo Sailor,
+  Ayla, and paid Aeven inn sleep with full recovery/Gold debit/bed warp. Native
+  integration also proved duplicate paired gear and persisted levels/equipment.
+  Private test worlds/credentials live only under ignored work/remote stage.
+- Deployment `/opt/aster-vale/backups/v36-gameplay-20261017T134146Z`: hash guarded
+  source/native/home/quest files, stopped-world SQLite/config/code/binary backup,
+  native + gateway + websocket restart. No operator character/account edits.
+  Native binary SHA25624004edd8da199a53810e5a620182de1fd18604cdc64c43135f3080a4c8ba3f4.
+  Production health/TLS handshake/auth guards and deployed source hashes passed.
+- APK0.29.0/code36 verified signature and16KB alignment; original45 tracks still
+  packaged. SHA25684e62cfa41d12b67628040cedb6e6a33a67dcc72e58230a86c8dfefff60ed8cd.
+  Wireless ADB installation pending: no device/mDNS currently. Asked for current
+  Wireless debugging address and started a bounded reconnect/install attempt.
+  Check docs/android-v36-report.json and work/v36-phone-install.log before claiming
+  installed; keep the existing signing key and preserve run-as offline save bytes.

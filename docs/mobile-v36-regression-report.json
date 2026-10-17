@@ -1,0 +1,15 @@
+{
+  "v36_features_mobile": "passed",
+  "music_quests_mobile": "passed",
+  "short_movement": "passed",
+  "movement_controls": "passed",
+  "movement_timing": "passed",
+  "movement": "passed",
+  "combat_mobile": "passed",
+  "gameplay_smoke": "passed",
+  "chest_mobile": "passed",
+  "seating_weight": "passed",
+  "paperdoll_mobile": "passed",
+  "bow_and_npc_labels": "passed",
+  "network_regressions": "passed"
+}

@@ -166,13 +166,14 @@ class SkillsMixin:
             if pid==self.player_id:self.casting=None
         elif f==16 and a in (9,4,2):
             if not hasattr(self,'spells'):self.spells=[]
+            old_level=next((s['level'] for s in self.spells if s['id']==Reader(p[2:4]).num(2)),0) if a==2 else 0
             if a==2:
                 values['skill_points']=r.num(2);ident=r.num(2);level=r.num(2)
             else:ident=r.num(2);level=0
             self.spells=[s for s in self.spells if s['id']!=ident]
             if a!=4:self.spells.append(dict(id=ident,level=level))
             if a==9:self._set_amount(1,r.num(4))
-            event.update(kind='skill_changed',spell_id=ident)
+            event.update(kind='skill_changed',spell_id=ident,action='trained' if a==2 else 'learned' if a==9 else 'forgotten',level=level,old_level=old_level)
         elif (f,a)==(16,3):self.skill_error=True
         else:return
         if values:update(self,values)

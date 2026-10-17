@@ -21,6 +21,9 @@ var effects: Array[Dictionary] = []
 var ready_at: int = 0
 var cast_hint: Label
 var character_id: int = -1
+var shortcut_identity: String = ""
+var settings_path: String = "user://quick_skills.json"
+const Store = preload("res://scripts/shortcut_store.gd")
 var last_rows: String = ""
 
 func build(owner_game: Node, parent: Control) -> void:
@@ -71,8 +74,13 @@ func build(owner_game: Node, parent: Control) -> void:
 		refresh_detail()
 	)
 	card.add_child(list)
-	detail = game._label(card, "", Vector2(414, 90), 18)
-	detail.size = Vector2(404, 275)
+	var detail_scroll: ScrollContainer = ScrollContainer.new()
+	detail_scroll.position = Vector2(414, 90)
+	detail_scroll.size = Vector2(404, 275)
+	detail_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	card.add_child(detail_scroll)
+	detail = game._label(detail_scroll, "", Vector2.ZERO, 18)
+	detail.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	level_button = game._button(card, "Train +1", Vector2(414, 386), Vector2(190, 48), func() -> void: change("level"))
 	learn_button = game._button(card, "Learn", Vector2(618, 386), Vector2(190, 48), func() -> void: change("learn"))
@@ -87,6 +95,7 @@ func build(owner_game: Node, parent: Control) -> void:
 			var old: int = slots.find(selected)
 			if old >= 0: slots[old] = slots[slot]
 			slots[slot] = selected
+			Store.write_slots(settings_path, shortcut_identity, slots)
 			panel.hide()
 			refresh()
 		)
@@ -206,18 +215,27 @@ func refresh() -> void:
 		cancel_cast()
 		chants.clear()
 		effects.clear()
-	var identity: int = int(game.online.player.get("character_id", -1))
-	if identity != character_id:
-		character_id = identity
-		ready_at = 0
-		slots.clear()
-		last_rows = ""
+	var identity: String = game.online.profile_identity()
 	var learned: Array = game.online.player.get("spells", []) as Array
-	for index: int in range(slots.size()):
-		if slots[index] != 0 and not known(slots[index]): slots[index] = 0
-	for spell: Dictionary in learned:
-		if slots.size() >= 2: break
-		if not slots.has(int(spell.id)): slots.append(int(spell.id))
+	if not identity.is_empty() and identity != shortcut_identity:
+		shortcut_identity = identity
+		character_id = int(game.online.player.get("character_id", -1))
+		ready_at = 0
+		last_rows = ""
+		var saved: Array = Store.read_slots(settings_path, identity)
+		slots.assign(saved if saved.size() == 2 else [0, 0])
+		if saved.is_empty():
+			for spell: Dictionary in learned:
+				var index: int = slots.find(0)
+				if index < 0: break
+				if not slots.has(int(spell.id)): slots[index] = int(spell.id)
+			Store.write_slots(settings_path, identity, slots)
+	# Only an authoritative learned list can invalidate an unlearned skill.
+	if active and game.online.player.has("spells"):
+		for index: int in range(slots.size()):
+			if slots[index] != 0 and not known(slots[index]):
+				slots[index] = 0
+				Store.write_slots(settings_path, shortcut_identity, slots)
 	for index: int in range(buttons.size()):
 		var button: Button = buttons[index]
 		button.visible = active and game.started and not game._modal_open()
@@ -257,7 +275,19 @@ func refresh_detail() -> void:
 		lines.append("TP %d   ·   Chant %.2fs" % [int(spell.get("tp", 0)), float(spell.get("cast_time", 1)) * 0.48])
 		lines.append("Target: " + ("Yourself" if int(spell.get("target", 0)) == 1 else "Party" if int(spell.get("target", 0)) == 3 else "Friendly player" if int(spell.get("restrict", 0)) == 1 else "Monster"))
 		for learned: Dictionary in game.online.player.get("spells", []):
-			if int(learned.id) == selected: lines.append("Skill level %d" % int(learned.level))
+			if int(learned.id) == selected:
+				var level: int = int(learned.level)
+				lines.append("Skill level %d / 100" % level)
+				if int(spell.get("type", -1)) == 0:
+					var heal: int = int(spell.get("hp", 0)) + level
+					lines.append("Heals %d HP" % heal)
+					if level < 100: lines.append("Next level: %d HP (+1)" % (heal + 1))
+				elif int(spell.get("type", -1)) == 1:
+					var low: int = int(spell.get("min_damage", 0)) + level
+					var high: int = int(spell.get("max_damage", 0)) + level
+					lines.append("Spell damage bonus %d–%d" % [low, high])
+					if level < 100: lines.append("Next level: %d–%d (+1)" % [low + 1, high + 1])
+					lines.append("Adds to attack damage; defence and hit chance apply.")
 		for offer: Dictionary in master.get("offers", []):
 			if int(offer.id) != selected: continue
 			lines.append("Learn: %d Gold · Level %d · Class %d (0 = any)" % [int(offer.cost), int(offer.level), int(offer.class_id)])
@@ -268,7 +298,10 @@ func refresh_detail() -> void:
 	lines.append("Skill points: %d" % int((game.online.player.get("stats", {}) as Dictionary).get("skill_points", 0)))
 	if master.is_empty(): lines.append("Visit a skill master to learn or forget skills.")
 	detail.text = "\n".join(lines)
-	level_button.disabled = not known(selected) or int((game.online.player.get("stats", {}) as Dictionary).get("skill_points", 0)) <= 0
+	var at_cap: bool = false
+	for learned: Dictionary in game.online.player.get("spells", []):
+		if int(learned.id) == selected and int(learned.level) >= 100: at_cap = true
+	level_button.disabled = at_cap or not known(selected) or int((game.online.player.get("stats", {}) as Dictionary).get("skill_points", 0)) <= 0
 	learn_button.disabled = master.is_empty() or selected == 0 or known(selected)
 	forget_button.disabled = master.is_empty() or not known(selected)
 
@@ -284,6 +317,10 @@ func flash_spell(ident: int, suffix: String = "") -> void:
 func event(event_data: Dictionary) -> void:
 	var kind: String = str(event_data.get("kind", ""))
 	var pid: int = int(event_data.get("player_id", 0))
+	if kind == "skill_changed" and str(event_data.get("action", "")) == "trained":
+		var trained: Dictionary = info(int(event_data.spell_id))
+		game._toast("%s · Level %d · +1 %s" % [str(trained.get("name", "Skill")), int(event_data.level), "HP healing" if int(trained.get("type", -1)) == 0 else "spell damage"])
+		refresh_detail()
 	if kind == "spell_chant":
 		chants[pid] = Time.get_ticks_msec() + int(float(event_data.get("seconds", 0.48)) * 1000) + 200
 		var shout: String = str(info(int(event_data.get("spell_id", 0))).get("shout", ""))

@@ -1,0 +1,49 @@
+{
+  "supplied_quest_starters_tested": 36,
+  "missing_dialogue": [
+    {
+      "npc_id": 123,
+      "name": "King",
+      "vendor_id": 52,
+      "expected_quest_file": "00052.eqf"
+    },
+    {
+      "npc_id": 192,
+      "name": "Jessica",
+      "vendor_id": 13,
+      "expected_quest_file": "00013.eqf"
+    },
+    {
+      "npc_id": 193,
+      "name": "Wolf Leader",
+      "vendor_id": 14,
+      "expected_quest_file": "00014.eqf"
+    },
+    {
+      "npc_id": 252,
+      "name": "Pig Farmer",
+      "vendor_id": 24,
+      "expected_quest_file": "00024.eqf"
+    },
+    {
+      "npc_id": 300,
+      "name": "Prisoner",
+      "vendor_id": 53,
+      "expected_quest_file": "00053.eqf"
+    },
+    {
+      "npc_id": 301,
+      "name": "Shady Stefano",
+      "vendor_id": 54,
+      "expected_quest_file": "00054.eqf"
+    },
+    {
+      "npc_id": 302,
+      "name": "Eddie Matador",
+      "vendor_id": 55,
+      "expected_quest_file": "00055.eqf"
+    }
+  ],
+  "reason": "No dialogue for these NPC vendor IDs exists in the supplied original sample quest scripts; native UI support cannot invent original quest logic.",
+  "required_resources": "Original quest scripts that define AddNpcText/AddNpcInput for these vendor IDs, including any referenced quest dependencies."
+}

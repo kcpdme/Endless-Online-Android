@@ -1,0 +1,67 @@
+--- a/src/map.cpp
++++ b/src/map.cpp
+@@ -1940,7 +1940,7 @@
+ 
+ 	from->tp -= spell.tp;
+ 
+-	int hpgain = spell.hp;
++	int hpgain = (spell.hp + from->SpellLevel(spell_id));
+ 
+ 	if (this->world->config["LimitDamage"])
+ 		hpgain = std::min(hpgain, from->maxhp - from->hp);
+@@ -1954,7 +1954,7 @@
+ 	PacketBuilder builder(PACKET_SPELL, PACKET_TARGET_SELF, 15);
+ 	builder.AddShort(from->PlayerID());
+ 	builder.AddShort(spell_id);
+-	builder.AddInt(spell.hp);
++	builder.AddInt((spell.hp + from->SpellLevel(spell_id)));
+ 	builder.AddChar(static_cast<unsigned char>(util::clamp<int>(static_cast<int>(double(from->hp) / double(from->maxhp) * 100.0), 0, 100)));
+ 
+ 	UTIL_FOREACH(this->characters, character)
+@@ -1984,7 +1984,7 @@
+ 	{
+ 		from->tp -= spell.tp;
+ 
+-		int amount = util::rand(from->mindam + spell.mindam, from->maxdam + spell.maxdam);
++		int amount = util::rand(from->mindam + spell.mindam + from->SpellLevel(spell_id), from->maxdam + spell.maxdam + from->SpellLevel(spell_id));
+ 		double rand = util::rand(0.0, 1.0);
+ 
+ 		bool critical = rand < static_cast<double>(this->world->config["CriticalRate"]);
+@@ -2033,7 +2033,7 @@
+ 
+ 		from->tp -= spell.tp;
+ 
+-		int amount = util::rand(from->mindam + spell.mindam, from->maxdam + spell.maxdam);
++		int amount = util::rand(from->mindam + spell.mindam + from->SpellLevel(spell_id), from->maxdam + spell.maxdam + from->SpellLevel(spell_id));
+ 		double rand = util::rand(0.0, 1.0);
+ 
+ 		bool critical = rand < static_cast<double>(this->world->config["CriticalRate"]);
+@@ -2109,8 +2109,8 @@
+ 	{
+ 		from->tp -= spell.tp;
+ 
+-		int displayhp = spell.hp;
+-		int hpgain = spell.hp;
++		int displayhp = (spell.hp + from->SpellLevel(spell_id));
++		int hpgain = (spell.hp + from->SpellLevel(spell_id));
+ 
+ 		if (this->world->config["LimitDamage"])
+ 			hpgain = std::min(hpgain, victim->maxhp - victim->hp);
+@@ -2166,7 +2166,7 @@
+ 
+ 	from->tp -= spell.tp;
+ 
+-	int displayhp = spell.hp;
++	int displayhp = (spell.hp + from->SpellLevel(spell_id));
+ 
+ 	if (!from->CanInteractCombat() && !(from->CanInteractPKCombat() && (from->map->pk || (this->world->config["GlobalPK"] && !this->world->PKExcept(this->id)))))
+ 	{
+@@ -2186,7 +2186,7 @@
+ 		if (member->map != from->map)
+ 			continue;
+ 
+-		int hpgain = spell.hp;
++		int hpgain = (spell.hp + from->SpellLevel(spell_id));
+ 
+ 		if (this->world->config["LimitDamage"])
+ 			hpgain = std::min(hpgain, member->maxhp - member->hp);
