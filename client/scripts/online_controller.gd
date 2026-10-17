@@ -1236,7 +1236,7 @@ func _process_events(events: Array) -> void:
 		var event: Dictionary = raw as Dictionary
 		game.skills_ui.event(event)
 		var kind: String = str(event.get("kind", event.get("type", event.get("event", ""))))
-		if kind in ["player_damage", "npc_attack"]:
+		if kind in ["player_damage", "npc_attack"] and event.get("source", "") != "spike":
 			npc_attack_until[int(event.get("npc_index", -1))] = Time.get_ticks_msec() / 1000.0 + 0.36
 			for npc: Dictionary in npcs:
 				if int(npc.index) == int(event.get("npc_index", -1)): npc.direction = int(event.get("direction", 0))
@@ -1245,6 +1245,10 @@ func _process_events(events: Array) -> void:
 				var health: Dictionary = npc_health.get(index, {"percent": 100}) as Dictionary
 				health["until"] = Time.get_ticks_msec() + 8000
 				npc_health[index] = health
+		if kind == "peer_damage":
+			var key: String = "player:" + str(int(event.get("player_id", -1)))
+			var at: Vector2 = _remote_position(key, game.player_world)
+			game.damage_numbers.append({"position":at + Vector2(0,-62),"value":"-%d" % int(event.get("damage",0)),"time":0.85})
 		if kind == "peer_attack":
 			var pid: int = int(event.get("player_id", -1))
 			peer_attacks[pid] = {"until": Time.get_ticks_msec() / 1000.0 + 0.36, "direction": int(event.get("direction", 0))}

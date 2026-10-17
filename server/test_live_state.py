@@ -18,6 +18,22 @@ def fixture():
     return s
 
 class StreamStateTests(unittest.TestCase):
+    def test_spikes_update_hp_and_stream_every_nonlethal_hit(self):
+        s=fixture();s.stats={'hp':1000,'max_hp':1000}
+        for hp in [950,900,850]:
+            s.dirty=False
+            s.apply_event(31,16,number(2,1)+number(50,2)+number(hp,2)+number(1000,2))
+            self.assertEqual(s.stats['hp'],hp);self.assertEqual(s.state['self']['hp'],hp)
+            self.assertTrue(s.dirty);self.assertFalse(s.stats['dead'])
+            self.assertEqual(s.events[-1]['source'],'spike')
+        s.apply_event(31,17,number(200,2)+number(95,1)+number(0,1)+number(50,3))
+        self.assertEqual(s.events[-1]['kind'],'peer_damage')
+        self.assertEqual(s.stats['hp'],850)
+    def test_lethal_spikes_stop_outstanding_inputs(self):
+        s=fixture();s.pending_moves.append(dict(seq=1));s.last_input_seq=1
+        s.apply_event(31,16,number(2,1)+number(20,2)+number(0,2)+number(1000,2))
+        self.assertTrue(s.stats['dead']);self.assertFalse(s.pending_moves)
+
     def test_junk_ack_removes_only_acknowledged_amount_without_ground_drop(self):
         s=fixture();s.inventory=[dict(id=360,amount=2)]
         s.apply_event(14,25,number(360,2)+number(1,3)+number(1,4)+number(3,1)+number(70,1))

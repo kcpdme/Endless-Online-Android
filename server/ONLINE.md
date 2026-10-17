@@ -120,3 +120,14 @@ Held strikes are independent of earlier strike receipts, bounded by the same
 four-request window. Idle recovery refreshes are suppressed while attacking.
 Walking waits for attack recovery; held attack yields to joystick movement,
 avoiding a native action backlog when switching between walking and combat.
+
+
+### Bounded spike damage (v0.25)
+
+The fourth native patch, `etheos-spikes.patch`, limits each timed/walked spike
+hit to at most50HP and5% of maximum HP (minimum1HP for small characters).
+SpikeDamage=0 still disables spikes; low remaining HP can still be lethal.
+Self Effect_Spec31/16 subtype2 supplies real damage/currentHP/maxHP; the adapter
+updates authoritative stats and streams the hit immediately. Effect_Admin31/17
+supplies peer damage. The Android HUD and damage numbers consume these native
+values; they do not locally subtract estimated health.

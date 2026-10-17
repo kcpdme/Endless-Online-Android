@@ -1,0 +1,14 @@
+--- a/src/character.cpp
++++ b/src/character.cpp
+@@ -1846,6 +1846,11 @@
+ 
+ void Character::SpikeDamage(int amount)
+ {
++    // Environmental damage must remain survivable at high max HP. Apply the
++    // same bound to timed and walk-triggered spikes before sending real HP.
++    const int spike_cap = std::min(50, std::max(1, int(this->maxhp * 0.05)));
++    amount = std::min(std::max(1, amount), spike_cap);
++
+ 	int limitamount = std::min(amount, int(this->hp));
+ 
+ 	if (this->world->config["LimitDamage"])

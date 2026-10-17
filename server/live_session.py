@@ -232,6 +232,10 @@ class LiveSession(RewardsMixin, SkillsMixin, ConsumablesMixin, ServicesMixin, Ec
                 self._upsert('items','uid',dict(drop))
                 self.drop_guards[drop['uid']]=(event['player_id'],time.monotonic()+30)
             self.dirty=True
+        elif (f,a) in ((31,16),(31,17)) and self.events[-1].get('kind') in ('player_damage','peer_damage'):
+            self.dirty=True
+            if self.events[-1].get('dead') and self.events[-1]['kind']=='player_damage':
+                self.position_seq=self.last_input_seq;self.pending_moves.clear()
         elif (f,a)==(14,7):
             item_id=r.num(2);uid=r.num(2);amount=r.num(3)
             self._upsert('items','uid',dict(uid=uid,id=item_id,amount=amount,x=r.num(),y=r.num()))

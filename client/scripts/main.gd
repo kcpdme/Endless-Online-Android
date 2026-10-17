@@ -123,7 +123,7 @@ func _ready() -> void:
 	DisplayServer.window_set_min_size(Vector2i(960, 540))
 	camera = Camera2D.new()
 	camera.zoom = Vector2(1.65, 1.65)
-	camera.position_smoothing_enabled = true
+	camera.position_smoothing_enabled = false
 	camera.position_smoothing_speed = 8.0
 	add_child(camera)
 	_load_content()
@@ -279,6 +279,7 @@ func _process(delta: float) -> void:
 			_place_enemy()
 	var walk_remainder: float = -1.0
 	var walk_phase: float = animation_clock
+	var was_walking: bool = moving
 	if moving:
 		var remaining: float = (1.0 - step_progress) * step_duration
 		_advance_walk(delta)
@@ -300,6 +301,10 @@ func _process(delta: float) -> void:
 	if moving and walk_remainder >= 0.0:
 		animation_clock = walk_phase
 		_advance_walk(minf(walk_remainder, step_duration))
+	elif moving and not was_walking:
+		# Respond on the first input frame, including a very short tap.
+		animation_clock += delta
+		_advance_walk(minf(delta, step_duration))
 	camera.position = player_world
 	for i: int in range(damage_numbers.size() - 1, -1, -1):
 		var number: Dictionary = damage_numbers[i]

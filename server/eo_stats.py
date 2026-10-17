@@ -43,6 +43,13 @@ def apply_packet(session,f,a,p):
             hp=r.num(2);tp=r.num(2)
             values=dict(hp=0 if dead else hp,tp=tp,dead=dead)
             event.update(kind='player_damage',npc_index=index,player_id=pid,damage=damage,hp=values['hp'],hp_percent=percent,dead=dead,direction=direction)
+    elif (f,a)==(31,16) and len(p)==7 and r.num()==2:
+        damage=r.num(2);hp=r.num(2);maxhp=r.num(2)
+        values=dict(hp=hp,max_hp=maxhp,dead=hp==0)
+        event.update(kind='player_damage',source='spike',player_id=session.player_id,damage=damage,hp=hp,dead=hp==0)
+    elif (f,a)==(31,17) and len(p)==7:
+        pid=r.num(2);percent=r.num();dead=bool(r.num());damage=r.num(3)
+        event.update(kind='peer_damage',source='spike',player_id=pid,damage=damage,hp_percent=percent,dead=dead)
     elif (f,a)==(11,8):
         event.update(kind='peer_attack',player_id=r.num(2),direction=r.num())
     elif f==26 and a in (2,16) and len(p)>=22:

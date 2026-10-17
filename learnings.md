@@ -16,7 +16,7 @@ Godot 4.7.2, typed GDScript and 2D isometric rendering are sufficient. A Unity/3
 rewrite and a larger server have not been needed for the measured regressions.
 
 Baseline before this update: commit `8c9e541`, APK 0.10.0/code 10. The current
-build is 0.24.0/code 26. See the final v0.21 section for current chat/presence and the v0.20 sections for equipment/HUD/Junk support. v0.12 added level/EXP, Nearby Send closure and
+build is 0.25.0/code 27. See the final v0.21 section for current chat/presence and the v0.20 sections for equipment/HUD/Junk support. v0.12 added level/EXP, Nearby Send closure and
 native consumables; v0.13 adds native skills and touch targeting. v0.11 added native bank/lockers, player inspection and
 trading, local/global/private chat, a dynamic joystick, and the heart/TP HUD,
 as well as placing NPC names near visible heads and fixing observer equipment/
@@ -1453,3 +1453,39 @@ local idle0, corrections0, maxpending3; observer idle14frames in that sustained
 walk. Local two-session run:84steps, local+observer idle0, maxpending1.
 Do not describe the public observer as perfectly continuous under all WAN
 conditions. Other players need0.24.0 for the queue/phase and numeric-ID fixes.
+
+
+## v0.25.0 / code27 — short-input direction and spike health
+
+- User reported an initial wrong-looking direction on short movements. The
+  player already interpolates each tile, but Camera2D additionally eased at8.0;
+  leftover camera movement could look like a turn in the wrong direction. The
+  initial input frame also started a step without advancing its position.
+  Camera2D smoothing is now disabled (camera follows the interpolated player),
+  and the first step advances on that same frame. Native four-way mappings,
+  dynamic joystick priority,420ms timing and committed-tile release remain.
+- `short_movement.gd` checks32 combinations: four starting headings × four input
+  directions × keyboard/joystick. It asserts first-frame displacement/facing,
+  camera follow, one-tile short release and native spike HP/damage feedback.
+  Movement timing, keyboard/joystick and network regressions also pass.
+- Native SpikeDamage previously used20% of maximum HP per trigger. The gateway
+  omitted Effect_Spec31/16 (subtype2), so displayed HP could remain stale until
+  death/warp. Decode self spike damage/hp/maxhp/dead, mark streaming dirty and
+  stop pending input on lethal hits. Effect_Admin31/17 broadcasts peer damage.
+  Client shows -damage and current HP without inventing an attacking NPC.
+- New fourth reproducible native patch: `server/patches/etheos-spikes.patch`,
+  included in setup.py. Shared Character::SpikeDamage now caps each trigger to
+  min(50,max(1,floor(maxhp*.05)))HP. Existing SpikeDamage=0 still disables it;
+  normal timed spikes and walked spikes share the bound. Damage is native-owned,
+  still lethal when actual HP runs out. Do not fake HP in the Android UI.
+- Patched/built the existing Debian source at /home/admin/eo-v24-native,
+  deployed binary plus eo_stats.py/live_session.py with source hash guards,
+  backup of database/binary/Python files and service restart. No operator-account
+  edits. Ignored deployment/test scripts are work/hosting/*v27*.py.
+- Real native test on map229: fixture maxHP2810, currentHP1000, three separate
+  spike hits produce950→900→850 with native50damage and no death. Map136 has
+  forced relog(88,36), so staging(1,1) there cannot test its upper-left spike.
+  Use dev-only map229 safe(109,3)↔spike(110,3); no relog relocation.
+- 49 Python state tests and the Godot checks pass. Evidence:
+  docs/fixes-v27-report.json, docs/gameplay-v27-phone-report.json. Version0.25.0
+  code27 keeps package/signature/player progress. Install with -r, never uninstall.

@@ -1,0 +1,22 @@
+{
+  "result": "passed",
+  "real_native_spike_map": 229,
+  "starting_hp": 1000,
+  "maximum_hp": 2810,
+  "hp_after_three_hits": [
+    950,
+    900,
+    850
+  ],
+  "damage_per_hit": 50,
+  "alive_after_three_hits": true,
+  "operator_accounts_modified": false,
+  "client_hp_packets_decoded": true,
+  "short_movement_heading_input_combinations": 32,
+  "first_frame_moves_in_requested_direction": true,
+  "camera_follow_without_second_interpolation": true,
+  "godot_hp_and_damage_feedback_verified": true,
+  "python_state_tests": 49,
+  "original_pacing_preserved_ms": 420,
+  "native_database_backed_up": true
+}
