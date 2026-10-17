@@ -146,6 +146,7 @@ func press(index: int) -> void:
 		game._toast("This skill needs bard or party support, which is not available yet.")
 		return
 	game._release_attack()
+	if game.sfx != null: game.sfx.play_named("SpellActivate", "skill_select")
 	if int(spell.get("target", 0)) == 1:
 		cast(slots[index], "self", 0)
 		return
@@ -337,6 +338,7 @@ func event(event_data: Dictionary) -> void:
 	var target_kind: String = "npc" if kind in ["npc_damage", "npc_killed"] else "player"
 	var ident: int = int(event_data.get("npc_index", 0)) if target_kind == "npc" else int(event_data.get("target_id", pid))
 	var at: Vector2 = game.tile_position(Vector2i(int(event_data.get("x", 0)), int(event_data.get("y", 0)))) if target_kind == "npc" else player_position(ident)
+	if game.sfx != null: game.sfx.effect(int(info(int(event_data.spell_id)).get("graphic", 0)))
 	var fx: Dictionary = (info(int(event_data.spell_id)).get("effect", {}) as Dictionary).duplicate(true)
 	if not fx.is_empty():
 		fx.merge({"kind": target_kind, "id": ident, "at": at, "start": Time.get_ticks_msec()})

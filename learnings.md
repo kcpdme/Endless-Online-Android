@@ -2016,3 +2016,61 @@ conditions. Other players need0.24.0 for the queue/phase and numeric-ID fixes.
   script/crash errors. See docs/gameplay-v36-phone-report.json. Current mDNS port
   was41673; discover again next session rather than assume the port is stable.
   Keep the existing signing key and preserve run-as offline save bytes.
+
+
+## v0.29.1 / code37 — stable speech, original action SFX,10×EXP/2×drops
+
+- Reproduced speech jump: deferred Label autowrap made a newly created
+  PanelContainer2212px tall before settling. Speech now uses a plain Panel with
+  width and measured wrapped height assigned before first draw. Label line_spacing0
+  matches Font measurement; fixed11px/7px padding prevents clipping. Process
+  priority100 and force_update_scroll keep camera/head anchors current. Preserve
+  separate chat_bubbles/spell_labels, expiry, mouseIGNORE and modal layering.
+- Original playback mapping is ONE-BASED despite a misleading enum comment:
+  ContentProvider key0 loads sfx001; SfxPlayer.PlaySfx(id) reads dictionary[id-1].
+  Old attack016/punch011/pickup021 aliases were wrong; correct015/010/020.
+  tools/export_sfx.py exports all81 original PCM WAVs and hashes,75 weapon and34
+  effect mappings from pinned EndlessClient C#metadata. Re-run after base importer
+  resets manifest. Keep original archives/generated assets ignored. Existing45
+  MIDI-derived map tracks remain packaged.
+- game_sfx.gd uses24 bounded overlapping voices, cached original PCM streams,
+  original weapon sounds at actual attack frame2 (240ms), and effect sounds once
+  on confirmed hit/heal. Bow38, melee15, fist10, alternate melee30, gun53, original
+  harp/guitar variations. Heal43, fire31, thunder50. Snow effect12 is silent.
+  Ordinary health potions have no original dedicated SFX; effect potions use
+  effect_id+1. UI/storage/equip/shop/craft/sit/door/whisper/trade/level/death/spike
+  cues use original named IDs. Nearby peers/NPC attacks also sound.
+- Native Music40/Player8 now forwards quest/server sound IDs; Effect31/Player8
+  forwards every potion effect in the packet. Own effect potions instead use
+  ItemReply (native excludes owner from Effect broadcast); avoid double playback.
+  JSON numeric action IDs arrive as FLOAT in Godot. Check int OR float when
+  identifying raw packet ACKs for chest/storage/bank sounds. Trained skill action
+  is a string and must not be cast to int.
+- Sound effects have independent mute/volume in hamburger menu, persisted in
+  user://sound_settings.cfg. Music's ConfigFile saver overwrites its file, so do
+  not share its audio_settings.cfg. Map ambient_sound loops original WAV at half
+  SFX volume. Background/mute clears pending sounds and pauses/stops voices.
+- User explicitly requested10× original NPC EXP and2× original item drop chance.
+  configure_rates.py sets ExpRate=1000%,DropRate=200%, preserving MobRate, sharing,
+  quest rewards, stack quantities and original drops.ini. setup.py applies this
+  policy and new native etheos-drop-rate.patch.
+- Critical original bug: NPC::Killed DropRateMode3 completely ignored DropRate!
+  Mode3 patch scales every weighted interval and uses max(100,sum(adjustedChances))
+  as roll ceiling. Preserve item proportions; combined probability caps100% as
+  original. Modes1/2 remain unchanged. Changing config alone was insufficient.
+  Tests compile the ACTUAL production block and enumerate70000 midpoint rolls
+  at0,.5,1,2× including saturation and empty tables. Private real native Rat kill
+  gained50EXP from unmodified original Rat5EXP.
+- Validation:139 Python tests;12 old Godot suites passed assertions (two known
+  immediate-exit audio resource warnings remain);102 new rendered checks passed.
+  Private native Ravigameboy/Skylar replicas verified both own/peer nearby bubbles,
+  native fist and confirmed Heal sounds once for both clients; speech persists
+  through native chants. No live operator accounts altered by fixtures.
+- Production backup /opt/aster-vale/backups/v37-audio-rates-20261017T142322Z.
+  Hash-guarded gateway/native/config upgrade, stopped-world database backup,
+  native+gateway+websocket restarted. No manual account/character edits.
+  Native SHA2567b9fc85b391afc62e3c1fd580067d692ec4cdf4674bb271a6c8751c19a18245f.
+  Gateway live_session.py SHA256ad22d6d33a9add2c44d1f8283e23d30b760604ec337fc4be0ab4f75d99a01b52.
+- Final APK0.29.1/code37 passes signing and16KB alignment;81 original PCM effects
+  and45 music tracks packaged. SHA2568e0b0b21cad2e006c02ba54f1412e95a7dab8261171ccef71929556048f48269.
+  Delivery/install verification is recorded separately in gameplay-v37-phone-report.json.

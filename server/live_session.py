@@ -178,7 +178,16 @@ class LiveSession(RewardsMixin, SkillsMixin, ConsumablesMixin, InnsMixin, Quests
             npc=next((n for n in self.state['npcs'] if n['index']==event['npc_index']),{})
             if npc:event.update(npc_id=npc['id'],x=npc['x'],y=npc['y'],npc_direction=npc.get('direction',0))
         r=Reader(p)
-        if (f,a)==(25,3):
+        if (f,a)==(40,8):
+            sound_id=r.num()
+            if r.rest():raise EOError('Unexpected native sound payload')
+            self.events[-1].update(kind='sound',sound_id=sound_id);self.dirty=True
+        elif (f,a)==(31,8):
+            if len(p)%4:raise EOError('Truncated potion effect payload')
+            effects=[]
+            while r.rest():effects.append(dict(kind='potion_effect',player_id=r.num(2),effect_id=r.num(2)))
+            self.events.extend(effects);self.dirty=True
+        elif (f,a)==(25,3):
             old_position=(self.state['self']['x'],self.state['self']['y']) if self.state.get('self') else None
             state=self.parse_snapshot(r)
             changed=old_position!=(state['self']['x'],state['self']['y'])

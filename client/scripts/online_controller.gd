@@ -372,6 +372,7 @@ func _apply_snapshot(data: Dictionary, entering: bool = false) -> void:
 		var tile: Vector2i = Vector2i(int(player.get("x", 40)), int(player.get("y", 40)))
 		if entering:
 			game.music.enter_map(game.world)
+			if game.sfx != null: game.sfx.enter_map(game.world)
 			game.quest_ui.panel.hide()
 			interaction.clear()
 			collect_pending = false
@@ -646,6 +647,7 @@ func _facing(value: Variant) -> String:
 func _on_closed(reason: String) -> void:
 	game.inn_ui.panel.hide()
 	game.music.leave_world()
+	if game.sfx != null: game.sfx.stop()
 	game.quest_ui.panel.hide()
 	game.redeem_ui.disconnected()
 	if drop_ui != null: drop_ui.panel.hide()
@@ -1371,6 +1373,7 @@ func _process_events(events: Array) -> void:
 		var event: Dictionary = raw as Dictionary
 		game.skills_ui.event(event)
 		var kind: String = str(event.get("kind", event.get("type", event.get("event", ""))))
+		_action_sound(event, kind)
 		if kind == "inn_recovered": game._toast("Rested at the inn · HP and TP restored.")
 		elif kind == "quest_hint": game._toast(str(event.get("message", "")))
 		elif kind == "class_changed":
@@ -1465,6 +1468,39 @@ func _process_events(events: Array) -> void:
 		if kind == "pickup_failed":
 			pickup_pending.erase(int(event.get("uid", 0)))
 			game._toast(str(event.get("message", "The server refused this pickup.")))
+
+func _action_sound(event: Dictionary, kind: String) -> void:
+	if game.sfx == null: return
+	if kind == "peer_attack":
+		if int(event.get("player_id", -1)) == int(player.get("player_id", -2)): return
+		for peer: Dictionary in players:
+			if int(peer.get("player_id", -2)) == int(event.get("player_id", -1)):
+				var graphics: Array = peer.get("equipment_graphics", []) as Array
+				game.sfx.weapon(int(graphics[8]) if graphics.size() > 8 else 0)
+	elif kind in ["player_damage", "npc_attack"]:
+		game.sfx.play_named("Spikes" if event.get("source", "") == "spike" else "PunchAttack", "npc")
+		if bool(event.get("dead", false)): game.sfx.play_named("Dead", "death")
+	elif kind in ["equip", "unequip", "drop", "item_junk"]: game.sfx.play_named("InventoryPlace", "inventory")
+	elif kind == "shop_transaction": game.sfx.play_named("Craft" if str(event.get("operation", "")) == "craft" else "BuySell", "shop")
+	elif kind == "skill_changed" and event.get("action", "") in ["learned", "trained"]: game.sfx.play_named("LearnNewSpell" if event.get("action", "") == "learned" else "InventoryPickup", "training")
+	elif kind == "seating" and int(event.get("sitting", 0)) != 0 and int(event.get("player_id", -1)) == int(player.get("player_id", -2)): game.sfx.play_named("Sit", "sit")
+	elif kind == "door_open": game.sfx.play_named("DoorOpen", "door")
+	elif kind == "door_locked": game.sfx.play_named("DoorOrChestLocked", "door")
+	elif kind == "chat" and event.get("channel", "") == "private": game.sfx.play_named("PrivateMessageSent" if event.get("outgoing", false) else "PrivateMessageReceived", "whisper")
+	elif kind == "trade_complete": game.sfx.play_named("TradeAccepted", "trade")
+	elif kind == "sound": game.sfx.play_id(int(event.get("sound_id", 0)), "server")
+	elif kind == "potion_effect" or (kind == "item_used" and int(event.get("item_type", -1)) == 23): game.sfx.effect(int(event.get("effect_id", -1)) + 1)
+	elif kind == "map_transition":
+		var animation: int = int(event.get("animation", 0))
+		if animation in [1, 2]: game.sfx.play_named("AdminWarp" if animation == 2 else "ScrollTeleport", "warp")
+	var action: Variant = event.get("action", -1)
+	var packet: Vector2i = Vector2i(int(event.get("family", -1)), int(action)) if action is int or action is float else Vector2i(-1, -1)
+	if packet == Vector2i(33, 13): game.sfx.play_named("ChestOpen", "chest")
+	elif packet == Vector2i(33, 14): game.sfx.play_named("DoorOrChestLocked", "chest")
+	elif packet in [Vector2i(33, 27), Vector2i(37, 27)]: game.sfx.play_named("InventoryPickup", "storage")
+	elif packet in [Vector2i(33, 3), Vector2i(37, 3)]: game.sfx.play_named("InventoryPlace", "storage")
+	elif packet == Vector2i(36, 3): game.sfx.play_named("BuySell", "bank")
+	if event.has("level_up"): game.sfx.play_named("LevelUp", "level")
 
 func _slot_name(kind: String) -> String:
 	return str({"hat": "head", "shield": "offhand"}.get(kind, kind))

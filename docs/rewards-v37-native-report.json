@@ -1,0 +1,12 @@
+{
+  "result": "passed",
+  "original_rat_exp": 5,
+  "native_kill_exp_gained": 50,
+  "experience_multiplier": 10,
+  "item_drop_chance_multiplier": 2,
+  "weighted_drop_mode": 3,
+  "native_binary_tested": true,
+  "operator_accounts_modified": false,
+  "live_world_modified": false,
+  "weighted_drop_algorithm_exact_probability_tests": "passed: production C++ block, 70000 deterministic rolls, 0x/0.5x/1x/2x and saturation"
+}

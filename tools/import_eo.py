@@ -340,7 +340,7 @@ def canonical_wav(data:bytes)->tuple[bytes,dict]:
 def export_sounds(out,client):
     (out/'audio').mkdir(exist_ok=True)
     sounds={}
-    for name,member in [('attack','sfx/sfx016.wav'),('pickup','sfx/sfx021.wav'),('punch','sfx/sfx011.wav')]:
+    for name,member in [('attack','sfx/sfx015.wav'),('pickup','sfx/sfx020.wav'),('punch','sfx/sfx010.wav')]:
         raw=read_member(client,member);canonical,metadata=canonical_wav(raw)
         (out/'audio'/f'{name}.wav').write_bytes(canonical)
         sounds[name]=dict(path=f'res://content/audio/{name}.wav',source_member=member,

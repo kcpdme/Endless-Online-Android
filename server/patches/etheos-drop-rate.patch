@@ -1,0 +1,24 @@
+--- a/src/npc.cpp
++++ b/src/npc.cpp
+@@ -594,11 +594,17 @@
+ 	}
+ 	else if (dropratemode == 3)
+ 	{
+-		double roll = util::rand(0.0, this->Data().drops_chance_total);
+-
++		// Mode3 used to ignore DropRate. Scale the whole weighted table, keeping
++		// relative item chances and the original100% total-probability ceiling.
++		double rate = std::max(0.0, droprate);
++		double total = 0.0;
+ 		UTIL_FOREACH_CREF(this->Data().drops, checkdrop)
+-		{
+-			if (roll >= checkdrop->chance_offset && roll < checkdrop->chance_offset+checkdrop->chance)
++			total += checkdrop->chance * rate;
++		double roll = util::rand(0.0, std::max(100.0, total));
++
++		UTIL_FOREACH_CREF(this->Data().drops, checkdrop)
++		{
++			if (roll >= checkdrop->chance_offset * rate && roll < (checkdrop->chance_offset+checkdrop->chance) * rate)
+ 			{
+ 				drop = checkdrop.get();
+ 				break;

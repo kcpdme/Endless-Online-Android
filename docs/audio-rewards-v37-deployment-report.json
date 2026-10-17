@@ -1,0 +1,15 @@
+{
+  "result": "deployed",
+  "backup": "/opt/aster-vale/backups/v37-audio-rates-20261017T142322Z",
+  "native_world_restarted": true,
+  "account_edits": false,
+  "native_sha256": "7b9fc85b391afc62e3c1fd580067d692ec4cdf4674bb271a6c8751c19a18245f",
+  "live_session_sha256": "ad22d6d33a9add2c44d1f8283e23d30b760604ec337fc4be0ab4f75d99a01b52",
+  "rates": {
+    "npc_exp_multiplier": 10,
+    "npc_item_drop_chance_multiplier": 2,
+    "drop_quantities_changed": false,
+    "quest_rewards_changed": false,
+    "restart_required": true
+  }
+}

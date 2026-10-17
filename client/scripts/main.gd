@@ -116,6 +116,7 @@ var waypoint: Vector2i = Vector2i(-1, -1)
 var modal_input_until: int = 0
 var redeem_ui: RefCounted
 var music: Node
+var sfx: Node
 var quest_ui: RefCounted
 var speech_layer: Control
 var sit_button: Button
@@ -137,6 +138,9 @@ func _ready() -> void:
 	music = preload("res://scripts/map_music.gd").new()
 	add_child(music)
 	music.configure(manifest.get("music", {}) as Dictionary)
+	sfx = preload("res://scripts/game_sfx.gd").new()
+	add_child(sfx)
+	sfx.configure(self, manifest)
 	online = OnlineController.new()
 	online.game = self
 	add_child(online)
@@ -199,6 +203,7 @@ func load_map(map_id: int) -> bool:
 	head_images.clear()
 	_configure_world(data)
 	if music != null: music.enter_map(world)
+	if sfx != null: sfx.enter_map(world)
 	damage_numbers.clear()
 	queue_redraw()
 	return true
@@ -983,6 +988,9 @@ func _button(parent: Node, value: String, position: Vector2, size: Vector2, call
 	button.add_theme_stylebox_override("hover", _style(Color("f5cc89") if primary else Color("294641"), GOLD, 14))
 	button.add_theme_stylebox_override("pressed", _style(Color("c39a57") if primary else Color("405d4a"), GOLD, 14))
 	button.pressed.connect(callback)
+	button.pressed.connect(func() -> void:
+		if sfx != null: sfx.play_named("DialogButtonClick" if value == "×" else "ButtonClick", "ui")
+	)
 	parent.add_child(button)
 	return button
 
@@ -1131,6 +1139,7 @@ func _build_welcome(parent: Node) -> void:
 
 func _show_welcome() -> void:
 	welcome.show()
+	if sfx != null: sfx.stop()
 	if music != null: music.title_music()
 	var play: Button = welcome.get_child(0).get_node("PlayButton") as Button
 	if started_from_save: play.text = "Continue offline"
@@ -1142,6 +1151,7 @@ func _begin_play() -> void:
 	started = true
 	welcome.hide()
 	music.enter_map(world)
+	sfx.enter_map(world)
 	_toast("Follow the slime nearby. Tap adjacent ground, then the weapon button.")
 
 func _item_info(kind: String) -> Dictionary:
@@ -1381,10 +1391,25 @@ func _build_menu(parent: Node) -> void:
 	music_volume.value = music.volume
 	music_volume.value_changed.connect(music.set_volume)
 	card.add_child(music_volume)
-	_button(card, "Return to the vale", Vector2(30, 218), Vector2(480, 58), func() -> void: menu.hide(), true)
-	_button(card, "Redeem Code", Vector2(30, 286), Vector2(480, 54), func() -> void: redeem_ui.open())
-	_button(card, "Reset journey", Vector2(30, 350), Vector2(480, 54), _confirm_reset)
-	_button(card, "Welcome screen", Vector2(30, 417), Vector2(480, 48), func() -> void:
+	var sound_toggle: CheckBox = CheckBox.new()
+	sound_toggle.text = "Sound effects"
+	sound_toggle.position = Vector2(28, 212)
+	sound_toggle.size = Vector2(182, 36)
+	sound_toggle.button_pressed = sfx.enabled
+	sound_toggle.add_theme_font_size_override("font_size", 18)
+	sound_toggle.toggled.connect(sfx.set_enabled)
+	card.add_child(sound_toggle)
+	var sound_volume: HSlider = HSlider.new()
+	sound_volume.position = Vector2(218, 215)
+	sound_volume.size = Vector2(288, 30)
+	sound_volume.min_value = 0; sound_volume.max_value = 1; sound_volume.step = .01
+	sound_volume.value = sfx.volume
+	sound_volume.value_changed.connect(sfx.set_volume)
+	card.add_child(sound_volume)
+	_button(card, "Return to the vale", Vector2(30, 258), Vector2(480, 58), func() -> void: menu.hide(), true)
+	_button(card, "Redeem Code", Vector2(30, 326), Vector2(480, 54), func() -> void: redeem_ui.open())
+	_button(card, "Reset journey", Vector2(30, 390), Vector2(480, 54), _confirm_reset)
+	_button(card, "Welcome screen", Vector2(30, 457), Vector2(480, 48), func() -> void:
 		menu.hide()
 		started = false
 		_show_welcome()
@@ -1588,19 +1613,16 @@ func _notification(what: int) -> void:
 		if content_ready and started: _save_progress()
 
 func _play_sound(sound_id: String) -> void:
-	var sounds: Dictionary = manifest.get("sounds", {}) as Dictionary
-	if not sounds.has(sound_id): return
-	var source: Dictionary = sounds[sound_id] as Dictionary
-	var path: String = str(source.get("path", ""))
-	if not ResourceLoader.exists(path): return
-	var stream: AudioStream = load(path) as AudioStream
-	if stream == null: return
-	var player: AudioStreamPlayer = AudioStreamPlayer.new()
-	player.stream = stream
-	player.volume_db = -10.0
-	add_child(player)
-	player.finished.connect(player.queue_free)
-	player.play()
+	if sfx == null: return
+	if sound_id == "attack":
+		var graphic: int = 0
+		if online_mode:
+			var gear: Array = online.player.get("equipment_graphics", []) as Array
+			if gear.size() == 9: graphic = int(gear[8])
+		elif equipped: graphic = 4
+		sfx.weapon(graphic)
+	elif sound_id == "pickup": sfx.play_named("InventoryPickup")
+	else: sfx.play_named(sound_id)
 
 func _active_hero() -> Dictionary:
 	if online_mode: return online.character_graphic(online.player)

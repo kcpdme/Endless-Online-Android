@@ -17,7 +17,7 @@ The default export is the complete 87×87 Aeven map, not a synthetic approximati
 
 `manifest.json` records source archive hashes, exact source URLs, graphics paths/dimensions, layer mapping, character frames, sound effects, and limitations. Character sprites are composed from classic male skin, hair, armor, and boots using the source renderer's frame selection and offsets. The prototype precomposes eight equipment combinations and switches among them at runtime; arbitrary equipment compositing is future work. `manifest.characters.hero_variants` keys are `a0_b0_w0` through `a1_b1_w1`, where the bits select armor, boots, and weapon. Every combination includes the complete four-direction idle, walking, and attack animation sets. `hero` aliases `a1_b1_w0`; `hero_equipped` aliases `a1_b1_w1`. `source_resources` records source EGF members and graphic IDs for each variation. The training creature uses green slime graphic 3, with its actual individual standing, walking, and attack resources. Frame dictionaries are keyed `south`, `east`, `north`, `west`. Each frame has `path`, `region:[x,y,w,h]`, and `offset:[dx,dy]` relative to a bottom-center entity anchor. Hero frames include eight transparent pixels below the feet, represented by offset `[0,8]`.
 
-`manifest.sounds` includes melee attack, inventory pickup, and punch effects from `sfx016.wav`, `sfx021.wav`, and `sfx011.wav`. The reference melee file reports an incorrect RIFF length and has extra bytes after its declared PCM data. The importer writes canonical WAV files from the declared PCM frames with exact lengths; the manifest preserves original member names/hashes and repair metadata. No MIDI conversion is included.
+`manifest.sounds` includes melee attack, inventory pickup, and punch effects from `sfx015.wav`, `sfx020.wav`, and `sfx010.wav`. Some original WAV files report incorrect RIFF lengths or include bytes after their declared PCM data. The importer writes canonical WAV files from the declared PCM frames with exact lengths; the manifest preserves original member names/hashes and repair metadata. No MIDI conversion is included.
 
 `manifest.starter_equipment` is parsed from the original client’s `pub/dat001.eif`, rather than guessing which icons match the character: armor is Soldier Plate (item143, male armor graphic1, icon312), boots are Blue Boots (item80, boot graphic1, icon176), and weapon is Dagger (item21, weapon graphic4, icon76). These are local prototype appearance definitions; the separately supplied server PUB data may use different identifiers. Every equipment entry includes its source member and ground/inventory graphic keys.
 
@@ -71,3 +71,20 @@ the eight existing starter variants remain unchanged. Extra weapons use a
 and original layer offsets. The native equipment doll graphic selects the
 appearance; item ID and bag icon are not substituted for doll graphic ID.
 The runtime continues to flag other unsupported character appearances.
+
+
+Original action sound bank (v0.29.1): after running the base importer/catalog export, run:
+
+```sh
+python3 tools/export_sfx.py --client-zip work/eoserv-crawl/downloads/EOzipped028.zip --original-client work/EndlessClient
+python3 -m unittest discover -s tools -p test_sfx.py
+```
+
+This preserves all81 original PCM effects and records original/source hashes in
+`manifest.sfx`. `sfx_config` imports the pinned client’s75 weapon mappings,34
+effect mappings and named sound aliases. Playback IDs are one-based: the original
+SfxPlayer uses dictionary[id-1], whose key0 contains sfx001.wav. Melee15 therefore
+means sfx015.wav; the old prototype’s three aliases were offset by one. Ordinary
+health potions have no dedicated SFX in the original; confirmed spells, effect
+potions, weapons, NPC attacks and acknowledged actions use their original cues.
+Music export remains a separate step; its45 original tracks are retained.

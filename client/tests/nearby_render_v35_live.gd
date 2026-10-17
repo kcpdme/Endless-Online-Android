@@ -48,7 +48,7 @@ func _run() -> void:
 	# Verify actual UI nodes and both perspectives, rather than only the cache.
 	await process_frame
 	await process_frame
-	var shown: PanelContainer = game.speech_layer.bubbles.get(pid) as PanelContainer
+	var shown: Panel = game.speech_layer.bubbles.get(pid) as Panel
 	if not check(shown != null and shown.is_visible_in_tree() and shown.get_node("Message").text == "Hello nearby!", "Observer must visibly render Ravigameboy’s speech"): return
 	var shots: String = OS.get_environment("ASTER_VALE_SCREENSHOTS")
 	if not shots.is_empty() and DisplayServer.get_name() != "headless":
@@ -57,7 +57,7 @@ func _run() -> void:
 		root.get_texture().get_image().save_png(shots.path_join("v35-nearby-observer.png"))
 	await process_frame
 	await process_frame
-	shown = speaker.speech_layer.bubbles.get(pid) as PanelContainer
+	shown = speaker.speech_layer.bubbles.get(pid) as Panel
 	if not check(shown != null and shown.is_visible_in_tree(), "Ravigameboy must visibly see his own speech"): return
 	if not shots.is_empty() and DisplayServer.get_name() != "headless":
 		await RenderingServer.frame_post_draw
