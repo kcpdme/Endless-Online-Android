@@ -2074,3 +2074,8 @@ conditions. Other players need0.24.0 for the queue/phase and numeric-ID fixes.
 - Final APK0.29.1/code37 passes signing and16KB alignment;81 original PCM effects
   and45 music tracks packaged. SHA2568e0b0b21cad2e006c02ba54f1412e95a7dab8261171ccef71929556048f48269.
   Delivery/install verification is recorded separately in gameplay-v37-phone-report.json.
+- Installed and launched on Galaxy S23 Ultra via wireless ADB; final APK hash and
+  version match, offline save preserved byte for byte, no startup resource/script/
+  crash errors. Wireless transfer was slow; compressed adb push plus pm install-r
+  completed successfully. Temporary phone APK removed. Code pushed as deae095.
+  Private fixture native processes/tunnel were stopped after their tests.
