@@ -347,7 +347,7 @@ def export_sounds(out,client):
     return sounds
 
 
-def export_hero(out,image,armor_on=1,boots_on=1,weapon_graphic=0,variant="a1_b1_w0",component=None,gender=1,race=0,hairstyle=1,haircolor=0,include_ranged=False):
+def export_hero(out,image,armor_on=1,boots_on=1,weapon_graphic=0,variant="a1_b1_w0",component=None,gender=1,race=0,hairstyle=1,haircolor=0,include_ranged=False,include_sitting=False):
     """Selectable native body/hair and equipment, with optional EO ranged poses.
 
     18x58 parent draw rectangle from CharacterRenderer. Skin source calculations
@@ -361,25 +361,27 @@ def export_hero(out,image,armor_on=1,boots_on=1,weapon_graphic=0,variant="a1_b1_
           'appearance':{'gender':gender,'race':race,'hair_style':hairstyle,'hair_color':haircolor,'armor_graphic':armor_on,'boots_graphic':boots_on,'weapon_graphic':weapon_graphic},
           'composition':'Layered source bitmaps precomposed for prototype; replace with runtime equipment layering later.'}
     hero['source_resources']={'gfx/gfx008.egf':[1,2,3,4],'gfx/gfx009.egf':[2,4]}
+    if component:hero['component']=component
     if armor_on:hero['source_resources']['gfx/gfx013.egf']=[(armor_on-1)*50+i for i in range(1,17)]
     if boots_on:hero['source_resources']['gfx/gfx011.egf']=[(boots_on-1)*40+i for i in range(1,13)]
     if weapon_graphic:
         base=(weapon_graphic-1)*100
         hero['source_resources']['gfx/gfx017.egf']=[base+i for i in list(range(1,18))]
     for direction,back,flip in [('south',0,False),('east',0,True),('north',1,True),('west',1,False)]:
-        for state,count in [('idle',1),('frames',4),('attack',2),('cast',1)]+([('ranged_attack',2)] if include_ranged else []):
+        for state,count in [('idle',1),('frames',4),('attack',2),('cast',1)]+([('ranged_attack',2)] if include_ranged else [])+([('sit_chair',1),('sit_floor',1)] if include_sitting else []):
             frames=[]
             for index in range(count):
                 walking=state=='frames'; attacking=state=='attack'; casting=state=='cast'; frame=index+1
                 shooting=state=='ranged_attack' and index==1
-                sheet=image(8,7 if shooting else 2 if walking else 3 if attacking else 4 if casting else 1)
+                sitting=state in ('sit_chair','sit_floor');floor=state=='sit_floor'
+                sheet=image(8,(6 if floor else 5) if sitting else 7 if shooting else 2 if walking else 3 if attacking else 4 if casting else 1)
                 columns=16 if walking else 8 if attacking else 4
                 sw=sheet.width//columns; sh=sheet.height//7
                 sx=gender*(sheet.width//2)+back*(sheet.width//4)+(index*sw if walking or attacking else 0)+(1 if (gender==1 and walking and not back) or (gender==0 and (attacking or shooting)) else 0)
                 skin=sheet.crop((sx,race*sh,sx+sw,(race+1)*sh))
                 hair=image(10-gender,(max(1,hairstyle)-1)*40+haircolor*4+2+back*2)
-                armor_id=21+back if shooting else 3+index+back*4 if walking else 13+index+back*2 if attacking else 11+back if casting else 1+back
-                boots_id=3+index+back*4 if walking else 11+back if shooting or (attacking and frame==2) else 1+back
+                armor_id=(19 if floor else 17)+back if sitting else 21+back if shooting else 3+index+back*4 if walking else 13+index+back*2 if attacking else 11+back if casting else 1+back
+                boots_id=(15 if floor else 13)+back if sitting else 3+index+back*4 if walking else 11+back if shooting or (attacking and frame==2) else 1+back
                 armor=image(14-gender,max(0,armor_on-1)*50+armor_id);boots=image(12-gender,max(0,boots_on-1)*40+boots_id)
                 canvas=Image.new('RGBA',(canvas_size,canvas_size))
                 parent_x=canvas_size//2-9;parent_y=canvas_size-66
@@ -401,26 +403,45 @@ def export_hero(out,image,armor_on=1,boots_on=1,weapon_graphic=0,variant="a1_b1_
                 # a down/right second swing; that pose uses a split resource.
                 split=weapon_graphic and attacking and frame==2 and not back
                 weapon_id=18+back if shooting else 3+index+back*4 if walking else 13+index+back*2 if attacking else 11+back if casting else 1+back
-                if weapon_graphic:draw_weapon(14 if split else weapon_id)
+                if weapon_graphic and not sitting:draw_weapon(14 if split else weapon_id)
                 skin_x=-math.floor(abs(sw-18)/2)
                 if gender==1 and attacking and frame==1:skin_x+=2 if flip else -2
                 skin_y=-math.floor(abs(sh-58)/2)-(2 if casting else 0)
                 if shooting:
                     skin_x=(0 if flip else 18-sw-2*int(not back))+(2 if flip and not back else 0)+2*gender*(1 if flip else -1)
                     skin_y=int(not back)
+                elif sitting:
+                    factor=1 if flip else -1
+                    skin_x=-(sw-18)+(3 if back else 2)*factor+(0 if back else gender)*factor
+                    skin_y=58-sh+(7 if back else 5)-gender
+                    if floor:
+                        skin_x+=-factor if back else 0
+                        skin_y+=int(back)
                 paste(skin,skin_x,skin_y,'skin')
                 boots_x=-math.floor(abs(boots.width-18)/2);boots_y=math.floor(58/3)*2-1-gender
                 if walking:boots_y-=1+(1 if frame==2 else 0)
                 elif attacking and frame==2:
                     factor=1 if flip else -1;boots_x+=2*factor;boots_y+=factor-(2*gender if flip else 0)
                 elif shooting:boots_x+=(1 if flip else -1)*((3+4*gender) if back else (5+gender))
+                elif sitting:
+                    boots_x-=3;boots_y+=-3 if back else 2
+                    if floor:
+                        factor=1 if flip else -1
+                        boots_x+=((0 if not back else -1) if gender else (1 if not back else -1))*factor
+                        boots_y+=4 if gender else 3 if back else 2
                 if boots_on:paste(boots,boots_x,boots_y,'boots')
                 armor_x=-math.floor(abs(armor.width-18)/2)-2
                 if shooting:armor_x+=(4 if flip else 0)+(2 if back else 4)*(1 if flip else -1)
                 elif attacking and frame==2:armor_x+=4 if flip else 0
+                elif sitting:
+                    if floor:
+                        armor_x+=(gender if direction=='west' else -gender if direction=='north' else 0)
+                        armor_x-=(2-gender) if direction in ('south','north') else gender
+                    else:armor_x-=1
                 else:armor_x+=2
                 armor_y=-math.floor(abs(armor.height-58)/2)-(4 if walking else 3)-gender
                 if shooting:armor_y+=int(not back)
+                elif sitting:armor_y+=(3+gender)+(12 if back else 9) if floor else (3+gender)+(2 if back else 0)
                 if armor_on:paste(armor,armor_x,armor_y,'armor')
                 hair_x=-math.floor(abs(hair.width-18)/2)-1+(2 if flip else 0)
                 hair_y=-math.floor(abs(hair.height-29)/2)-gender
@@ -431,6 +452,10 @@ def export_hero(out,image,armor_on=1,boots_on=1,weapon_graphic=0,variant="a1_b1_
                     hair_x+=4 if flip else -4
                     if back:hair_x+=(-2 if flip else 2)*gender
                     hair_y+=1 if back else 5-gender
+                elif sitting:
+                    hair_x-=3;hair_y+=(11+gender if back else 9+gender)*(2 if floor else 1)
+                    if floor and back:
+                        hair_x+=2 if direction=='west' else -2;hair_y-=1
                 if hairstyle:paste(hair,hair_x,hair_y,'hair')
                 if split:draw_weapon(17,'weapon_front')
                 name=f'characters/hero_{variant}_{direction}_{state}_{index}.png';canvas.save(out/name)

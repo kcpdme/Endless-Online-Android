@@ -365,6 +365,9 @@ func _reset_turn_input() -> void:
 	turn_wait = 0.0
 
 func _manual_step(direction: Vector2i, continuing_walk: bool) -> void:
+	if online_mode and online.seated():
+		online.toggle_sit()
+		return
 	var desired: String = _direction_name(direction)
 	# Original ArrowKeyController.FaceOrAttemptWalk: a stationary character
 	# turns first. Changes at a walking tile boundary continue without a pause.
@@ -452,6 +455,10 @@ func _screen_to_world(point: Vector2) -> Vector2:
 func _input(event: InputEvent) -> void:
 	var dismissing_modal: bool = Time.get_ticks_msec() < modal_input_until
 	if event is InputEventKey:
+		if event.keycode == KEY_F11 and event.pressed and not event.echo and started and online_mode and not _modal_open() and not _editing_text():
+			online.toggle_sit()
+			get_viewport().set_input_as_handled()
+			return
 		var key: int = _movement_key(event)
 		if key != 0:
 			var gameplay_key: bool = started and not _modal_open() and not _editing_text() and not (chat_ui != null and chat_ui.typing())
@@ -804,6 +811,7 @@ func _draw_decoration(entry: Dictionary) -> void:
 	draw_texture_rect_region(texture, Rect2(at + offset, size), Rect2(Vector2(frame_index * size.x, 0), size), color)
 
 func _frame(character: Dictionary, direction: String, state: String, phase: float = -1.0) -> Dictionary:
+	if state in ["sit_chair", "sit_floor"] and str(character.get("component", "")).begins_with("weapon"): return {}
 	if state == "attack" and bool(character.get("ranged", false)): state = "ranged_attack"
 	if character.has("directional_offhand"):
 		var offhand: Dictionary = character.directional_offhand
@@ -874,6 +882,7 @@ func _draw_player() -> void:
 	draw_set_transform(Vector2.ZERO)
 	if online_mode: skills_ui.draw_effect("player", int(online.player.get("player_id", 0)), player_world, false)
 	var state: String = "frames" if moving else "cast" if online_mode and skills_ui.is_chanting(int(online.player.get("player_id", 0))) else "attack" if swing_clock > 0.0 else "idle"
+	if online_mode and online.seated(): state = "sit_chair" if int(online.player.sitting) == 1 else "sit_floor"
 	if not _draw_character_frame(_active_hero(), player_world, facing, state, Color("ff8888") if player_hit_flash > 0.0 else Color.WHITE):
 		# Explicitly identified placeholder if the optional character conversion is unavailable.
 		draw_circle(player_world + Vector2(0, -18), 9, Color("82bfa2"))
@@ -1312,15 +1321,19 @@ func _toggle_equip() -> void:
 	_toast("%s %s." % [_item_name(selected_item), "equipped" if _is_equipped(selected_item) else "returned to your bag"])
 
 func _build_menu(parent: Node) -> void:
-	menu = _modal(parent, Vector2(540, 500))
+	menu = _modal(parent, Vector2(540, 560))
 	var card: Control = menu.get_child(0) as Control
 	_label(card, "ASTER VALE", Vector2(30, 28), 14, GOLD)
 	_label(card, "A moment’s rest", Vector2(28, 61), 32)
 	_label(card, "Your journey is saved automatically.\nTake a breath, then return to explore.", Vector2(30, 120), 17, MUTED)
 	_button(card, "Return to the vale", Vector2(30, 218), Vector2(480, 58), func() -> void: menu.hide(), true)
 	_button(card, "Redeem Code", Vector2(30, 286), Vector2(480, 54), func() -> void: redeem_ui.open())
-	_button(card, "Reset journey", Vector2(30, 350), Vector2(480, 54), _confirm_reset)
-	_button(card, "Welcome screen", Vector2(30, 417), Vector2(480, 48), func() -> void:
+	_button(card, "Sit / Stand", Vector2(30, 350), Vector2(480, 54), func() -> void:
+		menu.hide()
+		if online_mode: online.toggle_sit()
+	)
+	_button(card, "Reset journey", Vector2(30, 414), Vector2(480, 54), _confirm_reset)
+	_button(card, "Welcome screen", Vector2(30, 481), Vector2(480, 48), func() -> void:
 		menu.hide()
 		started = false
 		_show_welcome()

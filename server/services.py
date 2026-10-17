@@ -221,6 +221,14 @@ class ServicesMixin:
         except UnicodeEncodeError: raise EOError('Classic EO chat supports Latin characters; use English for this message')
         now=time.monotonic()
         if now-self.last_chat<.7: raise EOError('Wait a moment between messages')
+        # EO commands are Talk_Report (nearby), even when typed in another tab.
+        # The native role/command permissions decide what can run. Never publish
+        # command text into Global/Whisper or manufacture a nearby speech bubble.
+        if message.startswith('$'):
+            channel='local';target=''
+            if int(self.stats.get('admin',0))>0:
+                self.send(18,21,payload);self.last_chat=now
+                return self.snapshot()
         if channel=='private':
             if not target.isalpha() or not 4<=len(target)<=16 or not target.isascii(): raise EOError('Enter a valid character name')
             payload=target.encode('ascii')+b'\xff'+payload
@@ -271,7 +279,8 @@ class ServicesMixin:
                         delta=(-1 if int(pid)==self.player_id else 1)*item['amount']
                         self._set_amount(item['id'],self.item_amount(item['id'])+delta)
                         weight_delta+=definitions.get(item['id'],{}).get('weight',0)*delta
-                self.weight=max(0,min(250,self.weight+weight_delta));self.stats['weight']=self.weight
+                # Native admins with unlimitedweight report the 0 / 251 sentinel.
+                self.weight=0 if self.max_weight==251 else max(0,min(250,self.weight+weight_delta));self.stats['weight']=self.weight
                 self.trade=None;self.trade_request=None
                 self.events.append(dict(kind='trade_complete',message='Trade complete. Your inventory has been updated.'))
             elif self.trade:self.trade.update(offers=offers,agreed=False,peer_agreed=False)

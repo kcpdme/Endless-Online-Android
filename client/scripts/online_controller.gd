@@ -264,7 +264,7 @@ func _on_message(message: Dictionary) -> void:
 				if int((player.get("equipment", {}) as Dictionary).get(str(replacement.slot), 0)) == 0:
 					session.request("equip", {"item_id": int(replacement.item_id), "subloc": int(replacement.subloc)})
 				else: game._toast("The worn item could not be removed. Your replacement remains in the bag.")
-		"world", "refresh", "snapshot", "attack", "pickup", "equip", "spend_stat", "shop_buy", "shop_sell", "shop_craft", "bank_deposit", "bank_withdraw", "bank_upgrade", "locker_deposit", "locker_withdraw", "chest_deposit", "chest_take", "chest_close", "trade_request", "trade_accept", "trade_decline", "trade_add", "trade_remove", "trade_agree", "trade_cancel", "chat_send", "item_use", "skill_learn", "skill_forget", "skill_level":
+		"sit", "world", "refresh", "snapshot", "attack", "pickup", "equip", "spend_stat", "shop_buy", "shop_sell", "shop_craft", "bank_deposit", "bank_withdraw", "bank_upgrade", "locker_deposit", "locker_withdraw", "chest_deposit", "chest_take", "chest_close", "trade_request", "trade_accept", "trade_decline", "trade_add", "trade_remove", "trade_agree", "trade_cancel", "chat_send", "item_use", "skill_learn", "skill_forget", "skill_level":
 			_apply_snapshot(data)
 		"redeem_code":
 			_apply_snapshot(data)
@@ -347,6 +347,7 @@ func _apply_snapshot(data: Dictionary, entering: bool = false) -> void:
 	for raw: Variant in data.get("events", []):
 		if raw is Dictionary and str(raw.get("kind", "")) == "map_transition": entering = true
 	if data.has("player"):
+		var previous_sitting: int = int(player.get("sitting", 0))
 		player = data.player as Dictionary
 		defeated = bool((player.get("stats", {}) as Dictionary).get("dead", false))
 		var map_id: int = int(player.get("map_id", player.get("map", 5)))
@@ -392,6 +393,13 @@ func _apply_snapshot(data: Dictionary, entering: bool = false) -> void:
 			game.moving = false
 			game.camera.position = game.player_world
 			game.camera.reset_smoothing()
+		elif previous_sitting != int(player.get("sitting", 0)):
+			game._cancel_controls(true)
+			pending_inputs.clear()
+			waiting_for_walk = false
+			game.player_tile = tile
+			game.player_world = game.tile_position(tile)
+			game.facing = _facing(player.get("direction", 0))
 		elif bool(data.get("position_update", false)):
 			var confirmed: int = int(data.get("position_seq", 0))
 			confirmed_input_seq = confirmed
@@ -422,6 +430,8 @@ func _apply_snapshot(data: Dictionary, entering: bool = false) -> void:
 	else: npcs = _merge_updates(npcs, data.get("npcs_upsert", []), data.get("npcs_remove", []), "index")
 	if data.has("items"): drops = _dict_array(data.items)
 	else: drops = _merge_updates(drops, data.get("items_upsert", []), data.get("items_remove", []), "uid")
+	for raw: Variant in data.get("events", []):
+		if raw is Dictionary and str(raw.get("kind", "")) == "seating": remote_motion.erase("player:%d" % int(raw.player_id))
 	_track_entities("player", players, "player_id")
 	_track_entities("npc", npcs, "index")
 	_process_events(data.get("events", []) as Array)
@@ -479,7 +489,20 @@ func _process(delta: float) -> void:
 	if not pending_inputs.is_empty() and Time.get_ticks_msec() - int(pending_inputs[0].sent_at) > 15000:
 		session._fail("Movement confirmation timed out. Please reconnect.")
 
+func seated() -> bool:
+	return int(player.get("sitting", 0)) != 0
+
+func toggle_sit(tile: Vector2i = Vector2i(-1, -1)) -> void:
+	if not _action_ready() or game.moving: return
+	game._cancel_controls()
+	pending_face = ""
+	var fields: Dictionary = {} if seated() or tile.x < 0 else {"x": tile.x, "y": tile.y}
+	session.request("sit", fields)
+
 func request_step(direction: Vector2i) -> void:
+	if seated():
+		toggle_sit()
+		return
 	if not active or defeated or recovering or transition_pending or game.moving: return
 	if direction not in [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]: return
 	var single: Vector2i = direction
@@ -560,7 +583,7 @@ func _action_ready() -> bool:
 func request_attack() -> bool:
 	game.skills_ui.armed = 0
 	if not game.skills_ui.casting.is_empty(): return false
-	if not active or defeated or recovering or game.moving or transition_pending or session.has_blocking_requests() or session.pending.size() >= MAX_PREDICTIONS: return false
+	if not active or seated() or defeated or recovering or game.moving or transition_pending or session.has_blocking_requests() or session.pending.size() >= MAX_PREDICTIONS: return false
 	# Original attacks follow the chosen facing; do not redirect to another NPC.
 	var adjacent: Array[Dictionary] = []
 	for npc: Dictionary in npcs:
@@ -579,7 +602,7 @@ func request_attack() -> bool:
 	return sent
 
 func request_face(direction: String) -> void:
-	if not active or defeated or recovering or game.moving or transition_pending or not game.skills_ui.casting.is_empty(): return
+	if not active or seated() or defeated or recovering or game.moving or transition_pending or not game.skills_ui.casting.is_empty(): return
 	if game.facing != direction:
 		game.facing = direction
 		player["direction"] = _direction(direction)
@@ -655,6 +678,9 @@ func _track_entities(kind: String, rows: Array[Dictionary], id_field: String, at
 		seen[key] = true
 		var tile: Vector2i = Vector2i(int(record.get("x", 0)), int(record.get("y", 0)))
 		var target: Vector2 = game.tile_position(tile)
+		if kind == "player" and int(record.get("sitting", 0)) > 0:
+			remote_motion[key] = {"to":target,"tile":tile,"steps":[],"walk_start":now}
+			continue
 		if remote_motion.has(key) and remote_motion[key].to == target: continue
 		var motion: Dictionary = remote_motion.get(key, {}) as Dictionary
 		var distance: int = 0 if motion.is_empty() else absi(tile.x - int(motion.tile.x)) + absi(tile.y - int(motion.tile.y))
@@ -725,6 +751,9 @@ func entity_animation(kind: String, record: Dictionary) -> Dictionary:
 		phase = game.ONLINE_ATTACK_SWING_DURATION - (float(attack.until) - now)
 		direction = _facing(attack.direction)
 	if kind == "online_player" and state == "idle" and game.skills_ui.is_chanting(int(record.get("player_id", -1))): state = "cast"
+	if kind == "online_player" and int(record.get("sitting", 0)) > 0:
+		state = "sit_chair" if int(record.sitting) == 1 else "sit_floor"
+		direction = _facing(record.get("direction", 0))
 	return {"key": key, "state": state, "phase": phase, "direction": direction}
 
 func player_name_offset(name: String) -> Vector2:
@@ -1013,7 +1042,7 @@ func map_entity_target(point: Vector2) -> Dictionary:
 		if rectangle.grow(5.0).has_point(point): return {"tile": tile, "kind": "npc"}
 	# Match chest/locker artwork, including its front above the blocked tile.
 	for spec: Dictionary in ([] if game.skills_ui.armed > 0 else game.world.get("tile_specs", [])):
-		if int(spec.get("spec", -1)) not in [9, 16]: continue
+		if int(spec.get("spec", -1)) not in [1, 2, 3, 4, 5, 6, 7, 9, 16]: continue
 		var tile: Vector2i = Vector2i(int(spec.x), int(spec.y))
 		for decoration: Dictionary in game.decorations:
 			if decoration.tile != tile or str(decoration.layer) != "objects": continue
@@ -1021,7 +1050,7 @@ func map_entity_target(point: Vector2) -> Dictionary:
 			if texture == null: continue
 			var size: Vector2 = texture.get_size()
 			if int(decoration.gfx) == 3 and size.x >= 128: size.x /= 4.0
-			if Rect2(game.tile_position(tile) + Vector2(-2.0 - size.x / 2.0, 14.0 - size.y), size).grow(4.0).has_point(point): return {"tile": tile, "kind": "chest" if int(spec.spec) == 9 else "locker"}
+			if Rect2(game.tile_position(tile) + Vector2(-2.0 - size.x / 2.0, 14.0 - size.y), size).grow(4.0).has_point(point): return {"tile": tile, "kind": "chair" if int(spec.spec) in range(1, 8) else "chest" if int(spec.spec) == 9 else "locker"}
 	for peer: Dictionary in players:
 		if int(peer.get("player_id", 0)) == int(player.get("player_id", 0)): continue
 		var tile: Vector2i = Vector2i(int(peer.x), int(peer.y))
@@ -1031,6 +1060,9 @@ func map_entity_target(point: Vector2) -> Dictionary:
 
 func map_click(tile: Vector2i, preferred_kind: String = "") -> void:
 	if not active or defeated or recovering or transition_pending: return
+	if seated():
+		toggle_sit()
+		return
 	if game.skills_ui.target(tile): return
 	interaction.clear()
 	for drop: Dictionary in (drops if preferred_kind in ["", "drop"] else []):
@@ -1044,10 +1076,11 @@ func map_click(tile: Vector2i, preferred_kind: String = "") -> void:
 			game._cancel_controls()
 			interaction = {"kind": "player", "id": int(peer.player_id)}
 			return
-	for spec: Dictionary in (game.world.get("tile_specs", []) if preferred_kind in ["", "locker", "chest"] else []):
-		if int(spec.get("spec", -1)) in [9, 16] and Vector2i(int(spec.x), int(spec.y)) == tile:
-			interaction = {"kind": "chest" if int(spec.spec) == 9 else "locker", "id": 0, "x": tile.x, "y": tile.y}
-			_approach(tile, 1)
+	for spec: Dictionary in (game.world.get("tile_specs", []) if preferred_kind in ["", "locker", "chest", "chair"] else []):
+		if int(spec.get("spec", -1)) in [1, 2, 3, 4, 5, 6, 7, 9, 16] and Vector2i(int(spec.x), int(spec.y)) == tile:
+			interaction = {"kind": "chair" if int(spec.spec) in range(1, 8) else "chest" if int(spec.spec) == 9 else "locker", "id": 0, "x": tile.x, "y": tile.y, "spec": int(spec.spec)}
+			if str(interaction.kind) == "chair": _approach_chair(tile, int(spec.spec))
+			else: _approach(tile, 1)
 			return
 	for npc: Dictionary in npcs:
 		if Vector2i(int(npc.x), int(npc.y)) != tile: continue
@@ -1068,6 +1101,36 @@ func map_click(tile: Vector2i, preferred_kind: String = "") -> void:
 		else: game._toast("%s: this NPC service is not available yet." % str(info.get("name", "NPC")))
 		return
 	game._request_path(tile)
+
+func chair_sides(spec: int) -> Array[Vector2i]:
+	match spec:
+		1: return [Vector2i.DOWN]
+		2: return [Vector2i.LEFT]
+		3: return [Vector2i.RIGHT]
+		4: return [Vector2i.UP]
+		5: return [Vector2i.DOWN, Vector2i.RIGHT]
+		6: return [Vector2i.UP, Vector2i.LEFT]
+		7: return [Vector2i.DOWN, Vector2i.LEFT, Vector2i.UP, Vector2i.RIGHT]
+	return []
+
+func _approach_chair(tile: Vector2i, spec: int) -> void:
+	game.route.clear()
+	for peer: Dictionary in players:
+		if Vector2i(int(peer.x), int(peer.y)) == tile:
+			interaction.clear()
+			game._toast("This chair is occupied.")
+			return
+	var choices: Array[Vector2i] = []
+	for side: Vector2i in chair_sides(spec):
+		var candidate: Vector2i = tile + side
+		if candidate == game.player_tile: return
+		if game._walkable(candidate): choices.append(candidate)
+	choices.sort_custom(func(a: Vector2i, b: Vector2i) -> bool: return game._distance(game.player_tile, a) < game._distance(game.player_tile, b))
+	for choice: Vector2i in choices:
+		game._request_path(choice)
+		if not game.route.is_empty(): return
+	interaction.clear()
+	game._toast("Reach the open side of the chair.")
 
 func _approach(tile: Vector2i, distance: int) -> void:
 	game.route.clear()
@@ -1097,12 +1160,12 @@ func _process_interaction() -> void:
 			session.request("inspect_player", {"player_id": int(interaction.id)})
 			interaction.clear()
 			return
-		var target: Dictionary = interaction if str(interaction.kind) in ["locker", "chest"] else {}
-		for row: Dictionary in ([] if str(interaction.kind) in ["locker", "chest"] else (drops if str(interaction.kind) == "drop" else npcs)):
+		var target: Dictionary = interaction if str(interaction.kind) in ["locker", "chest", "chair"] else {}
+		for row: Dictionary in ([] if str(interaction.kind) in ["locker", "chest", "chair"] else (drops if str(interaction.kind) == "drop" else npcs)):
 			if int(row.get("uid" if str(interaction.kind) == "drop" else "index", -1)) == int(interaction.id): target = row
 		if not target.is_empty():
 			var tile: Vector2i = Vector2i(int(target.x), int(target.y))
-			var distance: int = 1 if str(interaction.kind) in ["locker", "chest"] else 2 if str(interaction.kind) == "drop" else NPC_SERVICE_DISTANCE
+			var distance: int = 1 if str(interaction.kind) in ["locker", "chest", "chair"] else 2 if str(interaction.kind) == "drop" else NPC_SERVICE_DISTANCE
 			if game._distance(game.player_tile, tile) > distance:
 				if str(interaction.kind) in ["shop", "bank", "skillmaster"]:
 					interaction.clear()
@@ -1110,8 +1173,9 @@ func _process_interaction() -> void:
 					return
 				_approach(tile, distance)
 				return
-			if str(interaction.kind) == "drop": _pickup(int(interaction.id))
-			elif str(interaction.kind) in ["locker", "chest"]: session.request("chest_open" if str(interaction.kind) == "chest" else "locker_open", {"x": int(target.x), "y": int(target.y)})
+			if str(interaction.kind) == "chair": toggle_sit(tile)
+			elif str(interaction.kind) == "drop": _pickup(int(interaction.id))
+			elif str(interaction.kind) in ["locker", "chest", "chair"]: session.request("chest_open" if str(interaction.kind) == "chest" else "locker_open", {"x": int(target.x), "y": int(target.y)})
 			else: session.request("skillmaster_open" if str(interaction.kind) == "skillmaster" else "bank_open" if str(interaction.kind) == "bank" else "shop_open", {"npc_index": int(interaction.id)})
 		interaction.clear()
 		collect_pending = false
@@ -1177,7 +1241,11 @@ func refresh_game_ui() -> void:
 	game.health_label.visible = false
 	game.health_label.text = "HP %d / %d" % [int(player.get("hp", 0)), int(player.get("max_hp", player.get("maxhp", 0)))]
 	var items: Array[Dictionary] = inventory_items()
-	game.inventory_summary.text = "%d belongings" % items.size()
+	var stats: Dictionary = player.get("stats", {}) as Dictionary
+	var weight: int = int(stats.get("weight", 0))
+	var capacity: int = int(stats.get("max_weight", 0))
+	game.inventory_summary.text = "%d belongings   ·   Weight %d / %d%s" % [items.size(), weight, capacity, "  ·  Overweight" if capacity > 0 and weight >= capacity else ""]
+	game.inventory_summary.modulate = Color("f29b81") if capacity > 0 and weight >= capacity else Color.WHITE
 	game.offline_bag_panel.hide()
 	game.bag_scroll.show()
 	game.bag_grid.refresh()

@@ -24,6 +24,27 @@ class RuntimeCatalogTests(unittest.TestCase):
     def setUp(self):
         self.catalog=json.loads((CONTENT/'catalog.json').read_text())
         self.manifest=json.loads((CONTENT/'manifest.json').read_text())
+    def test_original_chair_and_floor_body_pixels_all_genders_and_directions(self):
+        from import_eo import PEBitmaps,read_member
+        positions={
+            'sit_chair':{1:[(78,136),(84,136),(84,138),(78,138)],0:[(79,137),(83,137),(84,139),(78,139)]},
+            'sit_floor':{1:[(78,145),(84,145),(83,148),(79,148)],0:[(79,146),(83,146),(83,149),(79,149)]}}
+        layers=self.manifest['characters']['equipment_layers']['layers']
+        with zipfile.ZipFile(ROOT/'reference/gfx.zip') as archive:
+            source=PEBitmaps(read_member(archive,'gfx/gfx008.egf'))
+            for state,gid in [('sit_chair',5),('sit_floor',6)]:
+                sheet=source.image(gid);height=52 if gid==5 else 43
+                for gender in (1,0):
+                    key='skin:0' if gender else 'skin:f:0'
+                    for i,direction in enumerate(('south','east','north','west')):
+                        x=gender*48+(24 if i>=2 else 0)
+                        art=sheet.crop((x,0,x+24,height))
+                        if i in (1,2):art=ImageOps.mirror(art)
+                        expected=Image.new('RGBA',(192,192));expected.alpha_composite(art,positions[state][gender][i])
+                        frame=layers[key][state][direction][0]
+                        with Image.open(CONTENT/frame['path'].removeprefix('res://content/')) as atlas:
+                            x,y,w,h=frame['region'];self.assertEqual(atlas.crop((x,y,x+w,y+h)).tobytes(),expected.tobytes(),(state,gender,direction))
+
     def test_ranged_layers_use_original_shooting_resources_and_offsets(self):
         from import_eo import PEBitmaps,read_member
         layers=self.manifest['characters']['equipment_layers']

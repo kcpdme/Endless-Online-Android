@@ -14,12 +14,13 @@ from eo_session import Session, Reader, EOError, number
 from economy import EconomyMixin
 from services import ServicesMixin
 from chests import ChestsMixin
+from seating import SeatingMixin
 from consumables import ConsumablesMixin
 from skills import SkillsMixin
 from rewards import RewardsMixin
 
 
-class LiveSession(RewardsMixin, SkillsMixin, ConsumablesMixin, ChestsMixin, ServicesMixin, EconomyMixin, Session):
+class LiveSession(RewardsMixin, SkillsMixin, ConsumablesMixin, SeatingMixin, ChestsMixin, ServicesMixin, EconomyMixin, Session):
     def __init__(self,*args):
         self.init_services();self.init_skills()
         self.pending_moves=deque();self.position_seq=0;self.last_input_seq=0
@@ -34,6 +35,7 @@ class LiveSession(RewardsMixin, SkillsMixin, ConsumablesMixin, ChestsMixin, Serv
         if direction not in range(4) or not self.state or not self.state.get('self'):raise EOError('Enter the world before moving')
         if self.warp:raise EOError('Wait for the map transition')
         if self.trade:raise EOError('Close the trade before moving')
+        if self.state['self'].get('sitting',0):raise EOError('Stand up before moving')
         if self.stats.get('dead'):return {'sent':False,'input_seq':seq,'dead':True}
         if seq<=self.last_input_seq:raise EOError('Movement sequence is stale')
         if len(self.pending_moves)>=4:raise EOError('Wait for outstanding movement')
@@ -160,6 +162,7 @@ class LiveSession(RewardsMixin, SkillsMixin, ConsumablesMixin, ChestsMixin, Serv
         super().apply_event(f,a,p)
         self.apply_service_packet(f,a,p)
         self.apply_chest_packet(f,a,p)
+        if self.state:self.apply_seating_packet(f,a,p)
         self.apply_item_packet(f,a,p)
         self.apply_reward_packet(f,a,p)
         if self.state:self.apply_skill_packet(f,a,p)

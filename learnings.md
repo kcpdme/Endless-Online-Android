@@ -16,7 +16,7 @@ Godot 4.7.2, typed GDScript and 2D isometric rendering are sufficient. A Unity/3
 rewrite and a larger server have not been needed for the measured regressions.
 
 Baseline before this update: commit `8c9e541`, APK 0.10.0/code 10. The current
-build is 0.27.3/code 33. See the final v0.21 section for current chat/presence and the v0.20 sections for equipment/HUD/Junk support. v0.12 added level/EXP, Nearby Send closure and
+build is 0.27.4/code 34. See the final v0.21 section for current chat/presence and the v0.20 sections for equipment/HUD/Junk support. v0.12 added level/EXP, Nearby Send closure and
 native consumables; v0.13 adds native skills and touch targeting. v0.11 added native bank/lockers, player inspection and
 trading, local/global/private chat, a dynamic joystick, and the heart/TP HUD,
 as well as placing NPC names near visible heads and fixing observer equipment/
@@ -1812,3 +1812,92 @@ conditions. Other players need0.24.0 for the queue/phase and numeric-ID fixes.
   identical, process is running and startup logcat has no script/crash errors.
   Public WebSocket handshake reached deployed chest handler; a chest request
   before character entry was rejected without sending a native chest packet.
+
+
+## v0.27.4 / code34: native cleanup, admin commands, chairs and bag weight
+
+- User explicitly chose the original 10-minute ground-item timeout (overriding
+  the earlier approximate two-hour suggestion). Pinned native config/misc.ini
+  defaults: ItemDespawn=no, ItemDespawnCheck=1m, ItemDespawnRate=10m.
+  world.cpp::world_despawn_items expires map->items after unprotecttime + rate;
+  it runs a timer registered only at startup when enabled. Production overrides
+  are now yes / 1m / 10m. Original protection still applies: player5s, NPC30s,
+  PK1m, death5m; scanning adds up to a minute. Bags, banks and chest contents
+  are not part of map->items. Native Item_Remove drives client removal; no
+  client cleanup, reward fabrication or world refresh was added.
+- New server/configure_world.py patches only EIF weight byte55 for teleport
+  scrolls (type4), effect/cure potions (23/25), and all named potion/scroll items, including static quest items;
+  type3 Elixer/Elixir is included. Food and gear are preserved. All existing
+  scrolls are now zero weight, including Scroll of Guilds331 and King Scroll490;
+  Big HP375, Big MP376, Elixer377 and other potions are weightless.22 records
+  changed. PUB revision updates deterministically; other item bytes are intact.
+  Run with the world stopped and back up PUB/config first. server/setup.py
+  applies this configuration for fresh runtimes too. Regenerate catalog weights
+  and its PUB/manifest hashes after applying. Current native EIF SHA256:
+  e9c155f39a9a789320328b900edd83d2a9f50def08e02c8e902ad1023b84b03c.
+- Explicitly promoted only skylar and ravigameboy to native admin4 (HGM). Their
+  other character fields/items/stats were compared and preserved. Stop world
+  before DB edits so logout saves cannot overwrite them. UseDutyAdmin=false;
+  native admin.ini permissions apply. Commands use Talk_Report18/21. Gateway
+  routes leading-$ text from every chat tab to nearby; admin command text is
+  not echoed/bubbled or sent to Global/Whisper. Native code controls permission,
+  target lookup and warping. Examples: $warpmeto <online-name>, $warptome <name>,
+  $warp <map> <x> <y>, $sitem <id> <amount>, $snpc <id>. Offline targets return
+  the native server error. Original ordinary players do not gain any privilege.
+- Original unlimitedweight permission is admin3; these HGM characters therefore
+  correctly report native weight0/max251, while ordinary players report actual
+  carrying weight. Trade completion preserves this native admin sentinel.
+  Bag summary now displays native Weight current / max and highlights full or
+  overweight bags. Inventory grid/selection/icons remain unchanged.
+- New server/seating.py passes native Chair8/Request1 and Sit41/Request1. Sit
+  action1; stand2. Self Player8 replies include pid/x/y/facing/unknown; self
+  Close14 and peer Sit41/Remove4 include pid/x/y. Client never predicts sitting.
+  ACKs update local/peer tile, pose and direction, cancel stale controls/spells,
+  and avoid inventing a walk or a collision rollback. Seated movement first
+  requests stand. Native world rejects occupied/wrong-side chairs.
+- Client handles chair tile specs1..7/artwork hit boxes and routes to their
+  original allowed approach sides. Tap chair to sit; tap world/move to stand;
+  hamburger Sit / Stand and original F11 support floor sitting/standing.
+  Remote seating events clear obsolete interpolation tracks. Chair/floor poses
+  use original gfx008/5/6, armor17-20, boots13-16 and original skin/hair/hat/back
+  offsets. Weapons and front shields are hidden while seated.1,055 layers
+  regenerated with no missing resources; all40,024 old idle/walk/melee/cast/bow
+  frame pixels were checked unchanged. Independent golden body pixel tests
+  cover both genders, four directions and both sitting states.
+-77 Python state tests and30 catalog/import tests pass. New seating_weight.gd
+  passes headless and rendered: chair artwork, original sides, native ACK,
+  stand-before-walk, original pose composition, remote updates, bag capacity.
+  Visually checked work/v34-chair.png and work/v34-bag-weight.png. Seven prior
+  movement/combat/gameplay/chest regression suites also pass.
+- Real native integration uses only a new private copied runtime at
+  /home/admin/eo-v34-world/runtime, fixture.sdb/port18080. Its PUB directory is
+  copied locally before editing (baseline has a live directory symlink).
+  Test cleanup accelerated to2s with0.2s scans; production remains10m/1m.
+  Verified admin cross-map warp to online player, offline rejection, ordinary
+  player denial, correct/occupied/wrong-side chair behavior, self and observer
+  sit/stand, floor sit, player and rat kill drops expiring, existing chest and
+  bag contents surviving, and10,000 native potions + scrolls weighing0 for a
+  nonadmin, including static quest potions15/17 and Scroll of Truth419.
+  The private chest persists between runs: compare against its prior
+  contents rather than assuming empty. Script: work/hosting/test_v34_world.py.
+  Sanitized result: docs/world-v34-native-report.json.
+- Production deployed seating.py/configure_world.py/gateway.py/live_session.py/
+  services.py; source/PUB guards, config/PUB/code backups and a stopped-world
+  SQLite backup were made. Restarted all three services; native binary unchanged.
+  Backup: /opt/aster-vale/backups/v34-world-20261017T113332Z.
+  Verified both live admin fields, exact cleanup settings and native/client EIF
+  hash agreement. Public TLS health and WebSocket native handshake + seating
+  entry guard pass. Python urllib's default agent got Cloudflare403; health
+  succeeds with a browser user agent and WSS works normally.
+- APK0.27.4/code34 exported and signature/16KB alignment verified. Download is
+  outputs/endless-online-android-v0.27.4.apk under the original task folder.
+  Phone install is pending: no ADB device, old34105 and stale32773 ports refused
+  connections. Asked user for the current Wireless debugging IP:port. Do not
+  claim installed until installing/verifying this exact APK; preserve save via
+  run-as as in work/install_v33.py. Report: docs/gameplay-v34-report.json.
+
+- Final all-item audit also included static Royal Potion15, Elemental Potion17
+  and Scroll of Truth419. Their native weight is now0 too. Follow-up PUB/config/
+  SQLite/code backup: /opt/aster-vale/backups/v34-weight-completion-20261017T113932Z.
+  Native world restarted to load those final3 records; isolated test rerun also
+  verified them for a nonadmin. Total22 formerly weighted records changed.

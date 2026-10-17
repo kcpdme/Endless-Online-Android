@@ -15,7 +15,7 @@ FACE_MASK={7,8,9,10,11,12,13,14,15,32,33,48,50}
 BACK_SHIELDS={10,11,14,15,16,18,19}
 # WeaponMetadataProvider's ranged rendering set, including Scav Bow.
 RANGED_WEAPONS={42,43,49,50,58,73}
-STATES=(('idle',1),('frames',4),('attack',2),('cast',1),('ranged_attack',2))
+STATES=(('idle',1),('frames',4),('attack',2),('cast',1),('ranged_attack',2),('sit_chair',1),('sit_floor',1))
 DIRECTIONS=(('south',0,False),('east',0,True),('north',1,True),('west',1,False))
 
 def hat_bitmap(raw,graphic):
@@ -33,7 +33,7 @@ def export_layers(out,image,items,raw_image=None):
         for index,(frame,im) in enumerate(images):
             visible=visible or bool(im.getbbox());x=index%8*192;y=index//8*192
             atlas.alpha_composite(im,(x,y));frame.update(region=[x,y,192,192],path='res://content/'+path)
-        assert len(images) in (32,40)
+        assert len(images) in (32,40,48)
         if visible or key.startswith('weapon_front:'):
             atlas.save(out/path);layers[key]=hero
         else:missing.append({'layer':key,'reason':'blank original art'})
@@ -43,7 +43,7 @@ def export_layers(out,image,items,raw_image=None):
         if name=='skin' and race:key+=f':{race}'
         if name=='hair' and (hairstyle,haircolor)!=(1,0):key+=f':{hairstyle}:{haircolor}'
         try:
-            hero=export_hero(out,image,graphic if name=='armor' else 0,graphic if name=='boots' else 0,graphic if name.startswith('weapon') else 0,'layer_'+key.replace(':','_'),component=name,gender=gender,race=race,hairstyle=hairstyle,haircolor=haircolor,include_ranged=not name.startswith('weapon') or graphic in RANGED_WEAPONS)
+            hero=export_hero(out,image,graphic if name=='armor' else 0,graphic if name=='boots' else 0,graphic if name.startswith('weapon') else 0,'layer_'+key.replace(':','_'),component=name,gender=gender,race=race,hairstyle=hairstyle,haircolor=haircolor,include_ranged=not name.startswith('weapon') or graphic in RANGED_WEAPONS,include_sitting=not name.startswith('weapon'))
         except KeyError as error:
             missing.append({'layer':key,'resource':str(error)});return
         images=[]
@@ -69,6 +69,7 @@ def export_layers(out,image,items,raw_image=None):
                     for index in range(count):
                         walking=state=='frames';second=state=='attack' and index==1
                         shooting=state=='ranged_attack' and index==1
+                        sitting=state in ('sit_chair','sit_floor');floor=state=='sit_floor'
                         canvas=Image.new('RGBA',(192,192));px=87;py=126
                         if name=='head':
                             gid=(graphic-1)*10+1+back*2
@@ -83,6 +84,9 @@ def export_layers(out,image,items,raw_image=None):
                                 x+=4 if flip else -4
                                 if back:x+=(-2 if flip else 2)*gender
                                 y+=1 if back else 5-gender
+                            elif sitting:
+                                x-=3;y+=(11+gender if back else 9+gender)*(2 if floor else 1)
+                                if floor and back:x+=2 if direction=='west' else -2;y-=1
                             x+=-2 if flip else 0;y-=3
                         else:
                             on_back=graphic in BACK_SHIELDS
@@ -92,10 +96,14 @@ def export_layers(out,image,items,raw_image=None):
                                 x=-math.floor(abs(art.width-18)/2);y=-math.floor(58/3)-gender
                                 if second:x+=2 if flip else -2
                                 elif shooting:x+=(1+2*gender)*(1 if flip else -1)
+                                elif sitting:
+                                    x-=3;y+=(11+gender if back else 9+gender)*(2 if floor else 1)
+                                    if floor and back:x+=2 if direction=='west' else -2;y-=1
                             else:
                                 x=math.floor(abs(art.width-18)/2);y=math.floor(abs(art.height-58)/2)+5-gender-int(walking)
                                 x+=(-27-2*int(second)+2) if not flip else (-12+2*int(second)-3)
                         if flip:art=ImageOps.mirror(art)
+                        if name=='offhand' and sitting and not on_back:art=Image.new('RGBA',art.size)
                         canvas.alpha_composite(art,(px+int(x),py+int(y)))
                         frame={'offset':[0,8]};frames.append(frame);images.append((frame,canvas))
                     hero[state][direction]=frames[0] if state=='idle' else frames
