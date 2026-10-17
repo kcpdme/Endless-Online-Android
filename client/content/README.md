@@ -27,5 +27,15 @@ python3 tools/export_catalog.py \
   --graphics-zip reference/gfx.zip
 ```
 
-This adds server item/NPC definitions, all item icons, and the NPC art used in Aeven.
+This adds server item/NPC definitions, all 282 map geometries, item icons, spawned
+NPC art, spells and independent male armor/boots/weapon animation layers.
+To refresh only equipment layers after an existing import/catalog export:
+
+```sh
+python3 tools/export_player_layers.py --graphics-zip reference/gfx.zip
+```
+
+Equipment layers currently use the male starter body, race 0, hair 1/color 0.
+Alternate bodies/hair, hats/offhands and exact ranged weapon animation offsets
+still need additional rendering support.
 See `tools/README.md` for the catalog contract and reference archive audit.

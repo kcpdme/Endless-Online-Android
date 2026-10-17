@@ -49,6 +49,11 @@ var attack_touch_id: int = -1
 var owned_touches: Dictionary = {}
 var hero_equipped: Dictionary = {}
 var bag_slots: Array[Button] = []
+var offline_bag_slots: Array[Button] = []
+var bag_grid: Control
+var bag_navigation: Control
+var offline_bag_panel: Control
+var inventory_preview: TextureRect
 var equipment_slots: Dictionary = {}
 var selected_item: String = "weapon"
 var item_title: Label
@@ -673,6 +678,15 @@ func _draw_decoration(entry: Dictionary) -> void:
 	draw_texture_rect_region(texture, Rect2(at + offset, size), Rect2(Vector2(frame_index * size.x, 0), size), color)
 
 func _frame(character: Dictionary, direction: String, state: String, phase: float = -1.0) -> Dictionary:
+	if character.has("layers"):
+		var layers: Array[Dictionary] = []
+		for layer: Dictionary in character.layers:
+			var part: Dictionary = _frame(layer, direction, state, phase)
+			if not part.is_empty(): layers.append(part)
+		if layers.is_empty(): return {}
+		var composed: Dictionary = layers[0].duplicate()
+		composed["layers"] = layers
+		return composed
 	var group: Dictionary = character.get(state, character.get("frames", {})) as Dictionary
 	var raw: Variant = group.get(direction, group.get("south", []))
 	if raw is Dictionary: return raw as Dictionary
@@ -686,6 +700,12 @@ func _frame(character: Dictionary, direction: String, state: String, phase: floa
 func _draw_character_frame(character: Dictionary, at: Vector2, direction: String, state: String, tint: Color = Color.WHITE, phase: float = -1.0) -> bool:
 	var frame: Dictionary = _frame(character, direction, state, phase)
 	if frame.is_empty(): return false
+	if frame.has("layers"):
+		for layer: Dictionary in frame.layers: _paint_character_frame(layer, at, tint)
+		return true
+	return _paint_character_frame(frame, at, tint)
+
+func _paint_character_frame(frame: Dictionary, at: Vector2, tint: Color) -> bool:
 	var texture: Texture2D = _texture(str(frame.get("path", "")))
 	if texture == null: return false
 	var dimensions: Array = frame.get("region", [0, 0, texture.get_width(), texture.get_height()]) as Array
@@ -853,6 +873,8 @@ func _build_ui() -> void:
 	toast_label = _label(root, "", Vector2(-320, -200), 17, TEXT)
 	toast_label.set_anchors_preset(Control.PRESET_CENTER_BOTTOM, true)
 	toast_label.size = Vector2(640, 62)
+	toast_label.z_index = 30
+	toast_label.add_theme_stylebox_override("normal", _wood_style(Color("493018"), GOLD))
 	toast_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	toast_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	toast_label.add_theme_color_override("font_shadow_color", Color.BLACK)
@@ -947,19 +969,19 @@ func _select_item(kind: String) -> void:
 	_refresh_ui()
 
 func _build_inventory(parent: Node) -> void:
-	inventory = _modal(parent, Vector2(840, 626))
+	inventory = _modal(parent, Vector2(1120, 640))
 	var card: Control = inventory.get_child(0) as Control
 	_wood_card(card)
 	_label(card, "YOUR BELONGINGS", Vector2(28, 18), 13, GOLD)
 	_label(card, "Wayfarer’s bag", Vector2(26, 42), 30)
-	_button(card, "×", Vector2(756, 18), Vector2(56, 52), func() -> void: inventory.hide())
+	_button(card, "×", Vector2(1038, 18), Vector2(56, 52), func() -> void: inventory.hide())
 	inventory_summary = _label(card, "", Vector2(28, 79), 15, MUTED)
-	var bag: Panel = _panel(card, Vector2(26, 108), Vector2(788, 326), Color("51381f"))
+	var bag: Panel = _panel(card, Vector2(28, 150), Vector2(672, 192), Color("51381f"))
 	bag.add_theme_stylebox_override("panel", _wood_style(Color("51381f"), Color("bf9555"), 3))
 	for index: int in range(24):
 		var column: int = index % 6
 		var row: int = index / 6
-		var slot: Button = _button(bag, "", Vector2(16 + column * 126, 17 + row * 76), Vector2(114, 66), func() -> void:
+		var slot: Button = _button(bag, "", Vector2(4 + column * 112, 2 + row * 48), Vector2(104, 44), func() -> void:
 			if online_mode:
 				online.select_bag_item(index)
 				return
@@ -980,14 +1002,47 @@ func _build_inventory(parent: Node) -> void:
 		badge.add_theme_constant_override("shadow_offset_x", 2)
 		badge.add_theme_constant_override("shadow_offset_y", 2)
 		bag_slots.append(slot)
-	var detail: Panel = _panel(card, Vector2(26, 446), Vector2(788, 100), Color("644424"))
+	offline_bag_panel = bag
+	offline_bag_slots = bag_slots.duplicate()
+	bag_grid = preload("res://scripts/bag_grid.gd").new()
+	bag_grid.game = self
+	bag_grid.position = Vector2(28, 150)
+	bag_grid.size = Vector2(672, 192)
+	card.add_child(bag_grid)
+	bag_grid.hide()
+	bag_navigation = Control.new()
+	bag_navigation.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	card.add_child(bag_navigation)
+	_button(bag_navigation, "‹", Vector2(28, 366), Vector2(60, 46), func() -> void: bag_grid.change_page(-1))
+	bag_grid.page_label = _label(bag_navigation, "Bag 1 / 1", Vector2(102, 377), 20, GOLD)
+	_button(bag_navigation, "›", Vector2(272, 366), Vector2(60, 46), func() -> void: bag_grid.change_page(1))
+	_button(bag_navigation, "Move to next bag", Vector2(390, 366), Vector2(310, 46), func() -> void: bag_grid.move_to_next_bag())
+	_label(bag_navigation, "Drag an item to rearrange your bag.\nLarge belongings need a little more room.", Vector2(28, 448), 20, MUTED)
+	var detail: Panel = _panel(card, Vector2(728, 92), Vector2(364, 456), Color("644424"))
 	detail.add_theme_stylebox_override("panel", _wood_style(Color("644424"), Color("bf9555"), 3))
-	item_title = _label(detail, "", Vector2(16, 8), 22)
-	_button(detail, "Details", Vector2(650, 4), Vector2(120, 32), func() -> void: stats_ui.show_item(selected_item))
-	inventory_detail = _label(detail, "", Vector2(16, 39), 15, MUTED)
-	inventory_detail.size = Vector2(756, 56)
+	item_title = _label(detail, "", Vector2(16, 10), 23)
+	item_title.size = Vector2(332, 54)
+	item_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	inventory_preview = TextureRect.new()
+	inventory_preview.position = Vector2(74, 72)
+	inventory_preview.size = Vector2(216, 198)
+	inventory_preview.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	inventory_preview.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	inventory_preview.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	inventory_preview.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	detail.add_child(inventory_preview)
+	var scroll: ScrollContainer = ScrollContainer.new()
+	scroll.position = Vector2(16, 286)
+	scroll.size = Vector2(332, 100)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	detail.add_child(scroll)
+	inventory_detail = Label.new()
+	inventory_detail.add_theme_font_size_override("font_size", 18)
 	inventory_detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	equip_button = _button(card, "", Vector2(26, 558), Vector2(788, 46), func() -> void:
+	inventory_detail.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(inventory_detail)
+	_button(detail, "Item details / larger view", Vector2(16, 398), Vector2(332, 42), func() -> void: stats_ui.show_item(selected_item))
+	equip_button = _button(card, "", Vector2(728, 564), Vector2(364, 52), func() -> void:
 		if _owns_item(selected_item) and not _is_equipped(selected_item): _toggle_equip()
 	, true)
 	_inventory_theme(card)
@@ -1193,6 +1248,11 @@ func _refresh_ui() -> void:
 			inventory_detail.text = "%d in your bag  ·  %d equipped\n2 damage per strike" % [_offline_bag_amount("weapon"), 1 if equipped else 0]
 		equip_button.disabled = not owned or worn or selected_item == "coins"
 		equip_button.text = "Equip " + _item_name(selected_item) if owned and not worn else "Select an item from your bag"
+		bag_grid.hide()
+		bag_navigation.hide()
+		offline_bag_panel.show()
+		bag_slots = offline_bag_slots.duplicate()
+		inventory_preview.texture = _item_texture(selected_item)
 		inventory_summary.text = "%d coins  ·  24 bag slots" % coins
 		var kinds: Array[String] = ["coins", "weapon", "armor", "boots"]
 		for index: int in range(bag_slots.size()):

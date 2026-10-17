@@ -16,7 +16,7 @@ Godot 4.7.2, typed GDScript and 2D isometric rendering are sufficient. A Unity/3
 rewrite and a larger server have not been needed for the measured regressions.
 
 Baseline before this update: commit `8c9e541`, APK 0.10.0/code 10. The current
-build is 0.15.0/code 15. v0.12 added level/EXP, Nearby Send closure and
+build is 0.16.0/code 16. v0.12 added level/EXP, Nearby Send closure and
 native consumables; v0.13 adds native skills and touch targeting. v0.11 added native bank/lockers, player inspection and
 trading, local/global/private chat, a dynamic joystick, and the heart/TP HUD,
 as well as placing NPC names near visible heads and fixing observer equipment/
@@ -834,3 +834,80 @@ valid signature/16KB alignment and no startup script/crash errors. Report:
 docs/shop-v15-phone-report.json. Raw logs and save backups stay ignored under
 work/. Download files use outputs/endless-online-android-v0.15.0.*. No server
 restart or operator account modification was performed for this UI release.
+
+
+## v0.16 — purchase feedback, classic movable bag and Plaot Robes
+
+Skylar's read-only live character inspection found Plaot Robes (item 407,
+armor doll graphic 40), Blue Boots (80/graphic 1) and Ultima Blade (281/graphic 33).
+The old `character_graphic` rejected every armor and boot outside graphics 0/1,
+which caused the explicit two-circle placeholder. No operator character was
+changed to fix this; the missing renderer was the cause.
+
+`tools/export_player_layers.py` exports 252 independent male equipment layers
+from the private original graphics archive: skin, hair, all male armor graphics,
+boots and weapon front/back layers. Armor resource stride 50 and boots stride 40
+match the pinned original CharacterSpriteCalculator. Each layer is a compact
+32-pose atlas covering idle, walk, attack and cast in four directions. The world
+renderer assembles these in original order; original split weapon attack sprites
+remain in front/behind correctly. `tools/export_catalog.py` invokes the exporter
+for future full content rebuilds. To regenerate just these layers:
+
+```
+python3 tools/export_player_layers.py --graphics-zip reference/gfx.zip
+```
+
+`tools/test_catalog.py` now checks all 32 starter frames against the previous
+precomposition, pixel for pixel. All 252 layer exports succeeded with no missing
+source art. Body support is still male/race 0/hair 1/color 0. Hats/offhands,
+alternate bodies/hair and exact ranged-weapon animation offsets remain further
+renderer work; do not describe this as complete support for every EO appearance.
+The existing starter/precomposed assets remain as fallback/offline content.
+
+`client/scripts/bag_grid.gd` restores the original 14×4 inventory with the eight
+EIF ItemSize footprints (1×1 through1×4, then2×1 through2×4). Plaot Robes use 2×3;
+Ultima Blade uses 1×4. Images fill their footprints and actual stack quantities
+appear in the upper-right corner. Native finger dragging and desktop mouse
+dragging snap to cells and reject occupied/out-of-bounds drops. Android's
+emulated mouse press can arrive BEFORE the finger press; ignore it in the bag's
+GUI handler so it cannot steal ownership of a drag. Cancel drags on hide/focus
+loss or authoritative inventory membership/quantity changes.
+
+Arrangements live separately in `user://bag_layouts.json`, keyed by server and
+character name. JSON cell coordinates are normalized back to ints on load.
+Never treat layout changes as item ownership changes or send them to the server.
+Gold remains present at zero. Additional 14×4 bag pages keep all stacks reachable,
+including dev inventories larger than the classic grid. Arrows browse pages;
+Move to next bag moves the selected item to a free footprint on a later page.
+The offline demo keeps its previous 24-slot presentation and unchanged save data.
+
+Purchase/craft/sale messages use actual native `shop_transaction` events after
+acknowledgement. The toast explicitly identifies the item/amount and says it is
+in the bag, draws above the shop modal, and never claims success on submission.
+Craft Have/Need has a 30px right margin inside the detail scroller. Shop View
+opens the large original artwork and full stats; closing returns to the shop.
+The inventory also has a large selected-item preview and scrollable attributes.
+The larger item detail window keeps the image beside a scrollable stats panel.
+
+Validation: 35 server state regressions, 14 original catalog/graphics checks,
+gameplay/world/network regression scenes, the existing full native Marble
+buy/sell/craft/touch-scroll suite, and the new `server/test_inventory_ui.py` passed.
+The new isolated dev fixture tests real purchase feedback, craft padding,
+six-cell finger dragging, collision rejection, layout reload, overflow pages,
+exact inventory quantities, large previews, native robe/boots/weapon equip and
+an independent native observer seeing armor graphic 40. No Skylar/ravigameboy
+account login or mutation was used. Reports: `docs/inventory-v16-live-report.json`
+and `docs/shop-v16-live-report.json`. Private screenshots are under
+`work/v16-inventory-shots` and `work/v16-shop-shots`.
+
+Build: 0.16.0/code 16, normal signed debug APK, arm64/x86_64, 16KiB alignment.
+This is a client-only change; production services and native world need no
+upgrade/restart. Existing production health endpoint returned `ok`.
+
+Final v0.16 APK installed and launched on Galaxy S23 Ultra. Confirmed
+version 16/0.16.0, valid signature/16KiB alignment, installed base.apk SHA256
+identical to the final exported/download APK, byte-identical offline save across
+reinstall and zero startup script/crash errors. Report:
+`docs/shop-inventory-v16-phone-report.json`. Private logs/save backups remain
+under ignored `work/`. Download files use
+`outputs/endless-online-android-v0.16.0.{apk,-source.zip,-SHA256SUMS.txt}`.

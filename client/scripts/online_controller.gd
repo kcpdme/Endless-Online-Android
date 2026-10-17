@@ -1046,22 +1046,13 @@ func refresh_game_ui() -> void:
 	game.health_label.visible = false
 	game.health_label.text = "HP %d / %d" % [int(player.get("hp", 0)), int(player.get("max_hp", player.get("maxhp", 0)))]
 	var items: Array[Dictionary] = inventory_items()
-	game.inventory_summary.text = "%d coins  ·  %d items" % [game.coins, items.size()]
-	for index: int in range(game.bag_slots.size()):
-		var slot: Button = game.bag_slots[index] as Button
-		slot.icon = null
-		slot.text = ""
-		(slot.get_node("Quantity") as Label).text = ""
-		slot.tooltip_text = "Empty slot"
-		if index < items.size():
-			var item: Dictionary = items[index]
-			var kind: String = "item:%d" % int(item.get("id", 0))
-			var info: Dictionary = item_info(kind)
-			slot.icon = _catalog_texture(str(info.get("icon", "")))
-			slot.tooltip_text = str(info.get("name", "Item"))
-			if int(item.get("id", 0)) == 1 or int(item.get("amount", 1)) > 1: (slot.get_node("Quantity") as Label).text = str(int(item.amount))
+	game.inventory_summary.text = "%d belongings  ·  14 × 4 spaces in each bag" % items.size()
+	game.offline_bag_panel.hide()
+	game.bag_navigation.show()
+	game.bag_grid.refresh()
 	var selected: String = str(game.selected_item)
 	var info: Dictionary = item_info(selected)
+	game.inventory_preview.texture = _catalog_texture(str(info.get("icon", "")))
 	var worn: bool = is_equipped(selected)
 	var owned: bool = owns_item(selected)
 	game.item_title.text = str(info.get("name", "Your inventory"))
@@ -1101,9 +1092,19 @@ func character_graphic(record: Dictionary) -> Dictionary:
 	var equipment_graphics: Array = record.get("equipment_graphics", []) as Array
 	if equipment_graphics.size() != 9: return {}
 	if int(record.get("gender", 1)) != 1 or int(record.get("race", 0)) != 0 or int(record.get("hairstyle", 1)) != 1 or int(record.get("haircolor", 0)) != 0: return {}
+	var characters: Dictionary = game.manifest.get("characters", {}) as Dictionary
+	var layered: Dictionary = characters.get("equipment_layers", {}) as Dictionary
+	if not layered.is_empty():
+		var definitions: Dictionary = layered.get("layers", {}) as Dictionary
+		var parts: Array[Dictionary] = []
+		for name: String in ["weapon_back", "skin", "boots", "armor", "hair", "weapon_front"]:
+			var graphic: int = int(equipment_graphics[8]) if name.begins_with("weapon") else int(equipment_graphics[4]) if name == "armor" else int(equipment_graphics[0]) if name == "boots" else 0
+			if graphic == 0 and name not in ["skin", "hair"]: continue
+			var part: Dictionary = definitions.get("%s:%d" % [name, graphic], {}) as Dictionary
+			if not part.is_empty(): parts.append(part)
+		if not parts.is_empty(): return {"layers": parts, "appearance": {"armor_graphic": int(equipment_graphics[4]), "boots_graphic": int(equipment_graphics[0]), "weapon_graphic": int(equipment_graphics[8])}}
 	if int(equipment_graphics[6]) != 0 or int(equipment_graphics[7]) != 0: return {}
 	if int(equipment_graphics[0]) not in [0, 1] or int(equipment_graphics[4]) not in [0, 1]: return {}
-	var characters: Dictionary = game.manifest.get("characters", {}) as Dictionary
 	if int(equipment_graphics[8]) not in [0, 4]:
 		var weapon_variants: Dictionary = characters.get("weapon_variants", {}) as Dictionary
 		return weapon_variants.get("a%d_b%d_g%d" % [int(equipment_graphics[4]), int(equipment_graphics[0]), int(equipment_graphics[8])], {}) as Dictionary
@@ -1167,6 +1168,8 @@ func _process_events(events: Array) -> void:
 			pickup_pending.erase(int(event.get("uid", 0)))
 			game._play_sound("pickup")
 			game._toast("Picked up %s ×%d." % [str(item_info("item:%d" % int(event.get("item_id", 0))).get("name", "Item")), int(event.get("amount", 0))])
+		if kind == "shop_transaction":
+			game.shop_ui.confirm_transaction(event)
 		if kind == "item_used":
 			game._toast("Used %s." % str(item_info("item:%d" % int(event.get("item_id", 0))).get("name", "item")))
 			if int(event.get("hp_gain", 0)) > 0: game.damage_numbers.append({"position": game.player_world + Vector2(0, -62), "value": "+%d" % int(event.hp_gain), "time": 0.85})

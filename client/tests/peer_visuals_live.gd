@@ -66,7 +66,7 @@ func _run() -> void:
 			await create_timer(0.20).timeout
 			animation = c.entity_animation("online_player", peer)
 			var second: Dictionary = game._frame(appearance, str(animation.direction), str(animation.state), float(animation.phase))
-			if not check(animation.state == "attack" and first.path != second.path, "Peer weapon remained on the same animation frame"): return
+			if not check(animation.state == "attack" and JSON.stringify(first) != JSON.stringify(second), "Peer weapon remained on the same animation frame"): return
 			swings += 1
 			await create_timer(0.40).timeout
 		await rpc("unequip", {"item_id": weapon})

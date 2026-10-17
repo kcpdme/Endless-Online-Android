@@ -4,7 +4,7 @@ import json
 import os
 from pathlib import Path
 import unittest
-from PIL import Image
+from PIL import Image, ImageChops
 from export_catalog import parse_items, parse_npcs, pub_records, npc_frame_offset, NPC_RENDER_METADATA, WEAPON_APPEARANCE_ITEMS
 
 ROOT=Path(__file__).resolve().parents[1]
@@ -23,6 +23,27 @@ class RuntimeCatalogTests(unittest.TestCase):
     def setUp(self):
         self.catalog=json.loads((CONTENT/'catalog.json').read_text())
         self.manifest=json.loads((CONTENT/'manifest.json').read_text())
+    def test_equipment_layers_preserve_original_composition_and_robe(self):
+        data=self.manifest['characters']['equipment_layers']
+        self.assertEqual(data['missing'],[])
+        layers=data['layers']
+        self.assertIn('armor:40',layers)  # Plaot Robes, native item407.
+        self.assertEqual(self.catalog['items']['407']['size'],6)  # Original Size2x3.
+        original=self.manifest['characters']['hero_variants']['a1_b1_w1']
+        atlases={key:Image.open(CONTENT/layers[key]['idle']['south']['path'].removeprefix('res://content/')) for key in ['weapon_back:4','skin:0','boots:1','armor:1','hair:0','weapon_front:4']}
+        try:
+            for state in ('idle','frames','attack','cast'):
+                for direction in ('south','east','north','west'):
+                    frames=original[state][direction];frames=[frames] if isinstance(frames,dict) else frames
+                    for index,frame in enumerate(frames):
+                        composed=Image.new('RGBA',(192,192))
+                        for key,atlas in atlases.items():
+                            raw=layers[key][state][direction];part=raw if isinstance(raw,dict) else raw[index]
+                            x,y,w,h=part['region'];composed.alpha_composite(atlas.crop((x,y,x+w,y+h)))
+                        with Image.open(CONTENT/frame['path'].removeprefix('res://content/')) as expected:
+                            self.assertIsNone(ImageChops.difference(composed.crop((48,96,144,192)),expected).getbbox(),(state,direction,index))
+        finally:
+            for atlas in atlases.values():atlas.close()
     def test_catalog_tracks_actual_server_pub_hashes(self):
         for source in self.catalog['source']['files'].values():
             self.assertEqual(source['sha256'],hashlib.sha256((RUNTIME/source['path']).read_bytes()).hexdigest())

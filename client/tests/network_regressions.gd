@@ -72,7 +72,7 @@ func _run() -> void:
 	var appearance: Dictionary = game.online.character_graphic(peer)
 	var first: Dictionary = game._frame(appearance, str(animation.direction), "attack", 0.01)
 	var second: Dictionary = game._frame(appearance, str(animation.direction), "attack", 0.20)
-	check(not appearance.is_empty() and first.get("path") != second.get("path"), "Observer must render both original weapon attack frames")
+	check(not appearance.is_empty() and JSON.stringify(first) != JSON.stringify(second), "Observer must render both original weapon attack frames")
 	game.online.peer_attacks[200].until = Time.get_ticks_msec() / 1000.0 - 1.0
 	check(game.online.entity_animation("online_player", peer).state == "idle", "Peer animation must finish rather than freeze in an attack pose")
 	# Original level thresholds, including the fact that EXP is cumulative.

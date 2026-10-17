@@ -6,6 +6,7 @@ var panel: Control
 var item_panel: Control
 var item_body: Label
 var item_heading: Label
+var item_art: TextureRect
 var item_kind: String = ""
 var summary: Label
 var details: Label
@@ -65,8 +66,22 @@ func build(owner_game: Node, parent: Control) -> void:
 	game._wood_card(item_card)
 	item_heading = game._label(item_card, "", Vector2(36, 24), 28, game.GOLD)
 	game._button(item_card, "×", Vector2(750, 18), Vector2(54, 48), func() -> void: item_panel.hide())
-	item_body = game._label(item_card, "", Vector2(36, 92), 20)
-	item_body.size = Vector2(760, 470)
+	item_panel.z_index = 20
+	item_art = TextureRect.new()
+	item_art.position = Vector2(36, 126)
+	item_art.size = Vector2(240, 330)
+	item_art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	item_art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	item_art.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	item_art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	item_card.add_child(item_art)
+	var item_scroll: ScrollContainer = ScrollContainer.new()
+	item_scroll.position = Vector2(306, 100)
+	item_scroll.size = Vector2(494, 450)
+	item_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	item_card.add_child(item_scroll)
+	item_body = game._label(item_scroll, "", Vector2.ZERO, 20)
+	item_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	item_body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	game._label(item_card, "Item bonuses come from the original game data.
 Your combined totals are shown in Character Stats.", Vector2(36, 570), 17, game.MUTED)
@@ -103,6 +118,7 @@ func refresh() -> void:
 	if game == null or game.online == null: return
 	if not item_kind.is_empty():
 		var item: Dictionary = game.online.item_info(item_kind)
+		item_art.texture = game.online._catalog_texture(str(item.get("icon", "")))
 		item_heading.text = str(item.get("name", "Item"))
 		var bonuses: Array[String] = []
 		var requirements: Array[String] = []

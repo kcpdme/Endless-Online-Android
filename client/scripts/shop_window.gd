@@ -60,14 +60,18 @@ func build(owner_game: Node, parent: Control) -> void:
 	card.add_child(list)
 	item_icon = TextureRect.new()
 	item_icon.position = Vector2(566, 158)
-	item_icon.size = Vector2(48, 52)
+	item_icon.size = Vector2(72, 60)
 	item_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	item_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	item_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	card.add_child(item_icon)
-	item_title = game._label(card, "", Vector2(628, 158), 23, game.TEXT)
-	item_title.size = Vector2(438, 58)
+	item_title = game._label(card, "", Vector2(650, 158), 23, game.TEXT)
+	item_title.size = Vector2(300, 58)
 	item_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	game._button(card, "View", Vector2(968, 162), Vector2(100, 46), func() -> void:
+		var selected: PackedInt32Array = list.get_selected_items()
+		if not selected.is_empty(): game.stats_ui.show_item("item:%d" % int(offers[selected[0]].id))
+	)
 	details_scroll = ScrollContainer.new()
 	details_scroll.position = Vector2(566, 222)
 	details_scroll.size = Vector2(510, 316)
@@ -77,7 +81,11 @@ func build(owner_game: Node, parent: Control) -> void:
 	details_body = VBoxContainer.new()
 	details_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	details_body.add_theme_constant_override("separation", 9)
-	details_scroll.add_child(details_body)
+	var margin: MarginContainer = MarginContainer.new()
+	margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	margin.add_theme_constant_override("margin_right", 30)
+	details_scroll.add_child(margin)
+	margin.add_child(details_body)
 	count_label = game._label(card, "", Vector2(32, 628), 15, game.MUTED)
 	game._label(card, "Quantity", Vector2(32, 581), 20)
 	quantity = SpinBox.new()
@@ -103,6 +111,13 @@ func build(owner_game: Node, parent: Control) -> void:
 
 func close() -> void:
 	panel.hide()
+
+func confirm_transaction(event: Dictionary) -> void:
+	var operation: String = str(event.get("operation", ""))
+	var item: String = "%s ×%d" % [item_name(int(event.get("item_id", 0))), int(event.get("amount", 0))]
+	if operation == "buy": game._toast("Purchased %s\nTucked safely into your bag." % item)
+	elif operation == "craft": game._toast("Crafted %s\nYour new item is in your bag." % item)
+	elif operation == "sell": game._toast("Sold %s\nThe Gold is in your bag." % item)
 
 func open(data: Dictionary) -> void:
 	shop = data

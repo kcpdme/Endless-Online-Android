@@ -221,6 +221,8 @@ def export_catalog(runtime:Path,graphics_zip:Path,out:Path,map_id=5):
                 for boots_on in (0,1):
                     key=f'a{armor_on}_b{boots_on}_g{doll}'
                     manifest['characters']['weapon_variants'][key]=export_hero(out,image,armor_on,boots_on,doll,key)
+        from export_player_layers import export_layers
+        manifest['characters']['equipment_layers']=export_layers(out,image,items)
         npc_graphics={}
         for map_data in maps.values():
             for spawn in map_data['npc_spawns']:
