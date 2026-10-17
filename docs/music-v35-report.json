@@ -1,0 +1,12 @@
+{
+  "result": "passed",
+  "original_midi_tracks": 45,
+  "all_tracks_decoded_non_silent": true,
+  "source_and_output_hashes_verified": true,
+  "native_maps": 282,
+  "original_silent_maps": 172,
+  "all_map_music_headers_match": true,
+  "all_seven_music_controls_tested": true,
+  "android_background_pause_tested": true,
+  "saved_toggle_and_volume": true
+}

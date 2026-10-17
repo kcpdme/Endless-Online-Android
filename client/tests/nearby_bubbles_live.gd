@@ -4,6 +4,7 @@ func login_game(target: Node, fixture: Dictionary) -> bool:
 	var c: Node = target.online
 	c.show_login()
 	c.host_field.text = OS.get_environment("ASTER_VALE_TEST_HOST")
+	if not OS.get_environment("ASTER_VALE_TEST_PORT").is_empty(): c.port_field.value = int(OS.get_environment("ASTER_VALE_TEST_PORT"))
 	c.username_field.text = str(fixture.username)
 	c.password_field.text = str(fixture.password)
 	c._authenticate("login")

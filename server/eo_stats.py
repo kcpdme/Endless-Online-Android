@@ -8,6 +8,7 @@ DERIVED=('min_damage','max_damage','accuracy','evade','armor')
 
 def update(session,values):
     session.stats.update(values)
+    if 'max_weight' in values:session.max_weight=values['max_weight']
     if session.state and session.state.get('self'):
         me=session.state['self']
         for source,target in [('hp','hp'),('tp','tp'),('max_hp','maxhp'),('max_tp','maxtp'),('level','level')]:
@@ -26,6 +27,14 @@ def apply_packet(session,f,a,p):
         name=r.text();title=r.text();guild=r.text();rank=r.text();clas=r.num();r.take(3);admin=r.num();level=r.num()
         values=dict(name=name,title=title,guild=guild,guild_rank=rank,class_id=clas,admin=admin,level=level,experience=r.num(4),usage=r.num(4),dead=False)
         for key in ('hp','max_hp','tp','max_tp','max_sp','stat_points','skill_points','karma',*DERIVED,'strength','wisdom','intelligence','agility','constitution','charisma'):values[key]=r.num(2)
+    elif (f,a)==(42,18):
+        values['class_id']=r.num(2)
+        for key in (*ATTRIBUTES,'max_hp','max_tp','max_sp','max_weight',*DERIVED):values[key]=r.num(2)
+        event.update(kind='class_changed',class_id=values['class_id'])
+    elif (f,a)==(42,3):
+        values.update(experience=r.num(4),karma=r.num(2));level=r.num()
+        if level:values['level']=level
+        event.update(kind='quest_stats',karma=values['karma'])
     elif f==30 and a in (4,5):
         r.take(16)
         if a==5:r.take(3)

@@ -115,6 +115,9 @@ var toast_time: float = 0.0
 var waypoint: Vector2i = Vector2i(-1, -1)
 var modal_input_until: int = 0
 var redeem_ui: RefCounted
+var music: Node
+var quest_ui: RefCounted
+var speech_layer: Control
 var menu: Control
 var started_from_save: bool = false
 var debug_snapshot_time: float = -1.0
@@ -129,6 +132,9 @@ func _ready() -> void:
 	camera.position_smoothing_speed = 8.0
 	add_child(camera)
 	_load_content()
+	music = preload("res://scripts/map_music.gd").new()
+	add_child(music)
+	music.configure(manifest.get("music", {}) as Dictionary)
 	online = OnlineController.new()
 	online.game = self
 	add_child(online)
@@ -190,6 +196,7 @@ func load_map(map_id: int) -> bool:
 	textures.clear()
 	head_images.clear()
 	_configure_world(data)
+	if music != null: music.enter_map(world)
 	damage_numbers.clear()
 	queue_redraw()
 	return true
@@ -425,7 +432,7 @@ func _joystick_begin(pointer: Vector2, pointer_id: int) -> void:
 	stick = joystick.vector
 
 func _modal_open() -> bool:
-	return (redeem_ui != null and redeem_ui.panel.visible) or (online != null and online.panel != null and online.panel.visible) or (inventory != null and inventory.visible) or (menu != null and menu.visible) or (character_panel != null and character_panel.visible) or (stats_ui != null and stats_ui.is_open()) or (shop_ui != null and shop_ui.panel.visible) or (services_ui != null and services_ui.panel.visible) or (chat_ui != null and chat_ui.panel.visible) or (skills_ui != null and skills_ui.panel.visible) or (quick_items != null and quick_items.panel.visible)
+	return (quest_ui != null and quest_ui.panel.visible) or (redeem_ui != null and redeem_ui.panel.visible) or (online != null and online.panel != null and online.panel.visible) or (inventory != null and inventory.visible) or (menu != null and menu.visible) or (character_panel != null and character_panel.visible) or (stats_ui != null and stats_ui.is_open()) or (shop_ui != null and shop_ui.panel.visible) or (services_ui != null and services_ui.panel.visible) or (chat_ui != null and chat_ui.panel.visible) or (skills_ui != null and skills_ui.panel.visible) or (quick_items != null and quick_items.panel.visible)
 
 func _begin_attack(pointer_id: int) -> void:
 	if online_mode: route.clear()
@@ -783,7 +790,7 @@ func _draw() -> void:
 		var color: Color = Color("ffaaaa") if bool(number.get("player_hit", false)) else MUTED if caption == "Miss" else Color("a4edb0") if bool(number.get("exp_gain", false)) else GOLD
 		draw_string_outline(font, origin, caption, HORIZONTAL_ALIGNMENT_LEFT, -1, 18, 3, Color.BLACK)
 		draw_string(font, origin, caption, HORIZONTAL_ALIGNMENT_LEFT, -1, 18, color)
-	# Speech is an overlay above every sprite, wall, roof and combat number.
+	# Spell shouts draw above world/combat; speech has its own HUD overlay.
 	if online_mode: online.draw_chat_bubbles()
 
 func _draw_diamond(center: Vector2, color: Color) -> void:
@@ -1051,6 +1058,8 @@ func _build_ui() -> void:
 	quick_items.build(self, root)
 	services_ui = preload("res://scripts/services_window.gd").new()
 	services_ui.build(self, root)
+	quest_ui = preload("res://scripts/quest_window.gd").new()
+	quest_ui.build(self, root)
 	_build_paperdoll(root)
 	stats_ui = CharacterStats.new()
 	stats_ui.build(self, root)
@@ -1060,6 +1069,9 @@ func _build_ui() -> void:
 	online.build_ui(root)
 	chat_ui = preload("res://scripts/chat_window.gd").new()
 	chat_ui.build(self, root)
+	speech_layer = preload("res://scripts/speech_bubbles.gd").new()
+	speech_layer.game = self
+	root.add_child(speech_layer)
 	# Godot GUI hit testing follows tree order, even when z_index draws a
 	# curtain above a later-created HUD button. Keep all modal roots last.
 	for child: Node in root.get_children():
@@ -1095,6 +1107,7 @@ func _build_welcome(parent: Node) -> void:
 
 func _show_welcome() -> void:
 	welcome.show()
+	if music != null: music.title_music()
 	var play: Button = welcome.get_child(0).get_node("PlayButton") as Button
 	if started_from_save: play.text = "Continue offline"
 
@@ -1104,6 +1117,7 @@ func _begin_play() -> void:
 	if online.panel != null: online.panel.hide()
 	started = true
 	welcome.hide()
+	music.enter_map(world)
 	_toast("Follow the slime nearby. Tap adjacent ground, then the weapon button.")
 
 func _item_info(kind: String) -> Dictionary:
@@ -1326,6 +1340,23 @@ func _build_menu(parent: Node) -> void:
 	_label(card, "ASTER VALE", Vector2(30, 28), 14, GOLD)
 	_label(card, "A moment’s rest", Vector2(28, 61), 32)
 	_label(card, "Your journey is saved automatically.\nTake a breath, then return to explore.", Vector2(30, 120), 17, MUTED)
+	var music_toggle: CheckBox = CheckBox.new()
+	music_toggle.text = "Music"
+	music_toggle.position = Vector2(28, 172)
+	music_toggle.size = Vector2(122, 36)
+	music_toggle.button_pressed = music.enabled
+	music_toggle.add_theme_font_size_override("font_size", 18)
+	music_toggle.toggled.connect(music.set_enabled)
+	card.add_child(music_toggle)
+	var music_volume: HSlider = HSlider.new()
+	music_volume.position = Vector2(166, 175)
+	music_volume.size = Vector2(340, 30)
+	music_volume.min_value = 0.0
+	music_volume.max_value = 1.0
+	music_volume.step = .01
+	music_volume.value = music.volume
+	music_volume.value_changed.connect(music.set_volume)
+	card.add_child(music_volume)
 	_button(card, "Return to the vale", Vector2(30, 218), Vector2(480, 58), func() -> void: menu.hide(), true)
 	_button(card, "Redeem Code", Vector2(30, 286), Vector2(480, 54), func() -> void: redeem_ui.open())
 	_button(card, "Sit / Stand", Vector2(30, 350), Vector2(480, 54), func() -> void:
@@ -1505,6 +1536,8 @@ func _handle_back() -> void:
 		skills_ui.panel.hide()
 	elif chat_ui != null and chat_ui.panel.visible:
 		chat_ui.close()
+	elif quest_ui != null and quest_ui.panel.visible:
+		quest_ui.close()
 	elif services_ui != null and services_ui.panel.visible:
 		services_ui.close()
 	elif shop_ui != null and shop_ui.panel.visible:

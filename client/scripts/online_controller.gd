@@ -7,6 +7,7 @@ var session: OnlineSession
 var panel: Control
 var status_label: Label
 var chat_bubbles: Dictionary = {}
+var spell_labels: Dictionary = {}
 var trade: Dictionary = {}
 var server_label: Label
 var host_field: LineEdit
@@ -264,7 +265,7 @@ func _on_message(message: Dictionary) -> void:
 				if int((player.get("equipment", {}) as Dictionary).get(str(replacement.slot), 0)) == 0:
 					session.request("equip", {"item_id": int(replacement.item_id), "subloc": int(replacement.subloc)})
 				else: game._toast("The worn item could not be removed. Your replacement remains in the bag.")
-		"sit", "world", "refresh", "snapshot", "attack", "pickup", "equip", "spend_stat", "shop_buy", "shop_sell", "shop_craft", "bank_deposit", "bank_withdraw", "bank_upgrade", "locker_deposit", "locker_withdraw", "chest_deposit", "chest_take", "chest_close", "trade_request", "trade_accept", "trade_decline", "trade_add", "trade_remove", "trade_agree", "trade_cancel", "chat_send", "item_use", "skill_learn", "skill_forget", "skill_level":
+		"quest_open", "quest_reply", "quest_close", "sit", "world", "refresh", "snapshot", "attack", "pickup", "equip", "spend_stat", "shop_buy", "shop_sell", "shop_craft", "bank_deposit", "bank_withdraw", "bank_upgrade", "locker_deposit", "locker_withdraw", "chest_deposit", "chest_take", "chest_close", "trade_request", "trade_accept", "trade_decline", "trade_add", "trade_remove", "trade_agree", "trade_cancel", "chat_send", "item_use", "skill_learn", "skill_forget", "skill_level":
 			_apply_snapshot(data)
 		"redeem_code":
 			_apply_snapshot(data)
@@ -370,6 +371,8 @@ func _apply_snapshot(data: Dictionary, entering: bool = false) -> void:
 
 		var tile: Vector2i = Vector2i(int(player.get("x", 40)), int(player.get("y", 40)))
 		if entering:
+			game.music.enter_map(game.world)
+			game.quest_ui.panel.hide()
 			interaction.clear()
 			collect_pending = false
 			pickup_pending.clear()
@@ -384,6 +387,7 @@ func _apply_snapshot(data: Dictionary, entering: bool = false) -> void:
 			npc_attack_until.clear()
 			peer_attacks.clear()
 			chat_bubbles.clear()
+			spell_labels.clear()
 			npc_health.clear()
 			waiting_for_walk = false
 			transition_pending = false
@@ -439,6 +443,7 @@ func _apply_snapshot(data: Dictionary, entering: bool = false) -> void:
 	game.shop_ui.refresh()
 	if data.has("trade"): trade = data.trade as Dictionary if data.trade is Dictionary else {}
 	game.skills_ui.receive(data)
+	game.quest_ui.receive(data)
 	game.services_ui.receive(data)
 	game.services_ui.refresh()
 	server_label.text = "● Connected  ·  %d nearby" % nearby_count()
@@ -478,8 +483,9 @@ func _process(delta: float) -> void:
 		login_retry_at = 0
 		if panel.visible and not active: _authenticate("login", true)
 	if not active: return
-	for key: Variant in chat_bubbles.keys():
-		if Time.get_ticks_msec() >= int((chat_bubbles[key] as Dictionary).until): chat_bubbles.erase(key)
+	for collection: Dictionary in [chat_bubbles, spell_labels]:
+		for key: Variant in collection.keys():
+			if Time.get_ticks_msec() >= int((collection[key] as Dictionary).until): collection.erase(key)
 	_flush_face()
 	_process_interaction()
 	warp_notice_clock = maxf(0.0, warp_notice_clock - delta)
@@ -607,8 +613,9 @@ func request_face(direction: String) -> void:
 		game.facing = direction
 		player["direction"] = _direction(direction)
 		pending_face = direction
-	for key: Variant in chat_bubbles.keys():
-		if Time.get_ticks_msec() >= int((chat_bubbles[key] as Dictionary).until): chat_bubbles.erase(key)
+	for collection: Dictionary in [chat_bubbles, spell_labels]:
+		for key: Variant in collection.keys():
+			if Time.get_ticks_msec() >= int((collection[key] as Dictionary).until): collection.erase(key)
 	_flush_face()
 
 func _flush_face() -> void:
@@ -636,6 +643,8 @@ func _facing(value: Variant) -> String:
 	return ["south", "west", "north", "east"][clampi(int(value), 0, 3)]
 
 func _on_closed(reason: String) -> void:
+	game.music.leave_world()
+	game.quest_ui.panel.hide()
 	game.redeem_ui.disconnected()
 	if drop_ui != null: drop_ui.panel.hide()
 	active = false
@@ -828,41 +837,30 @@ func chat_bubble_position(pid: int) -> Vector2:
 			return _remote_position("player:%d" % pid, game.tile_position(Vector2i(int(peer.x), int(peer.y))))
 	return Vector2.INF
 
+func show_speech(event: Dictionary) -> void:
+	if str(event.get("channel", "")) != "local": return
+	var pid: int = int(player.get("player_id", -1)) if bool(event.get("outgoing", false)) else int(event.get("player_id", -1))
+	if pid < 0 or str(event.get("message", "")).strip_edges().is_empty(): return
+	chat_bubbles[pid] = {"text": str(event.message), "until": Time.get_ticks_msec() + 5500}
+	if game.speech_layer != null: game.speech_layer.sync()
+
 func draw_chat_bubbles() -> void:
+	# Speech lives in a real HUD overlay; spell labels retain original blinking text.
 	if not active: return
-	for key: Variant in chat_bubbles.keys():
+	for key: Variant in spell_labels.keys():
 		var at: Vector2 = chat_bubble_position(int(key))
 		if at.is_finite(): draw_chat_bubble(int(key), at)
 
 func draw_chat_bubble(pid: int, at: Vector2) -> void:
-	var bubble: Dictionary = chat_bubbles.get(pid, {}) as Dictionary
+	var bubble: Dictionary = spell_labels.get(pid, {}) as Dictionary
 	var now: int = Time.get_ticks_msec()
 	if bubble.is_empty() or now >= int(bubble.until): return
-	if bool(bubble.get("spell", false)):
-		# Original CharacterRenderer blinks the spell label every 250ms.
-		# Speech keeps its normal bubble; spell shouts are only outlined text.
-		if int((now - int(bubble.get("start", now))) / 250.0) % 2 == 1: return
-		var text: String = str(bubble.text)
-		var font: Font = ThemeDB.fallback_font
-		var origin: Vector2 = at + Vector2(-font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 11).x / 2.0, -82)
-		game.draw_string_outline(font, origin, text, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, 3, Color.BLACK)
-		game.draw_string(font, origin, text, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, game.TEXT)
-		return
-	var lines: Array[String] = []
-	var line: String = ""
-	for word: String in str(bubble.text).split(" "):
-		if line.length() + word.length() > 29 and not line.is_empty():
-			lines.append(line)
-			line = ""
-		line += (" " if not line.is_empty() else "") + word
-	if not line.is_empty(): lines.append(line)
-	if lines.size() > 3: lines = lines.slice(0, 3); lines[2] += "…"
-	var width: float = 50.0
-	for text: String in lines: width = maxf(width, ThemeDB.fallback_font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 10).x + 14.0)
-	var rectangle: Rect2 = Rect2(at + Vector2(-width / 2.0, -86 - lines.size() * 13), Vector2(width, lines.size() * 13 + 8))
-	var style: StyleBoxFlat = game._style(Color(0.06, 0.08, 0.10, 0.9), Color("d7cfae"), 5)
-	game.draw_style_box(style, rectangle)
-	for i: int in range(lines.size()): game.draw_string(ThemeDB.fallback_font, rectangle.position + Vector2(7, 13 + i * 13), lines[i], HORIZONTAL_ALIGNMENT_LEFT, -1, 10, game.TEXT)
+	if int((now - int(bubble.get("start", now))) / 250.0) % 2 == 1: return
+	var text: String = str(bubble.text)
+	var font: Font = ThemeDB.fallback_font
+	var origin: Vector2 = at + Vector2(-font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 11).x / 2.0, -82)
+	game.draw_string_outline(font, origin, text, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, 3, Color.BLACK)
+	game.draw_string(font, origin, text, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, game.TEXT)
 
 func _catalog_texture(key: String) -> Texture2D:
 	var graphics: Dictionary = game.graphics as Dictionary
@@ -1086,11 +1084,11 @@ func map_click(tile: Vector2i, preferred_kind: String = "") -> void:
 		if Vector2i(int(npc.x), int(npc.y)) != tile: continue
 		var info: Dictionary = (catalog.get("npcs", {}) as Dictionary).get(str(int(npc.id)), {}) as Dictionary
 		var type: int = int(info.get("type", -1))
-		if type in [6, 9, 14]:
+		if type in [6, 9, 14, 15]:
 			# Original EO dispatches a visible service NPC directly, including
 			# shopkeepers behind sealed counters. Never path onto their side.
 			game._cancel_controls()
-			interaction = {"kind": "skillmaster" if type == 14 else "bank" if type == 9 else "shop", "id": int(npc.index)}
+			interaction = {"kind": "quest" if type == 15 else "skillmaster" if type == 14 else "bank" if type == 9 else "shop", "id": int(npc.index)}
 		elif type in [1, 2, 3]:
 			if game._distance(game.player_tile, tile) == 1:
 				var direction: String = game._direction_name(tile - game.player_tile)
@@ -1167,7 +1165,7 @@ func _process_interaction() -> void:
 			var tile: Vector2i = Vector2i(int(target.x), int(target.y))
 			var distance: int = 1 if str(interaction.kind) in ["locker", "chest", "chair"] else 2 if str(interaction.kind) == "drop" else NPC_SERVICE_DISTANCE
 			if game._distance(game.player_tile, tile) > distance:
-				if str(interaction.kind) in ["shop", "bank", "skillmaster"]:
+				if str(interaction.kind) in ["shop", "bank", "skillmaster", "quest"]:
 					interaction.clear()
 					game._toast("This NPC has left your view.")
 					return
@@ -1176,7 +1174,7 @@ func _process_interaction() -> void:
 			if str(interaction.kind) == "chair": toggle_sit(tile)
 			elif str(interaction.kind) == "drop": _pickup(int(interaction.id))
 			elif str(interaction.kind) in ["locker", "chest", "chair"]: session.request("chest_open" if str(interaction.kind) == "chest" else "locker_open", {"x": int(target.x), "y": int(target.y)})
-			else: session.request("skillmaster_open" if str(interaction.kind) == "skillmaster" else "bank_open" if str(interaction.kind) == "bank" else "shop_open", {"npc_index": int(interaction.id)})
+			else: session.request("quest_open" if str(interaction.kind) == "quest" else "skillmaster_open" if str(interaction.kind) == "skillmaster" else "bank_open" if str(interaction.kind) == "bank" else "shop_open", {"npc_index": int(interaction.id)})
 		interaction.clear()
 		collect_pending = false
 	elif collect_pending:
@@ -1367,6 +1365,10 @@ func _process_events(events: Array) -> void:
 		var event: Dictionary = raw as Dictionary
 		game.skills_ui.event(event)
 		var kind: String = str(event.get("kind", event.get("type", event.get("event", ""))))
+		if kind == "quest_hint": game._toast(str(event.get("message", "")))
+		elif kind == "class_changed":
+			var class_info: Dictionary = (catalog.get("classes", {}) as Dictionary).get(str(int(event.get("class_id", 0))), {}) as Dictionary
+			game._toast("Your class is now %s." % str(class_info.get("name", "changed")))
 		if kind in ["player_damage", "npc_attack"] and event.get("source", "") != "spike":
 			npc_attack_until[int(event.get("npc_index", -1))] = Time.get_ticks_msec() / 1000.0 + 0.36
 			for npc: Dictionary in npcs:
@@ -1451,8 +1453,7 @@ func _process_events(events: Array) -> void:
 		if kind == "online_players": game.chat_ui.receive_roster(event)
 		if kind == "chat":
 			game.chat_ui.receive(event)
-			if str(event.get("channel", "")) == "local" and int(event.get("player_id", 0)) > 0:
-				chat_bubbles[int(event.player_id)] = {"text": str(event.get("message", "")), "until": Time.get_ticks_msec() + 5500}
+			show_speech(event)
 		if kind in ["trade_sent", "trade_complete", "trade_cancelled"]: game._toast(str(event.get("message", "")))
 		if kind == "pickup_failed":
 			pickup_pending.erase(int(event.get("uid", 0)))

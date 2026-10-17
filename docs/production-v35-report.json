@@ -1,0 +1,9 @@
+{
+  "result": "passed",
+  "public_health_http_status": 200,
+  "public_health_text": "ok",
+  "tls_websocket_native_connect": true,
+  "unauthenticated_quest_rejected": true,
+  "native_world_restarted": false,
+  "account_edits": false
+}

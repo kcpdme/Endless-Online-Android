@@ -16,7 +16,7 @@ Godot 4.7.2, typed GDScript and 2D isometric rendering are sufficient. A Unity/3
 rewrite and a larger server have not been needed for the measured regressions.
 
 Baseline before this update: commit `8c9e541`, APK 0.10.0/code 10. The current
-build is 0.27.4/code 34. See the final v0.21 section for current chat/presence and the v0.20 sections for equipment/HUD/Junk support. v0.12 added level/EXP, Nearby Send closure and
+build is 0.28.0/code 35. See the final v0.21 section for current chat/presence and the v0.20 sections for equipment/HUD/Junk support. v0.12 added level/EXP, Nearby Send closure and
 native consumables; v0.13 adds native skills and touch targeting. v0.11 added native bank/lockers, player inspection and
 trading, local/global/private chat, a dynamic joystick, and the heart/TP HUD,
 as well as placing NPC names near visible heads and fixing observer equipment/
@@ -1901,3 +1901,49 @@ conditions. Other players need0.24.0 for the queue/phase and numeric-ID fixes.
   SQLite/code backup: /opt/aster-vale/backups/v34-weight-completion-20261017T113932Z.
   Native world restarted to load those final3 records; isolated test rerun also
   verified them for a nonadmin. Total22 formerly weighted records changed.
+
+
+## v0.28.0 / code 35 — Wise Man, original map music, visible Nearby bubbles
+
+- `server/quests.py` implements native Quest Use/Dialog/Accept/Cancel behavior.
+  Wise Man NPC166 already exists on Inner Temple map6 at9,1, using native quest4.
+  No duplicate spawn or live map edits. Original class/karma dialogue and links
+  remain server authoritative; Cancel does not choose OK. Class Recover/List
+  and karma Recover/Reply update stats. The class/karma test uses disposable
+  accounts and preserves level/inventory; see `docs/wiseman-v35-native-report.json`.
+- `client/scripts/quest_window.gd` presents original pages and links with mobile
+  scrolling. Quest NPCs use original visible-range service interaction.
+- `tools/export_music.py` renders the 45 original mfx MIDI files from ignored
+  `work/eoserv-crawl/downloads/EOzipped028.zip` using libfluidsynth and
+  `/usr/share/sounds/sf2/TimGM6mb.sf2` into ignored portable Ogg files. Run it
+  after map/catalog generation. Outputs/provenance are in content/manifest.json;
+  the public source repo does not include generated original audio/resources.
+- `tools/import_eo.py`, catalog/map JSON retain EMF music_id, music_control,
+  ambient_sound (header33..36). `map_music.gd` implements all seven original
+  playback controls, title music, background pause, saved music toggle/volume.
+  Of282 maps172 have track0: preserve original silence, do not assign random
+  music.45 tracks total73.7MiB. Full decoding/source-hash tests in test_music.py.
+- Nearby speech now uses `speech_bubbles.gd`: real HUD PanelContainer+Label,
+  ignored touch input, world-to-HUD character anchors, above world sprites and
+  below modals, expires after5.5s. Outgoing echoes always anchor to self ID.
+  `online_controller.chat_bubbles` is speech ONLY; `spell_labels` is separate.
+  Spell chants previously overwrote speech; keep the stores separate. Global,
+  private and admin command messages must not turn into Nearby bubbles.
+- User confirmed Ravigameboy's Nearby text appeared in history without a bubble.
+  Do not mistake this for missing native network broadcast. The new rendered
+  two-client test uses private Ravigameboy/Skylar replicas, independent World2D
+  viewports, and checks actual visible UI nodes and screenshots for both sender
+  and observer. Real native casting cannot replace speech. Neither live account
+  was modified. `docs/chat-bubbles-v35-report.json` records this.
+- Python:118 tests passed (86 server,30 importer/catalog,2 music). Godot music/
+  quest headless and rendered checks passed;11 existing gameplay suites passed
+  assertions. Two immediate-exit synthetic suites report audio shutdown resource
+  warnings; no script/assertion failures. Reports preserve this distinction.
+- Gateway update deployed with source hash guards and rollback backup:
+  `/opt/aster-vale/backups/v35-quests-20261017T125540Z`. Only gateway/websocket
+  services restarted. Native world stayed running; no account/data edits.
+- Wireless ADB reconnected during delivery. v0.28.0/code35 installed and launched
+  on the Galaxy S23 Ultra. Installed APK SHA256 matches final build; offline save
+  preserved byte for byte and no startup script/crash errors. See
+  `docs/gameplay-v35-phone-report.json`. Other players must install this APK too
+  to receive the new speech renderer.

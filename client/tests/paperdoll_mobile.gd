@@ -81,7 +81,7 @@ func _run() -> void:
 	var before: int=wire.calls.size()
 	game.skills_ui.press(0)
 	check(wire.calls.size()==before and game.skills_ui.casting.is_empty(),"Full-health Self Heal must not become stuck or send a useless cast")
-	check(bool(c.chat_bubbles[100].get("spell", false)) and str(c.chat_bubbles[100].text).contains("HP full"),"Full health uses a brief spell-name flash")
+	check(bool(c.spell_labels[100].get("spell", false)) and str(c.spell_labels[100].text).contains("HP full"),"Full health uses a brief spell-name flash")
 	c.player.hp=500
 	game.skills_ui.press(1)
 	c.npcs.assign([{"id":257,"index":47,"x":41,"y":40,"direction":0}])
@@ -93,7 +93,7 @@ func _run() -> void:
 	var anchor: Vector2=c.npc_feedback_anchor(c.npcs[0],Vector2i(41,40))
 	check(anchor.y<game.tile_position(Vector2i(41,40)).y-150,"Boss damage floats above its visible head")
 	check(is_equal_approx(c.npc_health_fraction(47),.94),"Boss health uses native percentage")
-	c.chat_bubbles[100].start=Time.get_ticks_msec()
+	c.spell_labels[100].start=Time.get_ticks_msec()
 	game.queue_redraw()
 	await shot("bosscombat")
 	c._process_events([{"kind":"npc_killed","player_id":100,"npc_index":47,"npc_id":257,"x":41,"y":40,"damage":2000,"exp_gain":6666}])

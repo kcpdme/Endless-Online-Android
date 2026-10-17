@@ -1,0 +1,14 @@
+{
+  "version": "0.28.0",
+  "android_code": 35,
+  "signature_verified": true,
+  "zip_alignment_16kb_verified": true,
+  "packaged_original_music_tracks": 45,
+  "bytes": 160270975,
+  "sha256": "352fb920a7365c2368d7ce4c9107ed13ad8232e6ece23f8984ee4ec9aa0e4095",
+  "phone_installed": true,
+  "phone_install_status": "passed",
+  "save_preserved_byte_for_byte": true,
+  "installed_apk_hash_verified": true,
+  "startup_errors": 0
+}

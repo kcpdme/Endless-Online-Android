@@ -142,7 +142,7 @@ def export_catalog(runtime:Path,graphics_zip:Path,out:Path,map_id=5):
         maps[str(world['id'])]={'path':'res://content/'+geometry_path,'id':world['id'],'name':world['name'],'width':world['width'],'height':world['height'],
             'relog':world['spawn'],'npc_spawns':world['npcs'],'warp_count':len(world['warps']),
             'sha256':hashlib.sha256(path.read_bytes()).hexdigest(),
-            'client_geometry_available':True}
+            'client_geometry_available':True,**{key:world.get(key,0) for key in ('music_id','music_control','ambient_sound')}}
     selected=maps[str(map_id)]
     catalog={'schema_version':1,'spells':parse_spells(files['spells'].read_bytes()),'classes':parse_classes(files['classes'].read_bytes()),'items':items,'npcs':npcs,'maps':maps,'selected_map':map_id,
       'source':{'kind':'staged etheos runtime data','files':{key:{'path':str(path.relative_to(runtime)),
