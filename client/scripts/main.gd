@@ -277,13 +277,12 @@ func _process(delta: float) -> void:
 		if enemy_respawn <= 0.0:
 			enemy_health = 3
 			_place_enemy()
+	var walk_remainder: float = -1.0
+	var walk_phase: float = animation_clock
 	if moving:
-		step_progress = minf(1.0, step_progress + delta / step_duration)
-		player_world = step_from.lerp(step_to, step_progress)
-		if step_progress >= 1.0:
-			moving = false
-			_collect_loot()
-			_save_progress()
+		var remaining: float = (1.0 - step_progress) * step_duration
+		_advance_walk(delta)
+		if not moving: walk_remainder = maxf(0.0, delta - remaining)
 	if not _modal_open():
 		if attack_touch_id != -1 and attack_clock <= 0.0 and (enemy_health > 0 or online_mode) and (not online_mode or (_input_direction() == Vector2i.ZERO and route.is_empty())):
 			_attack()
@@ -296,6 +295,11 @@ func _process(delta: float) -> void:
 			elif not route.is_empty() and (not online_mode or online.can_issue_walk()):
 				var next_tile: Vector2i = route.pop_front()
 				_step(next_tile - player_tile)
+	# Chain held/path movement on the same frame, carrying the unused time.
+	# Discarding it inserts a stationary frame at every tile boundary.
+	if moving and walk_remainder >= 0.0:
+		animation_clock = walk_phase
+		_advance_walk(minf(walk_remainder, step_duration))
 	camera.position = player_world
 	for i: int in range(damage_numbers.size() - 1, -1, -1):
 		var number: Dictionary = damage_numbers[i]
@@ -303,6 +307,15 @@ func _process(delta: float) -> void:
 		if float(number.time) <= 0.0:
 			damage_numbers.remove_at(i)
 	queue_redraw()
+
+func _advance_walk(delta: float) -> void:
+	step_progress = minf(1.0, step_progress + delta / step_duration)
+	if step_progress >= 1.0 - 0.000001: step_progress = 1.0
+	player_world = step_from.lerp(step_to, step_progress)
+	if step_progress >= 1.0:
+		moving = false
+		_collect_loot()
+		_save_progress()
 
 func _movement_key(event: InputEventKey) -> int:
 	for key: int in [int(event.physical_keycode), int(event.keycode)]:
@@ -791,7 +804,8 @@ func _frame(character: Dictionary, direction: String, state: String, phase: floa
 	if raw is Dictionary: return raw as Dictionary
 	if raw is Array and not (raw as Array).is_empty():
 		var frames: Array = raw as Array
-		var frame_index: int = int((phase if phase >= 0.0 else animation_clock) * 9.0) % frames.size() if phase >= 0.0 or (moving and state != "idle") or bool(character.get("animate_idle", false)) else 0
+		var frame_rate: float = frames.size() / online.MOVE_SECONDS if online_mode and state == "frames" else 9.0
+		var frame_index: int = int((phase if phase >= 0.0 else animation_clock) * frame_rate) % frames.size() if phase >= 0.0 or (moving and state != "idle") or bool(character.get("animate_idle", false)) else 0
 		if state == "attack": frame_index = mini(int((phase / 0.36 if phase >= 0.0 else 1.0 - swing_clock / ATTACK_SWING_DURATION) * frames.size()), frames.size() - 1)
 		return frames[frame_index] as Dictionary
 	return {}

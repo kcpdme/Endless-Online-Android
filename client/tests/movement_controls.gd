@@ -75,7 +75,7 @@ func _run() -> void:
 	# Put real NPC sprite geometry under the dynamic joystick, with a spell armed.
 	var at: Vector2 = game._screen_to_world(center)
 	game.online.npcs.assign([{"id":2,"index":9999,"x":0,"y":0,"direction":0}])
-	game.online.remote_motion["npc:9999"] = {"from":at+Vector2(0,8),"to":at+Vector2(0,8),"start":0.0}
+	game.online.remote_motion["npc:9999"] = {"to":at+Vector2(0,8),"steps":[],"walk_start":0.0}
 	if not check(not game.online.map_entity_target(at).is_empty(), "NPC overlap fixture must hit real sprite geometry"): return
 	game.skills_ui.armed = 1
 	pad(center,true)

@@ -21,7 +21,10 @@ var selected_characters: Array[Dictionary] = []
 var active: bool = false
 var waiting_for_walk: bool = false
 const NPC_SERVICE_DISTANCE: int = 11
+# Native Walk is 400 ms plus a 20 ms auto-queue dispatch stage.
 const MOVE_SECONDS: float = 0.42
+# Buffer only remote presentation; local input remains immediately predicted.
+const REMOTE_BUFFER_SECONDS: float = 0.10
 const MAX_PREDICTIONS: int = 4
 var streaming: bool = false
 var recovering: bool = false
@@ -39,7 +42,6 @@ var confirmed_input_seq: int = 0
 var pending_inputs: Array[Dictionary] = []
 var remote_motion: Dictionary = {}
 var refresh_clock: float = 0.0
-var walk_clock: float = 0.0
 var desired_auth: String = "login"
 var offline_state: Dictionary = {}
 var offline_map_id: int = 5
@@ -465,7 +467,6 @@ func _process(delta: float) -> void:
 	_flush_face()
 	_process_interaction()
 	warp_notice_clock = maxf(0.0, warp_notice_clock - delta)
-	walk_clock = maxf(0.0, walk_clock - delta)
 	refresh_clock += delta
 	# Original EO updates are event driven; no periodic full-world Refresh.
 	_update_loot_control()
@@ -504,7 +505,6 @@ func request_step(direction: Vector2i) -> void:
 	pending_inputs.append({"seq": next_input_seq, "direction": single, "sent_at": Time.get_ticks_msec()})
 	waiting_for_walk = true
 	transition_pending = passage
-	walk_clock = MOVE_SECONDS
 	refresh_clock = 0.0
 	_start_step(target, game._direction_name(single))
 
@@ -514,7 +514,7 @@ func _start_step(tile: Vector2i, direction: String) -> void:
 	game.step_to = game.tile_position(tile)
 	game.player_tile = tile
 	game.step_progress = 0.0
-	game.step_duration = 0.40
+	game.step_duration = MOVE_SECONDS
 	game.facing = direction
 	game.animation_clock = 0.0
 	game.moving = true
@@ -541,7 +541,6 @@ func _reset_movement() -> void:
 	confirmed_input_seq = 0
 	pending_inputs.clear()
 	remote_motion.clear()
-	walk_clock = 0.0
 	refresh_clock = 0.0
 
 func _action_ready() -> bool:
@@ -636,25 +635,53 @@ func leave_for_offline() -> void:
 	game.loot_visible = false
 	game._refresh_ui()
 
-func _track_entities(kind: String, rows: Array[Dictionary], id_field: String) -> void:
+func _track_entities(kind: String, rows: Array[Dictionary], id_field: String, at: float = -1.0) -> void:
 	var seen: Dictionary = {}
-	var now: float = Time.get_ticks_msec() / 1000.0
+	var now: float = Time.get_ticks_msec() / 1000.0 if at < 0.0 else at
 	for record: Dictionary in rows:
-		var key: String = kind + ":" + str(record.get(id_field, -1))
+		# JSON IDs arrive as floats; all sprite, bubble and hit-test keys use ints.
+		var key: String = kind + ":" + str(int(record.get(id_field, -1)))
 		seen[key] = true
-		var target: Vector2 = game.tile_position(Vector2i(int(record.get("x", 0)), int(record.get("y", 0))))
-		if not remote_motion.has(key):
-			remote_motion[key] = {"from": target, "to": target, "start": now - MOVE_SECONDS}
-		elif remote_motion[key].to != target:
-			remote_motion[key] = {"from": _remote_position(key, target), "to": target, "start": now}
+		var tile: Vector2i = Vector2i(int(record.get("x", 0)), int(record.get("y", 0)))
+		var target: Vector2 = game.tile_position(tile)
+		if remote_motion.has(key) and remote_motion[key].to == target: continue
+		var motion: Dictionary = remote_motion.get(key, {}) as Dictionary
+		var distance: int = 0 if motion.is_empty() else absi(tile.x - int(motion.tile.x)) + absi(tile.y - int(motion.tile.y))
+		# Spawns, warps and missed multi-tile updates establish a new baseline.
+		# Never invent a route through walls to interpolate an unknown path.
+		if motion.is_empty() or distance != 1:
+			remote_motion[key] = {"to":target,"tile":tile,"steps":[],"walk_start":now}
+			continue
+		_remote_sample(key, target, now)
+		var steps: Array = motion.steps
+		if steps.size() >= MAX_PREDICTIONS:
+			remote_motion[key] = {"to":target,"tile":tile,"steps":[],"walk_start":now}
+			continue
+		var end: float = float(steps.back().start) + MOVE_SECONDS if not steps.is_empty() else now - 1.0
+		var start: float = end if end >= now else now + REMOTE_BUFFER_SECONDS
+		if end < now: motion.walk_start = start
+		# Original EO queues/replays adjacent steps instead of restarting the
+		# current interpolation from a fractional position on every packet.
+		steps.append({"from":motion.to,"to":target,"start":start,"direction":_facing(record.get("direction", 0))})
+		motion.to = target
+		motion.tile = tile
 	for key: Variant in remote_motion.keys():
 		if str(key).begins_with(kind + ":") and not seen.has(key): remote_motion.erase(key)
 
+func _remote_sample(key: String, fallback: Vector2, now: float) -> Dictionary:
+	var motion: Dictionary = remote_motion.get(key, {}) as Dictionary
+	if motion.is_empty(): return {"position":fallback,"state":"idle","phase":0.0}
+	var steps: Array = motion.steps
+	while steps.size() > 1 and now >= float(steps[0].start) + MOVE_SECONDS:
+		steps.pop_front()
+	if steps.is_empty(): return {"position":motion.to,"state":"idle","phase":0.0}
+	var step: Dictionary = steps[0]
+	var elapsed: float = now - float(step.start)
+	var fraction: float = clampf(elapsed / MOVE_SECONDS, 0.0, 1.0)
+	return {"position":(step.from as Vector2).lerp(step.to as Vector2, fraction),"state":"frames" if elapsed >= 0.0 and elapsed < MOVE_SECONDS else "idle","phase":maxf(0.0, now - float(motion.walk_start)),"direction":step.direction}
+
 func _remote_position(key: String, fallback: Vector2) -> Vector2:
-	if not remote_motion.has(key): return fallback
-	var motion: Dictionary = remote_motion[key]
-	var fraction: float = clampf((Time.get_ticks_msec() / 1000.0 - float(motion.start)) / MOVE_SECONDS, 0.0, 1.0)
-	return (motion.from as Vector2).lerp(motion.to as Vector2, fraction)
+	return _remote_sample(key, fallback, Time.get_ticks_msec() / 1000.0).position
 
 func entities() -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
@@ -672,12 +699,12 @@ func entities() -> Array[Dictionary]:
 	return result
 
 func entity_animation(kind: String, record: Dictionary) -> Dictionary:
-	var key: String = ("npc:" + str(record.get("index", -1))) if kind == "online_npc" else ("player:" + str(record.get("player_id", -1)))
-	var motion: Dictionary = remote_motion.get(key, {}) as Dictionary
+	var key: String = ("npc:" + str(int(record.get("index", -1)))) if kind == "online_npc" else ("player:" + str(int(record.get("player_id", -1))))
 	var now: float = Time.get_ticks_msec() / 1000.0
-	var phase: float = now - float(motion.get("start", 0.0))
-	var state: String = "frames" if not motion.is_empty() and phase < MOVE_SECONDS and motion.from != motion.to else "idle"
-	var direction: String = _facing(record.get("direction", 0))
+	var sample: Dictionary = _remote_sample(key, Vector2.ZERO, now)
+	var phase: float = float(sample.phase)
+	var state: String = str(sample.state)
+	var direction: String = str(sample.get("direction", _facing(record.get("direction", 0)))) if state == "frames" else _facing(record.get("direction", 0))
 	if kind == "online_npc" and float(npc_attack_until.get(int(record.get("index", -1)), 0.0)) > now:
 		state = "attack"
 		phase = 0.36 - (float(npc_attack_until[int(record.index)]) - now)
@@ -1280,4 +1307,4 @@ func _slot_name(kind: String) -> String:
 	return str({"hat": "head", "shield": "offhand"}.get(kind, kind))
 
 func can_issue_walk() -> bool:
-	return active and streaming and not defeated and not recovering and not transition_pending and walk_clock <= 0.0 and game.attack_clock <= 0.0 and pending_inputs.size() < MAX_PREDICTIONS and not session.has_blocking_requests()
+	return active and streaming and not defeated and not recovering and not transition_pending and not game.moving and game.attack_clock <= 0.0 and pending_inputs.size() < MAX_PREDICTIONS and not session.has_blocking_requests()

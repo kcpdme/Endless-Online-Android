@@ -1,0 +1,10 @@
+{
+  "result": "network_stall_observed",
+  "concurrent_activity": "81 MB APK installation over wireless ADB",
+  "sustained_steps_completed": 84,
+  "maximum_pending_inputs": 4,
+  "local_stationary_frames": 104,
+  "remote_idle_frames": 175,
+  "prediction_limit_respected": true,
+  "note": "Concurrent transfer may affect Wi-Fi latency; rerun public validation after installation. The native host was lightly loaded. This is not an assertion that the client can conceal arbitrary network stalls."
+}

@@ -1,0 +1,192 @@
+{
+  "dynamic_joystick_directions": 4,
+  "holds": [
+    {
+      "direction": [
+        0,
+        -1
+      ],
+      "frames": 51,
+      "key": 87,
+      "stationary_frames": 4,
+      "stationary_ms": 66.474,
+      "step_times_ms": [
+        5582.401,
+        6015.481,
+        6452.509
+      ]
+    },
+    {
+      "direction": [
+        0,
+        1
+      ],
+      "frames": 51,
+      "key": 83,
+      "stationary_frames": 4,
+      "stationary_ms": 67.555,
+      "step_times_ms": [
+        7320.142,
+        7754.843,
+        8189.115
+      ]
+    },
+    {
+      "direction": [
+        -1,
+        0
+      ],
+      "frames": 51,
+      "key": 65,
+      "stationary_frames": 4,
+      "stationary_ms": 66.674,
+      "step_times_ms": [
+        9056.319,
+        9490.901,
+        9924.427
+      ]
+    },
+    {
+      "direction": [
+        1,
+        0
+      ],
+      "frames": 51,
+      "key": 68,
+      "stationary_frames": 4,
+      "stationary_ms": 67.11,
+      "step_times_ms": [
+        10809.743,
+        11243.351,
+        11677.109
+      ]
+    },
+    {
+      "direction": [
+        0,
+        -1
+      ],
+      "frames": 51,
+      "key": 4194320,
+      "stationary_frames": 4,
+      "stationary_ms": 65.814,
+      "step_times_ms": [
+        12561.827,
+        12993.871,
+        13428.013
+      ]
+    },
+    {
+      "direction": [
+        0,
+        1
+      ],
+      "frames": 51,
+      "key": 4194322,
+      "stationary_frames": 4,
+      "stationary_ms": 66.837,
+      "step_times_ms": [
+        14312.459,
+        14746.468,
+        15180.122
+      ]
+    },
+    {
+      "direction": [
+        -1,
+        0
+      ],
+      "frames": 51,
+      "key": 4194319,
+      "stationary_frames": 4,
+      "stationary_ms": 66.659,
+      "step_times_ms": [
+        16064.094,
+        16498.348,
+        16932.129
+      ]
+    },
+    {
+      "direction": [
+        1,
+        0
+      ],
+      "frames": 50,
+      "key": 4194321,
+      "stationary_frames": 3,
+      "stationary_ms": 49.847,
+      "step_times_ms": [
+        17816.136,
+        18249.773,
+        18681.98
+      ]
+    },
+    {
+      "direction": [
+        0,
+        -1
+      ],
+      "frames": 50,
+      "key": 0,
+      "stationary_frames": 3,
+      "stationary_ms": 49.447,
+      "step_times_ms": [
+        19566.022,
+        19999.767,
+        20433.77
+      ]
+    },
+    {
+      "direction": [
+        0,
+        1
+      ],
+      "frames": 51,
+      "key": 0,
+      "stationary_frames": 4,
+      "stationary_ms": 67.181,
+      "step_times_ms": [
+        21317.938,
+        21751.916,
+        22185.746
+      ]
+    },
+    {
+      "direction": [
+        -1,
+        0
+      ],
+      "frames": 50,
+      "key": 0,
+      "stationary_frames": 3,
+      "stationary_ms": 51.114,
+      "step_times_ms": [
+        23086.093,
+        23517.404,
+        23951.34
+      ]
+    },
+    {
+      "direction": [
+        1,
+        0
+      ],
+      "frames": 51,
+      "key": 0,
+      "stationary_frames": 4,
+      "stationary_ms": 66.952,
+      "step_times_ms": [
+        24853.504,
+        25286.797,
+        25720.752
+      ]
+    }
+  ],
+  "keyboard_directions": 8,
+  "no_steps_after_release": true,
+  "observer_positions_match_all_holds": true,
+  "operator_accounts_modified": false,
+  "result": "passed",
+  "server_corrections": 0,
+  "straight_steps_per_hold": 3
+}

@@ -51,7 +51,7 @@ func _run() -> void:
 	var origin: Vector2 = game.tile_position(Vector2i(40, 41))
 	peer.x = 41
 	c._track_entities("player", c._dict_array([peer]), "player_id")
-	c.remote_motion["player:200"].start = Time.get_ticks_msec() / 1000.0 - 0.21
+	c.remote_motion["player:200"].steps[0].start = Time.get_ticks_msec() / 1000.0 - c.MOVE_SECONDS / 2.0
 	var halfway: Vector2 = c._remote_position("player:200", Vector2.ZERO)
 	check(halfway.distance_to(origin.lerp(game.tile_position(Vector2i(41, 41)), 0.5)) < 0.2, "Remote movement must interpolate rather than teleport")
 	c._track_entities("player", c._dict_array([]), "player_id")

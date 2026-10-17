@@ -16,7 +16,7 @@ Godot 4.7.2, typed GDScript and 2D isometric rendering are sufficient. A Unity/3
 rewrite and a larger server have not been needed for the measured regressions.
 
 Baseline before this update: commit `8c9e541`, APK 0.10.0/code 10. The current
-build is 0.23.0/code 25. See the final v0.21 section for current chat/presence and the v0.20 sections for equipment/HUD/Junk support. v0.12 added level/EXP, Nearby Send closure and
+build is 0.24.0/code 26. See the final v0.21 section for current chat/presence and the v0.20 sections for equipment/HUD/Junk support. v0.12 added level/EXP, Nearby Send closure and
 native consumables; v0.13 adds native skills and touch targeting. v0.11 added native bank/lockers, player inspection and
 trading, local/global/private chat, a dynamic joystick, and the heart/TP HUD,
 as well as placing NPC names near visible heads and fixing observer equipment/
@@ -1376,3 +1376,80 @@ Additional v25 validation: real Marble head tap/buy/sell across the counter and
 left-of-character Small Fire targeting outside the reserved movement area passed
 (`docs/movement-v25-interactions-report.json`). Unit, local and public native
 movement reports reflect the final **dynamic, no-arrow** implementation.
+
+
+## v0.24.0 / code 26 — continuous walking and peer movement buffering
+
+- User reported stop/walk stutter despite the v25 direction fixes. Reproduced:
+  old main animation ended at400ms, child `walk_clock` gate at420ms was checked
+  before its decrement, producing ~433.76ms step starts and ~62.64ms stationary
+  time over two transitions at60FPS. This was scheduling, not host capacity.
+- `main._advance_walk` completes a tile; main `_process` immediately chains held
+  keyboard/joystick/path movement and carries the remaining frame time. Keep
+  the continuous animation phase across boundaries. `_frame` completes one walk
+  pose cycle per420ms online tile. No extra movement cooldown remains;
+  `can_issue_walk` uses `not game.moving` plus existing authoritative gates.
+- `OnlineController.MOVE_SECONDS=.42` matches the effective native pace:
+  `EOClient::Execute` auto-queues each received packet with20ms, then
+  `handlers.cpp` queues the registered400ms Walk action. Looking only at the
+  Walk registration misses that overhead. An initial400ms experiment showed
+  pending-input growth on sustained walks; use420ms animation and carry time.
+  The original open-source CharacterAnimator has replay/queued-direction logic
+  with nine10ms ticks per pose and standing+four walk poses. Do not claim its
+  animation timing is identical to the400ms native action queue.
+- Remote tracks now have `{to,tile,steps,walk_start}`. Each step has
+  `{from,to,start,direction}`. `_remote_sample(key,fallback,now)` is shared by
+  positioning and animation, prunes completed steps, preserves gait and queued
+  facing. A100ms buffer is remote-only; local input remains immediate.
+  Track keys normalize JSON numeric IDs through int before string conversion;
+  otherwise JSON gives player:1.0 while typed bubble/hit-test IDs give player:1.
+  The timing regression includes float IDs; the live observer must actually
+  enter walking state (not just report zero idle frames on a missing track).
+  Nonadjacent updates/spawns/warps snap to a new baseline rather than inventing
+  a path through obstacles. More than four queued segments resets the track.
+  Severe stalls can still exhaust this buffer; never extrapolate unconfirmed
+  movement or hide real collisions. Synthetic test fixtures must use the new
+  track structure, not the old `{from,to,start}` dictionary.
+- The Python move timestamp remains42 protocol ticks, stream advertises
+  movement_seconds=.42. Hosted gateway.py/live_session.py were restored to
+  their prior Git HEAD after the intermediate400ms experiment; hashes verified,
+  backups retained, gateway/WebSocket restarted. Ignored scripts:
+  `work/hosting/{deploy_v26,restore_v26_cadence}.py`. Native world and operator
+  rows unchanged. Future clients should keep420ms unless native dispatch rules
+  change too; a400ms client slowly builds a queue despite passing short tests.
+- `movement_timing.gd`: constant velocity/phase/release at15/24/30/59/60/90/120/144
+  FPS, remote jitter+queued turn+final stop+warp+cleanup. Reports in
+  `docs/movement-v26-*.json`; live local/public WSS tests measure stationary
+  frames and step starts for WASD/arrows, all four dynamic drags, plus two12tile
+  holds plus84 uninterrupted tiles bouncing inside visibility. Fake ACK tests still cover in-flight replay/no visual restart;
+  server state suite has47 cases. Controls/gameplay/world regressions retained.
+  Local live tests strictly assert both tracks have no stationary frames; the
+  public WSS test uses ASTER_VALE_TEST_REMOTE_STRICT=0, asserts local continuity
+  and records remote gaps under real WAN jitter. Do not claim a100ms buffer
+  eliminates longer public-network stalls. Host check: load0.26/0.13/0.09,
+  available1087MiB, native RSS25496KiB. No capacity change needed for this fault.
+  Run native movement headless with --max-fps60 for repeatable held-key tests;
+  desktop focus loss during a rendered test correctly cancels movement.
+- Long-hold dev fixtures: actor map40(20,10), observer(26,12). The former observer
+  (20,14) falls out of EO visibility at the12tile endpoint. Do not mistake this
+  for a dropped move. Tests only create/move dev-prefixed characters. Any direct
+  fixture SQLite staging must happen after those sessions have fully logged out.
+- Preserve the v25 dynamic joystick without arrows, keyboard priorities, NPC
+  capture protection and committed-tile release. Other players must update their
+  APK too to see the new buffered animation. Release uses the same app package
+  and signing key; install with `adb install -r`, never uninstall player data.
+
+
+v26 testing detail: do not run public latency tests concurrently with wireless
+ADB installation. A simultaneous81MB transfer coincided with a multi-second
+public stall, maxpending4 and104 local idle frames in84 steps. Evidence is kept
+in `docs/movement-v26-congested-wifi-report.json`; it does not mean the lightly
+loaded native world needs a larger machine. Repeat after installation before
+claiming public continuity. Preserve the bounded prediction window and honest
+network-gap metrics rather than concealing this limitation.
+
+Final isolated v26 public result after ADB transfer:84steps, mean420.06ms,
+local idle0, corrections0, maxpending3; observer idle14frames in that sustained
+walk. Local two-session run:84steps, local+observer idle0, maxpending1.
+Do not describe the public observer as perfectly continuous under all WAN
+conditions. Other players need0.24.0 for the queue/phase and numeric-ID fixes.

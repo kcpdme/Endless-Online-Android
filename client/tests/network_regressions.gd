@@ -116,7 +116,6 @@ func _run() -> void:
 	game.online.pending_inputs.clear()
 	game.online.recovering = false
 	game.online.transition_pending = false
-	game.online.walk_clock = 0.0
 	game.moving = false
 	game.attack_clock = 0.0
 	game.player_tile = Vector2i(40, 40)

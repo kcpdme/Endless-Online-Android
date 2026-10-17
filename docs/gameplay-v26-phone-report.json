@@ -1,0 +1,23 @@
+{
+  "result": "passed",
+  "version": "0.24.0",
+  "version_code": 26,
+  "device": "Galaxy S23 Ultra",
+  "installed_apk_matches_final_sha256": true,
+  "apk_sha256": "5ce1e5b1158168f37e7a3758141366c89b219696f26b01c838849d72004d1b2d",
+  "save_preserved_byte_for_byte": true,
+  "launched_process_running": true,
+  "startup_script_or_crash_errors": 0,
+  "apk_signature_verified": true,
+  "alignment_16k_verified": true,
+  "production_health": "ok",
+  "native_step_ms": 420,
+  "continuous_walking_without_tile_pauses": true,
+  "remote_step_queue_and_jitter_buffer": true,
+  "dynamic_joystick_without_arrows": true,
+  "joystick_input_precedes_npcs": true,
+  "wasd_and_arrows_native_four_directions": true,
+  "native_world_changes": false,
+  "operator_accounts_modified": false,
+  "timestamp": "2026-10-17T07:49:14.202451+00:00"
+}
