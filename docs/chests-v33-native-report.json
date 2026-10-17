@@ -1,0 +1,14 @@
+{
+  "result": "passed",
+  "native_packets": true,
+  "gateway_dispatch": true,
+  "isolated_runtime": true,
+  "empty_chest_opens": true,
+  "deposit_take_inventory_native": true,
+  "gold_round_trip": true,
+  "observer_shared_contents": true,
+  "closed_context_rejected": true,
+  "locked_without_key_rejected": true,
+  "original_key_opens_without_consumption": true,
+  "operator_accounts_modified": false
+}

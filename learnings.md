@@ -16,7 +16,7 @@ Godot 4.7.2, typed GDScript and 2D isometric rendering are sufficient. A Unity/3
 rewrite and a larger server have not been needed for the measured regressions.
 
 Baseline before this update: commit `8c9e541`, APK 0.10.0/code 10. The current
-build is 0.27.2/code 32. See the final v0.21 section for current chat/presence and the v0.20 sections for equipment/HUD/Junk support. v0.12 added level/EXP, Nearby Send closure and
+build is 0.27.3/code 33. See the final v0.21 section for current chat/presence and the v0.20 sections for equipment/HUD/Junk support. v0.12 added level/EXP, Nearby Send closure and
 native consumables; v0.13 adds native skills and touch targeting. v0.11 added native bank/lockers, player inspection and
 trading, local/global/private chat, a dynamic joystick, and the heart/TP HUD,
 as well as placing NPC names near visible heads and fixing observer equipment/
@@ -1729,3 +1729,86 @@ conditions. Other players need0.24.0 for the queue/phase and numeric-ID fixes.
 - Normalize metadata graphic IDs to int before comparing: Godot JSON numbers
   are floats, and Variant array membership with an int missed ranged graphics
   until explicit numeric normalization. The real-manifest Godot test catches it.
+
+## v0.27.3: original turn-first manual input and four-way joystick
+
+- User clarified original semantics: at rest, a tap in a different facing only
+  turns; keep that direction held to start walking. Same-facing taps move at
+  once. Original Controllers/ArrowKeyController.FaceOrAttemptWalk does exactly
+  this while Standing; Input/InputHandlerBase limits input to200ms.
+- Main._manual_step is shared by WASD/arrows and the touch stick. It sends the
+  existing native face command (no predicted step) on a standing turn, then
+  waits200ms of continuous input before the first walk. Release/neutral/focus
+  loss/dialog cancellation resets that wait, so a second same-facing tap walks
+  immediately and an old turn cannot generate delayed movement. This replaces
+  v0.25/short_movement's prior assumption that every different-facing tap walks.
+- Continuing movement at a tile boundary bypasses the turn wait; straight walks,
+  interpolation, native420ms step cadence and tap-to-walk paths stay unchanged.
+  Native movement/combat timing and accounts stay unchanged. Chest gateway
+  support was added in this same release, as described below.
+- Joystick retains the floating circular/translucent appearance and analog knob
+  travel, but update_pointer returns exactly one cardinal key or ZERO. Finger
+  X/Y use the same logical directions as WASD; no inverse-isometric remapping
+  or alternating/diagonal steps. Configurable dead_zone_pixels=18 and
+  direction_switch_ratio=1.25 stabilize a held axis around45-degree boundaries;
+  clear cross-axis or opposite input switches immediately, neutral resets it.
+  Native NPC hit testing cannot steal the captured joystick finger.
+- Official reference: Unity StickControl supports four individual directional
+  buttons and stick dead zones (concept reference; project still uses Godot):
+  https://docs.unity3d.com/Packages/com.unity.inputsystem@1.4/api/UnityEngine.InputSystem.Controls.StickControl.html
+- Short-input regression covers32 starting-heading/direction/keyboard-or-stick
+  combinations, face-only native requests, same-facing immediate walk, held
+  walk after200ms, release and between-frame key-up/down, no paused walking
+  turn, focus loss and unchanged path movement. Movement controls exercises
+  actual GUI key/touch events, diagonal jitter, deliberate switches, reversals,
+  dead zone and analog-art/digital-input separation.
+- Local timing test has0stationary frames at15,24,30,59,60,90,120,144FPS and
+  remote jitter simulation also has0idle frames. Prediction/reconciliation,
+  combat and gameplay smoke pass. Check docs/gameplay-v33-report.json for
+  package/build evidence; docs/gameplay-v33-phone-report.json records the final
+  installed package identity and save-preservation checks.
+
+### v0.27.3 chest support added in the same update
+
+- Actual cause: maps and etheos already supported chests, but Android only
+  dispatched spec16 lockers; neither gateway nor client had chest RPCs/UI.
+  Recognize spec9 (including empty chests with no spawn rows), hit-test visible
+  object artwork using the same animated frame width as the map renderer,
+  path to a neighbouring tile and open with the original coordinate packet.
+- New ChestsMixin/server/chests.py uses native family33: Open13, Add7, Take9,
+  Reply3 (remaining bag amount uses4bytes), Get27 (taken amount uses3bytes),
+  Agree5 (shared contents), Close14 (locked2bytes or broken1byte). No synthetic
+  loot or client map-spawn rewards. Taking requests a whole stack; native bag
+  capacity/weight decides the actual amount. Adding supports Gold and selected
+  quantity, rejects lore/invalid ownership and caps3byte protocol amounts.
+- A chest context must have been opened with a native ACK, remain on the same
+  map within1tile, and obey standing/alive/no-trade guards. Walking/warps clear
+  it. Closing the dialog clears gateway context without sending a native close
+  packet, matching the original client. Native Close rejects locked/broken chests
+  with a readable error. Original required keys are checked by native Open and
+  are not consumed. Inventory/Gold/weight only change on native Reply/Get.
+- Stream snapshots/deltas carry chest contents, including nearby native Agree
+  updates. ServicesWindow adds a wood chest mode with bag/chest columns, selected
+  deposit amount, whole-stack Take and a readable empty state. Existing bank
+  and item locker modes remain separate, including the locker Gold exclusion.
+- 68 Python state tests pass, including8 chest cases (locks, empty chest, native
+  quantities, Gold, peer changes, close/range/trade/lore guards, truncated ACK).
+  chest_mobile passes headless and rendered; inspected work/v33-chest.png.
+- Real unchanged native binary + gateway dispatch verified in the private
+  /home/admin/eo-v30-upgrade/isolated-runtime (port18080, fixture.sdb), using
+  randomly named test accounts only. Map53 chest(6,22) empty-open, dagger and
+  Gold deposit/take, observer Agree updates; map76 chest(29,3) locked without
+  Normal Key239, opens with it and keeps it. No live chest contents, operator
+  accounts, or live maps were used for these mutations. Script is ignored
+  work/hosting/test_v33_chests.py; sanitized report is docs/chests-v33-native-report.json.
+- Deployed chests.py/gateway.py/live_session.py with before/after source hash
+  checks, backups and a consistent SQLite backup. Restarted only gateway and
+  WebSocket services; native world was not restarted. Public health remains ok.
+  Backup: /opt/aster-vale/backups/v33-chests-20261017T111059Z.
+- Wireless ADB returned at192.168.1.8:34105 with mDNS suffix(2); older32773
+  discovery remained stale. Prefer live adb devices/mdns evidence next session.
+- Final combined APK0.27.3/code33 installed at the new debug address. Installed
+  base.apk SHA matches the exported/download APK, offline save remains byte
+  identical, process is running and startup logcat has no script/crash errors.
+  Public WebSocket handshake reached deployed chest handler; a chest request
+  before character entry was rejected without sending a native chest packet.

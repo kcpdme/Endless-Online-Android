@@ -13,6 +13,7 @@ const ONLINE_ATTACK_COOLDOWN: float = 0.52
 const ATTACK_COOLDOWN: float = 0.90
 const ATTACK_SWING_DURATION: float = 0.26
 const ONLINE_ATTACK_SWING_DURATION: float = 0.48
+const TURN_HOLD_SECONDS: float = 0.20 # Original InputHandlerBase's input interval.
 const SAVE_PATH: String = "user://aster_vale_save.json"
 const TILE: Vector2 = Vector2(64.0, 32.0)
 const GOLD: Color = Color("e9bd71")
@@ -60,6 +61,8 @@ var step_origin_tile: Vector2i = Vector2i.ZERO
 var step_duration: float = 0.24
 var touch_move_id: int = -1
 var movement_keys: Array[int] = []
+var turn_input: Vector2i = Vector2i.ZERO
+var turn_wait: float = 0.0
 var player_tile: Vector2i = Vector2i.ZERO
 var player_world: Vector2 = Vector2.ZERO
 var step_from: Vector2 = Vector2.ZERO
@@ -281,6 +284,8 @@ func _process(delta: float) -> void:
 	var walk_remainder: float = -1.0
 	var walk_phase: float = animation_clock
 	var was_walking: bool = moving
+	turn_wait = maxf(0.0, turn_wait - delta)
+	if _input_direction() == Vector2i.ZERO: _reset_turn_input()
 	if moving:
 		var remaining: float = (1.0 - step_progress) * step_duration
 		_advance_walk(delta)
@@ -294,7 +299,7 @@ func _process(delta: float) -> void:
 			if direction != Vector2i.ZERO:
 				route.clear()
 				waypoint = Vector2i(-1, -1)
-				_step(direction)
+				_manual_step(direction, was_walking)
 			elif not route.is_empty() and (not online_mode or online.can_issue_walk()):
 				var next_tile: Vector2i = route.pop_front()
 				_step(next_tile - player_tile)
@@ -355,6 +360,25 @@ func _can_step(origin: Vector2i, direction: Vector2i) -> bool:
 		return _walkable(origin + Vector2i(direction.x, 0)) and _walkable(origin + Vector2i(0, direction.y))
 	return true
 
+func _reset_turn_input() -> void:
+	turn_input = Vector2i.ZERO
+	turn_wait = 0.0
+
+func _manual_step(direction: Vector2i, continuing_walk: bool) -> void:
+	var desired: String = _direction_name(direction)
+	# Original ArrowKeyController.FaceOrAttemptWalk: a stationary character
+	# turns first. Changes at a walking tile boundary continue without a pause.
+	if not continuing_walk and facing != desired:
+		if online_mode: online.request_face(desired)
+		else: facing = desired
+		if facing == desired:
+			turn_input = direction
+			turn_wait = TURN_HOLD_SECONDS
+		return
+	if not continuing_walk and turn_input == direction and turn_wait > 0.000001: return
+	_reset_turn_input()
+	_step(direction)
+
 func _step(direction: Vector2i) -> void:
 	if online_mode:
 		online.request_step(direction)
@@ -376,6 +400,7 @@ func _step(direction: Vector2i) -> void:
 func _cancel_movement(force_stop: bool = false) -> void:
 	movement_keys.clear()
 	stick = Vector2.ZERO
+	_reset_turn_input()
 	touch_move_id = -1
 	route.clear()
 	waypoint = Vector2i(-1, -1)
@@ -430,7 +455,9 @@ func _input(event: InputEvent) -> void:
 		var key: int = _movement_key(event)
 		if key != 0:
 			var gameplay_key: bool = started and not _modal_open() and not _editing_text() and not (chat_ui != null and chat_ui.typing())
-			if not event.pressed: movement_keys.erase(key)
+			if not event.pressed:
+				movement_keys.erase(key)
+				if _input_direction() == Vector2i.ZERO: _reset_turn_input()
 			elif not event.echo and gameplay_key:
 				movement_keys.erase(key)
 				movement_keys.append(key)
@@ -544,6 +571,7 @@ func _input(event: InputEvent) -> void:
 			if not attack_button.contains_point(event.position): _release_attack()
 		elif event.index == touch_move_id:
 			stick = joystick.update_pointer(event.position)
+			if stick == Vector2.ZERO: _reset_turn_input()
 		if owned_touches.has(event.index):
 			get_viewport().set_input_as_handled()
 			return
@@ -569,6 +597,7 @@ func _input(event: InputEvent) -> void:
 		if attack_touch_id == -2 and not attack_button.contains_point(event.position): _release_attack()
 		if touch_move_id == -2:
 			stick = joystick.update_pointer(event.position)
+			if stick == Vector2.ZERO: _reset_turn_input()
 			get_viewport().set_input_as_handled()
 
 func _unhandled_input(event: InputEvent) -> void:

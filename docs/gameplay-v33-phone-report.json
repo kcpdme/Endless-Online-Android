@@ -1,0 +1,33 @@
+{
+  "result": "passed",
+  "version": "0.27.3",
+  "version_code": 33,
+  "device": "Galaxy S23 Ultra",
+  "installed_apk_matches_final_sha256": true,
+  "apk_sha256": "8e8f2b7ff661b08beccd0182dcdd9ebe1adbe90899478da2bf965fee167ceadc",
+  "save_preserved_byte_for_byte": true,
+  "launched_process_running": true,
+  "startup_script_or_crash_errors": 0,
+  "apk_signature_verified": true,
+  "alignment_16k_verified": true,
+  "native_world_changes": false,
+  "gateway_chest_support_deployed": true,
+  "native_chest_integration": "passed",
+  "operator_accounts_modified": false,
+  "manual_input_checks": [
+    "standing tap turns only",
+    "held turn walks after200ms",
+    "same-facing tap walks immediately",
+    "four-way digital joystick with diagonal tolerance"
+  ],
+  "regressions": [
+    "short_movement",
+    "movement_controls",
+    "movement_timing",
+    "movement",
+    "combat_mobile",
+    "gameplay_smoke",
+    "chest_mobile"
+  ],
+  "timestamp": "2026-10-17T11:17:20.413110+00:00"
+}

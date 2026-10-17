@@ -2,6 +2,10 @@ extends Control
 ## Floating translucent stick. Main captures its finger before world/NPC targeting.
 var active: bool = false
 var vector: Vector2 = Vector2.ZERO
+var direction: Vector2i = Vector2i.ZERO
+# Visual thumb travel stays analog; gameplay receives one held keyboard axis.
+@export_range(0.0, 40.0, 1.0) var dead_zone_pixels: float = 18.0
+@export_range(1.0, 2.0, 0.05) var direction_switch_ratio: float = 1.25
 var radius: float = 128.0
 var resting_position: Vector2 = Vector2(24, -282)
 var pointer_origin: Vector2 = Vector2.ZERO
@@ -38,7 +42,19 @@ func begin(pointer: Vector2) -> void:
 	pointer_origin = pointer
 	_place_center(pointer)
 	vector = Vector2.ZERO
+	direction = Vector2i.ZERO
 	queue_redraw()
+
+func _snap_direction(delta: Vector2) -> Vector2i:
+	if delta.length() <= dead_zone_pixels: return Vector2i.ZERO
+	var candidate: Vector2i
+	if absf(delta.x) > absf(delta.y): candidate = Vector2i.RIGHT if delta.x > 0 else Vector2i.LEFT
+	else: candidate = Vector2i.DOWN if delta.y > 0 else Vector2i.UP
+	# Stay on the held key around diagonal boundaries, until the thumb clearly
+	# selects the neighbouring axis. A deliberate opposite input switches at once.
+	if direction == Vector2i.ZERO or candidate == direction: return candidate
+	var held_strength: float = maxf(0.0, delta.dot(Vector2(direction)))
+	return candidate if delta.dot(Vector2(candidate)) > held_strength * direction_switch_ratio else direction
 
 func update_pointer(pointer: Vector2) -> Vector2:
 	var delta: Vector2 = pointer - pointer_origin
@@ -48,13 +64,15 @@ func update_pointer(pointer: Vector2) -> Vector2:
 		pointer_origin += shift
 		_place_center(global_position + Vector2.ONE * radius + shift)
 		delta = delta.normalized() * 84
-	vector = (delta / 84).limit_length(1.0) if delta.length() > 18 else Vector2.ZERO
+	vector = (delta / 84).limit_length(1.0) if delta.length() > dead_zone_pixels else Vector2.ZERO
+	direction = _snap_direction(delta)
 	queue_redraw()
-	return vector
+	return Vector2(direction)
 
 func reset() -> void:
 	active = false
 	vector = Vector2.ZERO
+	direction = Vector2i.ZERO
 	pointer_origin = Vector2.ZERO
 	set_anchors_preset(Control.PRESET_TOP_LEFT, true)
 	position = Vector2(resting_position.x, (get_parent() as Control).size.y + resting_position.y)

@@ -37,6 +37,7 @@ func _run() -> void:
 		game._cancel_movement(true)
 		game.player_tile = Vector2i(40,40)
 		game.player_world = game.tile_position(game.player_tile)
+		game.facing = "east" # Measure continuous walking, after any initial turn.
 		game.movement_keys.assign([KEY_D])
 		capture.moves = 0
 		game._process(0.0)

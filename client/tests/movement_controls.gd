@@ -72,6 +72,21 @@ func _run() -> void:
 		pad(Vector2(1100,300),false)
 		await process_frame
 		if not check(game.stick == Vector2.ZERO and game.touch_move_id == -1, "Release outside pad must stop future steps"): return
+	# The circular stick behaves as one held key, even around a diagonal edge.
+	pad(center,true)
+	await process_frame
+	for sample: Array in [[Vector2(60,0),Vector2.RIGHT],[Vector2(49,50),Vector2.RIGHT],[Vector2(50,49),Vector2.RIGHT],[Vector2(48,51),Vector2.RIGHT],[Vector2(35,65),Vector2.DOWN],[Vector2(50,49),Vector2.DOWN],[Vector2(-65,0),Vector2.LEFT],[Vector2(5,5),Vector2.ZERO],[Vector2(0,-65),Vector2.UP]]:
+		var digital_drag: InputEventScreenDrag = InputEventScreenDrag.new()
+		digital_drag.index = 41
+		digital_drag.position = center + (sample[0] as Vector2)
+		Input.parse_input_event(digital_drag)
+		await process_frame
+		if not check(game.stick == sample[1] and game._input_direction() == Vector2i(sample[1]),"Joystick digital mapping or diagonal stability failed: "+str(sample)): return
+		if sample[0] == Vector2(49,50):
+			if not check(game.joystick.vector.x > 0 and game.joystick.vector.y > 0,"Thumb artwork should remain analog while gameplay holds a single axis"): return
+	pad(center,false)
+	await process_frame
+	if not check(game.joystick.direction == Vector2i.ZERO and game.stick == Vector2.ZERO,"Release must clear the digital held key"): return
 	# Put real NPC sprite geometry under the dynamic joystick, with a spell armed.
 	var at: Vector2 = game._screen_to_world(center)
 	game.online.npcs.assign([{"id":2,"index":9999,"x":0,"y":0,"direction":0}])
@@ -97,7 +112,7 @@ func _run() -> void:
 	pad(center,false)
 	game.menu.hide()
 	if not check(game.joystick.z_index > 0 and game.joystick.radius >= 125, "Joystick must be large and above world graphics"): return
-	print("MOVEMENT CONTROLS PASS: WASD/arrows physical+logical, newest held key, release/focus/typing, dynamic stick without arrows, NPC overlap, armed skill priority, captured outside drag, modal protection")
+	print("MOVEMENT CONTROLS PASS: WASD/arrows physical+logical, newest held key, release/focus/typing, digital four-way stick, diagonal tolerance/dead zone/reversal, NPC overlap, armed skill priority, captured outside drag, modal protection")
 	game.started = false
 	game.queue_free()
 	quit()

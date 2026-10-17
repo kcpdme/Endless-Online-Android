@@ -69,6 +69,7 @@ func _list(card: Control, at: Vector2) -> ItemList:
 	return result
 
 func open(kind: String, data: Dictionary) -> void:
+	if mode == "chest" and kind != "chest": close()
 	mode = kind
 	state = data.duplicate(true)
 	game.inventory.hide()
@@ -84,6 +85,7 @@ func open(kind: String, data: Dictionary) -> void:
 	refresh()
 
 func close() -> void:
+	if mode == "chest": game.online.session.request("chest_close")
 	if mode == "trade" and not game.online.trade.is_empty():
 		game.online.session.request("trade_cancel")
 	if mode == "invitation": game.online.session.request("trade_decline")
@@ -99,7 +101,7 @@ func receive(data: Dictionary) -> void:
 		elif mode == "trade": panel.hide(); mode = ""
 	if data.has("trade_request") and data.trade_request is Dictionary and not (data.trade_request as Dictionary).is_empty() and game.online.trade.is_empty():
 		open("invitation", data.trade_request as Dictionary)
-	for kind: String in ["bank", "locker"]:
+	for kind: String in ["bank", "locker", "chest"]:
 		if mode == kind and data.has(kind):
 			if data[kind] is Dictionary: state = data[kind] as Dictionary; refresh()
 			else: panel.hide(); mode = ""
@@ -124,7 +126,7 @@ func refresh() -> void:
 	card.offset_left = -500.0
 	card.offset_right = 500.0
 	for control: Control in [quantity, primary, secondary, extra]: control.position.y = 270.0 if compact else 560.0
-	var storage: bool = mode == "locker"
+	var storage: bool = mode in ["locker", "chest"]
 	var trading: bool = mode == "trade"
 	var inspect: bool = mode == "inspect"
 	left.visible = storage or trading
@@ -134,7 +136,7 @@ func refresh() -> void:
 	doll.visible = inspect
 	details.position = Vector2(608, 130) if inspect else Vector2(36, 132 if compact else 474)
 	details.size = Vector2(340, 390) if inspect else Vector2(916, 115 if compact else 66)
-	quantity.visible = mode in ["bank", "locker", "trade"]
+	quantity.visible = mode in ["bank", "locker", "chest", "trade"]
 	primary.visible = true
 	secondary.visible = mode != "inspect"
 	extra.visible = inspect or trading or mode == "bank"
@@ -151,15 +153,17 @@ func refresh() -> void:
 		primary.text = "Deposit Gold"
 		secondary.text = "Withdraw Gold"
 	elif storage:
-		title.text = "ITEM LOCKER"
-		right_heading.text = "Your locker"
-		left_rows = game.online.inventory_items().filter(func(i: Dictionary) -> bool: return int(i.id) != 1)
+		title.text = "CHEST" if mode == "chest" else "ITEM LOCKER"
+		left_heading.text = "Your bag"
+		right_heading.text = "Chest contents" if mode == "chest" else "Your locker"
+		left_rows = game.online.inventory_items().filter(func(i: Dictionary) -> bool: return (mode == "chest" or int(i.id) != 1) and int(i.amount) > 0)
 		right_rows = state.get("items", []) as Array
 		_fill(left, left_rows)
 		_fill(right, right_rows)
 		primary.text = "Deposit item"
-		secondary.text = "Withdraw stack"
+		secondary.text = "Take stack" if mode == "chest" else "Withdraw stack"
 		details.text = "Select a bag item and quantity to store it, or a locker stack to withdraw.\nThe original locker withdraws a whole stack, limited by what your bag can hold."
+		if mode == "chest": details.text = "Select a chest stack to take it. To leave an item, select it in your bag and choose a quantity." if not right_rows.is_empty() else "This chest is empty. Select a bag item and quantity to put inside."
 	elif trading:
 		title.text = "TRADE  ·  " + str(state.get("name", "Player"))
 		left_heading.text = "Your bag  ·  select to offer"
@@ -204,7 +208,7 @@ func _selected() -> void:
 	primary.disabled = not game.online.session.is_idle()
 	secondary.disabled = primary.disabled
 	extra.disabled = primary.disabled or (mode == "bank" and not bool(state.get("can_upgrade", false)))
-	if mode == "locker":
+	if mode in ["locker", "chest"]:
 		primary.disabled = primary.disabled or left.get_selected_items().is_empty()
 		secondary.disabled = secondary.disabled or right.get_selected_items().is_empty()
 	elif mode == "trade":
@@ -214,7 +218,7 @@ func _selected() -> void:
 		if not selection.is_empty(): secondary.disabled = secondary.disabled or int(right_rows[selection[0]].owner) != int(game.online.player.get("player_id", 0))
 	if not left.get_selected_items().is_empty():
 		var item: Dictionary = left_rows[left.get_selected_items()[0]] as Dictionary
-		quantity.max_value = maxi(1, int(item.amount))
+		quantity.max_value = maxi(1, mini(int(item.amount), 16194276) if mode == "chest" else int(item.amount))
 
 func _request(op: String, fields: Dictionary = {}) -> void:
 	if not game.online.session.is_idle(): return
@@ -226,10 +230,10 @@ func _request(op: String, fields: Dictionary = {}) -> void:
 func _primary() -> void:
 	match mode:
 		"bank": _request("bank_deposit", {"amount": int(quantity.value)})
-		"locker", "trade":
+		"locker", "chest", "trade":
 			var selection: PackedInt32Array = left.get_selected_items()
 			if selection.is_empty(): return
-			_request("locker_deposit" if mode == "locker" else "trade_add", {"item_id": int(left_rows[selection[0]].id), "amount": int(quantity.value)})
+			_request("chest_deposit" if mode == "chest" else "locker_deposit" if mode == "locker" else "trade_add", {"item_id": int(left_rows[selection[0]].id), "amount": int(quantity.value)})
 		"inspect":
 			_request("trade_request", {"player_id": int(state.player_id)})
 			panel.hide()
@@ -241,7 +245,7 @@ func _secondary() -> void:
 	else:
 		var selection: PackedInt32Array = right.get_selected_items()
 		if selection.is_empty(): return
-		_request("locker_withdraw" if mode == "locker" else "trade_remove", {"item_id": int(right_rows[selection[0]].id)})
+		_request("chest_take" if mode == "chest" else "locker_withdraw" if mode == "locker" else "trade_remove", {"item_id": int(right_rows[selection[0]].id)})
 
 func _extra() -> void:
 	if mode == "bank": _request("bank_upgrade")

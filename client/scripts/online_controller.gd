@@ -264,7 +264,7 @@ func _on_message(message: Dictionary) -> void:
 				if int((player.get("equipment", {}) as Dictionary).get(str(replacement.slot), 0)) == 0:
 					session.request("equip", {"item_id": int(replacement.item_id), "subloc": int(replacement.subloc)})
 				else: game._toast("The worn item could not be removed. Your replacement remains in the bag.")
-		"world", "refresh", "snapshot", "attack", "pickup", "equip", "spend_stat", "shop_buy", "shop_sell", "shop_craft", "bank_deposit", "bank_withdraw", "bank_upgrade", "locker_deposit", "locker_withdraw", "trade_request", "trade_accept", "trade_decline", "trade_add", "trade_remove", "trade_agree", "trade_cancel", "chat_send", "item_use", "skill_learn", "skill_forget", "skill_level":
+		"world", "refresh", "snapshot", "attack", "pickup", "equip", "spend_stat", "shop_buy", "shop_sell", "shop_craft", "bank_deposit", "bank_withdraw", "bank_upgrade", "locker_deposit", "locker_withdraw", "chest_deposit", "chest_take", "chest_close", "trade_request", "trade_accept", "trade_decline", "trade_add", "trade_remove", "trade_agree", "trade_cancel", "chat_send", "item_use", "skill_learn", "skill_forget", "skill_level":
 			_apply_snapshot(data)
 		"redeem_code":
 			_apply_snapshot(data)
@@ -281,9 +281,10 @@ func _on_message(message: Dictionary) -> void:
 			game.skills_ui.refresh()
 		"inspect_player":
 			game.services_ui.open("inspect", data)
-		"bank_open", "locker_open":
+		"bank_open", "locker_open", "chest_open":
 			_apply_snapshot(data)
-			game.services_ui.open("bank" if operation == "bank_open" else "locker", data.get("bank" if operation == "bank_open" else "locker", {}) as Dictionary)
+			var kind: String = "bank" if operation == "bank_open" else "chest" if operation == "chest_open" else "locker"
+			game.services_ui.open(kind, data.get(kind, {}) as Dictionary)
 		"shop_open":
 			_apply_snapshot(data)
 			game.shop_ui.open(data.get("shop", {}) as Dictionary)
@@ -1010,16 +1011,17 @@ func map_entity_target(point: Vector2) -> Dictionary:
 		var at: Vector2 = _remote_position("npc:%d" % int(npc.index), game.tile_position(tile))
 		var rectangle: Rect2 = Rect2(at + Vector2(float(offset[0]), float(offset[1])) - Vector2(dimensions.x / 2.0, dimensions.y), dimensions)
 		if rectangle.grow(5.0).has_point(point): return {"tile": tile, "kind": "npc"}
-	# Match the visible locker object, including its tall front above its tile.
+	# Match chest/locker artwork, including its front above the blocked tile.
 	for spec: Dictionary in ([] if game.skills_ui.armed > 0 else game.world.get("tile_specs", [])):
-		if int(spec.get("spec", -1)) != 16: continue
+		if int(spec.get("spec", -1)) not in [9, 16]: continue
 		var tile: Vector2i = Vector2i(int(spec.x), int(spec.y))
 		for decoration: Dictionary in game.decorations:
 			if decoration.tile != tile or str(decoration.layer) != "objects": continue
 			var texture: Texture2D = game._graphic(int(decoration.gfx), int(decoration.id))
 			if texture == null: continue
 			var size: Vector2 = texture.get_size()
-			if Rect2(game.tile_position(tile) + Vector2(-2.0 - size.x / 2.0, 14.0 - size.y), size).grow(4.0).has_point(point): return {"tile": tile, "kind": "locker"}
+			if int(decoration.gfx) == 3 and size.x >= 128: size.x /= 4.0
+			if Rect2(game.tile_position(tile) + Vector2(-2.0 - size.x / 2.0, 14.0 - size.y), size).grow(4.0).has_point(point): return {"tile": tile, "kind": "chest" if int(spec.spec) == 9 else "locker"}
 	for peer: Dictionary in players:
 		if int(peer.get("player_id", 0)) == int(player.get("player_id", 0)): continue
 		var tile: Vector2i = Vector2i(int(peer.x), int(peer.y))
@@ -1042,9 +1044,9 @@ func map_click(tile: Vector2i, preferred_kind: String = "") -> void:
 			game._cancel_controls()
 			interaction = {"kind": "player", "id": int(peer.player_id)}
 			return
-	for spec: Dictionary in (game.world.get("tile_specs", []) if preferred_kind in ["", "locker"] else []):
-		if int(spec.get("spec", -1)) == 16 and Vector2i(int(spec.x), int(spec.y)) == tile:
-			interaction = {"kind": "locker", "id": 0, "x": tile.x, "y": tile.y}
+	for spec: Dictionary in (game.world.get("tile_specs", []) if preferred_kind in ["", "locker", "chest"] else []):
+		if int(spec.get("spec", -1)) in [9, 16] and Vector2i(int(spec.x), int(spec.y)) == tile:
+			interaction = {"kind": "chest" if int(spec.spec) == 9 else "locker", "id": 0, "x": tile.x, "y": tile.y}
 			_approach(tile, 1)
 			return
 	for npc: Dictionary in npcs:
@@ -1095,12 +1097,12 @@ func _process_interaction() -> void:
 			session.request("inspect_player", {"player_id": int(interaction.id)})
 			interaction.clear()
 			return
-		var target: Dictionary = interaction if str(interaction.kind) == "locker" else {}
-		for row: Dictionary in ([] if str(interaction.kind) == "locker" else (drops if str(interaction.kind) == "drop" else npcs)):
+		var target: Dictionary = interaction if str(interaction.kind) in ["locker", "chest"] else {}
+		for row: Dictionary in ([] if str(interaction.kind) in ["locker", "chest"] else (drops if str(interaction.kind) == "drop" else npcs)):
 			if int(row.get("uid" if str(interaction.kind) == "drop" else "index", -1)) == int(interaction.id): target = row
 		if not target.is_empty():
 			var tile: Vector2i = Vector2i(int(target.x), int(target.y))
-			var distance: int = 1 if str(interaction.kind) == "locker" else 2 if str(interaction.kind) == "drop" else NPC_SERVICE_DISTANCE
+			var distance: int = 1 if str(interaction.kind) in ["locker", "chest"] else 2 if str(interaction.kind) == "drop" else NPC_SERVICE_DISTANCE
 			if game._distance(game.player_tile, tile) > distance:
 				if str(interaction.kind) in ["shop", "bank", "skillmaster"]:
 					interaction.clear()
@@ -1109,7 +1111,7 @@ func _process_interaction() -> void:
 				_approach(tile, distance)
 				return
 			if str(interaction.kind) == "drop": _pickup(int(interaction.id))
-			elif str(interaction.kind) == "locker": session.request("locker_open", {"x": int(target.x), "y": int(target.y)})
+			elif str(interaction.kind) in ["locker", "chest"]: session.request("chest_open" if str(interaction.kind) == "chest" else "locker_open", {"x": int(target.x), "y": int(target.y)})
 			else: session.request("skillmaster_open" if str(interaction.kind) == "skillmaster" else "bank_open" if str(interaction.kind) == "bank" else "shop_open", {"npc_index": int(interaction.id)})
 		interaction.clear()
 		collect_pending = false
