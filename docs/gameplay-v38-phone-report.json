@@ -1,0 +1,19 @@
+{
+  "result": "passed",
+  "version": "0.29.2",
+  "version_code": 38,
+  "device": "Galaxy S23 Ultra",
+  "installed_apk_matches_final_sha256": true,
+  "apk_sha256": "d90c2627ec5943b8215aab6e48adea9f404c16b863a21059f28c597977c15a6b",
+  "save_preserved_byte_for_byte": true,
+  "launched_process_running": true,
+  "startup_script_or_crash_errors": 0,
+  "apk_signature_verified": true,
+  "alignment_16k_verified": true,
+  "original_sfx_bank_count": 81,
+  "native_exp_multiplier": 10,
+  "native_drop_chance_multiplier": 2,
+  "native_touch_equip_ring_armlet_bracer_test": "passed",
+  "original_music_tracks": 45,
+  "timestamp": "2026-10-17T14:51:50.483580+00:00"
+}

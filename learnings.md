@@ -2079,3 +2079,31 @@ conditions. Other players need0.24.0 for the queue/phase and numeric-ID fixes.
   crash errors. Wireless transfer was slow; compressed adb push plus pm install-r
   completed successfully. Temporary phone APK removed. Code pushed as deae095.
   Private fixture native processes/tunnel were stopped after their tests.
+
+
+## v0.29.2 / code38 — paired gear bag button hotfix
+
+- User still could not wear two rings/bracelets despite native/controller tests.
+  Exact remaining bug: _build_inventory Equip button callback in main.gd still
+  checked `not _is_equipped(selected_item)`. That ID-level check rejects a SECOND
+  identical bag copy, even though the button is enabled and equipment_request
+  correctly chooses subloc1. Earlier v36 test called equipment_request directly,
+  bypassing the broken callback; never treat that as a complete UI test.
+- Online bag button now checks an actual item:ID bag selection with positive bag
+  amount and invokes the normal bag action. Offline guard remains unchanged.
+  Native bag quantities, equipment validation, ACK gating, paired-slot selection,
+  curse handling and single glove slot remain in the existing controller/server.
+- paired_equipment_v38.gd reproduced all3 failures with REAL screen touches
+  before the fix, then passed25 checks after: rings41, armlets39, bracers54,
+  both paperdoll icons, removing only secondary by double tap, no local mutation
+  before ACK and potion Use through the same button.
+- paired_equipment_v38_live.gd then used real touches through private gateway and
+  native server: first Equip decrements bag2->1, second Equip1->0; both identical
+  items visibly occupy original paperdoll slots; double tap secondary returns
+  exactly1 bag copy while preserving first worn copy. All3 categories passed.
+  No operator accounts modified and no production server deployment needed.
+- Final APK0.29.2/code38 SHA256d90c2627ec5943b8215aab6e48adea9f404c16b863a21059f28c597977c15a6b; signature and16KB alignment verified.
+- v0.29.2 installed/launched on Galaxy S23 Ultra. Installed SHA256 and version
+  match; offline save unchanged byte for byte, no startup resource/script/crash
+  errors. Existing v36 feature regression passed. See gameplay-v38-phone-report.
+  Private native fixture and SSH tunnel stopped after tests.

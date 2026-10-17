@@ -1248,7 +1248,10 @@ func _build_inventory(parent: Node) -> void:
 	card.add_child(bag_overflow)
 	bag_overflow.hide()
 	equip_button = _button(card, "", Vector2(932, 558), Vector2(160, 52), func() -> void:
-		if _owns_item(selected_item) and not _is_equipped(selected_item): _toggle_equip()
+		if online_mode:
+			# A worn item ID can have another copy in the bag (paired jewellery).
+			if selected_item.begins_with("item:") and online.bag_amount(online.item_id(selected_item)) > 0: _toggle_equip()
+		elif _owns_item(selected_item) and not _is_equipped(selected_item): _toggle_equip()
 	, true)
 	_inventory_theme(card)
 	inventory.hide()

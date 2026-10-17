@@ -1,0 +1,16 @@
+{
+  "actual_touch_equip_button_used": true,
+  "both_original_paperdoll_slots_visible": true,
+  "double_tap_removes_secondary_only": true,
+  "first_copy_preserved": true,
+  "identical_bag_copy_can_equip_second_slot": true,
+  "operator_accounts_modified": false,
+  "paired_categories": [
+    "ring",
+    "armlet",
+    "bracer"
+  ],
+  "real_native_gateway_and_server": true,
+  "result": "passed",
+  "server_ack_updates_bag_quantities": true
+}

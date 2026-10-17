@@ -1,0 +1,20 @@
+{
+  "result": "passed",
+  "version": "0.29.2",
+  "version_code": 38,
+  "root_cause": "Bag Equip button callback rejected an item ID if any copy was already worn; controller/native second-slot logic was already correct.",
+  "before_fix_actual_touch_reproduces_failure": [
+    "ring",
+    "armlet",
+    "bracer"
+  ],
+  "after_fix_actual_ui_checks": 25,
+  "native_touch_equip_and_ack_report": "paired-equipment-v38-native-report.json",
+  "identical_bag_copies_use_original_secondary_slots": true,
+  "consumable_use_preserved": true,
+  "no_server_change_required": true,
+  "apk_sha256": "d90c2627ec5943b8215aab6e48adea9f404c16b863a21059f28c597977c15a6b",
+  "apk_signature_verified": true,
+  "alignment_16k_verified": true,
+  "timestamp": "2026-10-17T14:51:13.662984+00:00"
+}
