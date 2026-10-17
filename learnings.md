@@ -2296,10 +2296,13 @@ conditions. Other players need0.24.0 for the queue/phase and numeric-ID fixes.
   NAME because native character list may sort names; passwords are cleared
   after login and a test reconnect must supply its own private fixture password.
 - APK0.31.0/code41 signature and16KB alignment verified; SHA256 2da4792470e52683a09bbe95d1cce2b2312416aabe8ab813985653d94c830f4d.
-  Wireless ADB currently unavailable (stale32773 discovery refuses connection,
-  no active transport); APK prepared for manual installation / later update.
-  Do not claim it is installed. Optional user question requested current IP:port.
-  Keep same signing key and compare existing offline save bytes when reconnecting.
+  Installed/launched on Galaxy S23 Ultra after the user re-enabled wireless ADB.
+  Live connection was192.168.1.8:43601 / mDNS suffix(2); old32773 discovery
+  remained stale. Compressed push + pm install-r used existing signing key,
+  offline save preserved byte for byte. Installed base.apk SHA/version match,
+  process running, no startup script/resource/crash errors. Startup screenshot
+  visually confirms primary Play online and new auto-attack help text.
+  See docs/gameplay-v41-phone-report.json; private save/log/screenshot stay in work/.
   Reports: docs/gameplay-v41-report.json, starters-v41-{native,public-ui,
   deployment}-report.json. Source ZIP must come from final committed HEAD and
   exclude ignored assets/secrets. APK is the local user's development delivery.

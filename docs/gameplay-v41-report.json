@@ -57,5 +57,6 @@
     }
   },
   "known_preexisting_exit_warning": "network_regressions reports two audio resources still in use at immediate exit; all assertions pass",
-  "phone_installation": "pending_wireless_adb_unavailable"
+  "phone_installation": "passed",
+  "phone_report": "docs/gameplay-v41-phone-report.json"
 }
