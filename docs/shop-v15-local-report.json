@@ -1,0 +1,13 @@
+{
+  "compact_price_amounts": true,
+  "dedicated_buy_sell_craft_details": true,
+  "duplicate_ingredient_totals_and_missing_state": true,
+  "four_material_rows_visible_at_1280x720": true,
+  "independent_catalog_details_scroll_preserved_across_native_snapshot": true,
+  "native_buy_sell_and_four_material_craft": true,
+  "native_finger_swipe_in_both_panes": true,
+  "operator_accounts_modified": false,
+  "quantity_and_selection_preserved_across_native_snapshot": true,
+  "result": "passed",
+  "wide_phone_layout": true
+}

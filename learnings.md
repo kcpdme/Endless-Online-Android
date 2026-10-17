@@ -16,7 +16,7 @@ Godot 4.7.2, typed GDScript and 2D isometric rendering are sufficient. A Unity/3
 rewrite and a larger server have not been needed for the measured regressions.
 
 Baseline before this update: commit `8c9e541`, APK 0.10.0/code 10. The current
-build is 0.14.0/code 14. v0.12 added level/EXP, Nearby Send closure and
+build is 0.15.0/code 15. v0.12 added level/EXP, Nearby Send closure and
 native consumables; v0.13 adds native skills and touch targeting. v0.11 added native bank/lockers, player inspection and
 trading, local/global/private chat, a dynamic joystick, and the heart/TP HUD,
 as well as placing NPC names near visible heads and fixing observer equipment/
@@ -761,3 +761,76 @@ crash errors. Sanitized evidence is docs/touch-v14-phone-report.json. Original
 bank/locker/inspection/trade/chat UI and original skills/observer pose regressions
 also passed. Deliverables use outputs/endless-online-android-v0.14.0.{apk,...}.
 Raw device logs, saves and fixture credentials stay private/ignored under work/.
+
+
+## v0.15: readable buy/sell/craft shop details
+
+`client/scripts/shop_window.gd` now uses a1120x660 wooden modal with independent
+left catalog and right selected-item panes. The old90px bottom description
+could clip four original recipe materials and equipment details. All four
+native material rows now fit within the right viewport at1280x720; additional
+item stats/requirements scroll independently below. Each material has its
+original item icon/name and colored Have / Need quantities. Gold is a normal
+native ingredient row with original artwork. Missing materials disable the
+Craft action and are called out in the footer. Repeated ingredient IDs are
+aggregated to match the gateway's Counter guard (e.g. native Pilotte313 needs
+11 Ant Legs322, from two recipe entries10+1). No crafting/price/gameplay data
+is invented or changed.
+
+Original reference: pinned EndlessClient Dialogs/ShopDialog.cs shows item
+name and a short price subtitle for buy/sell, ingredient count in craft list,
+and a separate full ingredient list in CraftItem/BuildMessage. This mobile
+adaptation keeps the catalog and requirements visible together instead of
+squeezing the full recipe into one bottom label. Buy/sell rows now read e.g.
+War Axe ·2000 without "gold each". Quantity and total stay in the footer; the
+selected pane shows full item name/icon, bag quantity, damage/armor/bonuses,
+weight and level/class/attribute requirements. Native armor type12 gender is
+shown as(M)/(F), distinguishing Lotus Armor311/312 and other same-name armor.
+
+A second browsing bug was fixed: online snapshots call shop.refresh for every
+world update. Rebuilding the entire list and calling _selected(reset=true)
+used to reset quantity/selection/scroll while NPCs moved. Catalog rendering is
+now keyed by mode/offer data, details by mode/item/ownership/offer data, and
+routine refresh uses _selected(false). World/native snapshots preserve selected
+item, requested quantity, and independent scroll offsets. Actual user selection
+or tab changes may reset quantity. Ownership ACKs refresh rows/readiness while
+preserving scroll. Empty buy/sell/craft sections clear stale details explicitly.
+
+Modal curtains now use z_index10 in main._modal, so the later-created chat/HUD
+buttons cannot draw over or intercept the wider shop header. Native gameplay
+input still respects _modal_open. Existing HUD behavior outside modals remains
+as before. No new graphics import, server deployment, restart or account grant
+is needed for this client-only update.
+
+`server/test_shop_ui.py` / `client/tests/shop_details_live.gd` run the actual
+Godot scene with a fresh dev fixture in Marble's shop (map125/tile6,4). The
+native fixture owns the real ingredients; tests buy two War Axes360 for4000,
+sell them for400, show all four Lotus Armor311 materials at1280x720, verify
+Pilotte's repeated/missing ingredients, preserve both panes' scroll and buy
+quantity across explicit native snapshots, and craft311 using318x8/320x8/
+322x10/Gold250. The native ACK must update the result and consumed bag stacks.
+Also checked at1544x720. `shop_touch_input.gd` explicitly arbitrates native
+screen touches in both panes: a12px drag scrolls with pointer capture and does
+not select a row; release without a drag selects once. Emulated mouse events
+are suppressed within the panes so a swipe cannot change the selected item.
+Physical mouse/wheel/keyboard handling remains native. The first actual
+finger-swipe regression exposed that ItemList was not scrolling from the
+injected native gesture; the explicit handler fixes it, and real touch swipes
+in both columns now pass. Touch capture clears when the modal hides or loses
+focus. Local and public WSS tests pass; sanitized reports:
+docs/shop-v15-{local,public}-report.json. Screenshots were reviewed under
+work/v15-shop*-screenshots. Operator accounts are never used as fixtures.
+Gameplay smoke passes after the common modal draw-order change.
+
+Build version is0.15.0/code15. Package/signing key remain unchanged. Release
+APKs/source/checksums follow the existing outputs naming convention. Keep
+fixture credentials, device logs/saves and original assets private/ignored.
+
+
+Final v0.15 APK installed and launched on Galaxy S23 Ultra with the existing
+signing key. Confirmed version15/0.15.0, installed base.apk SHA256 identical to
+the final touch-scroll build, byte-identical offline save across reinstall,
+valid signature/16KB alignment and no startup script/crash errors. Report:
+docs/shop-v15-phone-report.json. Raw logs and save backups stay ignored under
+work/. Download files use outputs/endless-online-android-v0.15.0.*. No server
+restart or operator account modification was performed for this UI release.

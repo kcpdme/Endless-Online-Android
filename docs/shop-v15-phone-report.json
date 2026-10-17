@@ -1,0 +1,13 @@
+{
+  "result": "passed",
+  "version_name": "0.15.0",
+  "version_code": 15,
+  "device": "Samsung Galaxy S23 Ultra",
+  "installed_and_running": true,
+  "installed_apk_sha256_matches_final_build": true,
+  "startup_script_or_crash_errors": 0,
+  "offline_save_bytes_preserved": true,
+  "apk_signature_verified": true,
+  "apk_16kb_alignment_verified": true,
+  "public_native_buy_sell_four_material_craft_and_touch_swipes_passed": true
+}

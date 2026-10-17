@@ -254,3 +254,17 @@ activation zone with exactly one cast, and normal empty-ground drag/release.
 Do not replace this with direct `map_click` calls: those bypass the regression.
 `--url` and `--fixture-file` support privately prepared hosted dev fixtures.
 NPCs wander, so use live sprite positions, not their static EMF spawn centers.
+
+
+## Shop details and crafting readability (v0.15)
+
+```sh
+python3 server/test_shop_ui.py --godot work/toolchain/godot/Godot_v4.7.2-stable_linux.x86_64 --report docs/shop-v15-local-report.json --screenshots work/v15-shop-screenshots
+```
+
+Uses a fresh dev character with native Marble ingredients. It exercises actual
+buy/sell/craft acknowledgements, all four material-row bounds at1280x720,
+independent native finger swipes (with tap-versus-drag selection), compact prices and preservation of selection/quantity/
+scroll through native snapshots. It also checks duplicated material totals,
+missing/readiness state and1544x720 layout. Use --url and --fixture-file for
+prepared hosted dev fixtures; never use operator accounts or publish that file.

@@ -876,6 +876,8 @@ func _build_ui() -> void:
 
 func _modal(parent: Node, size: Vector2) -> Control:
 	var curtain: ColorRect = ColorRect.new()
+	# Modal cards must cover later-created HUD controls (chat/menu included).
+	curtain.z_index = 10
 	curtain.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	curtain.color = Color(0.02, 0.055, 0.065, 0.72)
 	parent.add_child(curtain)
