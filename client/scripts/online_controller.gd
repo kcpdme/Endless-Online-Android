@@ -214,7 +214,7 @@ func _on_message(message: Dictionary) -> void:
 		if operation == "shop_open": interaction.clear()
 		if operation == "collect": pickup_pending.clear()
 		if operation in ["equip", "unequip"]: pending_equip.clear()
-		if operation == "spell_cast": game.skills_ui.casting.clear()
+		if operation == "spell_cast": game.skills_ui.cancel_cast()
 		if operation in ["item_drop", "item_junk"]:
 			drop_ui.submitting = false
 			drop_ui.refresh()

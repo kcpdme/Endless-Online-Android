@@ -1,5 +1,6 @@
 extends RefCounted
 ## Native known-spell list, touch shortcuts and original GFX024 effect layers.
+const CAST_POSE_MSEC: int = 480 # Original four120ms frames, after the local chant.
 var game: Node
 var panel: Control
 var list: ItemList
@@ -181,17 +182,23 @@ func cast(ident: int, kind: String, target_id: int) -> void:
 	armed = 0
 	var seconds: float = float(info(ident).get("cast_time", 1)) * 0.48
 	casting = {"spell_id": ident, "until": Time.get_ticks_msec() + int(seconds * 1000), "seconds": seconds}
-	if game.online.session.request("spell_cast", {"spell_id": ident, "target_kind": kind, "target_id": target_id}) < 0: casting.clear()
+	ready_at = int(casting.until) + CAST_POSE_MSEC
+	if game.online.session.request("spell_cast", {"spell_id": ident, "target_kind": kind, "target_id": target_id}) < 0: cancel_cast()
 	refresh()
+
+func cancel_cast() -> void:
+	casting.clear()
+	ready_at = 0
+	chants.erase(int(game.online.player.get("player_id", -1)))
 
 func receive(data: Dictionary) -> void:
 	if data.has("casting"):
 		if data.casting == null:
-			if not casting.is_empty(): ready_at = Time.get_ticks_msec() + 600
 			casting.clear()
 		elif casting.is_empty():
 			casting = (data.casting as Dictionary).duplicate()
 			casting["until"] = Time.get_ticks_msec() + int(float(casting.get("seconds", 0.48)) * 1000)
+			ready_at = int(casting.until) + CAST_POSE_MSEC
 	if data.has("skillmaster"): master = data.skillmaster as Dictionary if data.skillmaster is Dictionary else {}
 	refresh()
 
@@ -199,12 +206,13 @@ func refresh() -> void:
 	var active: bool = game.online_mode and game.online.active
 	if not active:
 		armed = 0
-		casting.clear()
+		cancel_cast()
 		chants.clear()
 		effects.clear()
 	var identity: int = int(game.online.player.get("character_id", -1))
 	if identity != character_id:
 		character_id = identity
+		ready_at = 0
 		slots.clear()
 		last_rows = ""
 	var learned: Array = game.online.player.get("spells", []) as Array
@@ -284,7 +292,7 @@ func event(event_data: Dictionary) -> void:
 		if not shout.is_empty(): game.online.chat_bubbles[pid] = {"text": shout, "until": int(chants[pid])}
 		return
 	if kind in ["spell_failed", "spell_cancelled"]:
-		casting.clear()
+		cancel_cast()
 		chants.erase(pid)
 		if kind == "spell_failed": game._toast(str(event_data.get("message", "Cast cancelled")))
 		return

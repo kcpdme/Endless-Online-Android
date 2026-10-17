@@ -29,15 +29,15 @@ def npc_types():
 
 class SkillsMixin:
     def init_skills(self):
-        self.casting=None;self.skillmaster=None;self.spell_ready_at=0.0
+        self.casting=None;self.skillmaster=None
 
     def cast_spell(self,spell_id,target_kind,target_id=0):
         self._mobile_action();spell_id=int(spell_id);target_id=int(target_id)
+        # Native SpellCooldownTime owns recovery; do not add another preparation lock.
         if self.casting:raise EOError('Wait for your skill to finish')
         if not any(s['id']==spell_id for s in getattr(self,'spells',[])):raise EOError('You have not learned this skill')
         spell=spell_definitions().get(spell_id)
         if not spell or spell['type'] not in (0,1):raise EOError('This native skill has no supported effect')
-        if time.monotonic()<getattr(self,'spell_ready_at',0):raise EOError('Your skill is recovering')
         if self.state['self'].get('tp',0)<spell['tp']:raise EOError('Not enough TP')
         target=self.state['self']
         if spell['target']==1 and spell['restrict']==1:
@@ -83,7 +83,6 @@ class SkillsMixin:
             if cast['target_kind']=='self':self.send(12,30,number(1,1)+number(cast['spell_id'],2)+number(release_timestamp,3))
             else:self.send(12,31,number(2 if cast['target_kind']=='npc' else 1,1)+number(1,1)+number(1,2)+number(cast['spell_id'],2)+number(cast['target_id'],2)+number(release_timestamp,3))
             cast['released']=True
-            self.spell_ready_at=now+.6
         elif now>=cast['timeout_at']:
             self.casting=None;self.dirty=True
             self.events.append(dict(kind='spell_failed',message='Cast ended without an effect. The target may have moved, died or become invalid.'))

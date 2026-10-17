@@ -1,0 +1,64 @@
+{
+  "result": "passed",
+  "version": "0.26.1",
+  "version_code": 29,
+  "comparison": {
+    "original_client": "CharacterAnimator.TICKS_PER_CAST_TIME=48 at10ms; four120ms cast poses after local chant",
+    "original_self_heal_cast_time": 1,
+    "original_chant_ms": 480,
+    "native_spell_cooldown_ms": 600,
+    "native_server_modified": false,
+    "native_timer": "0.47*cast_time + SpellCooldownTime(); native recovery remains authoritative"
+  },
+  "baseline_v28": {
+    "result": "passed",
+    "mode": "baseline_v28",
+    "native_spell_cooldown_seconds": 0.6,
+    "first_heal_seconds": 0.5082436520606279,
+    "repeat_heal_intervals": [
+      1.1142233852297068,
+      1.1159356757998466,
+      1.1148293316364288
+    ],
+    "tap_to_heal": [
+      0.5082436520606279,
+      0.5100963674485683,
+      0.5114199984818697,
+      0.5102505888789892
+    ],
+    "operator_accounts_modified": false,
+    "live_world_changed": false
+  },
+  "fixed_v29": {
+    "result": "passed",
+    "mode": "original_local_pose_clock_v29",
+    "native_spell_cooldown_seconds": 0.6,
+    "first_heal_seconds": 0.5069961324334145,
+    "repeat_heal_intervals": [
+      1.0750883463770151,
+      1.0699441265314817,
+      1.065693948417902
+    ],
+    "tap_to_heal": [
+      0.5069961324334145,
+      0.6140321660786867,
+      0.7223603595048189,
+      0.8190426677465439
+    ],
+    "operator_accounts_modified": false,
+    "live_world_changed": false
+  },
+  "client_regressions": {
+    "original480ms_local_pose_recovery": true,
+    "native_ack_does_not_restart_cooldown": true,
+    "late_ack_allows_immediate_next_preparation_after_local_deadline": true,
+    "rejection_cancels_local_recovery": true,
+    "potion_and_skill_preserve_walking": true
+  },
+  "python_state_tests": 54,
+  "notes": [
+    "First heal speed is already near the original500ms including dispatch; the fix removes acknowledgement-dependent input delay.",
+    "Native cooldown limits repeated heal effects to about1.07seconds; no instant healing or fake HP.",
+    "Timing was measured in an isolated native fixture world; mobile network latency is additional."
+  ]
+}

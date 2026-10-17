@@ -22,6 +22,21 @@ class SkillsStateTests(unittest.TestCase):
         self.assertEqual(s.sent[-1][:2],(12,31));r=Reader(s.sent[-1][2]);self.assertEqual(r.num(),2);r.take(3)
         self.assertEqual((r.num(2),r.num(2),r.num(3)),(4,2,start+96))
         self.assertFalse(s.metrics['refreshes']);self.assertEqual(len(s.sent),2)
+    def test_self_heal_original480ms_chant_and_no_second_gateway_cooldown(self):
+        s=setup()
+        with patch('skills.time.monotonic',return_value=100):
+            result=s.cast_spell(1,'self')
+        self.assertEqual(result['seconds'],.48)
+        with patch('skills.time.monotonic',return_value=100.479):s.poll_spells()
+        self.assertEqual(len(s.sent),1,'Never release Self Heal before the original480ms chant')
+        with patch('skills.time.monotonic',return_value=100.48):s.poll_spells()
+        self.assertEqual(s.sent[-1][:2],(12,30))
+        self.assertTrue(s.casting['released'])
+        s.apply_event(12,30,payload((100,2),(1,2),(4,4),(47,1),(14,2),(19,2)))
+        with patch('skills.time.monotonic',return_value=100.50):
+            s.cast_spell(1,'self')
+        self.assertIsNotNone(s.casting,'Native SpellCooldownTime owns recovery; gateway must not reject a valid new preparation')
+
     def test_unknown_tp_target_and_range_refused_before_sending(self):
         s=setup()
         for args in [(5,'npc',2),(1,'npc',2),(4,'npc',99),(4,'player',100)]:

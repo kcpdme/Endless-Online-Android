@@ -1,5 +1,11 @@
 # Validation scope
 
+v0.26.1 checks original480ms Self Heal chant and local480ms cast-pose recovery,
+with no added acknowledgement-time lock. State tests total54; combat_mobile
+covers late ACK/rejection and ongoing walking. Native timing comparison is in
+`heal-v29-timing-report.json`. Native600ms spell cooldown remains unchanged.
+
+
 v0.26 adds moving potion/skill, boss-child despawn, attack-timing and chat-scroll
 regressions. Run `python3 -m unittest discover -s server -p "test_*state.py" -v`
 (53 cases), then Godot `res://tests/combat_mobile.gd`, `movement_timing.gd`,

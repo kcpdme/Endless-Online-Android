@@ -158,3 +158,15 @@ renders the original480ms swing timeline and carries frame overshoot between
 held attacks. Movement remains420ms and does not wait for previous strike RPC
 receipts. Chat history and compact feed support finger dragging and preserve the
 reader's scroll position while incoming messages arrive.
+
+
+### Self Heal timing (v0.26.1)
+
+Original Heal Self uses ESF cast_time1:480ms chant. The client now recovers
+input after the original480ms local cast pose, measured from chant release.
+A native confirmation clears the pending cast without adding a new600ms lock.
+The adapter does not impose a second preparation cooldown. Native
+SpellCastCooldown=600ms and SpellCooldownTime remain unchanged and enforce
+about1.07seconds between repeated heal effects. Isolated first-heal timing was
+about507ms including dispatch; public network delay is additional. HP/TP are
+updated only from native replies. See docs/heal-v29-timing-report.json.

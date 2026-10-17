@@ -16,7 +16,7 @@ Godot 4.7.2, typed GDScript and 2D isometric rendering are sufficient. A Unity/3
 rewrite and a larger server have not been needed for the measured regressions.
 
 Baseline before this update: commit `8c9e541`, APK 0.10.0/code 10. The current
-build is 0.26.0/code 28. See the final v0.21 section for current chat/presence and the v0.20 sections for equipment/HUD/Junk support. v0.12 added level/EXP, Nearby Send closure and
+build is 0.26.1/code 29. See the final v0.21 section for current chat/presence and the v0.20 sections for equipment/HUD/Junk support. v0.12 added level/EXP, Nearby Send closure and
 native consumables; v0.13 adds native skills and touch targeting. v0.11 added native bank/lockers, player inspection and
 trading, local/global/private chat, a dynamic joystick, and the heart/TP HUD,
 as well as placing NPC names near visible heads and fixing observer equipment/
@@ -1555,3 +1555,39 @@ conditions. Other players need0.24.0 for the queue/phase and numeric-ID fixes.
 - APK uses existing signing key/package and version0.26.0/code28. Update with
   adb install -r, never uninstall; reports record save-byte preservation, installed
   APK hash/version and startup errors. Private credentials/saves stay ignored.
+
+
+## v0.26.1 / code29 — original Self Heal timing and input recovery
+
+- User asked to check Self Heal speed against original. ESF1 Heal Self has
+  cast_time1. Original CharacterAnimator.TICKS_PER_CAST_TIME=48 with10ms ticks:
+  chant480ms, followed by four120ms cast-pose frames. FunctionKeyController
+  allows the next shortcut after the local cast pose finishes; it does not start
+  a600ms lock on receiving the native heal confirmation.
+- Our v28 UI incorrectly set ready_at=now+600 when casting:null arrived. This
+  tied input recovery to network/server delay. SkillsController now schedules
+  ready_at at local chant release+480ms, keeps that deadline on ACK, and still
+  waits for the current native cast to finish before allowing another one.
+  cancel_cast resets local recovery on rejection, cancellation, disconnect and
+  failure. Character changes clear the old recovery deadline.
+- Removed adapter spell_ready_at/preparation rejection. Native etheos remains
+  authoritative: Spell_Request schedules0.47*cast_time+SpellCooldownTime(),
+  configured SpellCastCooldown=600ms, based on last native effect time. Starting
+  another preparation early cannot bypass this. Native binary/config were NOT
+  modified or restarted. Do not claim repeat heals are480ms or instant.
+- Isolated native comparison: baseline firstheal508ms, repeat effects about
+  1114–1116ms. Updated original local-pose scheduling: firstheal507ms, repeat
+  effects1066–1075ms. First-heal speed was already correct; the useful fix is
+  responsive input without another600ms after a late ACK. Real mobile network
+  delay is additional; no optimistic HP/TP or item values were introduced.
+- 54 Python state tests pass. New state test enforces no Self Heal release
+  before480ms, validates native acknowledgement, then allows new preparation
+  without a second gateway cooldown. combat_mobile checks original480ms local
+  pose deadline, ACK does not reset it, late ACK immediately releases eligible
+  shortcut and cancellation resets it. Network and movement controls pass.
+  Sanitized evidence docs/heal-v29-timing-report.json.
+- Live deployment updates only skills.py with before/after hash guards, private
+  backup and gateway/WebSocket restart. Native world service, DB, player stats,
+  inventory, cooldown configuration and binary stay unchanged. Ignored scripts:
+  work/hosting/{test_v29_heal*,upgrade_v29,deploy_v29}.py. APK0.26.1/code29 uses
+  the same package/signing key and save-preserving reinstall workflow.

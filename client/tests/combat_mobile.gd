@@ -51,11 +51,25 @@ func _run() -> void:
 	wire.pending.clear()
 	c._process_events([{"kind":"item_used","item_id":375,"remaining":4,"hp_gain":100}])
 	check(not c.pending_item_use,"Native potion ACK must release the shortcut")
+	game.skills_ui.refresh()
 	game.skills_ui.slots.assign([1,0])
 	game.skills_ui.press(0)
 	check(wire.calls.back().op=="spell_cast" and not game.skills_ui.casting.is_empty(),"Self skill must cast while walking with an outstanding walk ACK")
 	check(game.moving and game.stick==Vector2.RIGHT and game.touch_move_id==41,"Skill shortcut must preserve the movement finger")
-	game.skills_ui.casting.clear()
+	var skill_deadline: int=game.skills_ui.ready_at
+	var local_release: int=int(game.skills_ui.casting.until)
+	check(skill_deadline-local_release==480,"Self Heal recovery must be the original four120ms cast poses")
+	# Confirmation may arrive late; it must never start a new600ms button lock.
+	game.skills_ui.receive({"casting":null})
+	check(game.skills_ui.ready_at==skill_deadline and game.skills_ui.casting.is_empty(),"Heal acknowledgement must preserve the local recovery deadline")
+	# When the local pose deadline has passed, a late native ACK allows another tap.
+	game.skills_ui.casting={"spell_id":1,"until":Time.get_ticks_msec()-1000,"seconds":.48}
+	game.skills_ui.ready_at=Time.get_ticks_msec()-1
+	game.skills_ui.receive({"casting":null})
+	game.skills_ui.press(0)
+	check(not game.skills_ui.casting.is_empty() and wire.calls.back().op=="spell_cast","Late confirmation must allow the next Self Heal immediately, without600ms extra")
+	game.skills_ui.cancel_cast()
+	check(game.skills_ui.ready_at==0,"Rejected or cancelled skill must release its local recovery lock")
 	game.skills_ui.chants.clear()
 	game._cancel_controls(true)
 	c.pending_inputs.clear()
