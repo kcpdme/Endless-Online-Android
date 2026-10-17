@@ -12,7 +12,7 @@ var max_tp: float = 1.0
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	size = Vector2(280, 146)
+	size = Vector2(202, 124)
 
 func update_vitals(health: float, health_max: float, mana: float, mana_max: float) -> void:
 	hp = health
@@ -44,6 +44,8 @@ func _shape(center: Vector2, heart: bool, radius: float) -> PackedVector2Array:
 	return points
 
 func _draw() -> void:
+	# Shrink the vessels and their spacing together; keep level/EXP text readable.
+	draw_set_transform(Vector2(2, 0), 0.0, Vector2.ONE * 0.75)
 	for row: int in range(2):
 		for i: int in range(5):
 			var center: Vector2 = Vector2(28 + i * 48, 32 + row * 47)
@@ -69,13 +71,14 @@ func _draw() -> void:
 				else: draw_line(center + Vector2(8, 9), center + Vector2(1, 16), Color(0.55, 0.08, 0.22, 0.45), 2.0, true)
 			draw_polyline(shape, Color("ffc2c3") if heart else Color("a4dcff"), 1.25, true)
 
-	var progress: Rect2 = Rect2(8, 105, 232, 5)
+	draw_set_transform(Vector2.ZERO)
+	var progress: Rect2 = Rect2(8, 82, 174, 4)
 	draw_rect(progress.grow(1), Color(0.02, 0.04, 0.06, 0.8))
 	draw_rect(progress, Color("283d46"))
 	draw_rect(Rect2(progress.position, Vector2(progress.size.x * experience_fraction, progress.size.y)), Color("e8c475"))
 	var font: Font = ThemeDB.fallback_font
-	draw_string_outline(font, Vector2(8, 131), level_label, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, 3, Color(0.02, 0.03, 0.04, 0.8))
-	draw_string(font, Vector2(8, 131), level_label, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("fff0cf"))
-	var exp_x: float = 240.0 - font.get_string_size(exp_label, HORIZONTAL_ALIGNMENT_LEFT, -1, 13).x
-	draw_string_outline(font, Vector2(exp_x, 131), exp_label, HORIZONTAL_ALIGNMENT_LEFT, -1, 13, 3, Color(0.02, 0.03, 0.04, 0.8))
-	draw_string(font, Vector2(exp_x, 131), exp_label, HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("e8c475"))
+	draw_string_outline(font, Vector2(8, 108), level_label, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, 3, Color(0.02, 0.03, 0.04, 0.8))
+	draw_string(font, Vector2(8, 108), level_label, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("fff0cf"))
+	var exp_x: float = 182.0 - font.get_string_size(exp_label, HORIZONTAL_ALIGNMENT_LEFT, -1, 13).x
+	draw_string_outline(font, Vector2(exp_x, 108), exp_label, HORIZONTAL_ALIGNMENT_LEFT, -1, 13, 3, Color(0.02, 0.03, 0.04, 0.8))
+	draw_string(font, Vector2(exp_x, 108), exp_label, HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("e8c475"))

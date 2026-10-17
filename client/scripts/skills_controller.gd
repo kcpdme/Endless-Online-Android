@@ -29,7 +29,7 @@ func build(owner_game: Node, parent: Control) -> void:
 		var slot: int = index
 		var button: Button = preload("res://scripts/hud_icon_button.gd").new() if index == 2 else Button.new()
 		if index == 2: button.set("kind", "skills")
-		button.position = [Vector2(-258, -318), Vector2(-166, -346), Vector2(-258, -96)][index]
+		button.position = [Vector2(-258, -318), Vector2(-166, -346), Vector2(-356, 24)][index]
 		button.size = Vector2(68, 68)
 		button.focus_mode = Control.FOCUS_NONE
 		button.expand_icon = true
@@ -43,7 +43,7 @@ func build(owner_game: Node, parent: Control) -> void:
 			button.add_theme_stylebox_override(state, style)
 		button.pressed.connect(func() -> void: press(slot))
 		parent.add_child(button)
-		button.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT, true)
+		button.set_anchors_preset(Control.PRESET_TOP_RIGHT if index == 2 else Control.PRESET_BOTTOM_RIGHT, true)
 		buttons.append(button)
 		if index < 2:
 			var cost: Label = game._label(button, "", Vector2(0, 50), 11, game.TEXT)

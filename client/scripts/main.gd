@@ -906,7 +906,7 @@ func _build_ui() -> void:
 	bottom_hint.set_anchors_preset(Control.PRESET_BOTTOM_LEFT, true)
 	bag_button = HudIconButton.new()
 	bag_button.kind = "bag"
-	bag_button.position = Vector2(-104, -96)
+	bag_button.position = Vector2(-262, -100)
 	bag_button.size = Vector2(76, 76)
 	bag_button.tooltip_text = "Inventory bag"
 	bag_button.pressed.connect(_toggle_inventory)

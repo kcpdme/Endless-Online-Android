@@ -16,7 +16,7 @@ Godot 4.7.2, typed GDScript and 2D isometric rendering are sufficient. A Unity/3
 rewrite and a larger server have not been needed for the measured regressions.
 
 Baseline before this update: commit `8c9e541`, APK 0.10.0/code 10. The current
-build is 0.20.0/code 20. See the final v0.20 section for current equipment/HUD/Junk support. v0.12 added level/EXP, Nearby Send closure and
+build is 0.20.1/code 21. See the final v0.20 section for current equipment/HUD/Junk support. v0.12 added level/EXP, Nearby Send closure and
 native consumables; v0.13 adds native skills and touch targeting. v0.11 added native bank/lockers, player inspection and
 trading, local/global/private chat, a dynamic joystick, and the heart/TP HUD,
 as well as placing NPC names near visible heads and fixing observer equipment/
@@ -1131,3 +1131,23 @@ SHA256 matches the download build, code20/name0.20.0 verified, signature and
 errors. Report: `docs/gameplay-v20-phone-report.json`. Release files use
 `outputs/endless-online-android-v0.20.0*`. Wireless ADB was reconnected using its
 mDNS endpoint after Godot export restarted the daemon; use the current SDK adb.
+
+
+## v0.20.1 / code21 — compact vitals and HUD placement
+
+Small client-only layout update: the bag is centered on the former Skills book
+location at bottom-right offset(-262,-100), size76. The Skills book (index2 in
+skills_controller.buttons; two spell shortcuts remain index0/1) is anchored
+TOP_RIGHT at(-356,24), directly left of Chat at(-266,24). Retain the conditional
+top anchor when changing shortcut layout; applying the bottom anchor moves it
+off-screen. Hearts and TP orbs, including their spacing/highlights, are drawn at
+75% of the previous size. EXP width is174 and text stays at original font sizes,
+with progress/text moved up to suit the shorter vitals. No native server update
+or operator data mutation is needed. Visual QA: ignored work/v21-hud-preview.png
+at1544×720. Gameplay/world smoke and signed Android build validate the update.
+APK version0.20.1/code21 uses the same package and signing key.
+
+Installed and launched v0.20.1 on Galaxy S23 Ultra; final base.apk SHA256,
+version21/0.20.1, signature/16KiB alignment, byte-identical offline save and no
+startup script/crash errors verified. Report: docs/gameplay-v21-phone-report.json.
+Downloads use outputs/endless-online-android-v0.20.1*.
