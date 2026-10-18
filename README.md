@@ -19,6 +19,14 @@ The offline exploration mode remains available alongside hosted online play. It 
 
 ## Play online
 
+Version **0.33** adds an original-style minimap below the hearts: tap its header
+to collapse or reopen it. Orange marks you, green other players, red monsters,
+purple other NPCs and blue interactive tiles. It follows the current map and
+player position. Timed spikes now raise for one second on the native trigger;
+trap spikes appear when occupied. The Hall of Pain approach chest now has
+visible artwork at its existing solid tile. Chest tile specs always block
+client movement, including when cached collision metadata is incomplete.
+
 Version **0.32** makes both Ice Blast skills cast on a shortcut tap, without
 selecting an opponent. Each cast affects up to five monsters in a **5×5 area
 centered on you** (two tiles in each direction), with one TP charge and the

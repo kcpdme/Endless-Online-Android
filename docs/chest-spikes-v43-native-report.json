@@ -1,0 +1,44 @@
+{
+  "turtle_four_sides": [
+    {
+      "origin": [
+        56,
+        84
+      ],
+      "native_walk_blocked": true,
+      "native_chest_open_ack": true
+    },
+    {
+      "origin": [
+        56,
+        82
+      ],
+      "native_walk_blocked": true,
+      "native_chest_open_ack": true
+    },
+    {
+      "origin": [
+        57,
+        83
+      ],
+      "native_walk_blocked": true,
+      "native_chest_open_ack": true
+    },
+    {
+      "origin": [
+        55,
+        83
+      ],
+      "native_walk_blocked": true,
+      "native_chest_open_ack": true
+    }
+  ],
+  "two_tiles_away_denied": true,
+  "native_take_gold_into_bag": 7,
+  "invisible_approach_chest_is_real_empty_chest": true,
+  "native_timed_spike_packets": 2,
+  "result": "passed",
+  "native_map_modified": false,
+  "operator_accounts_used": false,
+  "scope": "Disposable private runtime; normal native Walk packets and actual Chest acknowledgements"
+}

@@ -1,0 +1,7 @@
+{
+  "result": "passed",
+  "public_wss_tls_verified": true,
+  "dev_fixture_login_welcome_stream": true,
+  "operator_accounts_used": false,
+  "production_character_or_inventory_edits": false
+}

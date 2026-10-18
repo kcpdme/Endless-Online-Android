@@ -204,6 +204,8 @@ def main():
     with zipfile.ZipFile(args.sample_data) as sample,zipfile.ZipFile(args.client_zip) as client:
         map_member=f'sample-data/maps/{args.map:05}.emf'
         world=parse_emf(read_member(sample,map_member),args.map)
+        from map_visuals import restore_chest_art
+        restore_chest_art(world)
         world['spawn']=safe_spawn(world)
         manifest={'schema_version':1,'graphics':{},'characters':{},'layer_gfx':LAYER_GFX,
           'source':{'map_archive':args.sample_data.name,'map_member':map_member,

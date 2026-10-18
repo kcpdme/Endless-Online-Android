@@ -33,7 +33,7 @@ func _run() -> void:
 	game.inventory.hide()
 	assert(game.load_map(4) and int(game.world.id) == 4 and not game.decorations.is_empty(), "Neighboring map geometry and decorations load")
 	assert(game.load_map(5) and int(game.world.id) == 5, "Aeven geometry reloads without old collision/decorations")
-	assert(game.get_viewport_rect().size.x > 1280 and game.attack_button.global_position.x > 1300, "Wide screen expands the world and anchors the attack control at its edge")
+	assert(game.get_viewport_rect().size.x > 1280 and game.attack_button.global_position.x > game.get_viewport_rect().size.x - 400 and game.attack_button.get_global_rect().end.x <= game.get_viewport_rect().size.x, "Wide screen expands the world and keeps the shifted attack control reachable inside its edge")
 	assert(game.bag_button.global_position.x > 1200, "Inventory control follows the wide-screen edge")
 	game.started = false
 	game.queue_free()

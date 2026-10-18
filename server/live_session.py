@@ -179,7 +179,9 @@ class LiveSession(RewardsMixin, SkillsMixin, ConsumablesMixin, InnsMixin, Quests
             npc=next((n for n in self.state['npcs'] if n['index']==event['npc_index']),{})
             if npc:event.update(npc_id=npc['id'],x=npc['x'],y=npc['y'],npc_direction=npc.get('direction',0))
         r=Reader(p)
-        if f==45:
+        if (f,a)==(31,21) and p==b'S':
+            event.update(kind='timed_spikes');self.dirty=True
+        elif f==45:
             from arena_events import decode_arena
             arena=decode_arena(a,p)
             if arena:self.events[-1].update(arena);self.dirty=True

@@ -33,7 +33,10 @@ var textures: Dictionary = {}
 var ground: Dictionary = {}
 var blocked: Dictionary = {}
 var server_blocked: Dictionary = {}
+var tile_specs: Dictionary = {}
+var timed_spikes_until: int = 0
 var decorations: Array[Dictionary] = []
+var minimap: Control
 var route: Array[Vector2i] = []
 var hero: Dictionary = {}
 var monster: Dictionary = {}
@@ -219,6 +222,8 @@ func _configure_world(data: Dictionary) -> void:
 	ground.clear()
 	blocked.clear()
 	server_blocked.clear()
+	tile_specs.clear()
+	timed_spikes_until = 0
 	decorations.clear()
 	route.clear()
 	waypoint = Vector2i(-1, -1)
@@ -226,6 +231,14 @@ func _configure_world(data: Dictionary) -> void:
 		blocked[Vector2i(int(cell[0]), int(cell[1]))] = true
 	for cell: Array in world.get("server_blocked", world.get("blocked", [])):
 		server_blocked[Vector2i(int(cell[0]), int(cell[1]))] = true
+	for spec: Dictionary in world.get("tile_specs", []):
+		var tile: Vector2i = Vector2i(int(spec.x), int(spec.y))
+		tile_specs[tile] = int(spec.spec)
+		# A chest's native tile spec is solid even if cached collision metadata
+		# is incomplete. Artwork and touch bounds never define walkability.
+		if int(spec.spec) == 9:
+			blocked[tile] = true
+			server_blocked[tile] = true
 	var layers: Dictionary = world.get("layers", {}) as Dictionary
 	for entry: Dictionary in layers.get("ground", []):
 		ground[Vector2i(int(entry.x), int(entry.y))] = int(entry.id)
@@ -533,6 +546,9 @@ func _input(event: InputEvent) -> void:
 	# Own native controls suppress their separately generated mouse events, including
 	# HUD presses that open a modal. A release can never become a second action.
 	if event is InputEventMouseButton and event.device == InputEvent.DEVICE_ID_EMULATION:
+		if started and not _modal_open() and minimap != null and minimap.contains(event.position):
+			get_viewport().set_input_as_handled()
+			return
 		var native_control: bool = started and not _modal_open() and ((skills_ui != null and skills_ui.contains(event.position) >= 0) or (quick_items != null and quick_items.contains(event.position) >= 0) or attack_button.contains_point(event.position) or bag_button.contains_point(event.position) or sit_button.contains_point(event.position) or chat_button.contains_point(event.position) or character_button.contains_point(event.position) or joystick.contains_point(event.position) or (online_mode and (skills_ui.armed > 0 or not online.map_entity_target(_screen_to_world(event.position)).is_empty())) or (online_mode and online.loot_button.visible and online.loot_button.get_global_rect().has_point(event.position)))
 		# Godot may synthesize the mouse press before delivering its native touch.
 		if dismissing_modal or native_control or not owned_touches.is_empty():
@@ -563,6 +579,11 @@ func _input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		return
 	if not started or _modal_open(): return
+	if (event is InputEventScreenTouch or event is InputEventMouseButton) and event.pressed and minimap != null and minimap.contains(event.position):
+		if event is InputEventScreenTouch: owned_touches[event.index] = true
+		minimap.press(event.position)
+		get_viewport().set_input_as_handled()
+		return
 	if event is InputEventScreenTouch and event.pressed:
 		var item_slot: int = quick_items.contains(event.position) if quick_items != null else -1
 		if item_slot >= 0:
@@ -840,6 +861,7 @@ func _draw_diamond(center: Vector2, color: Color) -> void:
 	draw_polyline(points, color, 1.4, true)
 
 func _draw_decoration(entry: Dictionary) -> void:
+	if not _decoration_visible(entry): return
 	var texture: Texture2D = _graphic(int(entry.gfx), int(entry.id))
 	if texture == null: return
 	var at: Vector2 = tile_position(entry.tile)
@@ -858,6 +880,28 @@ func _draw_decoration(entry: Dictionary) -> void:
 		offset = Vector2(-56.0, -28.0)
 		color.a = 0.20
 	draw_texture_rect_region(texture, Rect2(at + offset, size), Rect2(Vector2(frame_index * size.x, 0), size), color)
+
+func _decoration_visible(entry: Dictionary) -> bool:
+	if str(entry.layer) != "objects": return true
+	var tile: Vector2i = entry.tile as Vector2i
+	match int(tile_specs.get(tile, -1)):
+		34: # Original timed spikes are raised for one second after native Effect_Report.
+			return Time.get_ticks_msec() < timed_spikes_until
+		36: # Trap spikes follow the occupied tile, including a walking destination.
+			if started and player_tile == tile: return true
+			if online_mode:
+				for peer: Dictionary in online.players:
+					if Vector2i(int(peer.x), int(peer.y)) == tile: return true
+			return false
+	return true
+
+func map_effect_event(event: Dictionary) -> void:
+	var kind: String = str(event.get("kind", ""))
+	if kind == "map_transition": timed_spikes_until = 0
+	elif kind == "timed_spikes": timed_spikes_until = Time.get_ticks_msec() + 1000
+	elif kind == "player_damage" and str(event.get("source", "")) == "spike":
+		var tile: Vector2i = Vector2i(int(online.player.get("x", -1)), int(online.player.get("y", -1)))
+		if int(tile_specs.get(tile, -1)) == 34: timed_spikes_until = Time.get_ticks_msec() + 1000
 
 func _frame(character: Dictionary, direction: String, state: String, phase: float = -1.0) -> Dictionary:
 	if state in ["sit_chair", "sit_floor"] and str(character.get("component", "")).begins_with("weapon"): return {}
@@ -1027,6 +1071,9 @@ func _build_ui() -> void:
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	ui.add_child(root)
+	minimap = preload("res://scripts/minimap.gd").new()
+	minimap.game = self
+	root.add_child(minimap)
 	var header: Panel = _panel(root, Vector2(24, 22), Vector2(340, 78))
 	_label(header, "ASTER VALE", Vector2(20, 10), 25, GOLD)
 	location_label = _label(header, "Aeven  /  The first steps", Vector2(20, 44), 16, MUTED)

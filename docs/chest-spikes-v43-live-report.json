@@ -1,0 +1,10 @@
+{
+  "checks": 15,
+  "native_map_modified": false,
+  "native_timed_spikes": true,
+  "operator_accounts_used": false,
+  "restored_approach_chest": true,
+  "result": "passed",
+  "touch_open_and_deposit_take": true,
+  "turtle_collision": true
+}

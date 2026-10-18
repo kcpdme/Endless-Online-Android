@@ -13,6 +13,7 @@ import zipfile
 from collections import OrderedDict
 from PIL import ImageOps
 from import_eo import Reader, decode_number, parse_emf, PEBitmaps, read_member, write_json, LAYER_GFX, export_hero
+from map_visuals import restore_chest_art
 
 
 def pub_records(data,signature,size,names=1):
@@ -133,6 +134,7 @@ def export_catalog(runtime:Path,graphics_zip:Path,out:Path,map_id=5):
     (out/'maps').mkdir(exist_ok=True)
     for path in sorted(maps_dir.glob('[0-9][0-9][0-9][0-9][0-9].emf')):
         world=parse_emf(path.read_bytes(),int(path.stem))
+        restore_chest_art(world)
         world['relog']=list(world['spawn'])
         world['spawn_semantics']='Legacy relog coordinates only; online position comes from server snapshots.'
         world['server_blocked']=[[e['x'],e['y']] for e in world['tile_specs'] if e['spec'] in SERVER_BLOCKING_SPECS]
@@ -186,6 +188,8 @@ def export_catalog(runtime:Path,graphics_zip:Path,out:Path,map_id=5):
                     manifest['characters']['hero_variants'][key]=export_hero(out,image,armor_on,boots_on,4 if weapon_on else 0,key)
         manifest['characters']['hero']=manifest['characters']['hero_variants']['a1_b1_w0']
         map_references={}
+        from export_minimap import add_atlas
+        add_atlas(image(2,45),out,manifest)
         for world in worlds.values():
             for layer,entries in world['layers'].items():
                 for entry in entries:

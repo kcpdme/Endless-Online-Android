@@ -628,6 +628,7 @@ func _start_step(tile: Vector2i, direction: String) -> void:
 	game.moving = true
 
 func _reset_movement() -> void:
+	game.timed_spikes_until = 0
 	pending_item_use = false
 	pending_potion_requests.clear()
 	pending_face = ""
@@ -1450,6 +1451,7 @@ func _process_events(events: Array) -> void:
 		var event: Dictionary = raw as Dictionary
 		game.skills_ui.event(event)
 		var kind: String = str(event.get("kind", event.get("type", event.get("event", ""))))
+		game.map_effect_event(event)
 		_action_sound(event, kind)
 		if kind.begins_with("arena_"):
 			game._toast(str(event.get("message", "")))
@@ -1552,6 +1554,12 @@ func _process_events(events: Array) -> void:
 
 func _action_sound(event: Dictionary, kind: String) -> void:
 	if game.sfx == null: return
+	if kind == "timed_spikes":
+		for spec: Dictionary in game.world.get("tile_specs", []):
+			if int(spec.spec) == 34 and game._distance(game.player_tile, Vector2i(int(spec.x), int(spec.y))) <= 6:
+				game.sfx.play_named("Spikes", "map_spikes")
+				break
+		return
 	if kind == "peer_attack":
 		if int(event.get("player_id", -1)) == int(player.get("player_id", -2)): return
 		for peer: Dictionary in players:

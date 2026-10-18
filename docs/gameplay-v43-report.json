@@ -1,0 +1,16 @@
+{
+  "result": "passed",
+  "version": "0.33.0",
+  "version_code": 43,
+  "server_state_tests": 102,
+  "tool_tests": 37,
+  "client_regression_suites": 11,
+  "chest_spikes_checks": 21,
+  "minimap_checks": 23,
+  "native_ui_checks": 15,
+  "apk_sha256": "a6113cd4764625c050addb90bdf9c43f1ba6090822d2ae8311619946bb558a4a",
+  "signature_verified": true,
+  "alignment_16k_verified": true,
+  "packaged_chest_art_and_minimap_verified": true,
+  "native_world_maps_inventory_unchanged": true
+}

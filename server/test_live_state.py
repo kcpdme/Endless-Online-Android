@@ -18,6 +18,16 @@ def fixture():
     return s
 
 class StreamStateTests(unittest.TestCase):
+    def test_timed_spikes_push_without_unrelated_world_activity(self):
+        s=fixture()
+        s.apply_event(31,21,b'S')
+        self.assertEqual(s.events[-1]['kind'],'timed_spikes')
+        self.assertTrue(s.dirty)
+        for payload in (b'',b'X',b'SS'):
+            s.dirty=False;s.apply_event(31,21,payload)
+            self.assertNotEqual(s.events[-1].get('kind'),'timed_spikes')
+            self.assertFalse(s.dirty)
+
     def test_boss_children_despawn_by_type_not_spawn_index(self):
         s=fixture();s.state['npcs']=[dict(id=256,index=1,x=40,y=41),dict(id=256,index=2,x=40,y=42),dict(id=99,index=256,x=41,y=40)]
         s.apply_event(26,25,number(256,2))

@@ -1,0 +1,9 @@
+{
+  "result": "passed",
+  "backup": "/opt/aster-vale/backups/v43-map-visuals-20261018T143222Z",
+  "source_sha256": "9a55482aaa3b134c50dec2a9bd7e09a1f3ef97d5c9b189243b623ff0025b3a67",
+  "native_world_restarted": false,
+  "native_binary_map_config_unchanged": true,
+  "database_not_edited": true,
+  "adapter_restart_only": true
+}

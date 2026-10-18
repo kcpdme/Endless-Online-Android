@@ -16,7 +16,7 @@ Godot 4.7.2, typed GDScript and 2D isometric rendering are sufficient. A Unity/3
 rewrite and a larger server have not been needed for the measured regressions.
 
 Baseline before this update: commit `8c9e541`, APK 0.10.0/code 10. The current
-build is 0.32.0/code 42. See the final v0.32 section for Fairy Soda drunk
+build is 0.33.0/code 43. See the final v0.33 section for the minimap, missing chest art and spike visuals; see v0.32 for Fairy Soda drunk
 effects and native Ice Blast area damage; v0.31 covers character creation,
 starter inventory and latched auto attack. See the final v0.21 section for current chat/presence and the v0.20 sections for equipment/HUD/Junk support. v0.12 added level/EXP, Nearby Send closure and
 native consumables; v0.13 adds native skills and touch targeting. v0.11 added native bank/lockers, player inspection and
@@ -2387,3 +2387,72 @@ conditions. Other players need0.24.0 for the queue/phase and numeric-ID fixes.
   remain under ignored work/. All11 patches also apply to a clean pinned source.
   Reports: gameplay-v42-report.json, drinks-area-v42-{native,kills,ui-live,
   deployment}-report.json. Private fixtures/logs/screenshots remain ignored.
+
+
+## v0.33.0 / code43 — original minimap, chest artwork and spike visuals
+
+- User reported permanent raised spikes, walking through the Turtle chest,
+  invisible chest on its approach, and missing Android minimap. Original local
+  reference: MiniMapRenderer.cs, MapObjectLayerRenderer.cs, TimedSpikeEffectHandler.cs,
+  MapDebuffHandler.cs; pinned native Map::Walk / Chest_Open / TimedSpikes.
+- Hall of Pain136 underneath Grocery Storage249: Turtle Costume chest is56,83,
+  surrounded by four timed spike34 tiles. Live EMF is byte-identical to supplied
+  sample archive (SHA61843ebb8c4ec86ba9ef431a624b04bea62e7d44d058ae9f31916ffd075fb14e).
+  Actual Android scene and native normal Walk blocked entry from ALL4 sides
+  before the change too. Could not reproduce a native walk-through. Do not claim
+  the production server was letting players walk through that chest.
+- Added explicit chest-spec collision in _configure_world for online/offline:
+  even incomplete/stale blocked/server_blocked arrays cannot make a native
+  chest walkable. Original coordinates/range remain. Actual GUI repeatedly
+  tries to walk into56,83, then touches it, waits for native Open ACK, deposits
+  and takes owned fixture Gold through actual buttons. Distant2tile open denied.
+- Confirmed real invisible chest136(7,55): native spec9 solid/openable, no Objects
+  graphic in supplied EMF. tools/map_visuals.py restores original graphic247 at
+  that SAME tile in generated client geometry. Export_catalog/import_eo apply
+  it reproducibly and idempotently. Loot, specs, warps, NPCs and native EMF are
+  untouched. This is an explicit artwork repair, not a relocated chest.
+- Original spike visuals: timed34 hidden until native Effect31/Report21 raw'S',
+  then raised1000ms; self spike damage on34 also pulses (native sends damage
+  INSTEAD of Report to the player standing on timed spikes). Trap36 only draws
+  when self/nearby player occupies its tile, including walking destination.
+  Static35 remains visible. Clear on map change/disconnect. New native event
+  is dirty/streamed immediately even with no other world activity. Existing
+  native damage/cap/death remain unchanged. Original sound when within6tiles.
+- Missing minimap was unimplemented. tools/export_minimap.py exports original
+  GFX2:45 (243x14, nine cells); full export_catalog includes it too. New
+  minimap.gd shows nearby isometric grid below vitals, following player/map.
+  Original colors: self orange, other players green, combat NPCs red, others
+  purple, interactive tiles blue, walls gray; MapEdge void hidden. Only visible
+  server entities appear. Default expanded; tap header collapses to Map+.
+  Preference in separate minimap_settings.cfg, never player save. Plot/header
+  own touches and suppress emulated duplicate mouse actions; no walking or
+  skill targeting from minimap touches. Hides for modals/title. Safe at1280x720
+  and1544x720, clear of joystick activation and combat controls.
+- Validation:102 server state tests;37 tool tests;11 existing/new actual-scene
+  Godot suites passed (gameplay/world, movement/controls, combat, chest, v41
+  controls/creator, v42 drinks/AoE, audio/bubbles). New chest/spikes21 checks;
+  minimap23. Updated stale world_smoke fixed x>1300 threshold to a relative
+  reachable-edge assertion: v41 had already shifted the attack cluster72px.
+- Private native tests/runtime work/v43-map-runtime-2; fresh dev fixture only,
+  no human login/staging. Actual rendered native UI15checks and screenshots
+  work/v43-rendered verify raised/retracted spikes, touch chest Open, native
+  deposit/take, restored approach chest and minimap. Each run resets HP ONLY
+  on that disposable fixture; otherwise timed spikes can kill it mid-test.
+- Adapter-only deployment backup:
+  /opt/aster-vale/backups/v43-map-visuals-20261018T143222Z.
+  Only live_session.py changed; only gateway restarted. Native world binary,
+  config, map136 and production DB untouched. Public TLS WSS dev-fixture
+  login/Welcome/stream passed. No RAM/timeout setting changes.
+- Previous Skylar logout investigation: account lastused matched19:37:05IST
+  Oct18; host~1.1GB available, three game units~53MiB, no OOM/limit events,
+  no service restarts since intentionalv42deploy. Public140s connection test
+  survived native heartbeat cycles. Exact individual disconnect reason absent
+  from existing logs; DO NOT call a network timeout a confirmed cause.
+
+- APK0.33.0/code43 built and verified: SHA256
+  a6113cd4764625c050addb90bdf9c43f1ba6090822d2ae8311619946bb558a4a.
+  Original minimap atlas and restored136(7,55) chest are confirmed packaged.
+  Signature/16KB alignment pass. Phone mDNS appeared at192.168.1.8:34527,
+  then disappeared/refused connection before installation started. Do not claim
+  code43 installed until install/verify scripts succeed. Existing raw save must
+  be backed up and compared byte-for-byte; never uninstall.
