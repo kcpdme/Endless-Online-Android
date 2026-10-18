@@ -4,6 +4,7 @@ builds/*
 !builds/.gitkeep
 client/export_presets.cfg
 client/.godot/
+client/android/
 *.keystore
 *.log
 __pycache__/

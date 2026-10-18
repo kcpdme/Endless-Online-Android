@@ -8,6 +8,11 @@ This public repository contains source code, content import tools, build scripts
 
 After importing content and building, install `builds/aster-vale-debug.apk` on an Android device (Android 7 / API 24 or later). This development build includes ARM64 and x86_64. Open **Aster Vale**, choose **Play online** to join the persistent shared world, or **Explore offline** for local practice. The build is signed with a development key, not configured for Google Play release.
 
+The current Android package is **`com.cloudgameboy.astervale`**, version 0.33.1
+(code 44). It installs separately from the earlier `io.astervale.prototype` app;
+online accounts remain on the same server. Release APK and AAB exports use the
+same private release signing key.
+
 The offline exploration mode remains available alongside hosted online play. It includes the imported 87×87 Aeven map, animated character, collision and pathfinding, a floating circular touch joystick, a training slime, attacks, loot, a separate wooden bag and original EO equipment paperdoll, sound effects and saved local progress. Character appearances are composed from the original layers during import and selected when equipment changes. The blade changes attack damage; the starter outfit and boots provide appearance changes in this slice.
 
 - Drag in the enlarged lower-left area to use the translucent circular joystick. Releasing it clears queued movement; online play finishes the current committed tile. The pointer stays captured outside the circle. Tap clear ground elsewhere to walk to a destination.
@@ -89,6 +94,20 @@ python3 scripts/build.py web
 python3 scripts/build.py linux
 python3 scripts/build.py check
 ```
+
+For signed release files, supply a private signing JSON containing `path`
+(keystore), `alias` and `password`. Keep that file and the keystore outside Git.
+The default location is `<toolchain>/release-signing.json`:
+
+```sh
+python3 scripts/build.py android --release --toolchain work/toolchain
+python3 scripts/build.py android-aab --toolchain work/toolchain
+```
+
+Outputs are `builds/aster-vale-release.apk` and `builds/aster-vale-release.aab`.
+The AAB build installs the pinned official Godot Android source template and
+uses Gradle. `--signing-config /private/path/signing.json` selects another
+existing signing configuration. Reuse the same key for future updates.
 
 Use `--toolchain /path/to/cache` to reuse another cache and `--sdk /path/to/Android/Sdk` to select the SDK. `client/export_presets.cfg` is generated for the local toolchain. Nothing is uploaded or published by these commands.
 

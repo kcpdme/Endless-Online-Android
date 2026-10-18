@@ -11,7 +11,7 @@ VERSION = '4.7.2-stable'
 ENGINE = f'Godot_v{VERSION}_linux.x86_64.zip'
 TEMPLATES = f'Godot_v{VERSION}_export_templates.tpz'
 BASE = f'https://github.com/godotengine/godot/releases/download/{VERSION}/'
-WANTED = {'android_debug.apk', 'android_release.apk', 'web_debug.zip',
+WANTED = {'android_debug.apk', 'android_release.apk', 'android_source.zip', 'web_debug.zip',
           'web_release.zip', 'web_nothreads_debug.zip', 'web_nothreads_release.zip',
           'linux_debug.x86_64', 'linux_release.x86_64', 'version.txt'}
 

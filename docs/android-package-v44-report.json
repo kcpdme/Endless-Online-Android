@@ -1,0 +1,22 @@
+{
+  "result": "passed",
+  "package": "com.cloudgameboy.astervale",
+  "version": "0.33.1",
+  "version_code": 44,
+  "release_non_debuggable": true,
+  "apk_signature_valid": true,
+  "aab_signature_valid": true,
+  "same_signing_certificate": true,
+  "signing_certificate_sha256": "fbf80de525cf74dbedbcb1ae73899c6fe9a55ea9661b31e93637f074d7e979ed",
+  "aab_bundletool_validation": true,
+  "aab_generates_signed_universal_apk": true,
+  "apk_and_generated_apk_16k_aligned": true,
+  "abis": [
+    "arm64-v8a",
+    "x86_64"
+  ],
+  "identical_game_content_files": 10202,
+  "apk_sha256": "32a6cc43bdb25d8b7b82d69fc5728cc4d718c7d11ef930c52081543c30c9419f",
+  "aab_sha256": "245a9e1fc1ca8927b36c3d5ca1cf5388f64c54ceb88b20b5518192bba67361a4",
+  "server_changes": false
+}

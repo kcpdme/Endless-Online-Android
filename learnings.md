@@ -11,12 +11,15 @@ The user is building their **own game and server**, inspired by classic Endless
 Online, with original-style maps, movement, equipment, inventory, combat and
 shops adapted for Android. This is not a client for somebody else's public EO
 server. The project is called **Endless Online Android** on GitHub; the app's
-current working title/package are **Aster Vale** / `io.astervale.prototype`.
+current working title/package are **Aster Vale** / `com.cloudgameboy.astervale`.
+The previous debug package was `io.astervale.prototype`; retain it when
+recovering legacy phone saves. The current package is a separate Android app.
 Godot 4.7.2, typed GDScript and 2D isometric rendering are sufficient. A Unity/3D
 rewrite and a larger server have not been needed for the measured regressions.
 
 Baseline before this update: commit `8c9e541`, APK 0.10.0/code 10. The current
-build is 0.33.0/code 43. See the final v0.33 section for the minimap, missing chest art and spike visuals; see v0.32 for Fairy Soda drunk
+build is 0.33.1/code 44. See the final v0.33.1 section for release APK/AAB
+packaging and the package ID change. See the final v0.33 section for the minimap, missing chest art and spike visuals; see v0.32 for Fairy Soda drunk
 effects and native Ice Blast area damage; v0.31 covers character creation,
 starter inventory and latched auto attack. See the final v0.21 section for current chat/presence and the v0.20 sections for equipment/HUD/Junk support. v0.12 added level/EXP, Nearby Send closure and
 native consumables; v0.13 adds native skills and touch targeting. v0.11 added native bank/lockers, player inspection and
@@ -2471,3 +2474,53 @@ conditions. Other players need0.24.0 for the queue/phase and numeric-ID fixes.
   evidence docs/gameplay-v43-phone-report.json. Private save and logs remain
   ignored mode0600. First adapter deployment and installed APK remain valid;
   no native map repair or world restart was needed for the original portal.
+
+
+## v0.33.1 / code44 — com.cloudgameboy.astervale, signed APK and AAB
+
+- User requested the exact package ID com.cloudgameboy.astervale plus APK/AAB.
+  scripts/build.py now owns the package/version constants, supports android
+  --release and android-aab, and generates matching Android/Android Bundle
+  presets. Generated Gradle project client/android/ stays ignored. Android
+  Bundle installs the official build template only when absent, preserving
+  any existing Gradle customizations on subsequent exports.
+- Package changes Android identity: new app installs beside legacy
+  io.astervale.prototype, never as an in-place upgrade. Online accounts still
+  use the same hosted native server. No server/account/character edits or
+  deployments. No phone installation requested for this delivery.
+- New dedicated non-debug RSA3072 upload key for the NEW package is held in
+  ignored work/toolchain/cloudgameboy-astervale-upload.keystore, with private
+  configuration work/toolchain/release-signing.json (path, alias, password),
+  both mode0600. Keep and back up privately for future updates; NEVER regenerate
+  it or commit credentials. Old debug key remains separate and untouched.
+  Release builds inject GODOT_ANDROID_KEYSTORE_RELEASE_{PATH,USER,PASSWORD}.
+  Build logs are private mode0600, and error summaries redact passwords.
+- Do not print full Gradle process arguments: Godot passes signing passwords
+  as Gradle project properties. Initial generated password was rotated after
+  a diagnostic exposed it; the certificate/key itself stayed identical.
+- Original cached Godot4.7.2 export template TPZ SHA512 verified. Extracted its
+  official android_source.zip (214418211bytes); bootstrap now includes it in
+  the verified extraction list. Uses Gradle8.11.1, AGP8.6.1, Java17, API36,
+  build-tools36.1.0 and original prebuilt release AAR/native libraries.
+- Godot appends signed JAR metadata at the end of AAB. Added deterministic
+  manifest-first ordering without changing any signed entry bytes, resolving
+  JarInputStream versus JarFile verification warnings. Normal jarsigner
+  verification passes. APK signing v2/v3 and16KiB ZIP alignment pass.
+- Bundletool1.18.3 downloaded from official Google GitHub release, upstream
+  digest matched SHA256 a099cfa1543f55593bc2ed16a70a7c67fe54b1747bb7301f37fdfd6d91028e29.
+  Verification covers both manifests/package/version/non-debuggable status,
+  matching signing certificates, matching arm64-v8a/x86_64 release native
+  libraries, and matching original game content in APK assets versus AAB's
+  install-time asset pack. AAB conversion to signed APK also checked.
+- Current release signing certificate SHA256:
+  fbf80de525cf74dbedbcb1ae73899c6fe9a55ea9661b31e93637f074d7e979ed.
+  This certificate is public, not a password. Old debug-phone run-as/save
+  commands above are HISTORICAL: release apps are not debuggable and adb
+  run-as cannot read their private files. Never uninstall either app as a fix.
+
+- Final outputs: outputs/aster-vale-v0.33.1.{apk,aab}, matching SHA256SUMS.
+  APK SHA25632a6cc43bdb25d8b7b82d69fc5728cc4d718c7d11ef930c52081543c30c9419f;
+  AAB SHA256245a9e1fc1ca8927b36c3d5ca1cf5388f64c54ceb88b20b5518192bba67361a4.
+  Sanitized verification report docs/android-package-v44-report.json. Both
+  release certificates match;10,202 content files and native libraries match;
+  bundletool generated signed universal APK also passes16KiB alignment.
