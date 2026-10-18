@@ -2428,7 +2428,7 @@ conditions. Other players need0.24.0 for the queue/phase and numeric-ID fixes.
   own touches and suppress emulated duplicate mouse actions; no walking or
   skill targeting from minimap touches. Hides for modals/title. Safe at1280x720
   and1544x720, clear of joystick activation and combat controls.
-- Validation:102 server state tests;37 tool tests;11 existing/new actual-scene
+- Validation:102 server state tests;38 tool tests;11 existing/new actual-scene
   Godot suites passed (gameplay/world, movement/controls, combat, chest, v41
   controls/creator, v42 drinks/AoE, audio/bubbles). New chest/spikes21 checks;
   minimap23. Updated stale world_smoke fixed x>1300 threshold to a relative
@@ -2456,3 +2456,18 @@ conditions. Other players need0.24.0 for the queue/phase and numeric-ID fixes.
   then disappeared/refused connection before installation started. Do not claim
   code43 installed until install/verify scripts succeed. Existing raw save must
   be backed up and compared byte-for-byte; never uninstall.
+
+- IMPORTANT image follow-up: gold chest artwork GFX4:250 at136(7,46) is an
+  ORIGINAL WALKABLE PORTAL, with native warp ->136(7,84), and no loot rows.
+  Do not move chest spec7,55 onto it or block it: doing so breaks progression.
+  A disposable native normal-walk probe confirmed the warp. The rendered
+  screenshot shows that portal at the upper right and the restored EMPTY
+  storage chest7,55 beside the fixture. Turtle loot chest56,83 is elsewhere.
+  Its slot0 pool includes Turtle201/Panda202/Cook449/450; Gold100 has slot1.
+  Added an explicit regression preserving the gold portal and its destination.
+- Phone installation completed after reconnecting at192.168.1.8:38403:
+  code43 /0.33.0 installed, final APK hash matches, raw offline save bytes
+  identical, app launched with no startup script/crash errors. Public sanitized
+  evidence docs/gameplay-v43-phone-report.json. Private save and logs remain
+  ignored mode0600. First adapter deployment and installed APK remain valid;
+  no native map repair or world restart was needed for the original portal.

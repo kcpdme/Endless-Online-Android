@@ -33,6 +33,16 @@ class ChestVisualTests(unittest.TestCase):
         world=dict(id=53);restore_chest_art(world)
         self.assertEqual(world,dict(id=53))
 
+    def test_golden_chest_art_is_an_original_walkable_portal_not_a_loot_chest(self):
+        world=parse_emf((ROOT/'work/server-build/runtime/data/maps/00136.emf').read_bytes(),136)
+        restore_chest_art(world)
+        self.assertIn(dict(x=7,y=46,id=250),world['layers']['objects'])
+        self.assertFalse(any((s['x'],s['y'],s['spec'])==(7,46,9) for s in world['tile_specs']))
+        portal=next(w for w in world['warps'] if (w['x'],w['y'])==(7,46))
+        self.assertEqual((portal['map'],portal['destination']),(136,[7,84]))
+        self.assertNotIn([7,46],world['blocked'])
+        self.assertFalse(any((c['x'],c['y'])==(7,46) for c in world['chests']))
+
     def test_minimap_atlas_is_the_original_nine_cell_resource(self):
         with zipfile.ZipFile(ROOT/'work/eoserv-crawl/downloads/EOzipped028.zip') as archive:
             original=PEBitmaps(read_member(archive,'gfx/gfx002.egf')).image(45)

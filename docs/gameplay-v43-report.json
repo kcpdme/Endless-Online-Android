@@ -3,7 +3,7 @@
   "version": "0.33.0",
   "version_code": 43,
   "server_state_tests": 102,
-  "tool_tests": 37,
+  "tool_tests": 38,
   "client_regression_suites": 11,
   "chest_spikes_checks": 21,
   "minimap_checks": 23,
