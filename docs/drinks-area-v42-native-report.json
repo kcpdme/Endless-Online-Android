@@ -1,0 +1,25 @@
+{
+  "14": {
+    "native_hits": 5,
+    "nearest_five": true,
+    "corner_included": true,
+    "sixth_boundary_and_outside_and_service_npc_untouched": true,
+    "tp_charged_once": true,
+    "observer_received_all_hits_and_area": true
+  },
+  "21": {
+    "native_hits": 5,
+    "nearest_five": true,
+    "corner_included": true,
+    "sixth_boundary_and_outside_and_service_npc_untouched": true,
+    "tp_charged_once": true,
+    "observer_received_all_hits_and_area": true
+  },
+  "fairy_soda_native_consumption_original_duration_and_peer_emote": true,
+  "drunk_chat_native_receiver_matches_local_echo": true,
+  "expiry_restores_normal_chat": true,
+  "empty_cast_finishes_once_with_no_damage": true,
+  "result": "passed",
+  "operator_accounts_used": false,
+  "private_map_and_rat_hp_only": true
+}

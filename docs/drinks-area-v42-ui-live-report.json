@@ -1,0 +1,13 @@
+{
+  "actual_bag_use": true,
+  "both_ice_blast_shortcuts_cast_without_selection": true,
+  "caster_and_observer_original_effects_and_area": true,
+  "checks": 25,
+  "hazy_speech_visible": true,
+  "native_drunk_emote_received_and_rendered_by_observer": true,
+  "native_five_targets_tp_once": true,
+  "native_quantity_decrements_once": true,
+  "operator_accounts_used": false,
+  "result": "passed",
+  "slurred_chat_same_for_sender_and_receiver": true
+}

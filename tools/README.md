@@ -125,3 +125,18 @@ art, quests and map spawns. `server/setup.py` also applies it to fresh runtimes.
 For an existing server, stop and back up the world first, run
 `server/configure_npc_combat.py --runtime <runtime>`, then restart both native
 world and gateway so their PUB caches agree. Rebuild Android after export.
+
+### Fairy Soda emote graphics
+
+After the base/catalog import, export the original GFX002 resource38 sheet:
+
+```sh
+python3 tools/export_drinks.py --archive reference/gfx.zip
+```
+
+This preserves existing artwork/music/catalog bindings and adds the original
+15 emote sets × 4 frames (50×50 each), with drunk at set10. The renderer uses
+240ms per frame. Source EGF hash is recorded in `manifest.drinks`. Re-run this
+export after a base importer resets the manifest. The original chat corruption
+rules come from pinned EndlessClient `EOLib/Domain/Chat/ChatProcessor.MakeDrunk`;
+Fairy Soda's potency comes from the native EIF union at offsets32–34.

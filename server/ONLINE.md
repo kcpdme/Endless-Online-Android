@@ -193,3 +193,30 @@ Kill packets with private EXP appendages generate exp_gain from the authoritativ
 new total minus the previous total. Both melee and spell kills support it;
 observers without that suffix do not gain EXP. Boss damage and rounded native HP
 percentages are drawn above the visible head and above other scenery.
+
+## Fairy Soda and Ice Blast area extension (v0.32)
+
+Small/Big Fairysoda (210/211, native Beer22) consume one bottle through native
+Item_Use/Reply. Only a confirmed quantity decrement starts the drunk timer.
+Duration is the original `(100 + potency*10)/8` seconds:25s /137.5s. The adapter
+sends native Emote9/Report21 value11 immediately and every4–6s, decodes peer
+Emote9/Player8 and forwards it. The original drunk chat slurring, vowel-star and
+`*hic*` rules apply to outgoing chat; command text and whisper targets are kept
+intact. Text remains bounded to128 Latin-1 bytes. The temporary effect ends on
+expiry or session disconnect; it does not heal HP/TP or alter character saves.
+
+Both original Ice Blast definitions14/21 accept `spell_cast` with
+`target_kind="area"`, no opponent ID. Preparation and the original480ms chant
+remain native Spell12/Request1 and release12/TargetSelf30. The patched native
+Character::SpellAct routes these damage spells into Map::SpellAreaAttack.
+It chooses at most5 closest live combat NPCs in the centered5×5 square
+(abs(dx)<=2 and abs(dy)<=2), ordered by squared distance then NPC index. Players
+and noncombat service NPCs are excluded. Targets are chosen at release, so the
+area follows the caster's current native tile. Damage, hit chance, training,
+EXP, loot and quest kills still use normal native NPC::Damage/Map::SpellAttack.
+TP is deducted once, including an empty cast. No PUB damage or TP costs change.
+
+Native extension family231/action3 confirms casterPID2/spellID2/x1/y1/TP2/hits1
+(9bytes). It broadcasts area visuals and ends empty casts. Only the caster
+adopts its TP. Original family44 per-target damage/death packets remain intact.
+The client shows the5×5 frost pulse and original hit effects on each target.

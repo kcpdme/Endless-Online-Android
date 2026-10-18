@@ -46,6 +46,10 @@ func sync() -> void:
 			label.add_theme_font_size_override("font_size", 20)
 			label.add_theme_constant_override("line_spacing", 0)
 			label.add_theme_color_override("font_color", Color("2c2218"))
+			var haze: Label = label.duplicate() as Label
+			haze.name = "Haze"
+			haze.add_theme_color_override("font_color", Color(0.25, 0.20, 0.12, 0.22))
+			panel.add_child(haze)
 			panel.add_child(label)
 			add_child(panel)
 			bubbles[key] = panel
@@ -70,6 +74,15 @@ func sync() -> void:
 		panel.position = anchor - Vector2(panel.size.x / 2, panel.size.y + 9)
 		panel.position.x = clampf(panel.position.x, 8, maxf(8, size.x - panel.size.x - 8))
 		panel.position.y = maxf(8, panel.position.y)
+		var haze: Label = panel.get_node("Haze") as Label
+		haze.visible = bool(data.get("drunk", false)) and game.drink_effects.drunk()
+		label.position = Vector2(11, 7)
+		if haze.visible:
+			var phase: float = float(now) / 300.0
+			haze.text = message
+			haze.size = label.size
+			haze.position = label.position + Vector2(2.0 + sin(phase) * 1.5, cos(phase * 0.7))
+			label.position.y += sin(phase * 0.8) * 0.8
 	queue_redraw()
 
 func _draw() -> void:

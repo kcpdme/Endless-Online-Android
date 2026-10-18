@@ -16,8 +16,9 @@ Godot 4.7.2, typed GDScript and 2D isometric rendering are sufficient. A Unity/3
 rewrite and a larger server have not been needed for the measured regressions.
 
 Baseline before this update: commit `8c9e541`, APK 0.10.0/code 10. The current
-build is 0.31.0/code 41. See the final v0.31 section for online-first creation,
-starter inventory, spell grants and latched auto attack. See the final v0.21 section for current chat/presence and the v0.20 sections for equipment/HUD/Junk support. v0.12 added level/EXP, Nearby Send closure and
+build is 0.32.0/code 42. See the final v0.32 section for Fairy Soda drunk
+effects and native Ice Blast area damage; v0.31 covers character creation,
+starter inventory and latched auto attack. See the final v0.21 section for current chat/presence and the v0.20 sections for equipment/HUD/Junk support. v0.12 added level/EXP, Nearby Send closure and
 native consumables; v0.13 adds native skills and touch targeting. v0.11 added native bank/lockers, player inspection and
 trading, local/global/private chat, a dynamic joystick, and the heart/TP HUD,
 as well as placing NPC names near visible heads and fixing observer equipment/
@@ -2306,3 +2307,83 @@ conditions. Other players need0.24.0 for the queue/phase and numeric-ID fixes.
   Reports: docs/gameplay-v41-report.json, starters-v41-{native,public-ui,
   deployment}-report.json. Source ZIP must come from final committed HEAD and
   exclude ignored assets/secrets. APK is the local user's development delivery.
+
+
+## v0.32.0 / code 42 — Fairy Soda drunk feedback and native Ice Blast area damage
+
+- User requested Fairy Soda drinking feedback, including drunk emote, starred /
+  hazy words, plus untargeted Ice Blast affecting up to5 enemies in a5×5 area.
+  Follow explicit5×5 footprint: +/-2 tiles on each axis, corners included, not
+  radius5/11×11. Both original named Ice Blast definitions14/21 now use it.
+- Pinned original source InventoryController/ItemReplyHandler/PeriodicEmoteHandler
+  confirms Fairy Soda is Beer22 with cosmetic drunkenness, not HP/TP recovery.
+  Native Item_Use already consumes it; missing client emote/chat effects made
+  it look ineffective. Small210 potency10 lasts25s, Big211 potency100 lasts137.5s,
+  using original(100+potency*10)/8. Extract potency from native EIF32..34.
+- Confirmed native ItemReply quantity decrement starts session-local drunk state.
+  No optimistic drinking or HP/TP changes. poll_drunk sends original Emote9/21
+  value11 immediately/every4–6s; owner echo and peer9/8 decode create player_emote
+  events. Expiry restores ordinary chat. Disconnect clears client cosmetic state.
+- server/drunk_chat.py ports original EOLib/Domain/Chat/ChatProcessor.MakeDrunk:
+  vowel+j/w/u insertion and doubled letters,1-in12 vowel*,30% space*hic*,128char
+  cap. Bound insertion work defensively; Latin-1 cap128 bytes. Gateway applies
+  it before native Talk so owner echo and receiver see identical text. Preserve
+  admin command text and whisper target identity. Drafts/passwords are unaffected.
+- export_drinks.py extracts original gfx002/38 from supplied gfx.zip into ignored
+  content. Sheet3000×50 has15sets×4frames; drunk set10,240ms/frame. DrinkEffects
+  renders the original overhead emote, receives native timer/events, and clears
+  on disconnect. Speech bubbles add a faint drifting ghost Label only for the
+  drinker's starred/slurred speech while drunk; normal layout and input remain.
+  This subtle haze is the user's requested adaptation; no new artwork invented.
+- client SkillsController sends Ice Blast14/21 immediately as target_kind area
+  with no armed opponent selection, as Heal Self does. Existing480ms chant,
+  cast pose, TP/learned checks and movement support remain. Book details now
+  explain up to5 monsters in centered5×5 square.
+- etheos-ice-blast-area.patch adds native Map::SpellAreaAttack through TargetSelf.
+  Select native alive ENF Passive/Aggressive only, within abs(dx/y)<=2, sort by
+  squared distance then index, cap5. Exclude players and service NPCs. Read caster
+  tile at actual release. Hold indices and re-resolve each NPC: earlier boss
+  kills can delete children. Native SpellAttack accepts an internal consume_tp
+  flag; area deducts once, per-target native damage/formulas/training/crit/hit,
+  NPC death/loot/EXP/quest pipeline is reused. PUB/TP/damage definitions unchanged.
+- Native family231/action3 area completion: PID2/spell2/x1/y1/TP2/hits1. Broadcast
+  to nearby peers including caster; only caster adopts TP. Standard family44
+  hit/death packets stay unchanged. Empty casts cost once and finish with hits0.
+  Floor frost pulse covers25tiles; original ice FX remain on all actual targets,
+  original sound once per area cast. Empty areas still show a central effect.
+- Validation:101 server state tests (9 new),34 content/tool tests,18 actual GUI
+  tests,25 real two-client Godot/native GUI checks in headless and rendered modes.
+  Existing gameplay, movement, combat,196 v41 controls/creation and102 audio/bubble
+  regressions pass. Network assertions pass with the known immediate-exit2audio
+  resource warning. Original bitmap/music/catalog checks pass.
+- PRIVATE native fixtures use copies of all map/PUB files, disposable accounts
+  only. Fixed Rat spawns at center/edges/corners/outside + protected Shop Bob15
+  prove closest5, cap5, corner included, outsiders/service NPC untouched, TPonce,
+  observer all5 hits+area, both14/21, and empty-cast completion. Separate PRIVATE
+  RatHP1 + guaranteed-hit formula fixture proves5 kills/250EXP at10×, TPonce and
+  all5 peer deaths; these test changes are restored and NEVER deployed. Note
+  NPC indices are ZERO-based; NPC1 is Crow, not Shop Bob. Do not mistake a test
+  selecting a combat Crow for a friendly-NPC protection failure.
+- Actual native bag Use consumes one210 and starts original drunk timer. Both
+  clients receive/render emote; transmitted slur matches owner echo; expiry
+  restores normal text. Actual native GUI shortcut taps require no selection,
+  hit5, chargeTPonce and show original caster/observer effects. Rendered images
+  under ignored work/v42-rendered were reviewed.
+- Production backup /opt/aster-vale/backups/v42-drinks-area-20261018T134254Z.
+  Native before a584e038f7c91f7f66d437f481b8dc124e0b840e4cb293b182f36c57184f1ef9,
+  after335b04c4f6659c02f7c14b4d0903ceec9d1cc839e18d33cf5aeb7e096e191669.
+  Reviewed adapter hashes guarded; backed up stopped world SQLite/binary/config/
+  code, installed native +skills/services/consumables/live_session/drunk_chat,
+  restarted all3 services. Database byte-identical before restart, no character
+  edits/grants; config/password salt/rates/maps/PUB untouched. Public HTTPS and
+  WSS native handshake / unauthenticated area-cast guard pass. Canonical LOCAL
+  runtime binary updated with ignored backup; no local DB edits.
+- APK0.32.0/code42 signed/aligned, SHA256 a60733328904e5d66fd829769f7784cd0119c979e583ba203078d5fdff64f34c.
+  Installed and launched on Galaxy S23 Ultra after user re-enabled wireless ADB.
+  Current endpoint192.168.1.8:38225 (plain mDNS suffix, transport8); prior43601
+  was unreachable. Existing offline save preserved byte for byte, installed
+  base.apk hash/code42/name0.32.0 match final export, no startup errors. Physical
+  device evidence: docs/gameplay-v42-phone-report.json; private save/log/screenshot
+  remain under ignored work/. All11 patches also apply to a clean pinned source.
+  Reports: gameplay-v42-report.json, drinks-area-v42-{native,kills,ui-live,
+  deployment}-report.json. Private fixtures/logs/screenshots remain ignored.

@@ -1,0 +1,104 @@
+--- a/src/fwd/packet.hpp
++++ b/src/fwd/packet.hpp
+@@ -63,6 +63,7 @@
+ 	PACKET_QUEST = 50,
+ 	PACKET_BOOK = 51,
+ 	PACKET_REDEEM = 230, // Aster Vale durable account rewards
++	PACKET_AREA = 231, // Aster Vale native area spell completion
+ 	PACKET_F_INIT = 255
+ };
+ 
+--- a/src/map.hpp
++++ b/src/map.hpp
+@@ -283,7 +283,8 @@
+ 		void CloseDoor(unsigned char x, unsigned char y);
+ 
+ 		void SpellSelf(Character *from, unsigned short spell_id);
+-		void SpellAttack(Character *from, NPC *victim, unsigned short spell_id);
++		void SpellAttack(Character *from, NPC *victim, unsigned short spell_id, bool consume_tp = true);
++		void SpellAreaAttack(Character *from, unsigned short spell_id);
+ 		void SpellAttackPK(Character *from, Character *victim, unsigned short spell_id);
+ 		void SpellGroup(Character *from, unsigned short spell_id);
+ 
+--- a/src/character.cpp
++++ b/src/character.cpp
+@@ -968,6 +968,11 @@
+ 	switch (spell_target)
+ 	{
+ 		case TargetSelf:
++			if ((spell_id == 14 || spell_id == 21) && spell.type == ESF::Damage)
++			{
++				this->map->SpellAreaAttack(this, spell_id);
++				break;
++			}
+ 			if (spell.target_restrict != ESF::Friendly || spell.target != ESF::Self)
+ 				return;
+ 
+--- a/src/map.cpp
++++ b/src/map.cpp
+@@ -1970,19 +1970,62 @@
+ 	from->Send(builder);
+ }
+ 
+-void Map::SpellAttack(Character *from, NPC *npc, unsigned short spell_id)
++void Map::SpellAreaAttack(Character *from, unsigned short spell_id)
++{
++	const ESF_Data& spell = from->world->esf->Get(spell_id);
++	if ((spell_id != 14 && spell_id != 21) || !spell || spell.type != ESF::Damage
++	 || !from->CanInteractCombat() || from->hp <= 0 || from->tp < spell.tp)
++		return;
++
++	// A 5x5 square centered on the caster, chosen from native live NPCs.
++	// Keep indices, not pointers: Damage can delete temporary NPCs on death.
++	std::vector<std::pair<int, unsigned char>> candidates;
++	UTIL_FOREACH(this->npcs, npc)
++	{
++		int dx = int(npc->x) - int(from->x), dy = int(npc->y) - int(from->y);
++		if (npc->alive && (npc->ENF().type == ENF::Passive || npc->ENF().type == ENF::Aggressive)
++		 && std::abs(dx) <= 2 && std::abs(dy) <= 2)
++			candidates.push_back(std::make_pair(dx * dx + dy * dy, npc->index));
++	}
++	std::sort(candidates.begin(), candidates.end());
++	if (candidates.size() > 5) candidates.resize(5);
++
++	from->tp -= spell.tp; // Exactly one native cost, including an empty area.
++	unsigned char hits = 0;
++	for (const auto& candidate : candidates)
++	{
++		NPC *npc = this->GetNPCIndex(candidate.second);
++		if (!npc || !npc->alive) continue;
++		this->SpellAttack(from, npc, spell_id, false);
++		++hits;
++	}
++
++	// Explicit completion also ends empty casts. Standard damage/kill packets
++	// still own every hit, drop, EXP reward and quest kill-credit update.
++	PacketBuilder result(PACKET_AREA, PACKET_REPLY, 9);
++	result.AddShort(from->PlayerID());
++	result.AddShort(spell_id);
++	result.AddChar(from->x);
++	result.AddChar(from->y);
++	result.AddShort(from->tp);
++	result.AddChar(hits);
++	UTIL_FOREACH(this->characters, character)
++		if (character == from || from->InRange(character)) character->Send(result);
++}
++
++void Map::SpellAttack(Character *from, NPC *npc, unsigned short spell_id, bool consume_tp)
+ {
+ 	if (!from->CanInteractCombat())
+ 		return;
+ 
+ 	const ESF_Data& spell = from->world->esf->Get(spell_id);
+ 
+-	if (!spell || spell.type != ESF::Damage || from->tp < spell.tp)
++	if (!spell || spell.type != ESF::Damage || (consume_tp && from->tp < spell.tp))
+ 		return;
+ 
+ 	if ((npc->ENF().type == ENF::Passive || npc->ENF().type == ENF::Aggressive) && npc->alive)
+ 	{
+-		from->tp -= spell.tp;
++		if (consume_tp) from->tp -= spell.tp;
+ 
+ 		int amount = util::rand(from->mindam + spell.mindam + from->SpellLevel(spell_id), from->maxdam + spell.maxdam + from->SpellLevel(spell_id));
+ 		double rand = util::rand(0.0, 1.0);

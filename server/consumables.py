@@ -1,5 +1,6 @@
 """Original Item_Use / Item_Reply packets; quantities and effects are native-owned."""
 import time
+import random
 from eo_session import EOError, Reader, number
 from eo_stats import ATTRIBUTES, DERIVED, update
 from services import item_definitions, runtime_path
@@ -91,6 +92,15 @@ class ConsumablesMixin:
         if kind==3:
             self.finish_potion(item_id);event['consumed']=consumed
             event['hp_gain']=r.num(4);values.update(hp=r.num(2),tp=r.num(2))
+        elif kind==22:
+            event['consumed']=consumed
+            if consumed:
+                potency=item_definitions().get(item_id,{}).get('beer_potency',0)
+                seconds=(100+potency*10)/8.0
+                self.drunk_until=time.monotonic()+seconds
+                self.drunk_emote_at=0
+                event.update(drunk_seconds=seconds,beer_potency=potency)
+                self.poll_drunk()
         elif kind==24:
             color=r.num();self.state['self']['haircolor']=color;event['haircolor']=color
         elif kind==23:event['effect_id']=r.num(2)
@@ -107,3 +117,15 @@ class ConsumablesMixin:
             if level:values['level']=level;event['level_up']=level
             for key in ('stat_points','skill_points','max_hp','max_tp','max_sp'):values[key]=r.num(2)
         update(self,values);self.events.append(event);self.dirty=True
+
+    def poll_drunk(self):
+        until=getattr(self,'drunk_until',0)
+        if not until:return
+        now=time.monotonic()
+        if now>=until:
+            self.drunk_until=0
+            self.events.append(dict(kind='drunk_ended',player_id=self.player_id));self.dirty=True
+        elif now>=getattr(self,'drunk_emote_at',0):
+            self.drunk_emote_at=now+random.randint(4,6)
+            self.send(9,21,number(11,1))
+            self.events.append(dict(kind='player_emote',player_id=self.player_id,emote=11));self.dirty=True

@@ -1,0 +1,31 @@
+{
+  "result": "passed",
+  "backup": "/opt/aster-vale/backups/v42-drinks-area-20261018T134254Z",
+  "native_before_sha256": "a584e038f7c91f7f66d437f481b8dc124e0b840e4cb293b182f36c57184f1ef9",
+  "native_after_sha256": "335b04c4f6659c02f7c14b4d0903ceec9d1cc839e18d33cf5aeb7e096e191669",
+  "source_hashes": {
+    "skills.py": {
+      "before": "e77a8785a1ba412d89654c18e132a5f1f8667151ab75bebaef34edd8176eebba",
+      "after": "431d8c0b6463b1f3ca715475bde6778908d0d7380cb636e1623f1c8697e0e6c2"
+    },
+    "services.py": {
+      "before": "7d1bbdcb7602580671d3d4d6df9fd6c430feab0881852065521ed178e055cfb5",
+      "after": "4cacd6ea8c16d5f09b6f52c0079434ca9faf42b18b45b01550e6eb3d02cecb22"
+    },
+    "consumables.py": {
+      "before": "e34ea8690405872b99c29081dad146b96e9bb36c99853c58d9839dc11beeac80",
+      "after": "41e09cf25904316249d1ea4fbf10405f180aadd48599fe325b50f4ece8bf7dd7"
+    },
+    "live_session.py": {
+      "before": "2a62b751020e4c663680dcea608d29cf83231a6d2e70b6bee9bb528fc8401fb9",
+      "after": "7985f29e207697392d3bf3f4d33ffda85747bb39ed62b879375e506feb4055c8"
+    },
+    "drunk_chat.py": {
+      "before": null,
+      "after": "d5d42f4b6f3a9b94dfdcd425a696e4153798d3ce21260bd5733c8c4d04a3eedf"
+    }
+  },
+  "database_not_edited": true,
+  "config_password_salt_and_rates_unchanged": true,
+  "all_player_inventory_spells_progress_preserved": true
+}

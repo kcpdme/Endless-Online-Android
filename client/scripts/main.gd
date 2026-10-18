@@ -103,6 +103,7 @@ var quest_hint: Label
 var quest_label: Label
 var chat_ui: RefCounted
 var chat_button: Button
+var drink_effects: RefCounted
 var skills_ui: RefCounted
 var services_ui: RefCounted
 var coin_label: Label
@@ -794,6 +795,7 @@ func _draw() -> void:
 					draw_texture_rect_region(texture, Rect2(position - Vector2(32, 16), Vector2(frame_width, texture.get_height())), Rect2(Vector2(frame_index * frame_width, 0), Vector2(frame_width, texture.get_height())))
 	if started and waypoint.x >= 0 and not route.is_empty():
 		_draw_diamond(tile_position(waypoint), Color(0.92, 0.75, 0.44, 0.6))
+	if online_mode: skills_ui.draw_area()
 	var entities: Array[Dictionary] = []
 	for decoration: Dictionary in decorations:
 		var at: Vector2 = tile_position(decoration.tile)
@@ -829,7 +831,9 @@ func _draw() -> void:
 		draw_string_outline(font, origin, caption, HORIZONTAL_ALIGNMENT_LEFT, -1, 18, 3, Color.BLACK)
 		draw_string(font, origin, caption, HORIZONTAL_ALIGNMENT_LEFT, -1, 18, color)
 	# Spell shouts draw above world/combat; speech has its own HUD overlay.
-	if online_mode: online.draw_chat_bubbles()
+	if online_mode:
+		online.draw_chat_bubbles()
+		drink_effects.draw()
 
 func _draw_diamond(center: Vector2, color: Color) -> void:
 	var points: PackedVector2Array = PackedVector2Array([center + Vector2(0, -15), center + Vector2(30, 0), center + Vector2(0, 15), center + Vector2(-30, 0), center + Vector2(0, -15)])
@@ -1103,6 +1107,8 @@ func _build_ui() -> void:
 	_build_inventory(root)
 	shop_ui = ShopWindow.new()
 	shop_ui.build(self, root)
+	drink_effects = preload("res://scripts/drink_effects.gd").new()
+	drink_effects.game = self
 	skills_ui = preload("res://scripts/skills_controller.gd").new()
 	skills_ui.build(self, root)
 	quick_items = preload("res://scripts/quick_items.gd").new()

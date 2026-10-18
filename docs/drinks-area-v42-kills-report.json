@@ -1,0 +1,11 @@
+{
+  "result": "passed",
+  "native_kills": 5,
+  "native_exp_gain": 250,
+  "tp_cost": 1,
+  "observer_received_five_deaths": true,
+  "unselected_and_service_npcs_alive": true,
+  "native_drop_and_quest_kill_pipeline_reused": true,
+  "private_rat_hp_fixture_only": true,
+  "private_guaranteed_hit_formula_fixture_only": true
+}

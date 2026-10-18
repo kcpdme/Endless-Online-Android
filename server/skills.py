@@ -27,6 +27,9 @@ def npc_types():
         r.take(r.num());f=r.take(39);result[ident]=Reader(f[7:9]).num(2)
     return result
 
+ICE_BLAST_IDS = frozenset((14, 21))
+AREA_FAMILY = 231
+
 class SkillsMixin:
     def init_skills(self):
         self.casting=None;self.skillmaster=None
@@ -40,7 +43,10 @@ class SkillsMixin:
         if not spell or spell['type'] not in (0,1):raise EOError('This native skill has no supported effect')
         if self.state['self'].get('tp',0)<spell['tp']:raise EOError('Not enough TP')
         target=self.state['self']
-        if spell['target']==1 and spell['restrict']==1:
+        if spell_id in ICE_BLAST_IDS:
+            if target_kind not in ('area','self'):raise EOError('Ice Blast casts around you; no opponent selection is needed')
+            target_kind='area';target_id=0
+        elif spell['target']==1 and spell['restrict']==1:
             if target_kind!='self':raise EOError('This skill targets yourself')
             target_id=self.player_id
         elif spell['target']==0 and target_kind=='npc' and spell['restrict']!=1:
@@ -89,7 +95,7 @@ class SkillsMixin:
             ticks=spell_definitions()[cast['spell_id']]['cast_time']*48
             release_timestamp=cast['timestamp']+ticks
             self.timestamp=max(self.timestamp,release_timestamp)
-            if cast['target_kind']=='self':self.send(12,30,number(1,1)+number(cast['spell_id'],2)+number(release_timestamp,3))
+            if cast['target_kind'] in ('self','area'):self.send(12,30,number(1,1)+number(cast['spell_id'],2)+number(release_timestamp,3))
             else:self.send(12,31,number(2 if cast['target_kind']=='npc' else 1,1)+number(1,1)+number(1,2)+number(cast['spell_id'],2)+number(cast['target_id'],2)+number(release_timestamp,3))
             cast['released']=True
         elif now>=cast['timeout_at']:
@@ -131,7 +137,13 @@ class SkillsMixin:
 
     def apply_skill_packet(self,f,a,p):
         r=Reader(p);event=self.events[-1];values={}
-        if (f,a)==(12,1):
+        if (f,a)==(AREA_FAMILY,3):
+            pid=r.num(2);ident=r.num(2);x=r.num();y=r.num();tp=r.num(2);hits=r.num()
+            if ident not in ICE_BLAST_IDS or hits>5 or r.rest():raise EOError('Invalid native area spell acknowledgement')
+            event.update(kind='spell_area',player_id=pid,spell_id=ident,x=x,y=y,targets=hits,width=5,height=5)
+            if pid==self.player_id:
+                values['tp']=tp;self.casting=None;event['own_cast']=True
+        elif (f,a)==(12,1):
             pid=r.num(2);ident=r.num(2);spell=spell_definitions().get(ident,{})
             event.update(kind='spell_chant',player_id=pid,spell_id=ident,seconds=spell.get('cast_time',1)*.48)
         elif f==44 and a in (3,2,16):

@@ -1,0 +1,66 @@
+{
+  "result": "passed",
+  "version": "0.32.0",
+  "version_code": 42,
+  "apk_sha256": "a60733328904e5d66fd829769f7784cd0119c979e583ba203078d5fdff64f34c",
+  "apk_signature_verified": true,
+  "alignment_16k_verified": true,
+  "python_state_tests": 101,
+  "content_tools_tests": 34,
+  "new_actual_gui_checks": 18,
+  "actual_native_two_client_gui_checks": 25,
+  "regressions": {
+    "gameplay_smoke": {
+      "exit": 0,
+      "errors": [],
+      "pass": [
+        "GAMEPLAY SMOKE PASS: content, joystick pointer/drag/release, multitouch, modal/focus cancellation, corner collision, movement, combat, loot, paperdoll equipment, save/load, reset"
+      ]
+    },
+    "movement_controls": {
+      "exit": 0,
+      "errors": [],
+      "pass": [
+        "MOVEMENT CONTROLS PASS: WASD/arrows physical+logical, newest held key, release/focus/typing, digital four-way stick, diagonal tolerance/dead zone/reversal, NPC overlap, armed skill priority, captured outside drag, modal protection"
+      ]
+    },
+    "combat_mobile": {
+      "exit": 0,
+      "errors": [],
+      "pass": [
+        "MOBILE COMBAT PASS: potion/skill during walking, native ACK only, despawn cleanup, held attack mean=0.52121212121212s, touch chat history and preserved scroll"
+      ]
+    },
+    "controls_creation_v41": {
+      "exit": 0,
+      "errors": [],
+      "pass": [
+        "CONTROLS CREATION V41 PASS: 196 checks"
+      ]
+    },
+    "audio_bubbles_v37": {
+      "exit": 0,
+      "errors": [],
+      "pass": [
+        "AUDIO BUBBLES V37 PASS: 102 checks"
+      ]
+    },
+    "network_regressions": {
+      "exit": 0,
+      "errors": [
+        "ERROR: 2 resources still in use at exit (run with --verbose for details)."
+      ],
+      "pass": [
+        "NETWORK REGRESSIONS PASS: committed-tile release, visual/server alignment, deferred loot intent"
+      ]
+    }
+  },
+  "native_both_ice_blasts_five_targets_tp_once": true,
+  "native_five_kills_250_exp_private_fixture": true,
+  "original_drunk_emote_slur_stars_hiccups_and_expiry": true,
+  "rendered_original_emote_chat_and_frost_area_reviewed": true,
+  "production_tls_native_handshake_and_auth_guard": true,
+  "phone_installation": "passed",
+  "clean_pinned_eleven_native_patches_apply": true,
+  "phone_report": "docs/gameplay-v42-phone-report.json"
+}

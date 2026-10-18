@@ -391,6 +391,7 @@ func _create_character() -> void:
 	session.request("create_character", fields)
 
 func _enter_world(data: Dictionary) -> void:
+	game.drink_effects.clear()
 	game.chat_ui.clear()
 	if not game.online_mode:
 		offline_state = {}
@@ -512,6 +513,7 @@ func _apply_snapshot(data: Dictionary, entering: bool = false) -> void:
 	game._refresh_ui()
 	game.shop_ui.refresh()
 	if data.has("trade"): trade = data.trade as Dictionary if data.trade is Dictionary else {}
+	game.drink_effects.receive(player)
 	game.skills_ui.receive(data)
 	game.quest_ui.receive(data)
 	game.inn_ui.receive(data)
@@ -718,6 +720,7 @@ func _facing(value: Variant) -> String:
 	return ["south", "west", "north", "east"][clampi(int(value), 0, 3)]
 
 func _on_closed(reason: String) -> void:
+	game.drink_effects.clear()
 	creation_panel.hide()
 	game.inn_ui.panel.hide()
 	game.music.leave_world()
@@ -919,7 +922,7 @@ func show_speech(event: Dictionary) -> void:
 	if str(event.get("channel", "")) != "local": return
 	var pid: int = int(player.get("player_id", -1)) if bool(event.get("outgoing", false)) else int(event.get("player_id", -1))
 	if pid < 0 or str(event.get("message", "")).strip_edges().is_empty(): return
-	chat_bubbles[pid] = {"text": str(event.message), "until": Time.get_ticks_msec() + 5500}
+	chat_bubbles[pid] = {"text": str(event.message), "until": Time.get_ticks_msec() + 5500, "drunk": bool(event.get("drunk", false))}
 	if game.speech_layer != null: game.speech_layer.sync()
 
 func draw_chat_bubbles() -> void:
@@ -1531,6 +1534,7 @@ func _process_events(events: Array) -> void:
 				npc_attack_until.erase(int(index))
 				npc_hit_until.erase(int(index))
 				if interaction.get("kind", "") == "npc" and int(interaction.get("id", -1)) == int(index): interaction.clear()
+		game.drink_effects.event(event)
 		if kind == "item_used":
 			if int(event.get("item_type", 3)) == 3: _finish_potion(int(event.get("item_id", 0)))
 			else: pending_item_use = false

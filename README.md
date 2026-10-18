@@ -19,6 +19,14 @@ The offline exploration mode remains available alongside hosted online play. It 
 
 ## Play online
 
+Version **0.32** makes both Ice Blast skills cast on a shortcut tap, without
+selecting an opponent. Each cast affects up to five monsters in a **5×5 area
+centered on you** (two tiles in each direction), with one TP charge and the
+original damage rules. Fairy Soda now shows its original timed drunk emote,
+slurred/starred chat with `*hic*`, and a subtle haze on your speech bubble.
+Small soda lasts25 seconds; Big soda lasts137.5 seconds. It does not restore
+HP/TP.
+
 Version **0.24** removes the pause between walking tiles and runs at the native server’s effective 420 ms step pace. Held joystick/WASD/arrows chain continuously; nearby actors replay queued steps with a small jitter buffer. All players should update their APK for the smoother movement rendering. See [movement evidence and timing](docs/MOVEMENT.md).
 
 The Android build defaults to **`wss://eo.kcpd.top/ws`**. Create an account and character to play on the hosted world without ADB or a running development computer. The server runs on AWS behind Caddy HTTPS and proxied Cloudflare DNS. Accounts and progress on this hosted world are separate from the local development server and offline journey. See [hosting and maintenance](deploy/README.md).

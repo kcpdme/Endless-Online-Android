@@ -30,7 +30,7 @@ def item_definitions():
     for item_id in range(1,count+1):
         name=r.take(r.num()).decode('latin1');f=r.take(58)
         if name.lower()=='eof':break
-        result[item_id]={'special':Reader(f[4:5]).num(),'weight':Reader(f[55:56]).num(), 'type':Reader(f[2:3]).num(), 'hp':Reader(f[5:7]).num(2), 'tp':Reader(f[7:9]).num(2), 'graphic_value':Reader(f[32:35]).num(3), 'scroll_map':Reader(f[32:35]).num(3), 'scroll_x':Reader(f[35:36]).num(), 'scroll_y':Reader(f[36:37]).num()}
+        result[item_id]={'special':Reader(f[4:5]).num(),'weight':Reader(f[55:56]).num(), 'type':Reader(f[2:3]).num(), 'hp':Reader(f[5:7]).num(2), 'tp':Reader(f[7:9]).num(2), 'beer_potency':Reader(f[32:35]).num(3), 'graphic_value':Reader(f[32:35]).num(3), 'scroll_map':Reader(f[32:35]).num(3), 'scroll_x':Reader(f[35:36]).num(), 'scroll_y':Reader(f[36:37]).num()}
     return result
 
 @lru_cache(maxsize=1)
@@ -229,13 +229,17 @@ class ServicesMixin:
             if int(self.stats.get('admin',0))>0:
                 self.send(18,21,payload);self.last_chat=now
                 return self.snapshot()
+        drunk=now<getattr(self,'drunk_until',0) and not message.startswith('$')
+        if drunk:
+            from drunk_chat import make_drunk
+            message=make_drunk(message);payload=message.encode('latin1')
         if channel=='private':
             if not target.isalpha() or not 4<=len(target)<=16 or not target.isascii(): raise EOError('Enter a valid character name')
             payload=target.encode('ascii')+b'\xff'+payload
         self.send(18,{'local':21,'global':15,'private':20}[channel],payload);self.last_chat=now
         # The original server omits the sender from chat broadcasts. Echo locally,
         # as EndlessClient does; a native not-found/mute response remains visible.
-        self.events.append(dict(kind='chat',channel=channel,name=self.state['self']['name'],message=message,target=target,outgoing=True,player_id=self.player_id))
+        self.events.append(dict(kind='chat',channel=channel,name=self.state['self']['name'],message=message,target=target,outgoing=True,player_id=self.player_id,drunk=drunk))
         return self.snapshot()
 
     def apply_service_packet(self,f,a,p):

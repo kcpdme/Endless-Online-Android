@@ -18,6 +18,8 @@ var casting: Dictionary = {}
 var master: Dictionary = {}
 var chants: Dictionary = {}
 var effects: Array[Dictionary] = []
+var area_bursts: Array[Dictionary] = []
+const ICE_BLAST_IDS: Array[int] = [14, 21]
 var ready_at: int = 0
 var cast_hint: Label
 var character_id: int = -1
@@ -148,6 +150,9 @@ func press(index: int) -> void:
 		return
 	game._release_attack()
 	if game.sfx != null: game.sfx.play_named("SpellActivate", "skill_select")
+	if slots[index] in ICE_BLAST_IDS:
+		cast(slots[index], "area", 0)
+		return
 	if int(spell.get("target", 0)) == 1:
 		cast(slots[index], "self", 0)
 		return
@@ -285,7 +290,7 @@ func refresh_detail() -> void:
 	var lines: Array[String] = [str(spell.get("name", "No learned skills yet"))]
 	if not spell.is_empty():
 		lines.append("TP %d   ·   Chant %.2fs" % [int(spell.get("tp", 0)), float(spell.get("cast_time", 1)) * 0.48])
-		lines.append("Target: " + ("Yourself" if int(spell.get("target", 0)) == 1 else "Party" if int(spell.get("target", 0)) == 3 else "Friendly player" if int(spell.get("restrict", 0)) == 1 else "Monster"))
+		lines.append("Target: " + ("Up to 5 monsters in a 5×5 area around you" if selected in ICE_BLAST_IDS else "Yourself" if int(spell.get("target", 0)) == 1 else "Party" if int(spell.get("target", 0)) == 3 else "Friendly player" if int(spell.get("restrict", 0)) == 1 else "Monster"))
 		for learned: Dictionary in game.online.player.get("spells", []):
 			if int(learned.id) == selected:
 				var level: int = int(learned.level)
@@ -343,13 +348,24 @@ func event(event_data: Dictionary) -> void:
 		chants.erase(pid)
 		if kind == "spell_failed": game._toast(str(event_data.get("message", "Cast cancelled")))
 		return
+	if kind == "spell_area":
+		if pid == int(game.online.player.get("player_id", -1)): casting.clear()
+		chants.erase(pid)
+		area_bursts.append({"tile": Vector2i(int(event_data.x), int(event_data.y)), "start": Time.get_ticks_msec()})
+		if game.sfx != null: game.sfx.effect(int(info(int(event_data.spell_id)).get("graphic", 0)))
+		if int(event_data.get("targets", 0)) == 0:
+			var empty_fx: Dictionary = (info(int(event_data.spell_id)).get("effect", {}) as Dictionary).duplicate(true)
+			if not empty_fx.is_empty():
+				empty_fx.merge({"kind": "player", "id": pid, "at": player_position(pid), "start": Time.get_ticks_msec()})
+				effects.append(empty_fx)
+		return
 	if not event_data.has("spell_id") or kind not in ["npc_damage", "npc_killed", "spell_heal"]: return
 	if int(event_data.get("player_id", -1)) == int(game.online.player.get("player_id", -2)) or bool(event_data.get("own_cast", false)):
 		if int(casting.get("spell_id", -1)) == int(event_data.spell_id): casting.clear()
 	var target_kind: String = "npc" if kind in ["npc_damage", "npc_killed"] else "player"
 	var ident: int = int(event_data.get("npc_index", 0)) if target_kind == "npc" else int(event_data.get("target_id", pid))
 	var at: Vector2 = game.tile_position(Vector2i(int(event_data.get("x", 0)), int(event_data.get("y", 0)))) if target_kind == "npc" else player_position(ident)
-	if game.sfx != null: game.sfx.effect(int(info(int(event_data.spell_id)).get("graphic", 0)))
+	if game.sfx != null and int(event_data.spell_id) not in ICE_BLAST_IDS: game.sfx.effect(int(info(int(event_data.spell_id)).get("graphic", 0)))
 	var fx: Dictionary = (info(int(event_data.spell_id)).get("effect", {}) as Dictionary).duplicate(true)
 	if not fx.is_empty():
 		fx.merge({"kind": target_kind, "id": ident, "at": at, "start": Time.get_ticks_msec()})
@@ -367,7 +383,24 @@ func is_chanting(pid: int) -> bool:
 	if pid == int(game.online.player.get("player_id", -1)): return not casting.is_empty()
 	return Time.get_ticks_msec() < int(chants.get(pid, 0))
 
+func draw_area() -> void:
+	var now: int = Time.get_ticks_msec()
+	for burst: Dictionary in area_bursts:
+		var elapsed: float = float(now - int(burst.start)) / 840.0
+		if elapsed < 0.0 or elapsed >= 1.0: continue
+		var alpha: float = (1.0 - elapsed) * 0.34
+		for x: int in range(-2, 3):
+			for y: int in range(-2, 3):
+				var center: Vector2 = game.tile_position((burst.tile as Vector2i) + Vector2i(x, y))
+				var radius: float = 0.7 + sin(elapsed * PI) * 0.25
+				var points: PackedVector2Array = PackedVector2Array([center + Vector2(0, -15) * radius, center + Vector2(30, 0) * radius, center + Vector2(0, 15) * radius, center + Vector2(-30, 0) * radius])
+				game.draw_colored_polygon(points, Color(0.62, 0.89, 1.0, alpha))
+				game.draw_line(center + Vector2(-4, -4), center + Vector2(4, 4), Color(0.84, 0.97, 1.0, alpha * 2), 1.0)
+				game.draw_line(center + Vector2(4, -4), center + Vector2(-4, 4), Color(0.84, 0.97, 1.0, alpha * 2), 1.0)
+
 func tick() -> void:
+	for index: int in range(area_bursts.size() - 1, -1, -1):
+		if Time.get_ticks_msec() - int(area_bursts[index].start) >= 840: area_bursts.remove_at(index)
 	for index: int in range(effects.size() - 1, -1, -1):
 		var fx: Dictionary = effects[index]
 		if Time.get_ticks_msec() - int(fx.start) >= int(fx.frames) * int(fx.loops) * 120: effects.remove_at(index)

@@ -75,6 +75,7 @@ class LiveSession(RewardsMixin, SkillsMixin, ConsumablesMixin, InnsMixin, Quests
         return {'sent':True,'uid':uid}
 
     def poll_actions(self):
+        self.poll_drunk()
         self.poll_spells()
         queue=self.potion_queue()
         expired=[e for e in queue if time.monotonic()>=e['until']]
@@ -235,6 +236,10 @@ class LiveSession(RewardsMixin, SkillsMixin, ConsumablesMixin, InnsMixin, Quests
                 elif slot==2 and len(r.rest())>=2:row.update(hairstyle=r.num(),haircolor=r.num())
                 elif slot==3 and r.rest():row['haircolor']=r.num()
                 self.dirty=True
+        elif (f,a)==(9,8):
+            pid=r.num(2);emote=r.num()
+            self.events[-1].update(kind='player_emote',player_id=pid,emote=emote)
+            self.dirty=True
         elif (f,a)==(11,8):
             pid=r.num(2);direction=r.num()
             row=next((c for c in self.state['characters'] if c['player_id']==pid),None)
@@ -304,6 +309,7 @@ class LiveSession(RewardsMixin, SkillsMixin, ConsumablesMixin, InnsMixin, Quests
 
     def snapshot(self):
         data=super().snapshot()
+        data['player']['drunk_seconds']=max(0,getattr(self,'drunk_until',0)-time.monotonic())
         data['shop']=self.shop
         data['quest_dialog']=self.quest_dialog
         data['inn']=self.inn
