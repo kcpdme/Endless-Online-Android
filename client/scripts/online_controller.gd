@@ -728,6 +728,7 @@ func _on_closed(reason: String) -> void:
 	creation_panel.hide()
 	game.inn_ui.panel.hide()
 	game.guild_ui.disconnected()
+	game.movement_ui.disconnected()
 	game.music.leave_world()
 	if game.sfx != null: game.sfx.stop()
 	game.quest_ui.panel.hide()

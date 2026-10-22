@@ -8,8 +8,8 @@ This public repository contains source code, content import tools, build scripts
 
 After importing content and building, install `builds/aster-vale-debug.apk` on an Android device (Android 7 / API 24 or later). This development build includes ARM64 and x86_64. Open **Aster Vale**, choose **Play online** to join the persistent shared world, or **Explore offline** for local practice. The build is signed with a development key, not configured for Google Play release.
 
-The current Android package is **`com.cloudgameboy.astervale`**, version 0.34.0
-(code 46). It installs separately from the earlier `io.astervale.prototype` app;
+The current Android package is **`com.cloudgameboy.astervale`**, version 0.35.0
+(code 47). It installs separately from the earlier `io.astervale.prototype` app;
 online accounts remain on the same server. Release APK and AAB exports use the
 same private release signing key.
 
@@ -24,7 +24,9 @@ The offline exploration mode remains available alongside hosted online play. It 
 
 ## Play online
 
-Version **0.34.0** completes Guild Bob and Guild Master services: information/member lookup, founding invitations and confirmation, joining through a recruiter, deposits, descriptions, nine rank names, promotions/demotions, member removal, leaving, disbanding and private guild chat. Original server costs, founding-member requirements and permissions apply. Invitations and applications arrive through native events. Destructive actions and Gold payments require confirmation in the UI. Mobile movement was analysed without changing its behavior; see [the mobile movement audit](docs/MOVEMENT_MOBILE_AUDIT.md).
+Version **0.35.0** improves phone movement: 80 ms touch turn holds, a smaller start dead zone with a separate stop threshold, and shorter long-drag reversals. Open **Menu → Movement controls** to choose classic/isometric steering and a floating/fixed joystick base. Choices save on the device. Keyboard turn timing and native 420 ms walking stay unchanged. Floor rendering now visits bounded viewport tiles. See [movement implementation and validation](docs/MOVEMENT.md#version-035--code-47-mobile-controls).
+
+Version **0.34.0** completes Guild Bob and Guild Master services: information/member lookup, founding invitations and confirmation, joining through a recruiter, deposits, descriptions, nine rank names, promotions/demotions, member removal, leaving, disbanding and private guild chat. Original server costs, founding-member requirements and permissions apply. Invitations and applications arrive through native events. Destructive actions and Gold payments require confirmation in the UI. The earlier [mobile movement audit](docs/MOVEMENT_MOBILE_AUDIT.md) explains the comparison with classic EO and the reasoning behind v0.35.0.
 
 Version **0.33** adds an original-style minimap below the hearts: tap its header
 to collapse or reopen it. Orange marks you, green other players, red monsters,

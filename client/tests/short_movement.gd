@@ -18,7 +18,9 @@ func point_input(direction: Vector2i, keyboard: bool) -> void:
 	if keyboard:
 		var code: int = {Vector2i.UP:KEY_W,Vector2i.DOWN:KEY_S,Vector2i.LEFT:KEY_A,Vector2i.RIGHT:KEY_D}[direction]
 		game.movement_keys.assign([code])
-	else: game.stick = Vector2(direction)
+	else:
+		game.stick = Vector2(direction)
+		game.touch_move_id = 41
 func _run() -> void:
 	game = load("res://main.tscn").instantiate()
 	root.add_child(game)
@@ -50,6 +52,7 @@ func _run() -> void:
 				game.player_world = game.tile_position(game.player_tile)
 				game.facing = facing
 				point_input(direction,keyboard)
+				var interval: float = .20 if keyboard else .08
 				var from: Vector2 = game.player_world
 				var expected: Vector2 = game.tile_position(game.player_tile+direction)-from
 				var moves_before: int = capture.moves
@@ -57,8 +60,8 @@ func _run() -> void:
 				game._process(1.0/60.0)
 				if facing != game._direction_name(direction):
 					check(not game.moving and game.player_world == from and capture.moves == moves_before and capture.faces == faces_before+1,"A different-direction tap must send only a face, from "+facing+" to "+str(direction))
-					game._process(.10)
-					check(not game.moving and capture.moves == moves_before,"A short hold must not become a walk before original200ms interval")
+					game._process(interval / 2)
+					check(not game.moving and capture.moves == moves_before,"A short hold must not become a walk before its keyboard/touch turn interval")
 					game._cancel_movement()
 					game._process(.3)
 					check(game.player_world == from and capture.moves == moves_before,"Releasing after a turn must not schedule a delayed walk")
@@ -72,7 +75,7 @@ func _run() -> void:
 				game._cancel_movement()
 				game._process(.5)
 				check(game.player_tile==endpoint and not game.moving,"Short release issued another step")
-				# A continuous hold after a turn must start walking at200ms.
+				# A continuous hold after a turn uses its input-specific interval.
 				if facing != game._direction_name(direction):
 					c.pending_inputs.clear()
 					game._cancel_controls(true)
@@ -82,10 +85,10 @@ func _run() -> void:
 					point_input(direction,keyboard)
 					moves_before = capture.moves
 					game._process(.01)
-					game._process(.19)
+					game._process(interval - .01)
 					check(capture.moves == moves_before and not game.moving,"Turn hold moved too soon")
 					game._process(.011)
-					check(capture.moves == moves_before+1 and game.moving,"Holding a turned direction must walk after200ms")
+					check(capture.moves == moves_before+1 and game.moving,"Holding a turned direction must walk after its keyboard/touch interval")
 				cases+=1
 	# Turns during an existing walk must not add a stationary interval.
 	c.pending_inputs.clear()
@@ -137,7 +140,7 @@ func _run() -> void:
 	c._apply_snapshot({"player":{"player_id":100,"map_id":40,"x":40,"y":40,"hp":950,"max_hp":1000,"tp":10,"max_tp":10,"stats":{"dead":false}},"events":[{"kind":"player_damage","source":"spike","player_id":100,"damage":50,"hp":950,"dead":false}]})
 	check(game.stats_ui.vitals.hp==950 and not c.defeated,"Spike hit must visibly drain HP without killing a1000HP character")
 	check(str(game.damage_numbers.back().value)=="-50" and not c.npc_attack_until.has(-1),"Spike damage feedback must not invent an attacking NPC")
-	print("SHORT MOVEMENT ","FAIL" if failed else "PASS",": ",cases," heading/input combinations: tap turns, same-face tap walks,200ms hold, release cancellation, smooth walking turns and unchanged paths")
+	print("SHORT MOVEMENT ","FAIL" if failed else "PASS",": ",cases," heading/input combinations: tap turns, same-face tap walks,200ms keyboard/80ms touch hold, release cancellation, smooth walking turns and unchanged paths")
 	game.started=false
 	game.queue_free()
 	await process_frame

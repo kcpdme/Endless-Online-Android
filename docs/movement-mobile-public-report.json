@@ -1,0 +1,394 @@
+{
+  "dynamic_joystick_directions": 4,
+  "holds": [
+    {
+      "direction": [
+        0,
+        -1
+      ],
+      "frames": 50,
+      "key": 87,
+      "max_pending": 1,
+      "peer_idle_frames": 0,
+      "peer_started": true,
+      "stationary_frames": 0,
+      "stationary_ms": 0.0,
+      "step_times_ms": [
+        8866.88,
+        9283.588,
+        9700.17
+      ],
+      "steps": 3
+    },
+    {
+      "direction": [
+        0,
+        1
+      ],
+      "frames": 50,
+      "key": 83,
+      "max_pending": 2,
+      "peer_idle_frames": 0,
+      "peer_started": true,
+      "stationary_frames": 0,
+      "stationary_ms": 0.0,
+      "step_times_ms": [
+        10816.912,
+        11233.574,
+        11650.234
+      ],
+      "steps": 3
+    },
+    {
+      "direction": [
+        -1,
+        0
+      ],
+      "frames": 50,
+      "key": 65,
+      "max_pending": 2,
+      "peer_idle_frames": 0,
+      "peer_started": true,
+      "stationary_frames": 0,
+      "stationary_ms": 0.0,
+      "step_times_ms": [
+        12900.165,
+        13316.798,
+        13733.464
+      ],
+      "steps": 3
+    },
+    {
+      "direction": [
+        1,
+        0
+      ],
+      "frames": 50,
+      "key": 68,
+      "max_pending": 2,
+      "peer_idle_frames": 0,
+      "peer_started": true,
+      "stationary_frames": 0,
+      "stationary_ms": 0.0,
+      "step_times_ms": [
+        14983.423,
+        15399.891,
+        15816.699
+      ],
+      "steps": 3
+    },
+    {
+      "direction": [
+        0,
+        -1
+      ],
+      "frames": 50,
+      "key": 4194320,
+      "max_pending": 1,
+      "peer_idle_frames": 0,
+      "peer_started": true,
+      "stationary_frames": 0,
+      "stationary_ms": 0.0,
+      "step_times_ms": [
+        16933.298,
+        17349.885,
+        17766.633
+      ],
+      "steps": 3
+    },
+    {
+      "direction": [
+        0,
+        1
+      ],
+      "frames": 50,
+      "key": 4194322,
+      "max_pending": 1,
+      "peer_idle_frames": 0,
+      "peer_started": true,
+      "stationary_frames": 0,
+      "stationary_ms": 0.0,
+      "step_times_ms": [
+        18899.991,
+        19316.494,
+        19733.128
+      ],
+      "steps": 3
+    },
+    {
+      "direction": [
+        -1,
+        0
+      ],
+      "frames": 50,
+      "key": 4194319,
+      "max_pending": 2,
+      "peer_idle_frames": 0,
+      "peer_started": true,
+      "stationary_frames": 0,
+      "stationary_ms": 0.0,
+      "step_times_ms": [
+        20849.776,
+        21266.5,
+        21683.171
+      ],
+      "steps": 3
+    },
+    {
+      "direction": [
+        1,
+        0
+      ],
+      "frames": 50,
+      "key": 4194321,
+      "max_pending": 1,
+      "peer_idle_frames": 0,
+      "peer_started": true,
+      "stationary_frames": 0,
+      "stationary_ms": 0.0,
+      "step_times_ms": [
+        22883.216,
+        23299.762,
+        23716.414
+      ],
+      "steps": 3
+    },
+    {
+      "direction": [
+        0,
+        -1
+      ],
+      "frames": 50,
+      "key": 0,
+      "max_pending": 1,
+      "peer_idle_frames": 0,
+      "peer_started": true,
+      "stationary_frames": 0,
+      "stationary_ms": 0.0,
+      "step_times_ms": [
+        24699.799,
+        25116.368,
+        25532.984
+      ],
+      "steps": 3
+    },
+    {
+      "direction": [
+        0,
+        1
+      ],
+      "frames": 50,
+      "key": 0,
+      "max_pending": 2,
+      "peer_idle_frames": 0,
+      "peer_started": true,
+      "stationary_frames": 0,
+      "stationary_ms": 0.0,
+      "step_times_ms": [
+        26533.027,
+        26949.505,
+        27366.31
+      ],
+      "steps": 3
+    },
+    {
+      "direction": [
+        -1,
+        0
+      ],
+      "frames": 50,
+      "key": 0,
+      "max_pending": 2,
+      "peer_idle_frames": 0,
+      "peer_started": true,
+      "stationary_frames": 0,
+      "stationary_ms": 0.0,
+      "step_times_ms": [
+        28432.965,
+        28849.632,
+        29266.22
+      ],
+      "steps": 3
+    },
+    {
+      "direction": [
+        1,
+        0
+      ],
+      "frames": 50,
+      "key": 0,
+      "max_pending": 2,
+      "peer_idle_frames": 0,
+      "peer_started": true,
+      "stationary_frames": 0,
+      "stationary_ms": 0.0,
+      "step_times_ms": [
+        30266.132,
+        30686.648,
+        31099.37
+      ],
+      "steps": 3
+    },
+    {
+      "direction": [
+        1,
+        0
+      ],
+      "frames": 277,
+      "key": 68,
+      "max_pending": 2,
+      "peer_idle_frames": 0,
+      "peer_started": true,
+      "stationary_frames": 0,
+      "stationary_ms": 0.0,
+      "step_times_ms": [
+        32099.386,
+        32516.051,
+        32932.678,
+        33349.445,
+        33766.158,
+        34199.408,
+        34616.07,
+        35032.515,
+        35449.397,
+        35865.92,
+        36299.269,
+        36715.937
+      ],
+      "steps": 12
+    },
+    {
+      "direction": [
+        -1,
+        0
+      ],
+      "frames": 277,
+      "key": 65,
+      "max_pending": 4,
+      "peer_idle_frames": 66,
+      "peer_started": true,
+      "stationary_frames": 0,
+      "stationary_ms": 0.0,
+      "step_times_ms": [
+        37982.655,
+        38399.247,
+        38815.675,
+        39232.491,
+        39649.135,
+        40082.479,
+        40499.136,
+        40915.798,
+        41332.428,
+        41749.104,
+        42182.447,
+        42599.075
+      ],
+      "steps": 12
+    }
+  ],
+  "keyboard_directions": 8,
+  "long_continuous_holds": 2,
+  "no_steps_after_release": true,
+  "observer_positions_match_all_holds": true,
+  "operator_accounts_modified": false,
+  "remote_strict_jitter_assertions": false,
+  "result": "passed",
+  "server_corrections": 0,
+  "steps_per_long_hold": 12,
+  "straight_steps_per_direction_hold": 3,
+  "sustained_84_steps": {
+    "last": "(351.5983, 511.7992)",
+    "max_pending": 4,
+    "peer_idle_frames": 64,
+    "peer_started": true,
+    "started": true,
+    "stationary_frames": 0,
+    "step_times_ms": [
+      44348.979,
+      44765.499,
+      45182.236,
+      45598.92,
+      46015.618,
+      46448.883,
+      46865.441,
+      47282.177,
+      47698.814,
+      48115.548,
+      48548.672,
+      48965.448,
+      49382.13,
+      49798.624,
+      50215.231,
+      50648.543,
+      51065.352,
+      51481.922,
+      51898.565,
+      52315.315,
+      52748.585,
+      53165.197,
+      53581.872,
+      53998.552,
+      54415.185,
+      54848.473,
+      55265.12,
+      55681.881,
+      56098.531,
+      56515.21,
+      56948.479,
+      57365.068,
+      57781.823,
+      58198.458,
+      58614.997,
+      59048.46,
+      59464.998,
+      59881.683,
+      60298.299,
+      60714.932,
+      61148.302,
+      61564.995,
+      61981.662,
+      62398.308,
+      62814.954,
+      63248.224,
+      63664.824,
+      64081.557,
+      64498.055,
+      64914.782,
+      65348.154,
+      65764.835,
+      66181.28,
+      66598.15,
+      67014.793,
+      67447.952,
+      67864.641,
+      68281.366,
+      68698.012,
+      69114.67,
+      69548.013,
+      69964.629,
+      70381.291,
+      70797.872,
+      71214.579,
+      71647.872,
+      72064.631,
+      72481.177,
+      72897.821,
+      73314.483,
+      73747.784,
+      74164.348,
+      74581.11,
+      74997.708,
+      75414.396,
+      75847.715,
+      76264.342,
+      76681.035,
+      77097.719,
+      77514.313,
+      77947.702,
+      78364.23,
+      78780.932,
+      79197.613
+    ],
+    "tile": "(20, 10)"
+  }
+}

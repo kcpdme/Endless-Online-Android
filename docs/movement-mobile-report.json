@@ -1,0 +1,11 @@
+{
+  "aeven_full_grid_candidates": 7569,
+  "bounded_candidates": 2601,
+  "checks": 37,
+  "keyboard_turn_ms": 200,
+  "long_drag_reversal_px": 79,
+  "result": "passed",
+  "step_ms": 420,
+  "touch_turn_ms": 80,
+  "viewport_cases": 15
+}

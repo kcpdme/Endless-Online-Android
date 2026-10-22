@@ -1,5 +1,7 @@
 # Mobile movement audit — 23 October 2026
 
+Implementation update: v0.35.0 applies the shorter touch turn hold, threshold/reversal improvements, optional isometric/fixed controls and bounded floor traversal. See [implementation evidence](MOVEMENT.md#version-035--code-47-mobile-controls). The analysis below records the behavior before those changes.
+
 The next improvement should be touch responsiveness and steering clarity. Keep the native four-direction tile movement and the current 420 ms walking cadence. The current code already chains walking smoothly; its touch controls deliberately inherit keyboard behaviors that can feel slow or indirect on a phone.
 
 Movement was analysed only in this change. No joystick, movement timing, collision, prediction, or camera behavior was changed.

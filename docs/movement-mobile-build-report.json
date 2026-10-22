@@ -1,0 +1,30 @@
+{
+  "result": "passed",
+  "version": "0.35.0",
+  "version_code": 47,
+  "package": "com.cloudgameboy.astervale",
+  "apk_sha256": "b0b13d8c09e6be5adfec56d27c8dcb15bea154c64ffadb2d7831d52b622b0eed",
+  "signature_v2_v3_verified": true,
+  "alignment_16k_verified": true,
+  "server_unit_tests": 141,
+  "mobile_movement_checks": 37,
+  "guild_ui_checks": 26,
+  "heading_input_combinations": 32,
+  "simulated_frame_rates": [
+    15,
+    24,
+    30,
+    59,
+    60,
+    90,
+    120,
+    144
+  ],
+  "public_sustained_steps": 84,
+  "public_local_stationary_frames": 0,
+  "public_server_corrections": 0,
+  "public_remote_idle_frames": 64,
+  "phone_installed": false,
+  "phone_reason": "No ADB device connected",
+  "known_issue": "Pre-existing intermittent two-resource Godot shutdown leak after passing assertions"
+}

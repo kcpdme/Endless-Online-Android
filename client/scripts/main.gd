@@ -13,6 +13,7 @@ const ONLINE_ATTACK_COOLDOWN: float = 0.52
 const ATTACK_COOLDOWN: float = 0.90
 const ATTACK_SWING_DURATION: float = 0.26
 const ONLINE_ATTACK_SWING_DURATION: float = 0.48
+const TOUCH_TURN_HOLD_SECONDS: float = 0.08
 const TURN_HOLD_SECONDS: float = 0.20 # Original InputHandlerBase's input interval.
 const SAVE_PATH: String = "user://aster_vale_save.json"
 const TILE: Vector2 = Vector2(64.0, 32.0)
@@ -129,6 +130,7 @@ var sfx: Node
 var quest_ui: RefCounted
 var speech_layer: Control
 var sit_button: Button
+var movement_ui: RefCounted
 var guild_ui: RefCounted
 var inn_ui: RefCounted
 var menu: Control
@@ -417,7 +419,7 @@ func _manual_step(direction: Vector2i, continuing_walk: bool) -> void:
 		else: facing = desired
 		if facing == desired:
 			turn_input = direction
-			turn_wait = TURN_HOLD_SECONDS
+			turn_wait = TOUCH_TURN_HOLD_SECONDS if movement_keys.is_empty() and touch_move_id != -1 else TURN_HOLD_SECONDS
 		return
 	if not continuing_walk and turn_input == direction and turn_wait > 0.000001: return
 	_reset_turn_input()
@@ -463,10 +465,10 @@ func _joystick_begin(pointer: Vector2, pointer_id: int) -> void:
 	_cancel_movement()
 	touch_move_id = pointer_id
 	joystick.begin(pointer)
-	stick = joystick.vector
+	stick = Vector2(joystick.direction)
 
 func _modal_open() -> bool:
-	return (guild_ui != null and guild_ui.panel.visible) or (inn_ui != null and inn_ui.panel.visible) or (quest_ui != null and quest_ui.panel.visible) or (redeem_ui != null and redeem_ui.panel.visible) or (online != null and online.panel != null and online.panel.visible) or (inventory != null and inventory.visible) or (menu != null and menu.visible) or (character_panel != null and character_panel.visible) or (stats_ui != null and stats_ui.is_open()) or (shop_ui != null and shop_ui.panel.visible) or (services_ui != null and services_ui.panel.visible) or (chat_ui != null and chat_ui.panel.visible) or (skills_ui != null and skills_ui.panel.visible) or (quick_items != null and quick_items.panel.visible)
+	return (movement_ui != null and movement_ui.panel.visible) or (guild_ui != null and guild_ui.panel.visible) or (inn_ui != null and inn_ui.panel.visible) or (quest_ui != null and quest_ui.panel.visible) or (redeem_ui != null and redeem_ui.panel.visible) or (online != null and online.panel != null and online.panel.visible) or (inventory != null and inventory.visible) or (menu != null and menu.visible) or (character_panel != null and character_panel.visible) or (stats_ui != null and stats_ui.is_open()) or (shop_ui != null and shop_ui.panel.visible) or (services_ui != null and services_ui.panel.visible) or (chat_ui != null and chat_ui.panel.visible) or (skills_ui != null and skills_ui.panel.visible) or (quick_items != null and quick_items.panel.visible)
 
 func _begin_attack(pointer_id: int) -> void:
 	if online_mode: route.clear()
@@ -797,6 +799,20 @@ func _collect_loot(force: bool = false) -> void:
 	_refresh_ui()
 	_save_progress()
 
+func _visible_tile_bounds(rect: Rect2, width: int, height: int) -> Rect2i:
+	# Invert the four viewport corners, then conservatively pad for rounding.
+	# Keep the final screen-space cull, so tile order and coverage are unchanged.
+	var first: Vector2i = _world_tile(rect.position)
+	var low: Vector2i = first
+	var high: Vector2i = first
+	for corner: Vector2 in [rect.end, Vector2(rect.end.x, rect.position.y), Vector2(rect.position.x, rect.end.y)]:
+		var tile: Vector2i = _world_tile(corner)
+		low = Vector2i(mini(low.x, tile.x), mini(low.y, tile.y))
+		high = Vector2i(maxi(high.x, tile.x), maxi(high.y, tile.y))
+	var start: Vector2i = Vector2i(clampi(low.x - 1, 0, width), clampi(low.y - 1, 0, height))
+	var finish: Vector2i = Vector2i(clampi(high.x + 2, 0, width), clampi(high.y + 2, 0, height))
+	return Rect2i(start, finish - start)
+
 func _draw() -> void:
 	if not content_ready: return
 	var half_view: Vector2 = get_viewport_rect().size / camera.zoom / 2.0 + Vector2(160, 240)
@@ -804,8 +820,9 @@ func _draw() -> void:
 	var width: int = int(world.get("width", 0))
 	var height: int = int(world.get("height", 0))
 	var fill_id: int = int(world.get("fill_tile", 0))
-	for y: int in range(height):
-		for x: int in range(width):
+	var tile_bounds: Rect2i = _visible_tile_bounds(visible_rect, width, height)
+	for y: int in range(tile_bounds.position.y, tile_bounds.end.y):
+		for x: int in range(tile_bounds.position.x, tile_bounds.end.x):
 			var tile: Vector2i = Vector2i(x, y)
 			var position: Vector2 = tile_position(tile)
 			if not visible_rect.has_point(position): continue
@@ -1170,6 +1187,8 @@ func _build_ui() -> void:
 	inn_ui.build(self, root)
 	guild_ui = preload("res://scripts/guild_window.gd").new()
 	guild_ui.build(self, root)
+	movement_ui = preload("res://scripts/movement_settings.gd").new()
+	movement_ui.build(self, root)
 	_build_paperdoll(root)
 	stats_ui = CharacterStats.new()
 	stats_ui.build(self, root)
@@ -1450,7 +1469,7 @@ func _toggle_equip() -> void:
 	_toast("%s %s." % [_item_name(selected_item), "equipped" if _is_equipped(selected_item) else "returned to your bag"])
 
 func _build_menu(parent: Node) -> void:
-	menu = _modal(parent, Vector2(540, 560))
+	menu = _modal(parent, Vector2(540, 600))
 	var card: Control = menu.get_child(0) as Control
 	_label(card, "ASTER VALE", Vector2(30, 28), 14, GOLD)
 	_label(card, "A moment’s rest", Vector2(28, 61), 32)
@@ -1487,10 +1506,11 @@ func _build_menu(parent: Node) -> void:
 	sound_volume.value = sfx.volume
 	sound_volume.value_changed.connect(sfx.set_volume)
 	card.add_child(sound_volume)
-	_button(card, "Return to the vale", Vector2(30, 258), Vector2(480, 58), func() -> void: menu.hide(), true)
-	_button(card, "Redeem Code", Vector2(30, 326), Vector2(480, 54), func() -> void: redeem_ui.open())
-	_button(card, "Reset journey", Vector2(30, 390), Vector2(480, 54), _confirm_reset)
-	_button(card, "Welcome screen", Vector2(30, 457), Vector2(480, 48), func() -> void:
+	_button(card, "Movement controls", Vector2(30, 258), Vector2(480, 54), func() -> void: movement_ui.open())
+	_button(card, "Return to the vale", Vector2(30, 322), Vector2(480, 58), func() -> void: menu.hide(), true)
+	_button(card, "Redeem Code", Vector2(30, 386), Vector2(480, 54), func() -> void: redeem_ui.open())
+	_button(card, "Reset journey", Vector2(30, 450), Vector2(480, 54), _confirm_reset)
+	_button(card, "Welcome screen", Vector2(30, 514), Vector2(480, 48), func() -> void:
 		menu.hide()
 		started = false
 		_show_welcome()
@@ -1664,6 +1684,8 @@ func _handle_back() -> void:
 		skills_ui.panel.hide()
 	elif chat_ui != null and chat_ui.panel.visible:
 		chat_ui.close()
+	elif movement_ui != null and movement_ui.panel.visible:
+		movement_ui.close()
 	elif guild_ui != null and guild_ui.panel.visible:
 		guild_ui.close()
 	elif inn_ui != null and inn_ui.panel.visible:

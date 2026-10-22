@@ -8,7 +8,6 @@ var failed: bool = false
 var checks: int = 0
 func check(ok: bool, reason: String) -> void:
 	checks += 1
-	pass # Keep failure output concise.
 	if not ok: failed = true; push_error(reason)
 func _initialize() -> void: call_deferred("run")
 func touch(point: Vector2, pressed: bool) -> void:
@@ -113,6 +112,9 @@ func run() -> void:
 	check(card.get_global_rect().end.y <= 360, "Guild forms must remain above the software keyboard")
 	game.guild_ui.layout(0)
 	check(game.guild_ui.inputs.has("rank_9") and game.guild_ui.inputs.has("description"), "Founder must have all rank-name and description fields")
+	game.guild_ui.inputs["member_rank"].text = ""
+	game.guild_ui._confirm("guild_rank", {"name":"devmember","rank":0}, "Change rank?")
+	check(not game.guild_ui.confirmation.visible and game.guild_ui.status.text.begins_with("Enter the intended rank"), "Blank rank must never be interpreted as founder appointment")
 	for child: Node in game.guild_ui.body.get_children():
 		if child is Button and child.text == "Disband guild": child.pressed.emit()
 	check(game.guild_ui.pending_op == "guild_disband" and game.guild_ui.confirmation.visible, "Disband must require explicit confirmation")

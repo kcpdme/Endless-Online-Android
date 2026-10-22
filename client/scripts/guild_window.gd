@@ -76,6 +76,9 @@ func _action(text: String, callback: Callable) -> Button:
 
 func _confirm(op: String, fields: Dictionary, text: String) -> void:
 	if busy: return
+	if op == "guild_rank" and (_text("member_rank").is_empty() or not _text("member_rank").is_valid_int()):
+		status.text = "Enter the intended rank (0–9) first."
+		return
 	for control: Control in inputs.values(): control.release_focus()
 	pending_op = op; pending_fields = fields.duplicate(true)
 	confirmation.dialog_text = text; confirmation.popup_centered(Vector2i(560, 240))
