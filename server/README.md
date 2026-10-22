@@ -78,7 +78,7 @@ acknowledgements. Moving or warping invalidates the adapter shop session. The
 native Item_Add payload is item2/uid2/amount3/x1/y1; Walk_Reply's ground-item
 layout is separately uid2/item2/x1/y1/amount3. Partial pickup subtracts only the
 acknowledged amount. Pickup and transactions do not request a full world refresh.
-Gold banking, item lockers, equipment inspection, trading, chat and skills now have separate native flows. Guild, quest and party controls remain future work.
+Gold banking, item lockers, equipment inspection, trading, chat and skills now have separate native flows. Guild NPC opening, founding/support invitations, recruiter applications/acceptance, deposits, ranks, descriptions, leave/disband and guild chat use native Guild/Talk packets. Membership and Gold change only after native acknowledgement; silent leave/disband actions are verified through a self-paperdoll ordering barrier. Party controls remain future work.
 
 ## Password hash upgrade and recovery
 

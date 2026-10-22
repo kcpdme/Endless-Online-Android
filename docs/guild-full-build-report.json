@@ -1,0 +1,14 @@
+{
+  "result": "passed",
+  "version": "0.34.0",
+  "version_code": 46,
+  "package": "com.cloudgameboy.astervale",
+  "apk_sha256": "4d97bb5e7526b33e33defc2f6eabdead3cc397e63a082a23a7dab7588ba2a31c",
+  "signature_v2_v3_verified": true,
+  "alignment_16k_verified": true,
+  "server_unit_tests": 141,
+  "guild_touch_checks": 25,
+  "full_native_lifecycle": true,
+  "movement_changed": false,
+  "phone_installed": false
+}

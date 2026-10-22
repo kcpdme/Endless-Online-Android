@@ -129,6 +129,7 @@ var sfx: Node
 var quest_ui: RefCounted
 var speech_layer: Control
 var sit_button: Button
+var guild_ui: RefCounted
 var inn_ui: RefCounted
 var menu: Control
 var started_from_save: bool = false
@@ -284,6 +285,7 @@ func _process(delta: float) -> void:
 	if skills_ui != null: skills_ui.tick()
 	if quick_items != null: quick_items.refresh()
 	if chat_ui != null: chat_ui.tick()
+	if guild_ui != null: guild_ui.tick()
 	time_alive += delta
 	animation_clock += delta
 	var attack_previous: float = attack_clock
@@ -464,7 +466,7 @@ func _joystick_begin(pointer: Vector2, pointer_id: int) -> void:
 	stick = joystick.vector
 
 func _modal_open() -> bool:
-	return (inn_ui != null and inn_ui.panel.visible) or (quest_ui != null and quest_ui.panel.visible) or (redeem_ui != null and redeem_ui.panel.visible) or (online != null and online.panel != null and online.panel.visible) or (inventory != null and inventory.visible) or (menu != null and menu.visible) or (character_panel != null and character_panel.visible) or (stats_ui != null and stats_ui.is_open()) or (shop_ui != null and shop_ui.panel.visible) or (services_ui != null and services_ui.panel.visible) or (chat_ui != null and chat_ui.panel.visible) or (skills_ui != null and skills_ui.panel.visible) or (quick_items != null and quick_items.panel.visible)
+	return (guild_ui != null and guild_ui.panel.visible) or (inn_ui != null and inn_ui.panel.visible) or (quest_ui != null and quest_ui.panel.visible) or (redeem_ui != null and redeem_ui.panel.visible) or (online != null and online.panel != null and online.panel.visible) or (inventory != null and inventory.visible) or (menu != null and menu.visible) or (character_panel != null and character_panel.visible) or (stats_ui != null and stats_ui.is_open()) or (shop_ui != null and shop_ui.panel.visible) or (services_ui != null and services_ui.panel.visible) or (chat_ui != null and chat_ui.panel.visible) or (skills_ui != null and skills_ui.panel.visible) or (quick_items != null and quick_items.panel.visible)
 
 func _begin_attack(pointer_id: int) -> void:
 	if online_mode: route.clear()
@@ -1166,6 +1168,8 @@ func _build_ui() -> void:
 	quest_ui.build(self, root)
 	inn_ui = preload("res://scripts/inn_window.gd").new()
 	inn_ui.build(self, root)
+	guild_ui = preload("res://scripts/guild_window.gd").new()
+	guild_ui.build(self, root)
 	_build_paperdoll(root)
 	stats_ui = CharacterStats.new()
 	stats_ui.build(self, root)
@@ -1660,6 +1664,8 @@ func _handle_back() -> void:
 		skills_ui.panel.hide()
 	elif chat_ui != null and chat_ui.panel.visible:
 		chat_ui.close()
+	elif guild_ui != null and guild_ui.panel.visible:
+		guild_ui.close()
 	elif inn_ui != null and inn_ui.panel.visible:
 		inn_ui.close()
 	elif quest_ui != null and quest_ui.panel.visible:

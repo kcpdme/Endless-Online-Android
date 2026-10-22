@@ -1,0 +1,13 @@
+{
+  "public_tls_guild_open_native_ack": true,
+  "public_native_not_found_info_and_members": true,
+  "public_close": true,
+  "public_health_http_status": 403,
+  "result": "passed",
+  "operator_accounts_used": false,
+  "existing_player_data_edited": false,
+  "new_dev_fixture_only": true,
+  "public_health_curl_http_status": 200,
+  "origin_health_http_status": 200,
+  "health_note": "Python urllib received HTTP 403; curl over public HTTPS and the origin loopback health endpoint returned 200. Public TLS WebSocket gameplay operations passed."
+}

@@ -263,6 +263,7 @@ func _set_status(value: String) -> void:
 func _on_message(message: Dictionary) -> void:
 	game.chat_ui.response(message)
 	game.redeem_ui.response(message)
+	game.guild_ui.response(message)
 	var operation: String = str(message.get("op", message.get("event", "")))
 	if not bool(message.get("ok", true)):
 		waiting_for_walk = false
@@ -326,7 +327,7 @@ func _on_message(message: Dictionary) -> void:
 				if int((player.get("equipment", {}) as Dictionary).get(str(replacement.slot), 0)) == 0:
 					session.request("equip", {"item_id": int(replacement.item_id), "subloc": int(replacement.subloc)})
 				else: game._toast("The worn item could not be removed. Your replacement remains in the bag.")
-		"inn_open", "inn_quote", "inn_sleep", "inn_close", "quest_open", "quest_reply", "quest_close", "sit", "world", "refresh", "snapshot", "attack", "pickup", "equip", "spend_stat", "shop_buy", "shop_sell", "shop_craft", "bank_deposit", "bank_withdraw", "bank_upgrade", "locker_deposit", "locker_withdraw", "chest_deposit", "chest_take", "chest_close", "trade_request", "trade_accept", "trade_decline", "trade_add", "trade_remove", "trade_agree", "trade_cancel", "chat_send", "item_use", "skill_learn", "skill_forget", "skill_level":
+		"guild_open", "guild_info", "guild_members", "guild_close", "guild_refresh", "guild_begin", "guild_found", "guild_support", "guild_join", "guild_recruit", "guild_deposit", "guild_description", "guild_ranks", "guild_rank", "guild_kick", "guild_leave", "guild_disband", "guild_chat", "inn_open", "inn_quote", "inn_sleep", "inn_close", "quest_open", "quest_reply", "quest_close", "sit", "world", "refresh", "snapshot", "attack", "pickup", "equip", "spend_stat", "shop_buy", "shop_sell", "shop_craft", "bank_deposit", "bank_withdraw", "bank_upgrade", "locker_deposit", "locker_withdraw", "chest_deposit", "chest_take", "chest_close", "trade_request", "trade_accept", "trade_decline", "trade_add", "trade_remove", "trade_agree", "trade_cancel", "chat_send", "item_use", "skill_learn", "skill_forget", "skill_level":
 			_apply_snapshot(data)
 		"redeem_code":
 			_apply_snapshot(data)
@@ -444,6 +445,7 @@ func _apply_snapshot(data: Dictionary, entering: bool = false) -> void:
 			game.music.enter_map(game.world)
 			if game.sfx != null: game.sfx.enter_map(game.world)
 			game.quest_ui.panel.hide()
+			game.guild_ui.panel.hide()
 			interaction.clear()
 			collect_pending = false
 			pickup_pending.clear()
@@ -517,6 +519,7 @@ func _apply_snapshot(data: Dictionary, entering: bool = false) -> void:
 	game.skills_ui.receive(data)
 	game.quest_ui.receive(data)
 	game.inn_ui.receive(data)
+	game.guild_ui.receive(data)
 	game.services_ui.receive(data)
 	game.services_ui.refresh()
 	server_label.text = "● Connected  ·  %d nearby" % nearby_count()
@@ -724,6 +727,7 @@ func _on_closed(reason: String) -> void:
 	game.drink_effects.clear()
 	creation_panel.hide()
 	game.inn_ui.panel.hide()
+	game.guild_ui.disconnected()
 	game.music.leave_world()
 	if game.sfx != null: game.sfx.stop()
 	game.quest_ui.panel.hide()
@@ -1171,11 +1175,11 @@ func map_click(tile: Vector2i, preferred_kind: String = "") -> void:
 		if Vector2i(int(npc.x), int(npc.y)) != tile: continue
 		var info: Dictionary = (catalog.get("npcs", {}) as Dictionary).get(str(int(npc.id)), {}) as Dictionary
 		var type: int = int(info.get("type", -1))
-		if type in [6, 7, 9, 14, 15]:
+		if type in [6, 7, 9, 11, 14, 15]:
 			# Original EO dispatches a visible service NPC directly, including
 			# shopkeepers behind sealed counters. Never path onto their side.
 			game._cancel_controls()
-			interaction = {"kind": "inn" if type == 7 else "quest" if type == 15 else "skillmaster" if type == 14 else "bank" if type == 9 else "shop", "id": int(npc.index)}
+			interaction = {"kind": "guild" if type == 11 else "inn" if type == 7 else "quest" if type == 15 else "skillmaster" if type == 14 else "bank" if type == 9 else "shop", "id": int(npc.index)}
 		elif is_combat_npc(npc):
 			if game._distance(game.player_tile, tile) == 1:
 				var direction: String = game._direction_name(tile - game.player_tile)
@@ -1252,7 +1256,7 @@ func _process_interaction() -> void:
 			var tile: Vector2i = Vector2i(int(target.x), int(target.y))
 			var distance: int = 1 if str(interaction.kind) in ["locker", "chest", "chair"] else 2 if str(interaction.kind) == "drop" else NPC_SERVICE_DISTANCE
 			if game._distance(game.player_tile, tile) > distance:
-				if str(interaction.kind) in ["shop", "bank", "skillmaster", "quest", "inn"]:
+				if str(interaction.kind) in ["shop", "bank", "skillmaster", "quest", "inn", "guild"]:
 					interaction.clear()
 					game._toast("This NPC has left your view.")
 					return
@@ -1261,7 +1265,7 @@ func _process_interaction() -> void:
 			if str(interaction.kind) == "chair": toggle_sit(tile)
 			elif str(interaction.kind) == "drop": _pickup(int(interaction.id))
 			elif str(interaction.kind) in ["locker", "chest", "chair"]: session.request("chest_open" if str(interaction.kind) == "chest" else "locker_open", {"x": int(target.x), "y": int(target.y)})
-			else: session.request("inn_open" if str(interaction.kind) == "inn" else "quest_open" if str(interaction.kind) == "quest" else "skillmaster_open" if str(interaction.kind) == "skillmaster" else "bank_open" if str(interaction.kind) == "bank" else "shop_open", {"npc_index": int(interaction.id)})
+			else: session.request("guild_open" if str(interaction.kind) == "guild" else "inn_open" if str(interaction.kind) == "inn" else "quest_open" if str(interaction.kind) == "quest" else "skillmaster_open" if str(interaction.kind) == "skillmaster" else "bank_open" if str(interaction.kind) == "bank" else "shop_open", {"npc_index": int(interaction.id)})
 		interaction.clear()
 		collect_pending = false
 	elif collect_pending:

@@ -215,7 +215,8 @@ class ServicesMixin:
     def chat_send(self,channel,message,target=''):
         if not self.state: raise EOError('Enter the world before chatting')
         message=str(message).strip();target=str(target).strip().lower()
-        if channel not in ('local','global','private'): raise EOError('Unknown chat channel')
+        if channel not in ('local','global','private','guild'): raise EOError('Unknown chat channel')
+        if channel=='guild' and not self.stats.get('guild'):raise EOError('Join a guild before using guild chat')
         if not message or len(message)>128 or any(ord(c)<32 or ord(c)==255 for c in message): raise EOError('Use 1–128 printable characters')
         try: payload=message.encode('latin1')
         except UnicodeEncodeError: raise EOError('Classic EO chat supports Latin characters; use English for this message')
@@ -236,7 +237,7 @@ class ServicesMixin:
         if channel=='private':
             if not target.isalpha() or not 4<=len(target)<=16 or not target.isascii(): raise EOError('Enter a valid character name')
             payload=target.encode('ascii')+b'\xff'+payload
-        self.send(18,{'local':21,'global':15,'private':20}[channel],payload);self.last_chat=now
+        self.send(18,{'local':21,'global':15,'private':20,'guild':1}[channel],payload);self.last_chat=now
         # The original server omits the sender from chat broadcasts. Echo locally,
         # as EndlessClient does; a native not-found/mute response remains visible.
         self.events.append(dict(kind='chat',channel=channel,name=self.state['self']['name'],message=message,target=target,outgoing=True,player_id=self.player_id,drunk=drunk))
@@ -252,7 +253,7 @@ class ServicesMixin:
             if a==8:
                 pid=r.num(2);peer=next((c for c in self.state['characters'] if c['player_id']==pid),{})
                 event.update(channel='local',player_id=pid,name=peer.get('name','Player'),message=r.rest().decode('latin1'))
-            elif a in (15,20,17,22): event.update(channel={15:'global',20:'private',17:'system',22:'system'}[a],name=r.text(),message=r.text())
+            elif a in (1,15,20,17,22): event.update(channel={1:'guild',15:'global',20:'private',17:'system',22:'system'}[a],name=r.text(),message=r.text())
             elif a==23:event['message']=r.rest().decode('latin1')
             elif a==3:r.num(2);event['message']='Character not found: '+r.rest().decode('latin1')
             elif a==16:event['message']='The server has muted your character.'

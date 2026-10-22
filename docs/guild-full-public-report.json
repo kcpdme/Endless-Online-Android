@@ -1,0 +1,13 @@
+{
+  "public_tls_guild_open_native_ack": true,
+  "hosted_founding_requirements_preserved": true,
+  "native_client_insufficient_gold_feedback": true,
+  "native_recruiter_offline_feedback": true,
+  "public_native_not_found_info_and_members": true,
+  "public_close": true,
+  "public_health_http_status": 403,
+  "result": "passed",
+  "operator_accounts_used": false,
+  "existing_player_data_edited": false,
+  "new_dev_fixture_only": true
+}

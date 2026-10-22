@@ -1,0 +1,13 @@
+{
+  "result": "passed",
+  "backup": "/opt/aster-vale/backups/guild-v45-20261022T192633Z",
+  "adapter_restart_only": true,
+  "native_world_restarted": false,
+  "active_player_sessions_at_restart": 0,
+  "database_not_edited": true,
+  "source_sha256": {
+    "live_session.py": "efa7073cd8b6e34d192a59b6d17ae259ac95b82590dfd48ac2ba00d9ee099188",
+    "gateway.py": "308448245e8194d65819be766c7b2d4a8ad0c7b2745de5314f0ea10cb4faf0df",
+    "guilds.py": "915eb67b5ae8a95382f10e196901d8e7cd215d643dbad3a1631516f6d4bd3995"
+  }
+}

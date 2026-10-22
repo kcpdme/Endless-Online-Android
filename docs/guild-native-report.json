@@ -1,0 +1,9 @@
+{
+  "guild_bob_native_open_ack": true,
+  "native_information_and_bank": true,
+  "native_member_list": true,
+  "native_not_found_both_reply_widths": true,
+  "close_clears_context": true,
+  "result": "passed",
+  "environment": "isolated temporary native runtime; no player database copied or modified"
+}

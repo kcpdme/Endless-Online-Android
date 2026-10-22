@@ -16,13 +16,14 @@ from services import ServicesMixin
 from chests import ChestsMixin
 from seating import SeatingMixin
 from quests import QuestsMixin
+from guilds import GuildsMixin
 from inns import InnsMixin
 from consumables import ConsumablesMixin
 from skills import SkillsMixin
 from rewards import RewardsMixin
 
 
-class LiveSession(RewardsMixin, SkillsMixin, ConsumablesMixin, InnsMixin, QuestsMixin, SeatingMixin, ChestsMixin, ServicesMixin, EconomyMixin, Session):
+class LiveSession(GuildsMixin, RewardsMixin, SkillsMixin, ConsumablesMixin, InnsMixin, QuestsMixin, SeatingMixin, ChestsMixin, ServicesMixin, EconomyMixin, Session):
     def __init__(self,*args):
         self.init_services();self.init_skills()
         self.pending_moves=deque();self.position_seq=0;self.last_input_seq=0
@@ -46,7 +47,7 @@ class LiveSession(RewardsMixin, SkillsMixin, ConsumablesMixin, InnsMixin, Quests
         # Bound the queue; the native server enforces its 400 ms cadence. Network jitter
         # may deliver valid, evenly spaced client inputs in a burst. Never sleep here.
         self.skillmaster=None
-        self.quest_dialog=None;self.quest_context=None;self.inn=None
+        self.quest_dialog=None;self.quest_context=None;self.inn=None;self.guild=None
         now=time.monotonic();self.shop=None;self.bank=None;self.locker=None;self.chest=None
         if open_door:self.send(34,13,number(x,1)+number(y,1))
         # Match original etheos: NPC occupancy is checked by the client before
@@ -138,7 +139,8 @@ class LiveSession(RewardsMixin, SkillsMixin, ConsumablesMixin, InnsMixin, Quests
         if handled and (f,a)==(19,5):
             if self.pending_moves:self.position_seq=self.pending_moves[-1]['seq']
             self.casting=None;self.skillmaster=None
-            self.quest_dialog=None;self.quest_context=None;self.inn=None
+            self.quest_dialog=None;self.quest_context=None;self.inn=None;self.guild=None
+            self.guild_invitation=None;self.guild_requests=None
             self.shop=None;self.bank=None;self.locker=None;self.chest=None;self.trade=None;self.trade_request=None;self.pending_pickups.clear();self.drop_guards.clear()
             self.pending_moves.clear();self.expect_walk_refresh=False;self.position_update=True;self.correction=True;self.dirty=True
             if was_dead:self.events[-1]['reason']='death_respawn'
@@ -166,6 +168,7 @@ class LiveSession(RewardsMixin, SkillsMixin, ConsumablesMixin, InnsMixin, Quests
     def apply_event(self,f,a,p):
         super().apply_event(f,a,p)
         self.apply_service_packet(f,a,p)
+        if self.state:self.apply_guild_packet(f,a,p)
         self.apply_chest_packet(f,a,p)
         if self.state:self.apply_seating_packet(f,a,p)
         if self.state:self.apply_quest_packet(f,a,p)
@@ -315,6 +318,8 @@ class LiveSession(RewardsMixin, SkillsMixin, ConsumablesMixin, InnsMixin, Quests
         data['shop']=self.shop
         data['quest_dialog']=self.quest_dialog
         data['inn']=self.inn
+        data['guild']=self.guild
+        data.update(guild_creation=self.guild_creation,guild_invitation=self.guild_invitation,guild_requests=self.guild_requests or [],guild_notice=self.guild_notice)
         data.update(casting=({k:v for k,v in self.casting.items() if k in ('spell_id','target_kind','target_id','seconds')} if getattr(self,'casting',None) else None),skillmaster=getattr(self,'skillmaster',None),bank=self.bank,locker=self.locker,chest=self.chest,trade=self.trade,trade_request=self.trade_request)
         data.update(position_update=self.position_update,position_seq=self.position_seq,correction=self.correction)
         self.dirty=False;self.position_update=False;self.correction=False
@@ -327,7 +332,7 @@ class LiveSession(RewardsMixin, SkillsMixin, ConsumablesMixin, InnsMixin, Quests
         if not before or before['map_id']!=data['map_id'] or any(e.get('kind')=='map_transition' for e in data['events']):return data
         # Compact entity changes, like native EO: never resend the full visible world per step.
         update={k:data[k] for k in ('map_id','position_update','position_seq','correction','events')}
-        for key in ('bank','locker','chest','trade','trade_request','casting','skillmaster','quest_dialog','inn'):
+        for key in ('bank','locker','chest','trade','trade_request','casting','skillmaster','quest_dialog','inn','guild','guild_creation','guild_invitation','guild_requests','guild_notice'):
             if data.get(key)!=before.get(key):update[key]=data.get(key)
         if data['player']!=before['player'] or data['position_update']:update['player']=data['player']
         for collection,key in [('players','player_id'),('npcs','index'),('items','uid')]:

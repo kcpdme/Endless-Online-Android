@@ -1,0 +1,17 @@
+{
+  "version": "0.33.2",
+  "version_code": 45,
+  "package": "com.cloudgameboy.astervale",
+  "apk": "builds/aster-vale-release.apk",
+  "apk_sha256": "1dc6c83eeac233a6c3980d957c12a433119489e1687a3da8cd93c343f60f70a3",
+  "signed_release_export": true,
+  "signature_verified": true,
+  "alignment_16k_verified": true,
+  "server_unit_tests": 134,
+  "guild_touch_checks": 12,
+  "native_and_public_guild_checks": "passed",
+  "movement_changed": false,
+  "phone_installed": false,
+  "phone_note": "No ADB device connected",
+  "known_existing_issue": "Runtime check and movement_timing exit with the pre-existing resource shutdown leak; import, APK export and movement assertions pass."
+}
