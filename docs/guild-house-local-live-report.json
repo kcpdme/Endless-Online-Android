@@ -1,0 +1,8 @@
+{
+  "actual_guild_house_bob_touch": true,
+  "checks": 13,
+  "dev_account_only": true,
+  "native_lookup_error_keeps_window": true,
+  "refresh_preserves_form_and_close": true,
+  "result": "passed"
+}

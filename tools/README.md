@@ -147,3 +147,10 @@ sound effects. `test_sfx.py` verifies that every note retains the original PCM
 frames. These generated audio files and the supplied archive remain ignored by
 Git. Bard uses the native equipped instrument graphic (49 harp, 50 guitar),
 with note indices 0–35.
+
+Quest progress/history uses the original GFX2:68 objective icons, included by
+`export_catalog.py`. For an existing content pack:
+
+```sh
+python3 tools/export_quests.py --graphics /path/to/EOzipped028.zip
+```

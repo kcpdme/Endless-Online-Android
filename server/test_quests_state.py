@@ -12,6 +12,35 @@ def dialog(links=((1,'Karma menu'),(2,'Class menu')),pages=('Hello stranger',),q
 
 
 class QuestsStateTests(unittest.TestCase):
+    def test_progress_list_uses_native_request_and_preserves_counters(self):
+        s=fixture();s.snapshot=lambda:dict(quest_journal=s.quest_journal)
+        # Native count includes contexts omitted because hidden/finished; parse framed rows.
+        payload=number(1,1)+number(8,2)+string("Pjedro's Son")+string('Find Nena in Stronghold')+number(4,2)+number(2,2)+number(8,2)+b'\xff'
+        s._wait_service=lambda f,a:s.apply_event(50,18,payload)
+        data=s.quest_list()
+        self.assertEqual(s.sent,[(50,18,number(1,1))])
+        self.assertEqual(data['quest_journal'],dict(page='progress',entries=[dict(name="Pjedro's Son",description='Find Nena in Stronghold',icon=4,progress=2,target=8)]))
+
+    def test_history_and_empty_lists_never_invent_quests(self):
+        s=fixture();s.snapshot=lambda:dict(quest_journal=s.quest_journal)
+        s._wait_service=lambda f,a:s.apply_event(50,18,number(2,1)+number(20,2)+string('Pjedro'))
+        self.assertEqual(s.quest_list('history')['quest_journal'],dict(page='history',entries=[dict(name='Pjedro')]))
+        s.apply_event(50,18,number(1,1)+number(20,2))
+        self.assertEqual(s.quest_journal,dict(page='progress',entries=[]))
+        for value in ('bad','',0,True):
+            with self.assertRaises(EOError):s.quest_list(value)
+        s.state=None
+        with self.assertRaises(EOError):s.quest_list()
+
+    def test_malformed_quest_list_is_atomic_and_read_only_works_seated(self):
+        s=fixture();s.quest_journal=dict(page='history',entries=[]);old=s.quest_journal
+        for payload in (b'',number(3,1)+number(0,2),number(1,1)+number(1,2)+string('a')+b'bad'):
+            with self.assertRaises((EOError,RuntimeError,ValueError)):s.apply_event(50,18,payload)
+            self.assertIs(s.quest_journal,old)
+        s.state['self']['sitting']=1;s.stats['dead']=True;s.snapshot=lambda:{}
+        s._wait_service=lambda f,a:s.apply_event(50,18,number(1,1)+number(0,2))
+        s.quest_list();self.assertEqual(s.sent,[(50,18,number(1,1))])
+
     def opened(self):
         s=fixture();s.state['npcs']=[dict(id=166,index=7,x=40,y=39)]
         s.quest_context=dict(npc_index=7,npc_id=166,map_id=5,x=40,y=39)

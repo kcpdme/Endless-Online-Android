@@ -12,8 +12,8 @@ from bootstrap_godot import bootstrap
 
 ROOT = Path(__file__).resolve().parents[1]
 ANDROID_PACKAGE = 'com.cloudgameboy.astervale'
-ANDROID_VERSION_CODE = 51
-ANDROID_VERSION_NAME = '0.37.0'
+ANDROID_VERSION_CODE = 52
+ANDROID_VERSION_NAME = '0.37.1'
 
 def run_checked(command, env, name):
     """Godot can return zero for script errors, so inspect diagnostics as well."""

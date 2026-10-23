@@ -1,0 +1,13 @@
+{
+  "result": "passed",
+  "backup": "/opt/aster-vale/backups/guild-quests-v52-20261023T192345Z",
+  "active_sessions_before_adapter_restart": 0,
+  "native_world_restarted": false,
+  "native_database_or_definitions_edited": false,
+  "adapter_only": true,
+  "source_sha256": {
+    "quests.py": "996dc06c87536c1cd773d86266b45f9fc1cd585f7f9e5124ed1feda54a940170",
+    "gateway.py": "1cf7479f3e9dac79ddb8f28cc41297e9b9fc5777090843497e31ffa8d07c568d",
+    "live_session.py": "b6eff215684f41f08138134400e5d8ddc346f0213be01b56ce5a357e80cb715e"
+  }
+}

@@ -80,6 +80,6 @@ func run() -> void:
 	game.sfx._notification(Node.NOTIFICATION_APPLICATION_RESUMED)
 	for i: int in range(100):game.sfx.play_id(15)
 	check(game.sfx.voices.size() == 24,"Audio voices stay bounded under many simultaneous actions")
-	game.sfx.stop();game.started = false;game.queue_free();await process_frame
+	game.sfx.stop();game.started = false;game.queue_free();await create_timer(.2).timeout
 	print("AUDIO BUBBLES V37 PASS: ", checks, " checks")
 	quit()

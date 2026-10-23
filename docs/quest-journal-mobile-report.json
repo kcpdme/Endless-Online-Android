@@ -1,0 +1,10 @@
+{
+  "back_late_reply_logout": true,
+  "checks": 46,
+  "four_landscape_sizes": true,
+  "native_progress_and_history": true,
+  "no_optimistic_quests": true,
+  "quest_icon_beside_chat": true,
+  "result": "passed",
+  "single_touch_no_movement": true
+}

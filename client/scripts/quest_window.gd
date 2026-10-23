@@ -54,6 +54,7 @@ func receive(data: Dictionary) -> void:
 	state = (data.quest_dialog as Dictionary).duplicate(true)
 	page = 0
 	game._cancel_controls()
+	game.quest_journal.dismiss()
 	game.shop_ui.close()
 	game.services_ui.panel.hide()
 	game.inventory.hide()

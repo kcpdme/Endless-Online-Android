@@ -37,7 +37,7 @@ func build(owner_game: Node, parent: Control) -> void:
 		var slot: int = index
 		var button: Button = preload("res://scripts/hud_icon_button.gd").new() if index == 2 else Button.new()
 		if index == 2: button.set("kind", "skills")
-		button.position = [Vector2(-258, -318), Vector2(-166, -346), Vector2(-356, 24)][index]
+		button.position = [Vector2(-258, -318), Vector2(-166, -346), Vector2(-446, 24)][index]
 		if index < 2: button.position += game.COMBAT_HUD_SHIFT
 		button.size = Vector2(68, 68)
 		button.focus_mode = Control.FOCUS_NONE

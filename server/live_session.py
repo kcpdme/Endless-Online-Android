@@ -26,7 +26,7 @@ from party import PartyMixin
 
 class LiveSession(PartyMixin, GuildsMixin, RewardsMixin, SkillsMixin, ConsumablesMixin, InnsMixin, QuestsMixin, SeatingMixin, ChestsMixin, ServicesMixin, EconomyMixin, Session):
     def __init__(self,*args):
-        self.init_services();self.init_skills();self.init_party()
+        self.init_services();self.init_skills();self.init_party();self.quest_journal=None
         self.pending_moves=deque();self.position_seq=0;self.last_input_seq=0
         self.pending_pickups={};self.drop_guards={}
         self.metrics=dict(moves=0,walk_acks=0,refreshes=0,corrections=0,collects=0,pickups=0)
@@ -323,6 +323,7 @@ class LiveSession(PartyMixin, GuildsMixin, RewardsMixin, SkillsMixin, Consumable
         data['party_notice']=getattr(self,'party_notice','')
         data['shop']=self.shop
         data['quest_dialog']=self.quest_dialog
+        data['quest_journal']=self.quest_journal
         data['inn']=self.inn
         data['guild']=self.guild
         data.update(guild_creation=self.guild_creation,guild_invitation=self.guild_invitation,guild_requests=self.guild_requests or [],guild_notice=self.guild_notice)
@@ -338,7 +339,7 @@ class LiveSession(PartyMixin, GuildsMixin, RewardsMixin, SkillsMixin, Consumable
         if not before or before['map_id']!=data['map_id'] or any(e.get('kind')=='map_transition' for e in data['events']):return data
         # Compact entity changes, like native EO: never resend the full visible world per step.
         update={k:data[k] for k in ('map_id','position_update','position_seq','correction','events')}
-        for key in ('party','party_invitation','party_notice','bank','locker','chest','trade','trade_request','casting','skillmaster','quest_dialog','inn','guild','guild_creation','guild_invitation','guild_requests','guild_notice'):
+        for key in ('party','party_invitation','party_notice','bank','locker','chest','trade','trade_request','casting','skillmaster','quest_dialog','quest_journal','inn','guild','guild_creation','guild_invitation','guild_requests','guild_notice'):
             if data.get(key)!=before.get(key):update[key]=data.get(key)
         if data['player']!=before['player'] or data['position_update']:update['player']=data['player']
         for collection,key in [('players','player_id'),('npcs','index'),('items','uid')]:

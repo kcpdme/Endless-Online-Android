@@ -58,8 +58,9 @@ func run() -> void:
 	check("devleader" in game.guild_ui.detail.text, "Native member list must render")
 	online._on_message({"op":"guild_info","ok":false,"error":"Guild not found"})
 	check(game.guild_ui.panel.visible and game.toast_label.text == "Guild not found" and game.guild_ui.status.text == "Guild not found", "Lookup errors must keep the window usable and show feedback")
-	for width: int in [1280,1544]:
+	for width: int in [960,1280,1544,1920]:
 		root.size = Vector2i(width,720); await process_frame
+		game.guild_ui.tick(); await process_frame
 		check(root.get_visible_rect().encloses(card.get_global_rect()), "Guild window must fit phone landscape viewport")
 	if OS.get_environment("EO_GUILD_SCREENSHOT") != "":
 		await RenderingServer.frame_post_draw
@@ -109,8 +110,9 @@ func run() -> void:
 	game.guild_ui.response({"op":"guild_recruit","ok":true})
 	game.guild_ui._remember(); game.guild_ui.page = 3; game.guild_ui.refresh()
 	game.guild_ui.layout(360)
-	check(card.get_global_rect().end.y <= 360, "Guild forms must remain above the software keyboard")
+	check(card.get_global_rect().position.x >= 0 and card.get_global_rect().position.y >= 0 and card.get_global_rect().end.y <= 360, "Guild forms must remain above the software keyboard")
 	game.guild_ui.layout(0)
+	check(root.get_visible_rect().encloses(card.get_global_rect()), "Guild panel remains fully on-screen after keyboard closes")
 	check(game.guild_ui.inputs.has("rank_9") and game.guild_ui.inputs.has("description"), "Founder must have all rank-name and description fields")
 	game.guild_ui.inputs["member_rank"].text = ""
 	game.guild_ui._confirm("guild_rank", {"name":"devmember","rank":0}, "Change rank?")

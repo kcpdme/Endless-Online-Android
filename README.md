@@ -8,8 +8,8 @@ This public repository contains source code, content import tools, build scripts
 
 After importing content and building, install `builds/aster-vale-debug.apk` on an Android device (Android 7 / API 24 or later). This development build includes ARM64 and x86_64. Open **Aster Vale**, log in, select your character and join the persistent shared world. The build is signed with a development key, not configured for Google Play release.
 
-The current Android package is **`com.cloudgameboy.astervale`**, version 0.37.0
-(code 51). It installs separately from the earlier `io.astervale.prototype` app;
+The current Android package is **`com.cloudgameboy.astervale`**, version 0.37.1
+(code 52). It installs separately from the earlier `io.astervale.prototype` app;
 online accounts remain on the same server. Release APK and AAB exports use the
 same private release signing key.
 
@@ -25,6 +25,8 @@ Tap a card, then enter the selected character.
 - Two consumable and two skill shortcuts save per character on the server.
 - Targeted healing shortcuts let you tap yourself or another player in the world.
   Group Heal and Aura cast directly on your native party. Bard opens a 36-note instrument keyboard.
+- The parchment icon beside chat opens native ongoing quests and completed
+  history, including objectives and available progress counters.
 - **Menu → Party** manages invitations, members, party chat and leaving.
   Inspect another player to invite them. The leader can remove members;
   leaving as leader disbands the party after confirmation.
@@ -36,6 +38,12 @@ APK update (`--no-incremental -r`), verifies installed bytes and version, and
 checks that Android kept the app's original installation timestamp.
 
 ## Play online
+
+Version **0.37.1** fixes the guild-house window being clipped into the top-left
+corner when its keyboard layout handler runs. Guild forms also survive world
+refreshes. A parchment icon beside chat opens the original native quest
+progress/history list, with saved objectives, counters and original icons. See
+[guild-house and quest-journal verification](docs/GUILD_HOUSE_QUESTS.md).
 
 Version **0.37.0** expands login and creation to full-screen layouts, with three
 large native character slots and original body, skin, hair style and color

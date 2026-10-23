@@ -118,6 +118,7 @@ class Handler(socketserver.StreamRequestHandler):
         if op=='inn_quote':return s.inn_quote()
         if op=='inn_sleep':return s.inn_sleep()
         if op=='inn_close':return s.inn_close()
+        if op=='quest_list':return s.quest_list(str(r.get('page','progress')))
         if op=='quest_open':return s.quest_open(int(r['npc_index']),int(r.get('quest_id',0)))
         if op=='quest_reply':return s.quest_reply(r.get('action'))
         if op=='quest_close':return s.quest_close()

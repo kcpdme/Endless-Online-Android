@@ -128,5 +128,5 @@ func _run() -> void:
 	print("MOBILE COMBAT ","FAIL" if failed else "PASS",": potion/skill during walking, native ACK only, despawn cleanup, held attack mean=",mean,"s, touch chat history and preserved scroll")
 	game.started=false
 	game.queue_free()
-	await process_frame
+	await create_timer(.2).timeout
 	quit(1 if failed else 0)

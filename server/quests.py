@@ -6,6 +6,15 @@ from skills import npc_types
 class QuestsMixin:
     quest_dialog=None
     quest_context=None
+    quest_journal=None
+
+    def quest_list(self, page='progress'):
+        if not self.state:raise EOError('Enter a character before viewing quests')
+        if page not in ('progress','history'):raise EOError('Choose quest progress or history')
+        self.send(50,18,number(1 if page=='progress' else 2,1))
+        self._wait_service(50,{18})
+        if not self.quest_journal or self.quest_journal['page']!=page:raise EOError('Quest list did not match the requested page')
+        return self.snapshot()
 
     def quest_open(self,npc_index,quest_id=0):
         self._standing();npc_index,quest_id=int(npc_index),int(quest_id)
@@ -51,7 +60,21 @@ class QuestsMixin:
         return self.snapshot()
 
     def apply_quest_packet(self,f,a,p):
-        if (f,a)==(50,34):
+        if (f,a)==(50,18):
+            r=Reader(p);page=r.num();r.num(2)  # Native count includes hidden/finished contexts; rows are delimiter framed.
+            if page not in (1,2):raise EOError('Unknown native quest page')
+            entries=[]
+            while r.rest():
+                name=r.text()
+                if page==1:
+                    row=dict(name=name,description=r.text(),icon=r.num(2),progress=r.num(2),target=r.num(2))
+                    if r.take(1)!=b'\xff':raise EOError('Malformed native quest progress')
+                    entries.append(row)
+                else:entries.append(dict(name=name))
+                if len(entries)>1000:raise EOError('Too many native quest entries')
+            self.quest_journal=dict(page='progress' if page==1 else 'history',entries=entries)
+            self.dirty=True
+        elif (f,a)==(50,34):
             context=self.quest_context
             if not context or not self.state or context['map_id']!=self.state['map_id']:return
             r=Reader(p);count=r.num()

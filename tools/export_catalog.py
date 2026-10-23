@@ -189,7 +189,9 @@ def export_catalog(runtime:Path,graphics_zip:Path,out:Path,map_id=5):
         manifest['characters']['hero']=manifest['characters']['hero_variants']['a1_b1_w0']
         map_references={}
         from export_minimap import add_atlas
+        from export_quests import add_atlas as add_quest_atlas
         add_atlas(image(2,45),out,manifest)
+        add_quest_atlas(image(2,68),out,manifest)
         for world in worlds.values():
             for layer,entries in world['layers'].items():
                 for entry in entries:

@@ -20,7 +20,7 @@ func _ready() -> void:
 	button_down.connect(queue_redraw)
 	button_up.connect(queue_redraw)
 	resized.connect(queue_redraw)
-	tooltip_text = {"bag": "Inventory bag", "person": "Character equipment", "chat": "Chat", "sit": "Sit / Stand"}.get(kind, "")
+	tooltip_text = {"bag": "Inventory bag", "person": "Character equipment", "chat": "Chat", "quests": "Ongoing quests", "sit": "Sit / Stand"}.get(kind, "")
 
 func _has_point(point: Vector2) -> bool:
 	var radius: float = minf(size.x, size.y) * 0.5
@@ -60,6 +60,13 @@ func _draw() -> void:
 		for y: int in [-5, 1, 7]:
 			draw_line(Vector2(-14, y), Vector2(-5, y + 2), gold, 1.8, true)
 			draw_line(Vector2(5, y + 2), Vector2(14, y), gold, 1.8, true)
+	elif kind == "quests":
+		# Rolled parchment and a check mark distinguish quests from the skill book.
+		draw_rect(Rect2(-14,-20,28,38),light)
+		draw_line(Vector2(-18,-20),Vector2(16,-20),gold,5.0,true)
+		draw_line(Vector2(-14,18),Vector2(18,18),gold,5.0,true)
+		for y: int in [-11,-4]: draw_line(Vector2(-7,y),Vector2(8,y),ink,2.0,true)
+		draw_polyline(PackedVector2Array([Vector2(-7,6),Vector2(-2,11),Vector2(9,1)]),ink,3.0,true)
 	elif kind == "chat":
 		var bubble: PackedVector2Array = PackedVector2Array([Vector2(-17, -13), Vector2(17, -13), Vector2(17, 10), Vector2(-2, 10), Vector2(-12, 18), Vector2(-9, 10), Vector2(-17, 10)])
 		draw_colored_polygon(bubble, light)

@@ -99,6 +99,9 @@ func lookup(members: bool) -> void:
 	if text.length() < 2: game._toast("Enter a guild tag or name first."); return
 	_send("guild_members" if members else "guild_info", {"query": text})
 
+func _signature() -> String:
+	return JSON.stringify([state,creation,invitation,requests,notice,chat,page,busy])
+
 func refresh() -> void:
 	for child: Node in body.get_children(): body.remove_child(child); child.queue_free()
 	inputs.clear()
@@ -182,13 +185,15 @@ func refresh() -> void:
 		for child: Node in body.get_children():
 			if child is Button: child.disabled = true
 	status.text = notice
+	stamp = _signature()
 
 func receive(data: Dictionary) -> void:
 	var incoming: bool = false
-	var changed: bool = false
+	var opened: bool = false
 	if data.has("guild"):
+		var was_empty: bool = state.is_empty()
 		state = (data.guild as Dictionary).duplicate(true) if data.guild is Dictionary else {}
-		if not state.is_empty(): changed = true
+		if not state.is_empty(): opened = was_empty
 		elif panel.visible and page not in [4,5] and not busy: panel.hide()
 	if data.has("guild_creation"): creation = (data.guild_creation as Dictionary).duplicate(true) if data.guild_creation is Dictionary else {}
 	if data.has("guild_invitation"):
@@ -208,12 +213,12 @@ func receive(data: Dictionary) -> void:
 			chat.append("%s: %s" % [str(event.get("name", "")), str(event.get("message", ""))])
 			if chat.size() > 100: chat.pop_front()
 	if incoming: _remember(); page = 4
-	var next_stamp: String = JSON.stringify([state,creation,invitation,requests,notice,chat,page,busy])
+	var next_stamp: String = _signature()
 	if next_stamp != stamp:
 		_remember(); refresh(); stamp = next_stamp
-	if changed or incoming:
+	if opened or incoming:
 		game._cancel_controls(); game.shop_ui.close(); game.services_ui.panel.hide()
-		game.quest_ui.panel.hide(); game.inn_ui.panel.hide(); game.inventory.hide()
+		game.quest_journal.dismiss(); game.quest_ui.panel.hide(); game.inn_ui.panel.hide(); game.inventory.hide()
 		game.character_panel.hide(); game.stats_ui.dismiss(); game.skills_ui.panel.hide()
 		title.text = str(((game.online.catalog.get("npcs", {}) as Dictionary).get(str(int(state.get("npc_id", 46))), {}) as Dictionary).get("name", "Guild services"))
 		panel.show()
@@ -237,10 +242,14 @@ func tick() -> void:
 	layout(lift)
 
 func layout(lift: float) -> void:
-	var height: float = clampf(game.get_viewport_rect().size.y - lift - 24, 280, 650)
+	var height: float = clampf(panel.size.y - lift - 24, 280, 650)
 	var card: Control = panel.get_child(0) as Control
-	card.size = Vector2(900, height)
-	card.position = Vector2(-450, -height / 2.0 - lift / 2.0)
+	# Position is parent-relative; changing it to negative offsets clips the modal.
+	# Keep centered anchors and update offsets, including the keyboard lift.
+	card.set_anchors_preset(Control.PRESET_CENTER)
+	card.offset_left = -450; card.offset_right = 450
+	card.offset_top = -height / 2.0 - lift / 2.0
+	card.offset_bottom = height / 2.0 - lift / 2.0
 	scroll.size.y = maxf(52, height - 228)
 	status.position.y = height - 78
 	var focus: Control = game.get_viewport().gui_get_focus_owner()

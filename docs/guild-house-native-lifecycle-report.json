@@ -1,0 +1,14 @@
+{
+  "create_support_and_confirm": true,
+  "unauthorised_recruiter_rejected": true,
+  "native_recruiter_accept_and_bank_charge": true,
+  "description_rank_names_promotion_and_permissions": true,
+  "demotion_and_native_kick": true,
+  "private_native_guild_chat": true,
+  "native_leave_and_disband": true,
+  "result": "passed",
+  "isolated_runtime": true,
+  "founding_members_for_test": 3,
+  "hosted_requirement_unchanged": true,
+  "player_database_copied": false
+}

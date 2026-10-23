@@ -70,4 +70,4 @@ func run() -> void:
 	var report: Dictionary = {"result":"passed" if not failed else "failed","checks":checks,"target_heals_world_self_or_player":true,"party_and_group_heal_ui":true,"bard_36_note_keyboard":true,"login_real_appearance_and_equipment":true,"online_only_entry":true}
 	var path: String = OS.get_environment("ASTER_VALE_TEST_REPORT")
 	if not path.is_empty(): var f: FileAccess = FileAccess.open(path,FileAccess.WRITE); f.store_string(JSON.stringify(report,"  ")+"\n")
-	print("SOCIAL MOBILE: ",JSON.stringify(report)); game.queue_free(); await process_frame; await process_frame; quit(1 if failed else 0)
+	print("SOCIAL MOBILE: ",JSON.stringify(report)); game.queue_free(); await create_timer(.2).timeout; quit(1 if failed else 0)

@@ -1,0 +1,10 @@
+{
+  "actual_hud_touch_and_back": true,
+  "checks": 9,
+  "dev_character_only": true,
+  "native_saved_completed_history": true,
+  "native_saved_kill_progress_3_of_20": true,
+  "native_saved_ongoing_objective": true,
+  "original_quest_icons": true,
+  "result": "passed"
+}

@@ -126,6 +126,7 @@ var modal_input_until: int = 0
 var redeem_ui: RefCounted
 var music: Node
 var sfx: Node
+var quest_journal: RefCounted
 var quest_ui: RefCounted
 var speech_layer: Control
 var sit_button: Button
@@ -475,7 +476,7 @@ func _joystick_begin(pointer: Vector2, pointer_id: int) -> void:
 	stick = Vector2(joystick.direction)
 
 func _modal_open() -> bool:
-	return (party_ui != null and party_ui.panel.visible) or (skills_ui != null and (skills_ui.target_panel.visible or skills_ui.bard_panel.visible)) or (movement_ui != null and movement_ui.panel.visible) or (guild_ui != null and guild_ui.panel.visible) or (inn_ui != null and inn_ui.panel.visible) or (quest_ui != null and quest_ui.panel.visible) or (redeem_ui != null and redeem_ui.panel.visible) or (online != null and online.panel != null and online.panel.visible) or (inventory != null and inventory.visible) or (menu != null and menu.visible) or (character_panel != null and character_panel.visible) or (stats_ui != null and stats_ui.is_open()) or (shop_ui != null and shop_ui.panel.visible) or (services_ui != null and services_ui.panel.visible) or (chat_ui != null and chat_ui.panel.visible) or (skills_ui != null and skills_ui.panel.visible) or (quick_items != null and quick_items.panel.visible)
+	return (quest_journal != null and quest_journal.panel.visible) or (party_ui != null and party_ui.panel.visible) or (skills_ui != null and (skills_ui.target_panel.visible or skills_ui.bard_panel.visible)) or (movement_ui != null and movement_ui.panel.visible) or (guild_ui != null and guild_ui.panel.visible) or (inn_ui != null and inn_ui.panel.visible) or (quest_ui != null and quest_ui.panel.visible) or (redeem_ui != null and redeem_ui.panel.visible) or (online != null and online.panel != null and online.panel.visible) or (inventory != null and inventory.visible) or (menu != null and menu.visible) or (character_panel != null and character_panel.visible) or (stats_ui != null and stats_ui.is_open()) or (shop_ui != null and shop_ui.panel.visible) or (services_ui != null and services_ui.panel.visible) or (chat_ui != null and chat_ui.panel.visible) or (skills_ui != null and skills_ui.panel.visible) or (quick_items != null and quick_items.panel.visible)
 
 func _begin_attack(pointer_id: int) -> void:
 	if online_mode: route.clear()
@@ -560,7 +561,7 @@ func _input(event: InputEvent) -> void:
 		if started and not _modal_open() and minimap != null and minimap.contains(event.position):
 			get_viewport().set_input_as_handled()
 			return
-		var native_control: bool = started and not _modal_open() and ((skills_ui != null and skills_ui.contains(event.position) >= 0) or (quick_items != null and quick_items.contains(event.position) >= 0) or attack_button.contains_point(event.position) or bag_button.contains_point(event.position) or sit_button.contains_point(event.position) or chat_button.contains_point(event.position) or character_button.contains_point(event.position) or joystick.contains_point(event.position) or (online_mode and (skills_ui.armed > 0 or not online.map_entity_target(_screen_to_world(event.position)).is_empty())) or (online_mode and online.loot_button.visible and online.loot_button.get_global_rect().has_point(event.position)))
+		var native_control: bool = started and not _modal_open() and ((skills_ui != null and skills_ui.contains(event.position) >= 0) or (quick_items != null and quick_items.contains(event.position) >= 0) or attack_button.contains_point(event.position) or bag_button.contains_point(event.position) or sit_button.contains_point(event.position) or chat_button.contains_point(event.position) or quest_journal.button.contains_point(event.position) or character_button.contains_point(event.position) or joystick.contains_point(event.position) or (online_mode and (skills_ui.armed > 0 or not online.map_entity_target(_screen_to_world(event.position)).is_empty())) or (online_mode and online.loot_button.visible and online.loot_button.get_global_rect().has_point(event.position)))
 		# Godot may synthesize the mouse press before delivering its native touch.
 		if dismissing_modal or native_control or not owned_touches.is_empty():
 			get_viewport().set_input_as_handled()
@@ -626,6 +627,11 @@ func _input(event: InputEvent) -> void:
 		if bag_button.contains_point(event.position):
 			owned_touches[event.index] = true
 			_toggle_inventory()
+			get_viewport().set_input_as_handled()
+			return
+		if quest_journal.button.contains_point(event.position):
+			owned_touches[event.index] = true
+			quest_journal.open()
 			get_viewport().set_input_as_handled()
 			return
 		if chat_button.contains_point(event.position):
@@ -1207,6 +1213,8 @@ func _build_ui() -> void:
 	online.build_ui(root)
 	chat_ui = preload("res://scripts/chat_window.gd").new()
 	chat_ui.build(self, root)
+	quest_journal = preload("res://scripts/quest_journal.gd").new()
+	quest_journal.build(self, root)
 	speech_layer = preload("res://scripts/speech_bubbles.gd").new()
 	speech_layer.game = self
 	root.add_child(speech_layer)
@@ -1690,6 +1698,8 @@ func _handle_back() -> void:
 		guild_ui.close()
 	elif inn_ui != null and inn_ui.panel.visible:
 		inn_ui.close()
+	elif quest_journal != null and quest_journal.panel.visible:
+		quest_journal.dismiss()
 	elif quest_ui != null and quest_ui.panel.visible:
 		quest_ui.close()
 	elif services_ui != null and services_ui.panel.visible:

@@ -29,13 +29,19 @@ python3 tools/export_catalog.py \
 
 This adds server item/NPC definitions, all 282 map geometries, item icons, spawned
 NPC art, spells and independent equipment animation layers for both genders.
-It also exports the original nine-cell minimap atlas and restores missing
+It also exports the original minimap and quest progress/history icon atlases and restores missing
 wooden chest artwork at Hall of Pain's existing chest tile (7,55), without
 changing native map collision, loot or coordinates. To add only the minimap
 atlas to an existing content pack:
 
 ```sh
 python3 tools/export_minimap.py --graphics /path/to/EOzipped028.zip
+```
+
+To add only the original quest icons to an existing pack:
+
+```sh
+python3 tools/export_quests.py --graphics /path/to/EOzipped028.zip
 ```
 
 To refresh only equipment layers after an existing import/catalog export:
