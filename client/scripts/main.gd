@@ -13,7 +13,6 @@ const ONLINE_ATTACK_COOLDOWN: float = 0.52
 const ATTACK_COOLDOWN: float = 0.90
 const ATTACK_SWING_DURATION: float = 0.26
 const ONLINE_ATTACK_SWING_DURATION: float = 0.48
-const TOUCH_TURN_HOLD_SECONDS: float = 0.08
 const TURN_HOLD_SECONDS: float = 0.20 # Original InputHandlerBase's input interval.
 const SAVE_PATH: String = "user://aster_vale_save.json"
 const TILE: Vector2 = Vector2(64.0, 32.0)
@@ -411,6 +410,12 @@ func _manual_step(direction: Vector2i, continuing_walk: bool) -> void:
 	if online_mode and online.seated():
 		online.toggle_sit()
 		return
+	# Drag intent should issue its step on this frame. A separate desktop Face
+	# would add both a client hold and another action to the native queue.
+	if movement_keys.is_empty() and touch_move_id != -1:
+		_reset_turn_input()
+		_step(direction)
+		return
 	var desired: String = _direction_name(direction)
 	# Original ArrowKeyController.FaceOrAttemptWalk: a stationary character
 	# turns first. Changes at a walking tile boundary continue without a pause.
@@ -419,7 +424,7 @@ func _manual_step(direction: Vector2i, continuing_walk: bool) -> void:
 		else: facing = desired
 		if facing == desired:
 			turn_input = direction
-			turn_wait = TOUCH_TURN_HOLD_SECONDS if movement_keys.is_empty() and touch_move_id != -1 else TURN_HOLD_SECONDS
+			turn_wait = TURN_HOLD_SECONDS
 		return
 	if not continuing_walk and turn_input == direction and turn_wait > 0.000001: return
 	_reset_turn_input()

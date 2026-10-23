@@ -18,9 +18,9 @@ func build(owner_game: Node, parent: Control) -> void:
 	game._label(card, "Joystick base", Vector2(30, 200), 20)
 	base = OptionButton.new(); base.position = Vector2(30, 234); base.size = Vector2(680, 54)
 	base.add_item("Floating · starts where you touch and follows long drags")
-	base.add_item("Fixed · press around the resting circle to move")
+	base.add_item("Fixed · circle stays in place; drag from your touch")
 	base.add_theme_font_size_override("font_size", 20); card.add_child(base)
-	var explanation: Label = game._label(card, "Touch turns respond sooner; keyboard timing stays classic.\nBoth modes use the same four tile directions and walking speed.\nYour choices are saved on this device.", Vector2(30, 316), 19, game.MUTED)
+	var explanation: Label = game._label(card, "Touch-down is neutral; drag to walk immediately.\nBoth modes use the same four tile directions and walking speed.\nYour choices are saved on this device.", Vector2(30, 316), 19, game.MUTED)
 	explanation.size = Vector2(680, 90); explanation.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	mapping.item_selected.connect(func(_index: int) -> void: save())
 	base.item_selected.connect(func(_index: int) -> void: save())

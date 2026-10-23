@@ -8,7 +8,7 @@ This is a **local, offline playable slice** using an imported classic Aeven map 
 
 - Press **Enter the vale** / **Continue your journey**.
 - Tap/click clear ground to walk a collision-aware grid path. Drag in the lower-left area for the floating circular joystick; desktop also supports WASD and arrows.
-- The joystick follows eight screen directions. Release stops at the current visible position and clears queued movement. One finger can move while another strikes; opening a modal or losing focus cancels movement.
+- The joystick sends four native tile directions. Touch-down is neutral in both base modes; drag to walk immediately. Classic/isometric mapping and floating/fixed circles are selectable in Menu → Movement controls. Online release finishes only the committed tile and clears future movement; offline release stops at the visible position. One finger can move while another strikes; opening a modal or losing focus cancels movement.
 - Walk next to the green **Training slime** and hold the enlarged circular **weapon icon**. Attacks repeat every 0.9 seconds with one short swing each. Release or slide off to stop. Tapping the slime or pressing Space attacks once. Three unarmed strikes defeat it.
 - The action button has a translucent circular background with an opaque weapon/fist icon and a recovery ring. Walk over the glowing drop, tap nearby loot, or use the pouch icon / E to collect it. Pickup does not wait for attack recovery.
 - The **bag icon** / I opens a separate 24-slot bag: select a stored item and equip it.

@@ -1,0 +1,16 @@
+{
+  "delayed_first_steps": 135,
+  "extra_face_requests": 28,
+  "first_frame_motion": 0,
+  "fps": [
+    30,
+    60,
+    120
+  ],
+  "landing_points": 5,
+  "modes": 4,
+  "result": "failed",
+  "steps_before_drag": 45,
+  "traces": 180,
+  "wrong_first_directions": 45
+}

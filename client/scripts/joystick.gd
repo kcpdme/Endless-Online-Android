@@ -13,6 +13,7 @@ var fixed_base: bool = false
 var radius: float = 128.0
 var resting_position: Vector2 = Vector2(24, -282)
 var pointer_origin: Vector2 = Vector2.ZERO
+var visual_origin_offset: Vector2 = Vector2.ZERO
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -67,12 +68,11 @@ func _place_center(center: Vector2) -> void:
 func begin(pointer: Vector2) -> void:
 	active = true
 	vector = Vector2.ZERO; direction = Vector2i.ZERO
-	if fixed_base:
-		pointer_origin = global_position + Vector2.ONE * radius
-		update_pointer(pointer)
-	else:
-		pointer_origin = pointer
-		_place_center(pointer)
+	# A landing position is not movement intent, including with a fixed base.
+	# Measure the first drag from touch-down rather than the circle's centre.
+	pointer_origin = pointer
+	if not fixed_base: _place_center(pointer)
+	visual_origin_offset = global_position + Vector2.ONE * radius - pointer_origin
 	queue_redraw()
 
 func _snap_direction(delta: Vector2) -> Vector2i:
@@ -83,6 +83,11 @@ func _snap_direction(delta: Vector2) -> Vector2i:
 		if absf(delta.x) > absf(delta.y): candidate = Vector2i.RIGHT if delta.x > 0 else Vector2i.LEFT
 		else: candidate = Vector2i.DOWN if delta.y > 0 else Vector2i.UP
 	else:
+		# Isometric rays tie at straight up/down/left/right. Resolve a narrow
+		# cardinal cone explicitly so small thumb jitter cannot pick another ray.
+		if minf(absf(delta.x), absf(delta.y)) <= maxf(absf(delta.x), absf(delta.y)) * 0.20:
+			if absf(delta.x) > absf(delta.y): return Vector2i.RIGHT if delta.x > 0 else Vector2i.LEFT
+			return Vector2i.DOWN if delta.y > 0 else Vector2i.UP
 		var strongest: float = -INF
 		for tile: Vector2i in [Vector2i.RIGHT, Vector2i.DOWN, Vector2i.LEFT, Vector2i.UP]:
 			var strength: float = delta.dot(_display_direction(tile))
@@ -93,10 +98,10 @@ func _snap_direction(delta: Vector2) -> Vector2i:
 
 func update_pointer(pointer: Vector2) -> Vector2:
 	var delta: Vector2 = pointer - pointer_origin
-	if not fixed_base and delta.length() > INPUT_RADIUS:
+	if delta.length() > INPUT_RADIUS:
 		var shift: Vector2 = delta - delta.normalized() * INPUT_RADIUS
 		pointer_origin += shift
-		_place_center(global_position + Vector2.ONE * radius + shift)
+		if not fixed_base: _place_center(pointer_origin + visual_origin_offset)
 		delta = delta.normalized() * INPUT_RADIUS
 	direction = _snap_direction(delta)
 	vector = (delta / INPUT_RADIUS).limit_length(1.0) if direction != Vector2i.ZERO else Vector2.ZERO
@@ -104,7 +109,7 @@ func update_pointer(pointer: Vector2) -> Vector2:
 	return Vector2(direction)
 
 func reset() -> void:
-	active = false; vector = Vector2.ZERO; direction = Vector2i.ZERO; pointer_origin = Vector2.ZERO
+	active = false; vector = Vector2.ZERO; direction = Vector2i.ZERO; pointer_origin = Vector2.ZERO; visual_origin_offset = Vector2.ZERO
 	set_anchors_preset(Control.PRESET_TOP_LEFT, true)
 	position = Vector2(resting_position.x, (get_parent() as Control).size.y + resting_position.y)
 	_place_center(global_position + Vector2.ONE * radius)

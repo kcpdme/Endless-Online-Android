@@ -27,12 +27,12 @@ func run() -> void:
 	pad.fixed_base = false; pad.isometric = false; pad.reset()
 	var origin: Vector2 = game._joystick_zone().get_center()
 	game.player_tile = Vector2i(40,40); game.player_world = game.tile_position(game.player_tile); game.facing = "south"
-	# Actual captured joystick input uses the short mobile hold; keyboard stays classic.
+	# Captured drag starts on its first frame, with no separate Face or hold.
 	game._joystick_begin(origin,41); game.stick = pad.update_pointer(origin + Vector2(35,0))
-	game._process(0)
-	check(not game.moving and is_equal_approx(game.turn_wait,.08), "Captured touch must use an80ms turn hold")
-	game._process(.079); check(not game.moving, "Touch turn must preserve deliberate very-short turn-only gestures")
-	game._process(.002); check(game.moving, "Touch must start walking after80ms without an ACK wait")
+	game._process(1.0/60.0)
+	check(game.moving and game.turn_wait == 0, "Captured drag must start walking immediately")
+	check(wire.calls.filter(func(row: Dictionary) -> bool: return row.op == "face").is_empty(), "Touch walking must not queue an extra Face action")
+	check(game.player_world.distance_to(game.tile_position(Vector2i(40,40))) > .01, "The first input frame must display movement")
 	var committed: Vector2i = game.player_tile
 	game._cancel_controls(); game._process(.5)
 	check(not game.moving and game.player_tile == committed and game.player_world.distance_to(game.tile_position(committed)) < .01, "Release must finish exactly its committed tile")
@@ -60,7 +60,9 @@ func run() -> void:
 	pad.reset(); pad.fixed_base = true
 	var fixed_center: Vector2 = pad.global_position + Vector2.ONE * pad.radius
 	pad.begin(fixed_center + Vector2(40,20))
-	check(pad.direction == Vector2i.RIGHT, "Fixed isometric base must respond to pressing its lower-right ray")
+	check(pad.direction == Vector2i.ZERO, "Fixed-base landing must be neutral until a drag")
+	pad.update_pointer(fixed_center + Vector2(80,40))
+	check(pad.direction == Vector2i.RIGHT, "Fixed-base drag must use displacement from touch-down")
 	var fixed_position: Vector2 = pad.global_position
 	pad.update_pointer(Vector2(1500,50))
 	check(pad.global_position == fixed_position, "Fixed base must stay anchored during a long drag")
@@ -94,7 +96,7 @@ func run() -> void:
 			rectangle_cases += 1
 	var half: Vector2 = Vector2(1544,720) / 1.65 / 2 + Vector2(160,240)
 	var bounds: Rect2i = game._visible_tile_bounds(Rect2(game.tile_position(Vector2i(40,40))-half,half*2),87,87)
-	var metrics: Dictionary = {"result":"passed" if not failed else "failed","touch_turn_ms":80,"keyboard_turn_ms":200,"step_ms":420,"long_drag_reversal_px":distance,"aeven_full_grid_candidates":7569,"bounded_candidates":bounds.size.x*bounds.size.y,"viewport_cases":rectangle_cases,"checks":checks}
+	var metrics: Dictionary = {"result":"passed" if not failed else "failed","touch_turn_ms":0,"keyboard_turn_ms":200,"step_ms":420,"long_drag_reversal_px":distance,"aeven_full_grid_candidates":7569,"bounded_candidates":bounds.size.x*bounds.size.y,"viewport_cases":rectangle_cases,"checks":checks}
 	var output: String = OS.get_environment("EO_MOVEMENT_REPORT")
 	if OS.get_environment("EO_MOVEMENT_SCREENSHOT") != "":
 		game.movement_ui.open(); await process_frame; await RenderingServer.frame_post_draw

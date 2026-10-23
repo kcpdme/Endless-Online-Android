@@ -164,7 +164,7 @@ validation separate from APK transfer, and do not enlarge the prediction queue
 or overclock movement to hide a stalled connection.
 
 
-After the wireless transfer finished, the isolated public84-step run measured
+After the wireless transfer finished, the isolated public 84-step run measured
 420.06ms average step starts, zero local stationary frames and zero native
 corrections. Its observer recorded14 idle frames over that sustained walk;
 real WAN jitter can still exceed the100ms buffer. The local two-session
@@ -187,3 +187,24 @@ Fresh verification passes 37 mobile-control/culling and disconnect checks, all 3
 A fresh public WSS test with two native sessions passes all eight keyboard keys and four joystick directions, two 12-step holds and an 84-step sustained walk. It records **zero local stationary frames, zero corrections, matching native endpoints and no extra steps after release**. The 84-step observer records 64 idle frames in this WAN run; public network delivery can still exceed the 100 ms remote buffer. This result does not claim every nearby actor is continuously smooth on every network. Evidence is in `movement-mobile-report.json` and `movement-mobile-public-report.json`.
 
 The signed v0.35.0 / code 47 release APK passes export, signature and 16 KiB alignment checks. No phone is connected to ADB, so installation, actual device frame times, physical thumb distances and user preference testing remain unverified. The new choices allow comparison on the phone without another control rewrite.
+
+
+## Version 0.35.1 / code 48: correct and immediate touch starts
+
+A player reported that touching/dragging upward could begin a rightward walk, and movement still felt slow to start. The earlier constant-speed tests did not cover an off-centre landing before the first drag.
+
+The new actual-input regression (`joystick_startup.gd`) reproduces this across five touch-down positions, both bases, both mappings, three slight horizontal offsets during an upward drag, and simulated 30/60/120 FPS. Before the fix, 180 traces produced 45 premature steps in the wrong direction and 135 delayed starts. This establishes a client input regression independently of network latency.
+
+**Fixed-base input previously treated the landing point as movement.** A finger landing to the right of the circle could commit a rightward tile before the upward drag arrived. Both bases now start neutral and anchor input at touch-down. Their difference is where the circle is drawn; neither chooses a direction from the landing position. Long-drag input travel remains bounded in both modes, and floating-base drawing is derived from the current input anchor rather than accumulating clamped visual shifts.
+
+**The 80 ms joystick turn hold is removed.** Crossing the drag threshold requests the step in that same movement frame, with the facing carried by the Walk packet. Touch walking no longer sends a separate Face action first. Keyboard turn-first behavior retains its 200 ms interval. A joystick drag now commits a tile immediately, rather than serving as a turn-only gesture; a touch without dragging remains neutral.
+
+**Isometric cardinal input is deterministic.** Projected tile directions tie at vertical/horizontal input boundaries. A narrow cardinal detent (minor displacement at most 20% of major displacement) gives straight up/down/left/right drags a consistent native direction despite small thumb jitter. Deliberate diagonal rays still select their corresponding isometric tile direction. No new protocol direction or alternating-axis walk is introduced.
+
+After the fix, the same 180 engine touch traces report **zero premature steps, zero wrong first directions, zero delayed starts, first-frame motion in all 180 cases, and zero extra Face requests**. These are engine input/simulation results, not measured physical phone touch-to-photon latency. Before/after evidence is in `joystick-startup-before-report.json` and `joystick-startup-after-report.json`.
+
+`joystick_startup_live.gd` drives the actual game through the public TLS gateway with an off-centre touch point in fixed/isometric mode, verifies all four joystick directions against native positions, then runs the existing keyboard/continuous movement checks. The public 84-step walk passes with **zero local stationary frames, zero native corrections, matching observer endpoints, and no steps after release**. The observer records 29 idle frames from WAN delivery; this change does not conceal arbitrary network stalls. See `joystick-startup-public-report.json`.
+
+Additional checks pass: 38 mobile controls/culling/lifecycle checks, 32 heading/input combinations, original movement controls, eight simulated frame rates and controlled jitter, committed release/network regressions, gameplay/world smoke, 26 guild UI checks and 141 Python tests. The pre-existing intermittent two-resource Godot shutdown diagnostic can still appear after successful assertions.
+
+The native step pace remains 420 ms; the fix removes startup delay and incorrect input interpretation, rather than increasing server movement speed. Version 0.35.1 / code 48 uses the existing Android package and release key. No Android device is connected, so installation and physical device verification remain outstanding.
