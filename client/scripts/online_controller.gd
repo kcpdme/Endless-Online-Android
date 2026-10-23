@@ -23,6 +23,8 @@ var color_choice: OptionButton
 var creation_status: Label
 var character_preview: Control
 var character_name_field: LineEdit
+var login_store: RefCounted=preload("res://scripts/login_store.gd").new()
+var auth_credentials: Dictionary={}
 var character_flow: RefCounted = preload("res://scripts/character_flow.gd").new()
 var creating_character: bool = false
 var entering_character: bool = false
@@ -143,6 +145,7 @@ func show_login() -> void:
 		selected_characters.clear()
 		character_list.clear()
 		password_field.text = ""
+		character_flow.restore_login()
 		_set_status("Connect to your world or create a new account.")
 	panel.show()
 
@@ -150,7 +153,9 @@ func _close_panel() -> void:
 	creation_panel.hide()
 	login_retry_at = 0
 	panel.hide()
-	if not active: game._show_welcome()
+	if not active:
+		if character_box.visible:session.close();character_box.hide();auth_box.show()
+		game._show_welcome()
 
 func _authenticate(operation: String, retrying: bool = false) -> void:
 	if not retrying: login_retries = 0
@@ -158,6 +163,7 @@ func _authenticate(operation: String, retrying: bool = false) -> void:
 	if username_field.text.strip_edges().is_empty() or password_field.text.is_empty():
 		_set_status("Enter an account name and password.")
 		return
+	auth_credentials={"username":username_field.text.strip_edges(),"password":password_field.text,"host":host_field.text.strip_edges(),"port":int(port_field.value)}
 	desired_auth = operation
 	active = false
 	character_box.hide()
@@ -177,6 +183,7 @@ func _on_message(message: Dictionary) -> void:
 		return
 	game.chat_ui.response(message)
 	game.redeem_ui.response(message)
+	game.world_services.response(message)
 	game.guild_ui.response(message)
 	game.quest_journal.response(message)
 	var operation: String = str(message.get("op", message.get("event", "")))
@@ -218,17 +225,21 @@ func _on_message(message: Dictionary) -> void:
 	match operation:
 		"connect":
 			_set_status("Server handshake accepted. Signing in…")
-			var credentials: Dictionary = {"username": username_field.text.strip_edges(), "password": password_field.text}
+			var credentials: Dictionary = {"username":auth_credentials.get("username",username_field.text.strip_edges()),"password":auth_credentials.get("password",password_field.text)}
 			if desired_auth == "login" and username_field.text.strip_edges().to_lower() == resume_username: credentials["resume_token"] = resume_token
 			session.request(desired_auth, credentials)
 		"register":
 			_set_status("Account created. Signing in…")
-			session.request("login", {"username": username_field.text.strip_edges(), "password": password_field.text})
+			session.request("login", {"username":auth_credentials.get("username",username_field.text.strip_edges()),"password":auth_credentials.get("password",password_field.text)})
 		"login", "create_character":
 			if operation == "login" and data.has("resume_token"):
 				resume_username = username_field.text.strip_edges().to_lower()
 				resume_token = str(data.resume_token)
 			login_retry_at = 0
+			if operation=="login" and character_flow.remember.button_pressed and not auth_credentials.is_empty():
+				if login_store.save_login(auth_credentials):character_flow.forget_button.show()
+				else:game._toast("Login succeeded, but this device could not save the password.")
+			auth_credentials.clear()
 			password_field.text = ""
 			_show_characters(data.get("characters", []) as Array)
 		"enter":
@@ -245,7 +256,7 @@ func _on_message(message: Dictionary) -> void:
 				if int((player.get("equipment", {}) as Dictionary).get(str(replacement.slot), 0)) == 0:
 					session.request("equip", {"item_id": int(replacement.item_id), "subloc": int(replacement.subloc)})
 				else: game._toast("The worn item could not be removed. Your replacement remains in the bag.")
-		"party_invite", "party_join", "party_accept", "party_decline", "party_leave", "party_kick", "party_refresh", "bard_note", "guild_open", "guild_info", "guild_members", "guild_close", "guild_refresh", "guild_begin", "guild_found", "guild_support", "guild_join", "guild_recruit", "guild_deposit", "guild_description", "guild_ranks", "guild_rank", "guild_kick", "guild_leave", "guild_disband", "guild_chat", "inn_open", "inn_quote", "inn_sleep", "inn_close", "quest_open", "quest_reply", "quest_close", "quest_list", "sit", "world", "refresh", "snapshot", "attack", "pickup", "equip", "spend_stat", "shop_buy", "shop_sell", "shop_craft", "bank_deposit", "bank_withdraw", "bank_upgrade", "locker_deposit", "locker_withdraw", "chest_deposit", "chest_take", "chest_close", "trade_request", "trade_accept", "trade_decline", "trade_add", "trade_remove", "trade_agree", "trade_cancel", "chat_send", "item_use", "skill_learn", "skill_forget", "skill_level":
+		"party_invite", "party_join", "party_accept", "party_decline", "party_leave", "party_kick", "party_refresh", "bard_note", "barber_open", "barber_buy", "barber_close", "guild_open", "guild_info", "guild_members", "guild_close", "guild_refresh", "guild_begin", "guild_found", "guild_support", "guild_join", "guild_recruit", "guild_deposit", "guild_description", "guild_ranks", "guild_rank", "guild_kick", "guild_leave", "guild_disband", "guild_chat", "inn_open", "inn_quote", "inn_sleep", "inn_close", "quest_open", "quest_reply", "quest_close", "quest_list", "sit", "world", "refresh", "snapshot", "attack", "pickup", "equip", "spend_stat", "shop_buy", "shop_sell", "shop_craft", "bank_deposit", "bank_withdraw", "bank_upgrade", "locker_deposit", "locker_withdraw", "chest_deposit", "chest_take", "chest_close", "trade_request", "trade_accept", "trade_decline", "trade_add", "trade_remove", "trade_agree", "trade_cancel", "chat_send", "item_use", "skill_learn", "skill_forget", "skill_level":
 			_apply_snapshot(data)
 		"redeem_code":
 			_apply_snapshot(data)
@@ -452,6 +463,7 @@ func _apply_snapshot(data: Dictionary, entering: bool = false) -> void:
 	game.quest_journal.receive(data)
 	game.inn_ui.receive(data)
 	game.guild_ui.receive(data)
+	game.world_services.receive(data)
 	game.party_ui.receive(data)
 	game.services_ui.receive(data)
 	game.services_ui.refresh()
@@ -658,6 +670,7 @@ func _facing(value: Variant) -> String:
 
 func _on_closed(reason: String) -> void:
 	creating_character = false; entering_character = false; last_created_name = ""
+	auth_credentials.clear()
 	shortcuts.disconnected()
 	game.party_ui.disconnected()
 	game.skills_ui.target_panel.hide(); game.skills_ui.bard_panel.hide()
@@ -665,6 +678,7 @@ func _on_closed(reason: String) -> void:
 	creation_panel.hide()
 	game.inn_ui.panel.hide()
 	game.guild_ui.disconnected()
+	game.world_services.disconnected()
 	game.quest_journal.disconnected()
 	game.movement_ui.disconnected()
 	game.music.leave_world()
@@ -1060,6 +1074,14 @@ func map_entity_target(point: Vector2) -> Dictionary:
 		var at: Vector2 = _remote_position("npc:%d" % int(npc.index), game.tile_position(tile))
 		var rectangle: Rect2 = Rect2(at + Vector2(float(offset[0]), float(offset[1])) - Vector2(dimensions.x / 2.0, dimensions.y), dimensions)
 		if rectangle.grow(5.0).has_point(point): return {"tile": tile, "kind": "npc"}
+	for sign: Dictionary in ([] if game.skills_ui.armed>0 else game.world.get("signs",[])):
+		var tile: Vector2i=Vector2i(int(sign.x),int(sign.y))
+		var rectangle: Rect2=Rect2(game.tile_position(tile)-Vector2(24,54),Vector2(48,70))
+		for decoration: Dictionary in game.decorations:
+			if decoration.tile!=tile or str(decoration.layer)!="objects":continue
+			var texture: Texture2D=game._graphic(int(decoration.gfx),int(decoration.id))
+			if texture!=null:rectangle=Rect2(game.tile_position(tile)+Vector2(-2-texture.get_width()/2.0,14-texture.get_height()),texture.get_size()).grow(6)
+		if rectangle.has_point(point):return {"tile":tile,"kind":"sign"}
 	# Match chest/locker artwork, including its front above the blocked tile.
 	for spec: Dictionary in ([] if game.skills_ui.armed > 0 else game.world.get("tile_specs", [])):
 		if int(spec.get("spec", -1)) not in [1, 2, 3, 4, 5, 6, 7, 9, 16]: continue
@@ -1090,6 +1112,8 @@ func map_click(tile: Vector2i, preferred_kind: String = "") -> void:
 			interaction = {"kind": "drop", "id": int(drop.uid)}
 			_approach(tile, 2)
 			return
+	for sign: Dictionary in (game.world.get("signs",[]) if preferred_kind in ["","sign"] else []):
+		if Vector2i(int(sign.x),int(sign.y))==tile:game.world_services.open_sign(sign);return
 	for peer: Dictionary in (players if preferred_kind in ["", "player"] else []):
 		if int(peer.get("player_id", 0)) == int(player.get("player_id", 0)): continue
 		if Vector2i(int(peer.x), int(peer.y)) == tile:
@@ -1106,11 +1130,11 @@ func map_click(tile: Vector2i, preferred_kind: String = "") -> void:
 		if Vector2i(int(npc.x), int(npc.y)) != tile: continue
 		var info: Dictionary = (catalog.get("npcs", {}) as Dictionary).get(str(int(npc.id)), {}) as Dictionary
 		var type: int = int(info.get("type", -1))
-		if type in [6, 7, 9, 11, 14, 15]:
+		if type in [6, 7, 9, 10, 11, 14, 15]:
 			# Original EO dispatches a visible service NPC directly, including
 			# shopkeepers behind sealed counters. Never path onto their side.
 			game._cancel_controls()
-			interaction = {"kind": "guild" if type == 11 else "inn" if type == 7 else "quest" if type == 15 else "skillmaster" if type == 14 else "bank" if type == 9 else "shop", "id": int(npc.index)}
+			interaction = {"kind": "barber" if type == 10 else "guild" if type == 11 else "inn" if type == 7 else "quest" if type == 15 else "skillmaster" if type == 14 else "bank" if type == 9 else "shop", "id": int(npc.index)}
 		elif is_combat_npc(npc):
 			if game._distance(game.player_tile, tile) == 1:
 				var direction: String = game._direction_name(tile - game.player_tile)
@@ -1187,7 +1211,7 @@ func _process_interaction() -> void:
 			var tile: Vector2i = Vector2i(int(target.x), int(target.y))
 			var distance: int = 1 if str(interaction.kind) in ["locker", "chest", "chair"] else 2 if str(interaction.kind) == "drop" else NPC_SERVICE_DISTANCE
 			if game._distance(game.player_tile, tile) > distance:
-				if str(interaction.kind) in ["shop", "bank", "skillmaster", "quest", "inn", "guild"]:
+				if str(interaction.kind) in ["shop", "bank", "skillmaster", "quest", "inn", "guild", "barber"]:
 					interaction.clear()
 					game._toast("This NPC has left your view.")
 					return
@@ -1196,7 +1220,7 @@ func _process_interaction() -> void:
 			if str(interaction.kind) == "chair": toggle_sit(tile)
 			elif str(interaction.kind) == "drop": _pickup(int(interaction.id))
 			elif str(interaction.kind) in ["locker", "chest", "chair"]: session.request("chest_open" if str(interaction.kind) == "chest" else "locker_open", {"x": int(target.x), "y": int(target.y)})
-			else: session.request("guild_open" if str(interaction.kind) == "guild" else "inn_open" if str(interaction.kind) == "inn" else "quest_open" if str(interaction.kind) == "quest" else "skillmaster_open" if str(interaction.kind) == "skillmaster" else "bank_open" if str(interaction.kind) == "bank" else "shop_open", {"npc_index": int(interaction.id)})
+			else: session.request("barber_open" if str(interaction.kind)=="barber" else "guild_open" if str(interaction.kind) == "guild" else "inn_open" if str(interaction.kind) == "inn" else "quest_open" if str(interaction.kind) == "quest" else "skillmaster_open" if str(interaction.kind) == "skillmaster" else "bank_open" if str(interaction.kind) == "bank" else "shop_open", {"npc_index": int(interaction.id)})
 		interaction.clear()
 		collect_pending = false
 	elif collect_pending:

@@ -18,7 +18,7 @@ func tap(control: Control) -> void:
 func run() -> void:
 	root.size = Vector2i(1544,720)
 	var game: Node = load("res://main.tscn").instantiate(); root.add_child(game); await process_frame
-	game.set_process(false); game.music.stop(); game.started = true; game.welcome.hide(); game.online_mode = true
+	game.set_process(false); game.music.stop(); game.started = true; game.welcome.hide();game.online.panel.hide(); game.online_mode = true
 	var c: Node = game.online; c.set_process(false); c.session.queue_free()
 	var wire: Capture = Capture.new(); c.add_child(wire); wire.set_process(false); c.session = wire
 	c.active = true; c.streaming = true

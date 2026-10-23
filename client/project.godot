@@ -3,6 +3,8 @@ config_version=5
 
 [application]
 config/name="Aster Vale"
+boot_splash/show_image=false
+boot_splash/bg_color=Color(0.035, 0.09, 0.1, 1)
 config/icon="res://icon.svg"
 run/main_scene="res://main.tscn"
 config/features=PackedStringArray("4.3", "GL Compatibility")

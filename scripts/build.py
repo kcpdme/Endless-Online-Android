@@ -12,8 +12,8 @@ from bootstrap_godot import bootstrap
 
 ROOT = Path(__file__).resolve().parents[1]
 ANDROID_PACKAGE = 'com.cloudgameboy.astervale'
-ANDROID_VERSION_CODE = 52
-ANDROID_VERSION_NAME = '0.37.1'
+ANDROID_VERSION_CODE = 53
+ANDROID_VERSION_NAME = '0.38.0'
 
 def run_checked(command, env, name):
     """Godot can return zero for script errors, so inspect diagnostics as well."""
@@ -88,7 +88,9 @@ export_path="../builds/aster-vale-debug.apk"
 [preset.0.options]
 custom_template/debug={quoted(templates / 'android_debug.apk')}
 custom_template/release={quoted(templates / 'android_release.apk')}
-gradle_build/use_gradle_build=false
+gradle_build/use_gradle_build=true
+gradle_build/export_format=0
+gradle_build/android_source_template={quoted(templates / "android_source.zip")}
 architectures/armeabi-v7a=false
 architectures/arm64-v8a=true
 architectures/x86=false
@@ -132,12 +134,10 @@ custom_template/debug={quoted(templates / 'linux_debug.x86_64')}
 custom_template/release={quoted(templates / 'linux_release.x86_64')}
 binary_format/embed_pck=true
 '''
-    # AAB requires the official Gradle source template; APK keeps the fast
-    # prebuilt template path. Both presets use the same app identity and ABIs.
+    # Both Android formats include the first-party Keystore plugin through Gradle.
+    # The presets share their app identity, signing key and ABIs.
     android_options = presets.split('[preset.0.options]\n', 1)[1].split('[preset.1]', 1)[0]
-    bundle_options = android_options.replace('gradle_build/use_gradle_build=false',
-        'gradle_build/use_gradle_build=true\ngradle_build/export_format=1\n'
-        + 'gradle_build/android_source_template=' + quoted(templates / 'android_source.zip'))
+    bundle_options = android_options.replace('gradle_build/export_format=0', 'gradle_build/export_format=1')
     presets += '''
 [preset.3]
 name="Android Bundle"
@@ -181,6 +181,11 @@ def main():
     if args.target == 'check':
         run_checked(cmd + ['--quit-after', '120'], env, 'runtime')
         return
+    if args.target in ('android','android-aab'):
+        if not (ROOT/'client/android/build/build.gradle').exists():
+            run_checked(cmd+['--install-android-build-template','--editor','--quit'],env,'android-template')
+        from android_native import stage
+        stage()
     names = {'android':'Android', 'android-aab':'Android Bundle', 'web':'Web', 'linux':'Linux'}
     dest = {'android':ROOT/('builds/aster-vale-release.apk' if release else 'builds/aster-vale-debug.apk'),
             'android-aab':ROOT/'builds/aster-vale-release.aab', 'web':ROOT/'builds/web/index.html',

@@ -8,10 +8,16 @@ This public repository contains source code, content import tools, build scripts
 
 After importing content and building, install `builds/aster-vale-debug.apk` on an Android device (Android 7 / API 24 or later). This development build includes ARM64 and x86_64. Open **Aster Vale**, log in, select your character and join the persistent shared world. The build is signed with a development key, not configured for Google Play release.
 
-The current Android package is **`com.cloudgameboy.astervale`**, version 0.37.1
-(code 52). It installs separately from the earlier `io.astervale.prototype` app;
+The current Android package is **`com.cloudgameboy.astervale`**, version 0.38.0
+(code 53). It installs separately from the earlier `io.astervale.prototype` app;
 online accounts remain on the same server. Release APK and AAB exports use the
 same private release signing key.
+
+The app starts directly on a full-screen account login/create screen with
+original EO title artwork. On Android, **Remember login on this device** saves
+a successfully verified login in an Android Keystore-encrypted, backup-excluded
+vault. **Forget saved login** removes it. Changing the account/server clears the
+prefilled password. Saving is optional and off by default.
 
 The player entry flow is online-only. Character selection shows each character's
 native skin, body, hairstyle, hair color and equipped boots, armor, helmet,
@@ -22,6 +28,8 @@ Tap a card, then enter the selected character.
 - Drag the lower-left joystick to move; tap clear ground to walk there.
 - Tap the weapon for manual attacks; hold to latch auto attack and tap to stop.
 - The bag and character icons open native inventory and equipment.
+- Tap Babs in Aeven’s hair salon to preview a haircut/color and confirm its
+  native Gold price. Tap road signboards to read their original text.
 - Two consumable and two skill shortcuts save per character on the server.
 - Targeted healing shortcuts let you tap yourself or another player in the world.
   Group Heal and Aura cast directly on your native party. Bard opens a 36-note instrument keyboard.
@@ -38,6 +46,10 @@ APK update (`--no-incremental -r`), verifies installed bytes and version, and
 checks that Android kept the app's original installation timestamp.
 
 ## Play online
+
+Version **0.38.0** adds the native Aeven haircutter, working map signboards,
+direct full-screen account entry with original EO artwork, and optional secure
+Android saved login. See [haircutter, signs and login verification](docs/BARBER_LOGIN_SIGNS.md).
 
 Version **0.37.1** fixes the guild-house window being clipped into the top-left
 corner when its keyboard layout handler runs. Guild forms also survive world

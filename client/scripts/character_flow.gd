@@ -13,6 +13,10 @@ var create_button: Button
 var capacity: Label
 var creation_submit: Button
 var gender_buttons: Array[Button] = []
+var restored_login: Dictionary={}
+var restoring_login: bool=false
+var remember: CheckBox
+var forget_button: Button
 var creation_hint: Label
 
 func page(parent: Control) -> Array:
@@ -51,25 +55,37 @@ func build(owner: Node, parent: Control) -> void:
 	c = owner; game = c.game
 	var parts: Array = page(parent); c.panel = parts[0]; var body: VBoxContainer = parts[1]
 	heading = header(body,"Enter Aster Vale",c._close_panel)
-	subtitle = text(body,"Log in to your account, then choose your character.",19,game.MUTED)
+	subtitle = text(body,"Log in or create an account to begin your adventure.",19,game.MUTED)
 	var scroll: ScrollContainer = ScrollContainer.new(); scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL; scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED; body.add_child(scroll)
 	c.auth_box = VBoxContainer.new(); c.auth_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL; c.auth_box.add_theme_constant_override("separation",14); scroll.add_child(c.auth_box)
 	var auth: HBoxContainer = HBoxContainer.new(); auth.add_theme_constant_override("separation",48); c.auth_box.add_child(auth)
 	var form: VBoxContainer = VBoxContainer.new(); form.size_flags_horizontal = Control.SIZE_EXPAND_FILL; form.add_theme_constant_override("separation",12); auth.add_child(form)
 	text(form,"Account",19,game.MUTED); c.username_field = field(form,"Account name"); c.username_field.max_length = 16
 	text(form,"Password",19,game.MUTED); c.password_field = field(form,"Password"); c.password_field.secret = true; c.password_field.max_length = 64
+	remember=CheckBox.new();remember.text="Remember login on this device";remember.custom_minimum_size.y=48;remember.add_theme_font_size_override("font_size",19);remember.visible=c.login_store.available();form.add_child(remember)
+	remember.toggled.connect(func(enabled: bool) -> void:
+		if not enabled:c.login_store.forget()
+	)
+	forget_button=button(form,"Forget saved login",func() -> void:
+		c.login_store.forget();remember.set_pressed_no_signal(false);c.password_field.text="";c.auth_credentials.clear();restored_login.clear();forget_button.hide()
+	);forget_button.hide()
 	var actions: HBoxContainer = HBoxContainer.new(); actions.add_theme_constant_override("separation",14); form.add_child(actions)
 	button(actions,"Log in",func() -> void: c._authenticate("login"),true)
 	button(actions,"Create account",func() -> void: c._authenticate("register"))
 	var note: VBoxContainer = VBoxContainer.new(); note.size_flags_horizontal = Control.SIZE_EXPAND_FILL; note.add_theme_constant_override("separation",14); auth.add_child(note)
-	text(note,"YOUR NEXT ADVENTURE",24,game.GOLD)
-	var help: Label = text(note,"Your characters and their equipment are waiting.\n\nEach account has room for three characters.\nChoose a character, or create a new look.",22,game.MUTED); help.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	text(note,"Your password is never saved on this device.",16,game.MUTED)
+	auth.move_child(note,0)
+	var art: TextureRect=TextureRect.new();var art_path: String=str((game.manifest.get("login_art",{}) as Dictionary).get("path",""))
+	if not art_path.is_empty() and ResourceLoader.exists(art_path):art.texture=load(art_path)
+	art.expand_mode=TextureRect.EXPAND_IGNORE_SIZE;art.stretch_mode=TextureRect.STRETCH_KEEP_ASPECT_CENTERED;art.custom_minimum_size=Vector2(280,300);art.size_flags_vertical=Control.SIZE_EXPAND_FILL;art.size_flags_horizontal=Control.SIZE_EXPAND_FILL;note.add_child(art)
+	text(note,"Aster Vale",30,game.GOLD).horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
 	server_toggle = button(c.auth_box,"Server settings",func() -> void: server_options.visible = not server_options.visible)
 	server_options = HBoxContainer.new(); server_options.add_theme_constant_override("separation",14); c.auth_box.add_child(server_options)
 	c.host_field = field(server_options,"Server hostname or wss://…/ws"); c.host_field.text = "wss://eo.kcpd.top/ws"
 	c.port_field = SpinBox.new(); c.port_field.min_value = 1; c.port_field.max_value = 65535; c.port_field.value = 8079; c.port_field.custom_minimum_size = Vector2(140,54); c.port_field.editable = false; server_options.add_child(c.port_field)
 	c.host_field.text_changed.connect(func(value: String) -> void: c.port_field.editable = not (value.begins_with("ws://") or value.begins_with("wss://")))
+	c.host_field.text_changed.connect(func(_value: String) -> void: credentials_edited())
+	c.port_field.value_changed.connect(func(_value: float) -> void: credentials_edited())
+	c.username_field.text_changed.connect(func(_value: String) -> void: credentials_edited())
 	server_options.hide()
 	# Selection is a sibling of the auth scroll, so all three cards share its height.
 	c.character_box = VBoxContainer.new(); c.character_box.size_flags_vertical = Control.SIZE_EXPAND_FILL; c.character_box.add_theme_constant_override("separation",14); body.add_child(c.character_box)
@@ -184,8 +200,9 @@ func show_characters() -> void:
 func refresh() -> void:
 	if heading == null or capacity == null: return
 	var count: int = c.selected_characters.size()
-	heading.text = "Choose your character" if c.character_box.visible else "Enter Aster Vale"
-	subtitle.text = "Tap a character to see their look, then enter the world." if c.character_box.visible else "Log in to your account, then choose your character."
+	heading.text = "Choose your character" if c.character_box.visible else "Aster Vale"
+	(heading.get_parent().get_child(1) as Button).visible=c.character_box.visible
+	subtitle.text = "Tap a character to see their look, then enter the world." if c.character_box.visible else "Log in or create an account to begin your adventure."
 	capacity.text = "%d / %d characters · All slots filled" % [count,MAX_CHARACTERS] if count >= MAX_CHARACTERS else "%d / %d characters · Tap an empty slot to create another" % [count,MAX_CHARACTERS]
 	create_button.visible = count < MAX_CHARACTERS
 	enter_button.disabled = count == 0 or c.entering_character or c.creating_character
@@ -200,3 +217,17 @@ func refresh_creation() -> void:
 	var name: String = c.character_name_field.text.strip_edges().to_lower()
 	creation_submit.disabled = name.length()<4 or name.length()>12 or not c._character_letters(name) or c.selected_characters.size()>=MAX_CHARACTERS or c.creating_character
 	creation_submit.text = "Creating…" if c.creating_character else "Create character"
+
+func restore_login() -> void:
+	var saved: Dictionary=c.login_store.load_login()
+	if saved.is_empty():return
+	restoring_login=true
+	c.host_field.text=str(saved.get("host","wss://eo.kcpd.top/ws"));c.port_field.value=int(saved.get("port",8079))
+	c.username_field.text=str(saved.get("username",""));c.password_field.text=str(saved.get("password",""))
+	restored_login={"host":saved.get("host",""),"port":saved.get("port",8079),"username":saved.get("username","")};restoring_login=false
+	remember.set_pressed_no_signal(true);forget_button.show()
+
+func credentials_edited() -> void:
+	if restoring_login or restored_login.is_empty():return
+	if c.host_field.text.strip_edges()!=str(restored_login.get("host","")) or int(c.port_field.value)!=int(restored_login.get("port",8079)) or c.username_field.text.strip_edges()!=str(restored_login.get("username","")):
+		c.password_field.text="";remember.set_pressed_no_signal(false);restored_login.clear()

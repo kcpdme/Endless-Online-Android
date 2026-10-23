@@ -10,6 +10,7 @@ func check(ok: bool, why: String) -> void:
 	checks += 1
 	if not ok: failed = true; push_error(why)
 func tap(control: Control) -> void:
+	await process_frame;await process_frame
 	var event: InputEventScreenTouch = InputEventScreenTouch.new(); event.index=71;event.pressed=true;event.position=root.get_final_transform()*control.get_global_rect().get_center();Input.parse_input_event(event);await process_frame
 	event=event.duplicate();event.pressed=false;Input.parse_input_event(event);await process_frame
 func shot(name: String) -> void:
@@ -18,7 +19,7 @@ func shot(name: String) -> void:
 	await process_frame;await RenderingServer.frame_post_draw;root.get_texture().get_image().save_png(folder.path_join(name+".png"))
 func run() -> void:
 	var game: Node=load("res://main.tscn").instantiate();root.add_child(game);await process_frame
-	game.music.stop();game.welcome.hide()
+	game.music.stop();game.welcome.hide();game.online.panel.hide()
 	var c: Node=game.online;c.show_login();c.session.queue_free();var wire: Capture=Capture.new();c.add_child(wire);wire.set_process(false);c.session=wire
 	var fixtures: Array=[{"id":11,"name":"emberknight","gender":1,"race":0,"hairstyle":1,"haircolor":0,"level":120,"equipment_graphics":[1,1,44,1,33]},{"id":22,"name":"moonweaver","gender":0,"race":3,"hairstyle":20,"haircolor":9,"level":50,"equipment_graphics":[1,40,0,0,49]},{"id":33,"name":"stonewarden","gender":1,"race":2,"hairstyle":7,"haircolor":4,"level":25,"equipment_graphics":[1,1,0,0,21]}]
 	for dimensions: Vector2i in [Vector2i(960,540),Vector2i(1280,720),Vector2i(1600,720),Vector2i(1920,1080)]:

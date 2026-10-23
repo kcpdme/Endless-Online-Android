@@ -254,7 +254,7 @@ func _run() -> void:
 	print("GAMEPLAY SMOKE PASS: content, joystick pointer/drag/release, multitouch, modal/focus cancellation, corner collision, movement, combat, loot, paperdoll equipment, save/load, reset")
 	await create_timer(0.30).timeout
 	game.queue_free()
-	await process_frame
+	await create_timer(.2).timeout
 	await process_frame
 	quit(0)
 

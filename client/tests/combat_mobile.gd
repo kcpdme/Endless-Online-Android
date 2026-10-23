@@ -17,7 +17,7 @@ func _run() -> void:
 	root.add_child(game)
 	await process_frame
 	game.set_process(false)
-	game.welcome.hide()
+	game.welcome.hide();game.online.panel.hide()
 	var c: Node=game.online
 	c.set_process(false)
 	c.session.queue_free()

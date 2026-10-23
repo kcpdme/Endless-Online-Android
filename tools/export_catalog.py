@@ -190,8 +190,11 @@ def export_catalog(runtime:Path,graphics_zip:Path,out:Path,map_id=5):
         map_references={}
         from export_minimap import add_atlas
         from export_quests import add_atlas as add_quest_atlas
+        from export_login import add_art as add_login_art
         add_atlas(image(2,45),out,manifest)
         add_quest_atlas(image(2,68),out,manifest)
+        with zipfile.ZipFile(graphics_zip) as title_archive:
+            add_login_art(PEBitmaps(read_member(title_archive,"gfx/gfx001.egf")).image(31,transparent=False),out,manifest)
         for world in worlds.values():
             for layer,entries in world['layers'].items():
                 for entry in entries:

@@ -131,6 +131,7 @@ var quest_ui: RefCounted
 var speech_layer: Control
 var sit_button: Button
 var movement_ui: RefCounted
+var world_services: RefCounted
 var guild_ui: RefCounted
 var party_ui: RefCounted
 var inn_ui: RefCounted
@@ -476,7 +477,7 @@ func _joystick_begin(pointer: Vector2, pointer_id: int) -> void:
 	stick = Vector2(joystick.direction)
 
 func _modal_open() -> bool:
-	return (quest_journal != null and quest_journal.panel.visible) or (party_ui != null and party_ui.panel.visible) or (skills_ui != null and (skills_ui.target_panel.visible or skills_ui.bard_panel.visible)) or (movement_ui != null and movement_ui.panel.visible) or (guild_ui != null and guild_ui.panel.visible) or (inn_ui != null and inn_ui.panel.visible) or (quest_ui != null and quest_ui.panel.visible) or (redeem_ui != null and redeem_ui.panel.visible) or (online != null and online.panel != null and online.panel.visible) or (inventory != null and inventory.visible) or (menu != null and menu.visible) or (character_panel != null and character_panel.visible) or (stats_ui != null and stats_ui.is_open()) or (shop_ui != null and shop_ui.panel.visible) or (services_ui != null and services_ui.panel.visible) or (chat_ui != null and chat_ui.panel.visible) or (skills_ui != null and skills_ui.panel.visible) or (quick_items != null and quick_items.panel.visible)
+	return (world_services != null and (world_services.barber_panel.visible or world_services.sign_panel.visible)) or (quest_journal != null and quest_journal.panel.visible) or (party_ui != null and party_ui.panel.visible) or (skills_ui != null and (skills_ui.target_panel.visible or skills_ui.bard_panel.visible)) or (movement_ui != null and movement_ui.panel.visible) or (guild_ui != null and guild_ui.panel.visible) or (inn_ui != null and inn_ui.panel.visible) or (quest_ui != null and quest_ui.panel.visible) or (redeem_ui != null and redeem_ui.panel.visible) or (online != null and online.panel != null and online.panel.visible) or (inventory != null and inventory.visible) or (menu != null and menu.visible) or (character_panel != null and character_panel.visible) or (stats_ui != null and stats_ui.is_open()) or (shop_ui != null and shop_ui.panel.visible) or (services_ui != null and services_ui.panel.visible) or (chat_ui != null and chat_ui.panel.visible) or (skills_ui != null and skills_ui.panel.visible) or (quick_items != null and quick_items.panel.visible)
 
 func _begin_attack(pointer_id: int) -> void:
 	if online_mode: route.clear()
@@ -827,6 +828,7 @@ func _visible_tile_bounds(rect: Rect2, width: int, height: int) -> Rect2i:
 	return Rect2i(start, finish - start)
 
 func _draw() -> void:
+	if not started:return
 	if not content_ready: return
 	var half_view: Vector2 = get_viewport_rect().size / camera.zoom / 2.0 + Vector2(160, 240)
 	var visible_rect: Rect2 = Rect2(camera.position - half_view, half_view * 2.0)
@@ -1196,6 +1198,8 @@ func _build_ui() -> void:
 	services_ui.build(self, root)
 	quest_ui = preload("res://scripts/quest_window.gd").new()
 	quest_ui.build(self, root)
+	world_services = preload("res://scripts/world_services.gd").new()
+	world_services.build(self, root)
 	inn_ui = preload("res://scripts/inn_window.gd").new()
 	inn_ui.build(self, root)
 	guild_ui = preload("res://scripts/guild_window.gd").new()
@@ -1250,7 +1254,9 @@ func _build_welcome(parent: Node) -> void:
 	_button(card, "Log in or create account", Vector2(34,354),Vector2(532,58),online.show_login,true)
 
 func _show_welcome() -> void:
-	welcome.show()
+	started=false
+	welcome.hide()
+	online.show_login()
 	if sfx != null: sfx.stop()
 	if music != null: music.title_music()
 
@@ -1694,6 +1700,10 @@ func _handle_back() -> void:
 		chat_ui.close()
 	elif movement_ui != null and movement_ui.panel.visible:
 		movement_ui.close()
+	elif world_services != null and world_services.sign_panel.visible:
+		world_services.sign_panel.hide()
+	elif world_services != null and world_services.barber_panel.visible:
+		world_services.close_barber()
 	elif guild_ui != null and guild_ui.panel.visible:
 		guild_ui.close()
 	elif inn_ui != null and inn_ui.panel.visible:

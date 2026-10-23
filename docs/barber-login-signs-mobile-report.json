@@ -1,0 +1,10 @@
+{
+  "barber_preview_confirm_native_only": true,
+  "checks": 150,
+  "direct_fullscreen_login": true,
+  "endpoint_bound_password_prefill": true,
+  "forget_saved_login": true,
+  "opt_in_verified_login_only": true,
+  "original_signs_read": 130,
+  "result": "passed"
+}

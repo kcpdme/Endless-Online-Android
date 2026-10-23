@@ -29,7 +29,7 @@ python3 tools/export_catalog.py \
 
 This adds server item/NPC definitions, all 282 map geometries, item icons, spawned
 NPC art, spells and independent equipment animation layers for both genders.
-It also exports the original minimap and quest progress/history icon atlases and restores missing
+It also exports original login artwork, minimap and quest progress/history icon atlases and restores missing
 wooden chest artwork at Hall of Pain's existing chest tile (7,55), without
 changing native map collision, loot or coordinates. To add only the minimap
 atlas to an existing content pack:
@@ -55,3 +55,9 @@ and every visible armor, boots, weapon, headgear and offhand graphic in the curr
 catalog. Hats use original hair hiding/masking rules; shields/wings change depth
 with facing. Exact ranged attack offsets and sitting poses remain future work.
 See `tools/README.md` for the catalog contract and reference archive audit.
+
+To add the original EO title illustration to an existing pack:
+
+```sh
+python3 tools/export_login.py --graphics /path/to/EOzipped028.zip
+```

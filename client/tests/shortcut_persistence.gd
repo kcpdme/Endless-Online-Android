@@ -16,7 +16,7 @@ func run() -> void:
 	root.add_child(game)
 	await process_frame
 	game.music.stop()
-	game.welcome.hide()
+	game.welcome.hide();game.online.panel.hide()
 	game.online_mode = true
 	game.started = true
 	var c: Node = game.online

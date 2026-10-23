@@ -53,6 +53,7 @@ func _run() -> void:
 	var provided: bool = not OS.get_environment("ASTER_VALE_TEST_USERNAME").is_empty()
 	controller.username_field.text = OS.get_environment("ASTER_VALE_TEST_USERNAME") if provided else "av" + _letters(10)
 	controller.password_field.text = OS.get_environment("ASTER_VALE_TEST_PASSWORD") if provided else "Dev" + _letters(8) + "42"
+	var login_password: String=controller.password_field.text
 	controller._authenticate("login" if provided else "register")
 	if not _require(await _wait_until(func() -> bool: return controller.character_box.visible), "Real account login/character listing failed: " + controller.last_error): return
 	if controller.selected_characters.is_empty():
@@ -61,7 +62,9 @@ func _run() -> void:
 		if not _require(await _wait_until(func() -> bool: return not controller.selected_characters.is_empty()), "Real character creation failed: " + controller.last_error): return
 	controller._close_panel()
 	controller.show_login()
-	if not _require(controller.character_box.visible and not controller.auth_box.visible, "Canceling character selection must retain its still-live authenticated session"): return
+	if not _require(controller.auth_box.visible and not controller.character_box.visible, "Back from selection returns to the full-screen account login"): return
+	controller.password_field.text=login_password;controller._authenticate("login")
+	if not _require(await _wait_until(func() -> bool:return controller.character_box.visible),"Relogin after selection Back failed"):return
 	controller.character_list.select(0)
 	controller._enter_selected()
 	if not _require(await _wait_until(func() -> bool: return controller.active and controller.streaming and not controller.player.is_empty()), "Real Welcome/world entry failed: " + controller.last_error): return

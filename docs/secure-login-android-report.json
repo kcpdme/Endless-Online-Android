@@ -1,0 +1,10 @@
+{
+  "result": "passed",
+  "android_keystore_aes_gcm": true,
+  "ciphertext_not_plaintext": true,
+  "random_iv": true,
+  "across_process_restore": true,
+  "tamper_rejected": true,
+  "forget_deletes_key_and_file": true,
+  "separate_test_uid": true
+}

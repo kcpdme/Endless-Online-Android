@@ -13,7 +13,7 @@ func run() -> void:
 	game = load("res://main.tscn").instantiate();root.add_child(game)
 	await process_frame
 	game.music.stop();game.sfx.stop();game.sfx.settings_path = ""
-	game.sfx.set_enabled(true);game.welcome.hide();game.online_mode = true;game.started = true
+	game.sfx.set_enabled(true);game.welcome.hide();game.online.panel.hide();game.online_mode = true;game.started = true
 	var c: Node = game.online;c.active = true;c.streaming = true
 	c.player = {"player_id":100,"name":"fixture","x":40,"y":40,"map_id":5,"hp":100,"maxhp":100,"tp":100,"maxtp":100,"equipment_graphics":[0,0,0,0,0,0,0,0,4]}
 	game.player_tile = Vector2i(40,40);game.player_world = game.tile_position(game.player_tile);game.camera.position = game.player_world

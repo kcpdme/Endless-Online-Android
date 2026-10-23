@@ -1,0 +1,17 @@
+{
+  "result": "passed",
+  "version": "0.38.0",
+  "version_code": 53,
+  "device": "Samsung Galaxy S23 Ultra (SM-S918B)",
+  "package": "com.cloudgameboy.astervale",
+  "apk_sha256": "424a84270d8385b3f271b0b56068b42b63f9efa78356983478062d8591e029fa",
+  "installed_apk_hash_matches": true,
+  "original_first_install_time_preserved": true,
+  "cold_launch": "passed",
+  "android_credentials_plugin_initialized": true,
+  "script_or_fatal_launch_errors": [],
+  "phone_login_visual_check": "passed: original artwork, full-screen account entry, remember-login option, no rendered game behind it",
+  "visual_evidence": "work/barber-phone-final-login.png",
+  "device_credential_storage_tests": "docs/secure-login-android-report.json",
+  "timestamp": "2026-10-23T20:14:17.279290+00:00"
+}

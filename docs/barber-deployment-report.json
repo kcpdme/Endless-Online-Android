@@ -1,0 +1,13 @@
+{
+  "result": "passed",
+  "backup": "/opt/aster-vale/backups/barber-v53-20261023T200213Z",
+  "active_sessions_before_adapter_restart": 0,
+  "native_world_restarted": false,
+  "native_database_or_definitions_edited": false,
+  "adapter_only": true,
+  "source_sha256": {
+    "barber.py": "79e662ca5e229a483d727a33fbbd30e68a9c66d2dba5951e1d8029ad07b6e4d2",
+    "gateway.py": "68ba12d1c60c1d097620946fd9b298069c09b8863a88d999314dd90daff5ccf2",
+    "live_session.py": "4b79337d49871d1b6ea9e740915ff6a1a13a21ef19f11523d6458e0f045cc8c9"
+  }
+}

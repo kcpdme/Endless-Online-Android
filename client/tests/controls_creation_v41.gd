@@ -19,7 +19,7 @@ func run() -> void:
 	root.size = Vector2i(1544, 720)
 	var game: Node = load("res://main.tscn").instantiate(); root.add_child(game)
 	await process_frame
-	game.set_process(false); game.music.stop(); game.welcome.hide(); game.started = true
+	game.set_process(false); game.music.stop(); game.welcome.hide();game.online.panel.hide(); game.started = true
 	var attack: Vector2 = game.attack_button.get_global_rect().get_center()
 	game.enemy_health = 100; game.enemy_tile = game.player_tile + Vector2i(0, 1)
 	await touch(attack, true); await touch(attack, false)

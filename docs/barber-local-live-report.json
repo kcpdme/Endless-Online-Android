@@ -1,0 +1,11 @@
+{
+  "actual_aeven_sign_touch": true,
+  "checks": 26,
+  "dev_characters_only": true,
+  "native_babs_touch_and_price": true,
+  "native_gold_and_hair_ack_only": true,
+  "native_nearby_avatar_update": true,
+  "native_relogin_hair_and_gold_persist": true,
+  "result": "passed",
+  "sign_has_no_movement_or_network_action": true
+}

@@ -154,3 +154,6 @@ Quest progress/history uses the original GFX2:68 objective icons, included by
 ```sh
 python3 tools/export_quests.py --graphics /path/to/EOzipped028.zip
 ```
+
+The full-screen login uses original GFX1:31 artwork. `export_catalog.py`
+includes it; existing packs can run `tools/export_login.py --graphics /path/to/EOzipped028.zip`.
