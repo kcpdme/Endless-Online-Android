@@ -1,0 +1,8 @@
+{
+  "native_bard_keyboard": true,
+  "native_equipped_character_card": true,
+  "native_group_heal_shortcut": true,
+  "native_party_ui_invitation_and_roster": true,
+  "native_target_picker_large_heal": true,
+  "result": "passed"
+}

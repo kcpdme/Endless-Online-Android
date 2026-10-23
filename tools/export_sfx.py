@@ -38,6 +38,15 @@ def export(archive,client,out):
             ident=int(re.search(r'(\d{3})\.wav',member).group(1));raw=read_member(source,member);canonical,meta=canonical_wav(raw)
             path=target/f'sfx{ident:03}.wav';path.write_bytes(canonical)
             sounds[str(ident)]=dict(path='res://content/'+str(path.relative_to(out)),source_member=member,source_sha256=hashlib.sha256(raw).hexdigest(),sha256=hashlib.sha256(canonical).hexdigest(),**meta)
+        bard={}
+        for instrument,prefix in [(49,'har'),(50,'gui')]:
+            notes=[]
+            for index in range(1,37):
+                member=f'sfx/{prefix}{index:03}.wav';raw=read_member(source,member);canonical,meta=canonical_wav(raw)
+                path=target/f'{prefix}{index:03}.wav';path.write_bytes(canonical)
+                notes.append(dict(path='res://content/'+str(path.relative_to(out)),source_member=member,source_sha256=hashlib.sha256(raw).hexdigest(),sha256=hashlib.sha256(canonical).hexdigest(),**meta))
+            bard[str(instrument)]=notes
+        manifest['bard_notes']=bard
     assert len(sounds)==81
     assert all(str(i) in sounds for values in config['weapons'].values() for i in values)
     assert all(i==0 or str(i) in sounds for i in config['effects'].values())

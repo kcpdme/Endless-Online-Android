@@ -140,3 +140,10 @@ This preserves existing artwork/music/catalog bindings and adds the original
 export after a base importer resets the manifest. The original chat corruption
 rules come from pinned EndlessClient `EOLib/Domain/Chat/ChatProcessor.MakeDrunk`;
 Fairy Soda's potency comes from the native EIF union at offsets32–34.
+
+The same `export_sfx.py` command now also imports the original 36 harp and 36
+guitar note WAVs into `manifest.bard_notes`, separately from the 81 ordinary
+sound effects. `test_sfx.py` verifies that every note retains the original PCM
+frames. These generated audio files and the supplied archive remain ignored by
+Git. Bard uses the native equipped instrument graphic (49 harp, 50 guitar),
+with note indices 0–35.

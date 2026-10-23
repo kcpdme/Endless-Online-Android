@@ -230,3 +230,15 @@ group. `shortcuts_set` takes `kind`, `first`, `second` and returns the acknowled
 and entry. No client-supplied identity is used. Saves persist in the dedicated
 `ASTER_VALE_SHORTCUT_DB` SQLite file, separate from native character data.
 See [shortcut migration, validation and deployment](../docs/SHORTCUTS.md).
+
+### Native party, group spells and Bard (v0.36.0)
+
+`party_invite` / `party_join` take a nearby `player_id`; `party_accept` /
+`party_decline` respond to the current native invitation. `party_leave`,
+`party_kick` (`player_id`) and `party_refresh` use native membership permissions.
+Snapshots/deltas expose `party`, `party_invitation`, `party_notice`; membership
+changes only on native packets. `chat_send` accepts `channel="party"` for native
+party chat. `spell_cast` supports `target_kind="group"` for learned group heals
+and the normal `target_kind="player"` for friendly heals, including your own
+player ID. `bard_note` takes a note integer 0–35 and requires learned Bard plus
+an equipped native instrument. See [behavior and validation](../docs/PARTY_HEAL_BARD.md).

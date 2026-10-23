@@ -1,0 +1,15 @@
+{
+  "result": "passed",
+  "backup": "/opt/aster-vale/backups/social-v50-20261023T183324Z",
+  "active_sessions_before_adapter_restart": 1,
+  "native_world_restarted": false,
+  "native_database_or_definitions_edited": false,
+  "adapter_only": true,
+  "source_sha256": {
+    "party.py": "13678c61d0cc011a4aaf448829ba8a183e7d01713a6721265a5f426041261e7a",
+    "skills.py": "f5fa4578cd7e63fc9d8d0a0a534a170ffa2b1a0f96a2a37e336c5016682ba2df",
+    "services.py": "cc623109b194b204d3b0729ba2b4b24625a667501fba25d79360fbbeeb3b439e",
+    "live_session.py": "699b5bff92fa16fbe6d945e4d19238798f5639cd9080d63670c637a6f78ac73e",
+    "gateway.py": "4e13f650c663127e21d263a19e42638fa4d97248ab02a986ada4cd2dca32b1d9"
+  }
+}

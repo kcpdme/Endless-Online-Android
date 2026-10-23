@@ -316,7 +316,7 @@ func _append(log: RichTextLabel, row: Dictionary, compact: bool = false) -> void
 	var kind: String = str(row.get("channel", "system"))
 	var color: Color = Color("a9dfff") if kind == "private" else Color("efce88") if kind == "global" else Color("e6eee5") if kind == "local" else Color("f4a29a")
 	log.push_color(color)
-	var prefix: String = {"local":"N", "global":"G", "private":"W", "guild":"Guild", "system":"!"}.get(kind, "!")
+	var prefix: String = {"local":"N", "global":"G", "private":"W", "guild":"Guild", "party":"Party", "system":"!"}.get(kind, "!")
 	log.add_text("[%s] " % prefix if compact else str(row.get("time", "")) + "  ")
 	var name: String = str(row.get("name", "Server"))
 	if bool(row.get("outgoing", false)) and kind == "private": name = "You → " + str(row.get("target", ""))

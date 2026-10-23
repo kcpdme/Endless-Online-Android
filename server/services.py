@@ -215,7 +215,8 @@ class ServicesMixin:
     def chat_send(self,channel,message,target=''):
         if not self.state: raise EOError('Enter the world before chatting')
         message=str(message).strip();target=str(target).strip().lower()
-        if channel not in ('local','global','private','guild'): raise EOError('Unknown chat channel')
+        if channel not in ('local','global','private','guild','party'): raise EOError('Unknown chat channel')
+        if channel=='party' and not getattr(self,'party_members',[]):raise EOError('Join a party before using party chat')
         if channel=='guild' and not self.stats.get('guild'):raise EOError('Join a guild before using guild chat')
         if not message or len(message)>128 or any(ord(c)<32 or ord(c)==255 for c in message): raise EOError('Use 1–128 printable characters')
         try: payload=message.encode('latin1')
@@ -237,7 +238,7 @@ class ServicesMixin:
         if channel=='private':
             if not target.isalpha() or not 4<=len(target)<=16 or not target.isascii(): raise EOError('Enter a valid character name')
             payload=target.encode('ascii')+b'\xff'+payload
-        self.send(18,{'local':21,'global':15,'private':20,'guild':1}[channel],payload);self.last_chat=now
+        self.send(18,{'local':21,'global':15,'private':20,'guild':1,'party':13}[channel],payload);self.last_chat=now
         # The original server omits the sender from chat broadcasts. Echo locally,
         # as EndlessClient does; a native not-found/mute response remains visible.
         self.events.append(dict(kind='chat',channel=channel,name=self.state['self']['name'],message=message,target=target,outgoing=True,player_id=self.player_id,drunk=drunk))

@@ -131,6 +131,7 @@ var speech_layer: Control
 var sit_button: Button
 var movement_ui: RefCounted
 var guild_ui: RefCounted
+var party_ui: RefCounted
 var inn_ui: RefCounted
 var menu: Control
 var started_from_save: bool = false
@@ -159,7 +160,6 @@ func _ready() -> void:
 	get_viewport().size_changed.connect(_layout_safe_area)
 	_layout_safe_area()
 	if content_ready:
-		_load_save()
 		player_world = tile_position(player_tile)
 		camera.position = player_world
 		_place_enemy()
@@ -288,6 +288,7 @@ func _process(delta: float) -> void:
 	if online != null: online.shortcuts.tick()
 	if chat_ui != null: chat_ui.tick()
 	if guild_ui != null: guild_ui.tick()
+	if party_ui != null: party_ui.tick()
 	time_alive += delta
 	animation_clock += delta
 	var attack_previous: float = attack_clock
@@ -474,7 +475,7 @@ func _joystick_begin(pointer: Vector2, pointer_id: int) -> void:
 	stick = Vector2(joystick.direction)
 
 func _modal_open() -> bool:
-	return (movement_ui != null and movement_ui.panel.visible) or (guild_ui != null and guild_ui.panel.visible) or (inn_ui != null and inn_ui.panel.visible) or (quest_ui != null and quest_ui.panel.visible) or (redeem_ui != null and redeem_ui.panel.visible) or (online != null and online.panel != null and online.panel.visible) or (inventory != null and inventory.visible) or (menu != null and menu.visible) or (character_panel != null and character_panel.visible) or (stats_ui != null and stats_ui.is_open()) or (shop_ui != null and shop_ui.panel.visible) or (services_ui != null and services_ui.panel.visible) or (chat_ui != null and chat_ui.panel.visible) or (skills_ui != null and skills_ui.panel.visible) or (quick_items != null and quick_items.panel.visible)
+	return (party_ui != null and party_ui.panel.visible) or (skills_ui != null and (skills_ui.target_panel.visible or skills_ui.bard_panel.visible)) or (movement_ui != null and movement_ui.panel.visible) or (guild_ui != null and guild_ui.panel.visible) or (inn_ui != null and inn_ui.panel.visible) or (quest_ui != null and quest_ui.panel.visible) or (redeem_ui != null and redeem_ui.panel.visible) or (online != null and online.panel != null and online.panel.visible) or (inventory != null and inventory.visible) or (menu != null and menu.visible) or (character_panel != null and character_panel.visible) or (stats_ui != null and stats_ui.is_open()) or (shop_ui != null and shop_ui.panel.visible) or (services_ui != null and services_ui.panel.visible) or (chat_ui != null and chat_ui.panel.visible) or (skills_ui != null and skills_ui.panel.visible) or (quick_items != null and quick_items.panel.visible)
 
 func _begin_attack(pointer_id: int) -> void:
 	if online_mode: route.clear()
@@ -1193,6 +1194,8 @@ func _build_ui() -> void:
 	inn_ui.build(self, root)
 	guild_ui = preload("res://scripts/guild_window.gd").new()
 	guild_ui.build(self, root)
+	party_ui = preload("res://scripts/party_window.gd").new()
+	party_ui.build(self, root)
 	movement_ui = preload("res://scripts/movement_settings.gd").new()
 	movement_ui.build(self, root)
 	_build_paperdoll(root)
@@ -1236,26 +1239,15 @@ func _build_welcome(parent: Node) -> void:
 	description.add_theme_constant_override("line_spacing", 7)
 	_label(card, "YOUR ADVENTURE BEGINS HERE", Vector2(34, 255), 14, GOLD)
 	_label(card, "Tap weapon to attack; hold for auto, tap to stop.\nBag for items; character icon for equipment." if OS.has_feature("mobile") else "WASD / arrows to move. Hold weapon for auto.\nI for your bag. C for your character.", Vector2(34, 283), 16, TEXT)
-	var play: Button = _button(card, "Explore offline", Vector2(306, 354), Vector2(260, 58), _begin_play)
-	play.name = "PlayButton"
-	_button(card, "Play online", Vector2(34, 354), Vector2(260, 58), online.show_login, true)
+	_button(card, "Log in or create account", Vector2(34,354),Vector2(532,58),online.show_login,true)
 
 func _show_welcome() -> void:
 	welcome.show()
 	if sfx != null: sfx.stop()
 	if music != null: music.title_music()
-	var play: Button = welcome.get_child(0).get_node("PlayButton") as Button
-	if started_from_save: play.text = "Continue offline"
 
 func _begin_play() -> void:
-	if not content_ready: return
-	if online_mode: online.leave_for_offline()
-	if online.panel != null: online.panel.hide()
-	started = true
-	welcome.hide()
-	music.enter_map(world)
-	sfx.enter_map(world)
-	_toast("Follow the slime nearby. Tap adjacent ground, then the weapon button.")
+	if content_ready: online.show_login()
 
 func _item_info(kind: String) -> Dictionary:
 	if online_mode: return online.item_info(kind)
@@ -1515,12 +1507,8 @@ func _build_menu(parent: Node) -> void:
 	_button(card, "Movement controls", Vector2(30, 258), Vector2(480, 54), func() -> void: movement_ui.open())
 	_button(card, "Return to the vale", Vector2(30, 322), Vector2(480, 58), func() -> void: menu.hide(), true)
 	_button(card, "Redeem Code", Vector2(30, 386), Vector2(480, 54), func() -> void: redeem_ui.open())
-	_button(card, "Reset journey", Vector2(30, 450), Vector2(480, 54), _confirm_reset)
-	_button(card, "Welcome screen", Vector2(30, 514), Vector2(480, 48), func() -> void:
-		menu.hide()
-		started = false
-		_show_welcome()
-	)
+	_button(card, "Party", Vector2(30, 450), Vector2(480, 54), func() -> void: party_ui.open())
+	_button(card, "Log out", Vector2(30,514),Vector2(480,48),func() -> void: menu.hide(); online.log_out())
 	menu.hide()
 
 func _confirm_reset() -> void:
@@ -1665,6 +1653,12 @@ func _show_content_error() -> void:
 	push_error("Aster Vale content unavailable. Run tools/import_content.py.")
 
 func _handle_back() -> void:
+	if party_ui != null and party_ui.panel.visible:
+		party_ui.panel.hide()
+		return
+	if skills_ui != null and (skills_ui.target_panel.visible or skills_ui.bard_panel.visible):
+		skills_ui.target_panel.hide(); skills_ui.bard_panel.hide(); skills_ui.armed = 0
+		return
 	if redeem_ui != null and redeem_ui.panel.visible:
 		redeem_ui.close()
 		return

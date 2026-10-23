@@ -103,3 +103,14 @@ func _exit_tree() -> void:
 	stop()
 	for player: AudioStreamPlayer in voices: player.stream = null
 	if ambient != null: ambient.stream = null
+
+func bard(instrument: int, note: int) -> void:
+	if not enabled or paused or voices.is_empty() or note < 0 or note >= 36: return
+	var notes: Array = (game.manifest.get("bard_notes",{}) as Dictionary).get(str(instrument),[]) as Array
+	if note >= notes.size(): return
+	var key: String = "bard:%d:%d" % [instrument,note]
+	if not cache.has(key): cache[key] = load(str((notes[note] as Dictionary).get("path",""))) as AudioStream
+	var audio: AudioStream = cache[key] as AudioStream
+	if audio == null: return
+	var voice: AudioStreamPlayer = voices[next_voice]; next_voice = (next_voice + 1) % voices.size()
+	voice.stop(); voice.stream = audio; voice.volume_linear = volume; voice.play()

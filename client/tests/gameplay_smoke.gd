@@ -18,7 +18,9 @@ func _run() -> void:
 	game.set_process(false)
 	assert(game.content_ready, "Real imported content must load")
 	game._reset_progress()
-	game._begin_play()
+	game.started = true
+	game.welcome.hide()
+	game.online.panel.hide()
 	assert(not quit_on_go_back, "Android Back must not terminate the game")
 	game._notification(Node.NOTIFICATION_WM_GO_BACK_REQUEST)
 	assert(game.menu.visible, "Android Back opens the in-game menu")

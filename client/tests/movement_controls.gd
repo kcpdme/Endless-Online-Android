@@ -17,7 +17,9 @@ func _run() -> void:
 	root.add_child(game)
 	await process_frame
 	await process_frame
-	game._begin_play()
+	game.started = true
+	game.welcome.hide()
+	game.online.panel.hide()
 	game.set_process(false)
 	for pair: Array in [[KEY_W,Vector2i.UP],[KEY_A,Vector2i.LEFT],[KEY_S,Vector2i.DOWN],[KEY_D,Vector2i.RIGHT],[KEY_UP,Vector2i.UP],[KEY_LEFT,Vector2i.LEFT],[KEY_DOWN,Vector2i.DOWN],[KEY_RIGHT,Vector2i.RIGHT]]:
 		for physical: bool in [true,false]:

@@ -1,0 +1,9 @@
+{
+  "bard_36_note_keyboard": true,
+  "checks": 24,
+  "login_real_appearance_and_equipment": true,
+  "online_only_entry": true,
+  "party_and_group_heal_ui": true,
+  "result": "passed",
+  "target_heals_choose_self_or_player": true
+}

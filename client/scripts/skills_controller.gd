@@ -27,6 +27,9 @@ var shortcut_identity: String = ""
 var settings_path: String = "user://quick_skills.json"
 const Store = preload("res://scripts/shortcut_store.gd")
 var last_rows: String = ""
+var target_panel: Control
+var target_list: ItemList
+var bard_panel: Control
 
 func build(owner_game: Node, parent: Control) -> void:
 	game = owner_game
@@ -103,6 +106,7 @@ func build(owner_game: Node, parent: Control) -> void:
 			refresh()
 		)
 	panel.hide()
+	_build_targeting(parent)
 
 func info(ident: int) -> Dictionary:
 	return (game.online.catalog.get("spells", {}) as Dictionary).get(str(ident), {}) as Dictionary
@@ -145,8 +149,12 @@ func press(index: int) -> void:
 	if int(game.online.player.get("tp", 0)) < int(spell.get("tp", 0)):
 		game._toast("Not enough TP.")
 		return
-	if int(spell.get("type", 2)) == 2 or int(spell.get("target", -1)) == 3:
-		game._toast("This skill needs bard or party support, which is not available yet.")
+	if int(spell.get("type", 2)) == 2:
+		open_bard()
+		return
+	if int(spell.get("target", -1)) == 3:
+		if game.party_ui.party.is_empty(): game._toast("Join a party before casting this group heal."); return
+		cast(slots[index], "group", 0)
 		return
 	game._release_attack()
 	if game.sfx != null: game.sfx.play_named("SpellActivate", "skill_select")
@@ -157,6 +165,9 @@ func press(index: int) -> void:
 		cast(slots[index], "self", 0)
 		return
 	armed = 0 if armed == slots[index] else slots[index]
+	if armed > 0 and int(spell.get("restrict",0)) == 1:
+		open_targets()
+		return
 	if armed > 0: game._toast("%s: tap %s to cast. Tap the skill again to cancel." % [str(spell.get("name", "Skill")), "a player (or yourself)" if int(spell.get("restrict", 0)) == 1 else "a monster"])
 	refresh()
 
@@ -228,6 +239,7 @@ func receive(data: Dictionary) -> void:
 func refresh() -> void:
 	var active: bool = game.online_mode and game.online.active
 	if not active:
+		target_panel.hide(); bard_panel.hide()
 		armed = 0
 		cancel_cast()
 		chants.clear()
@@ -346,6 +358,16 @@ func event(event_data: Dictionary) -> void:
 		chants.erase(pid)
 		if kind == "spell_failed": game._toast(str(event_data.get("message", "Cast cancelled")))
 		return
+	if kind == "bard_note":
+		if game.sfx != null: game.sfx.bard(int(event_data.instrument), int(event_data.note))
+		game.online.peer_attacks[pid] = {"until": Time.get_ticks_msec()/1000.0 + 0.48, "direction": int(event_data.get("direction",0))}
+		if pid == int(game.online.player.get("player_id",-1)): game.swing_clock = 0.48
+		game.online.chat_bubbles[pid] = {"text":"♪", "start":Time.get_ticks_msec(),"until":Time.get_ticks_msec()+900}
+		return
+	if kind == "spell_group":
+		for member: Dictionary in event_data.get("targets",[]):
+			event({"kind":"spell_heal", "player_id":pid,"target_id":int(member.player_id),"spell_id":int(event_data.spell_id),"hp_gain":int(event_data.get("hp_gain",0))})
+		return
 	if kind == "spell_area":
 		if pid == int(game.online.player.get("player_id", -1)): casting.clear()
 		chants.erase(pid)
@@ -438,3 +460,48 @@ func draw_sheet(fx: Dictionary, front: bool) -> void:
 		var height: float = texture.get_height()
 		var at: Vector2 = (fx.at as Vector2) + Vector2(-width / 2.0, 20 - height + floorf((height - 100) / 2.0)) + shift
 		game.draw_texture_rect_region(texture, Rect2(at, Vector2(width, height)), Rect2(Vector2(frame * width, 0), Vector2(width, height)), Color(1, 1, 1, 0.5 if layer == 1 else 1.0))
+
+func _build_targeting(parent: Control) -> void:
+	target_panel = game._modal(parent,Vector2(620,460))
+	var card: Control = target_panel.get_child(0)
+	game._wood_card(card)
+	game._label(card,"CHOOSE A HEAL TARGET",Vector2(28,22),25,game.GOLD)
+	game._button(card,"×",Vector2(540,14),Vector2(54,48),func() -> void: target_panel.hide(); armed = 0)
+	target_list = ItemList.new(); target_list.position = Vector2(28,82); target_list.size = Vector2(564,242); target_list.add_theme_font_size_override("font_size",22); card.add_child(target_list)
+	game._button(card,"Heal selected player",Vector2(28,340),Vector2(564,48),func() -> void:
+		var selected_rows: PackedInt32Array = target_list.get_selected_items()
+		if selected_rows.is_empty(): return
+		var pid: int = int(target_list.get_item_metadata(selected_rows[0])); var ident: int = armed
+		target_panel.hide(); cast(ident,"player",pid)
+	,true)
+	game._button(card,"Choose in the world",Vector2(28,398),Vector2(564,40),func() -> void: target_panel.hide(); game._toast("Tap a player, including your own character, to heal."))
+	target_panel.hide()
+	bard_panel = game._modal(parent,Vector2(800,410))
+	card = bard_panel.get_child(0); game._wood_card(card)
+	game._label(card,"BARD · THREE OCTAVES",Vector2(28,20),25,game.GOLD)
+	game._button(card,"×",Vector2(720,14),Vector2(54,48),func() -> void: bard_panel.hide())
+	game._label(card,"Equip a Harp or Guitar, then tap a note.",Vector2(28,66),18,game.MUTED)
+	var notes: Array[String] = ["C","C♯","D","D♯","E","F","F♯","G","G♯","A","A♯","B"]
+	for octave: int in range(3):
+		for pitch: int in range(12):
+			var note: int = octave*12+pitch
+			game._button(card,notes[pitch]+str(octave+1),Vector2(28+pitch*62,116+octave*84),Vector2(56,72),func() -> void: game.online.session.request("bard_note",{"note":note}))
+	bard_panel.hide()
+
+func open_targets() -> void:
+	game._cancel_controls()
+	target_list.clear()
+	var seen: Array[int] = []
+	for peer: Dictionary in [game.online.player] + game.online.players:
+		var pid: int = int(peer.get("player_id",0))
+		if pid in seen: continue
+		seen.append(pid)
+		var own: bool = pid == int(game.online.player.get("player_id",-1))
+		var row: int = target_list.add_item(str(peer.get("name","Player")) + (" · Yourself" if own else ""))
+		target_list.set_item_metadata(row,pid)
+		if own: target_list.select(row)
+	target_panel.show()
+
+func open_bard() -> void:
+	game._cancel_controls()
+	panel.hide(); bard_panel.show()

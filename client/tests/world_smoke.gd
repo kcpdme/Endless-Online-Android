@@ -10,7 +10,9 @@ func _run() -> void:
 	await process_frame
 	await process_frame
 	game._reset_progress()
-	game._begin_play()
+	game.started = true
+	game.welcome.hide()
+	game.online.panel.hide()
 	game._toggle_inventory()
 	assert(game.bag_slots[0].icon != null and (game.bag_slots[0].get_node("Quantity") as Label).text == "0", "Gold remains visible at zero")
 	game.inventory.hide()

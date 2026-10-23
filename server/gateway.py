@@ -131,6 +131,8 @@ class Handler(socketserver.StreamRequestHandler):
         if op=='spell_cancel':return s.cancel_spell()
         if op=='skillmaster_open':return s.skillmaster_open(int(r['npc_index']))
         if op in ('skill_learn','skill_forget','skill_level'):return s.skill_change(op.removeprefix('skill_'),int(r['spell_id']))
+        if op=='bard_note':return s.bard_note(r['note'])
+        if isinstance(op,str) and op.startswith('party_'):return s.party_action(op.removeprefix('party_'),r.get('player_id',0))
         if op=='diagnostics':return dict(s.metrics)
         if op=='pickup':return s.pickup(int(r['uid']))
         if op in ('equip','unequip'):

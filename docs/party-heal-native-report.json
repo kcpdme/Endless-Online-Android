@@ -1,0 +1,26 @@
+{
+  "native_invite_accept_two_member_party": true,
+  "native_ask_join_accept_three_members": true,
+  "nonleader_and_outsider_removal_rejected": true,
+  "native_party_chat": true,
+  "group_heal_and_aura_native_hp_tp_all_members_not_outsider": true,
+  "native_targeted_heals_self_and_other_ids": [
+    2,
+    6,
+    7,
+    8,
+    11,
+    13,
+    20,
+    22,
+    28,
+    30
+  ],
+  "harp_and_guitar_native_observer_notes_low_mid_high": true,
+  "leader_remove_third_native": true,
+  "two_member_leave_disbands_and_group_cast_rejected": true,
+  "result": "passed",
+  "native_world": true,
+  "dev_fixtures_only": true,
+  "operator_accounts_modified": false
+}

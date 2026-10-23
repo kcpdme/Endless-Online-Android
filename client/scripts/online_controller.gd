@@ -23,6 +23,8 @@ var color_choice: OptionButton
 var creation_status: Label
 var character_preview: Control
 var character_name_field: LineEdit
+var character_cards: HBoxContainer
+var selection_previews: Array[Control] = []
 var character_list: ItemList
 var auth_box: Control
 var character_box: Control
@@ -52,8 +54,6 @@ var pending_inputs: Array[Dictionary] = []
 var remote_motion: Dictionary = {}
 var refresh_clock: float = 0.0
 var desired_auth: String = "login"
-var offline_state: Dictionary = {}
-var offline_map_id: int = 5
 var player: Dictionary = {}
 var players: Array[Dictionary] = []
 var npcs: Array[Dictionary] = []
@@ -131,11 +131,17 @@ func build_ui(parent: Control) -> void:
 	card.add_child(character_box)
 	character_list = ItemList.new()
 	character_list.size = Vector2(700, 118)
+	character_list.hide()
+	character_list.item_selected.connect(func(index: int) -> void: _select_character_card(index))
+	character_cards = HBoxContainer.new()
+	character_cards.size = Vector2(700,164)
+	character_cards.add_theme_constant_override("separation",12)
+	character_box.add_child(character_cards)
 	character_list.add_theme_font_size_override("font_size", 22)
 	character_list.fixed_icon_size = Vector2i(32, 32)
 	character_box.add_child(character_list)
-	game._button(character_box, "Enter selected character", Vector2(0, 132), Vector2(700, 52), _enter_selected, true)
-	game._button(character_box, "Create a new character…", Vector2(0, 199), Vector2(700, 48), func() -> void:
+	game._button(character_box, "Enter selected character", Vector2(0, 176), Vector2(700, 48), _enter_selected, true)
+	game._button(character_box, "Create a new character…", Vector2(0, 232), Vector2(700, 46), func() -> void:
 		creation_panel.show()
 		_update_creation_preview()
 	)
@@ -143,7 +149,7 @@ func build_ui(parent: Control) -> void:
 	status_label = game._label(card, "Connect to your world or create a new account.", Vector2(30, 479), 17, game.TEXT)
 	status_label.size = Vector2(700, 61)
 	status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	game._label(card, "Offline progress stays separate from your online characters.", Vector2(30, 553), 14, game.MUTED)
+	game._label(card, "Your characters, equipment and progress are saved on the server.", Vector2(30, 553), 14, game.MUTED)
 	panel.hide()
 	_build_character_creation(parent)
 	server_label = game._label(parent, "", Vector2(390, 67), 15, game.MUTED)
@@ -331,7 +337,7 @@ func _on_message(message: Dictionary) -> void:
 				if int((player.get("equipment", {}) as Dictionary).get(str(replacement.slot), 0)) == 0:
 					session.request("equip", {"item_id": int(replacement.item_id), "subloc": int(replacement.subloc)})
 				else: game._toast("The worn item could not be removed. Your replacement remains in the bag.")
-		"guild_open", "guild_info", "guild_members", "guild_close", "guild_refresh", "guild_begin", "guild_found", "guild_support", "guild_join", "guild_recruit", "guild_deposit", "guild_description", "guild_ranks", "guild_rank", "guild_kick", "guild_leave", "guild_disband", "guild_chat", "inn_open", "inn_quote", "inn_sleep", "inn_close", "quest_open", "quest_reply", "quest_close", "sit", "world", "refresh", "snapshot", "attack", "pickup", "equip", "spend_stat", "shop_buy", "shop_sell", "shop_craft", "bank_deposit", "bank_withdraw", "bank_upgrade", "locker_deposit", "locker_withdraw", "chest_deposit", "chest_take", "chest_close", "trade_request", "trade_accept", "trade_decline", "trade_add", "trade_remove", "trade_agree", "trade_cancel", "chat_send", "item_use", "skill_learn", "skill_forget", "skill_level":
+		"party_invite", "party_join", "party_accept", "party_decline", "party_leave", "party_kick", "party_refresh", "bard_note", "guild_open", "guild_info", "guild_members", "guild_close", "guild_refresh", "guild_begin", "guild_found", "guild_support", "guild_join", "guild_recruit", "guild_deposit", "guild_description", "guild_ranks", "guild_rank", "guild_kick", "guild_leave", "guild_disband", "guild_chat", "inn_open", "inn_quote", "inn_sleep", "inn_close", "quest_open", "quest_reply", "quest_close", "sit", "world", "refresh", "snapshot", "attack", "pickup", "equip", "spend_stat", "shop_buy", "shop_sell", "shop_craft", "bank_deposit", "bank_withdraw", "bank_upgrade", "locker_deposit", "locker_withdraw", "chest_deposit", "chest_take", "chest_close", "trade_request", "trade_accept", "trade_decline", "trade_add", "trade_remove", "trade_agree", "trade_cancel", "chat_send", "item_use", "skill_learn", "skill_forget", "skill_level":
 			_apply_snapshot(data)
 		"redeem_code":
 			_apply_snapshot(data)
@@ -362,11 +368,22 @@ func _show_characters(characters: Array) -> void:
 	creation_panel.hide()
 	selected_characters.clear()
 	character_list.clear()
+	selection_previews.clear()
+	for child: Node in character_cards.get_children(): character_cards.remove_child(child); child.queue_free()
 	for raw: Variant in characters:
 		var character: Dictionary = raw as Dictionary
 		selected_characters.append(character)
 		character_list.add_item("%s   ·   Level %d" % [str(character.get("name", "Character")), int(character.get("level", 1))])
-	if not selected_characters.is_empty(): character_list.select(0)
+		var index: int = selected_characters.size()-1
+		var button: Button = Button.new(); button.custom_minimum_size = Vector2(224,164); button.size_flags_horizontal = Control.SIZE_EXPAND_FILL; button.focus_mode = Control.FOCUS_NONE
+		character_cards.add_child(button)
+		button.pressed.connect(func() -> void: character_list.select(index); _select_character_card(index))
+		var preview: Control = preload("res://scripts/character_preview.gd").new()
+		preview.game = game; preview.appearance = character.duplicate(true); preview.zoom = 1.5; preview.bottom_margin = 6
+		preview.position = Vector2(-112,0); preview.size = Vector2(224,120); button.add_child(preview); preview.set_anchors_preset(Control.PRESET_CENTER_TOP,true); preview.mouse_filter = Control.MOUSE_FILTER_IGNORE; selection_previews.append(preview)
+		var label: Label = game._label(button,str(character.get("name","Character"))+" · Lv %d" % int(character.get("level",1)),Vector2(-108,130),18,game.TEXT)
+		label.set_anchors_preset(Control.PRESET_CENTER_TOP,true); label.size = Vector2(216,28); label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if not selected_characters.is_empty(): character_list.select(0); _select_character_card(0)
 	auth_box.hide()
 	character_box.show()
 	_set_status("Choose a character or create your first one.")
@@ -398,11 +415,6 @@ func _create_character() -> void:
 func _enter_world(data: Dictionary) -> void:
 	game.drink_effects.clear()
 	game.chat_ui.clear()
-	if not game.online_mode:
-		offline_state = {}
-		offline_map_id = int(game.world.get("id", 5))
-		for key: String in ["player_tile", "player_world", "coins", "kills", "dagger_count", "has_blade", "equipped", "armor_equipped", "boots_equipped"]:
-			offline_state[key] = game.get(key)
 	game.online_mode = true
 	active = true
 	game._cancel_controls()
@@ -526,6 +538,7 @@ func _apply_snapshot(data: Dictionary, entering: bool = false) -> void:
 	game.quest_ui.receive(data)
 	game.inn_ui.receive(data)
 	game.guild_ui.receive(data)
+	game.party_ui.receive(data)
 	game.services_ui.receive(data)
 	game.services_ui.refresh()
 	server_label.text = "● Connected  ·  %d nearby" % nearby_count()
@@ -731,6 +744,8 @@ func _facing(value: Variant) -> String:
 
 func _on_closed(reason: String) -> void:
 	shortcuts.disconnected()
+	game.party_ui.disconnected()
+	game.skills_ui.target_panel.hide(); game.skills_ui.bard_panel.hide()
 	game.drink_effects.clear()
 	creation_panel.hide()
 	game.inn_ui.panel.hide()
@@ -755,22 +770,6 @@ func _on_closed(reason: String) -> void:
 	game.menu.hide()
 	_set_status(reason)
 	game._toast(reason)
-
-func leave_for_offline() -> void:
-	active = false
-	session.close()
-	_reset_movement()
-	game._cancel_controls(true)
-	game.load_map(offline_map_id)
-	for raw: Variant in offline_state:
-		game.set(str(raw), offline_state[raw])
-	offline_state.clear()
-	game.online_mode = false
-	server_label.hide()
-	game._place_enemy()
-	game.enemy_health = 3
-	game.loot_visible = false
-	game._refresh_ui()
 
 func _track_entities(kind: String, rows: Array[Dictionary], id_field: String, at: float = -1.0) -> void:
 	var seen: Dictionary = {}
@@ -1115,6 +1114,14 @@ func map_press(point: Vector2, entities_only: bool = false) -> bool:
 	return true
 
 func map_entity_target(point: Vector2) -> Dictionary:
+	var friendly: bool = game.skills_ui.armed > 0 and int(game.skills_ui.info(game.skills_ui.armed).get("restrict",0)) == 1
+	if friendly:
+		var candidates: Array = [player] + players
+		for peer: Dictionary in candidates:
+			var pid: int = int(peer.get("player_id",0))
+			var tile: Vector2i = Vector2i(int(peer.get("x",0)),int(peer.get("y",0)))
+			var at: Vector2 = game.player_world if pid == int(player.get("player_id",-1)) else _remote_position("player:%d" % pid,game.tile_position(tile))
+			if Rect2(at-Vector2(24,76),Vector2(48,82)).has_point(point): return {"tile":tile,"kind":"player"}
 	# Ground loot gets a touch target matching its visible art, including tall items.
 	for drop: Dictionary in ([] if game.skills_ui.armed > 0 else drops):
 		var tile: Vector2i = Vector2i(int(drop.x), int(drop.y))
@@ -1462,6 +1469,7 @@ func _process_events(events: Array) -> void:
 		if not raw is Dictionary: continue
 		var event: Dictionary = raw as Dictionary
 		game.skills_ui.event(event)
+		game.party_ui.event(event)
 		var kind: String = str(event.get("kind", event.get("type", event.get("event", ""))))
 		game.map_effect_event(event)
 		_action_sound(event, kind)
@@ -1491,6 +1499,9 @@ func _process_events(events: Array) -> void:
 			peer_attacks[pid] = {"until": Time.get_ticks_msec() / 1000.0 + game.ONLINE_ATTACK_SWING_DURATION, "direction": int(event.get("direction", 0))}
 			for peer: Dictionary in players:
 				if int(peer.get("player_id", -2)) == pid: peer.direction = int(event.get("direction", 0))
+		if kind == "party_exp":
+			game.damage_numbers.append({"position":game.player_world+Vector2(0,-106),"value":"+%d EXP" % int(event.get("exp_gain",0)),"time":1.2,"exp_gain":true})
+			if event.has("level_up"): game._toast("Level %d reached!" % int(event.level_up))
 		if kind == "player_damage":
 			game.player_hit_flash = 0.22
 			game.damage_numbers.append({"position": game.player_world + Vector2(0, -62), "value": "-%d" % int(event.get("damage", 0)) if int(event.get("damage", 0)) > 0 else "Miss", "time": 0.85, "player_hit": true})
@@ -1610,3 +1621,13 @@ func _slot_name(kind: String) -> String:
 
 func can_issue_walk() -> bool:
 	return active and streaming and not defeated and not recovering and not transition_pending and not game.moving and game.attack_clock <= 0.0 and pending_inputs.size() < MAX_PREDICTIONS and not session.has_blocking_requests()
+
+func _select_character_card(index: int) -> void:
+	for i: int in range(character_cards.get_child_count()):
+		var button: Button = character_cards.get_child(i) as Button
+		button.modulate = Color.WHITE if i == index else Color(0.65,0.72,0.72)
+		button.tooltip_text = "Selected character" if i == index else "Tap to select"
+
+func log_out() -> void:
+	session.close()
+	_on_closed("Logged out.")

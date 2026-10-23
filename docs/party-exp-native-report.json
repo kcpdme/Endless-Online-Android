@@ -1,0 +1,9 @@
+{
+  "result": "passed",
+  "native_monster_kill": true,
+  "both_party_members_gained_exp": true,
+  "both_native_level_ups": true,
+  "native_stat_and_skill_points_match_saved_database": true,
+  "client_exp_totals_match_native_database": true,
+  "dev_accounts_only": true
+}

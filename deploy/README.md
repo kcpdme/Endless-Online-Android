@@ -99,3 +99,11 @@ and `ReadWritePaths=/opt/aster-vale/preferences`. Deploy `shortcuts.py` alongsid
 shortcut database in SQLite-consistent backups. No native world restart, schema
 change, or existing character-data rewrite is required. Old clients remain
 compatible. See [preference behavior and verification](../docs/SHORTCUTS.md).
+
+### v0.36.0 party, healing and Bard adapter
+
+Deploy `party.py`, `skills.py`, `services.py`, `live_session.py` and `gateway.py`,
+then restart the gateway. No native binary, spell-data or character-data rewrite
+is needed. Keep the existing shortcut preference storage configuration. Public
+and native regression tests use freshly provisioned dev characters; they never
+log into operator accounts. See [party/heal/Bard validation](../docs/PARTY_HEAL_BARD.md).

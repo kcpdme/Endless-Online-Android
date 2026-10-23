@@ -47,8 +47,6 @@ func _run() -> void:
 	fixture_written = true
 	var save_existed: bool = true
 	var saved_bytes: PackedByteArray = FileAccess.get_file_as_bytes(save_path)
-	var offline_position: Vector2i = game.player_tile
-	var offline_coins: int = game.coins
 	controller.show_login()
 	if not OS.get_environment("ASTER_VALE_TEST_HOST").is_empty(): controller.host_field.text = OS.get_environment("ASTER_VALE_TEST_HOST")
 	if not OS.get_environment("ASTER_VALE_TEST_PORT").is_empty(): controller.port_field.value = int(OS.get_environment("ASTER_VALE_TEST_PORT"))
@@ -79,7 +77,7 @@ func _run() -> void:
 	if not _require(not controller.server_label.visible, "Connection status must not overprint inventory"): return
 	game._toggle_inventory()
 	controller._process(0.01)
-	if not _require(controller.server_label.visible, "Connection status must return in the world"): return
+	if not _require(not controller.server_label.visible, "Connection status must remain outside the gameplay HUD"): return
 	var before: Vector2i = game.player_tile
 	if not _require(await _wait_until(func() -> bool: return controller.can_issue_walk()), "Live server did not become ready for walking"): return
 	var step: Vector2i = Vector2i(1, 0)
@@ -98,16 +96,16 @@ func _run() -> void:
 	game._save_progress()
 	if not _require(FileAccess.file_exists(save_path) == save_existed, "Online state created or removed the private offline save"): return
 	if save_existed and not _require(FileAccess.get_file_as_bytes(save_path) == saved_bytes, "Online state overwrote private offline save bytes"): return
-	controller.leave_for_offline()
-	if not _require(not game.online_mode and game.player_tile == offline_position and game.coins == offline_coins, "Offline progress was not restored after leaving online play"): return
+	controller.log_out()
+	if not _require(not controller.active and not game.started, "Logout must stop gameplay"): return
 	controller.show_login()
-	if not _require(controller.auth_box.visible and not controller.character_box.visible and controller.selected_characters.is_empty(), "Returning online after offline mode must show fresh authentication, not stale characters"): return
+	if not _require(controller.auth_box.visible and not controller.character_box.visible and controller.selected_characters.is_empty(), "Logging back in must show fresh authentication, not stale characters"): return
 	_restore_save()
 	game.started = false
 	game.queue_free()
 	await process_frame
 	await process_frame
-	print("ONLINE LIVE PASS: real registration/login, character creation/select, Welcome, authoritative map5/NPCs/movement, equip/unequip, offline-save isolation")
+	print("ONLINE LIVE PASS: real registration/login, character creation/select, Welcome, authoritative map5/NPCs/movement, equip/unequip, online logout and legacy save isolation")
 	quit(0)
 
 func _restore_save() -> void:

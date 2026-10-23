@@ -46,6 +46,10 @@ class SkillsMixin:
         if spell_id in ICE_BLAST_IDS:
             if target_kind not in ('area','self'):raise EOError('Ice Blast casts around you; no opponent selection is needed')
             target_kind='area';target_id=0
+        elif spell['target']==3 and spell['restrict']==1:
+            if target_kind!='group':raise EOError('This skill targets your party')
+            if not getattr(self,'party_members',[]):raise EOError('Join a party before casting a group heal')
+            target_id=0
         elif spell['target']==1 and spell['restrict']==1:
             if target_kind!='self':raise EOError('This skill targets yourself')
             target_id=self.player_id
@@ -55,7 +59,7 @@ class SkillsMixin:
         elif spell['target']==0 and target_kind=='player' and spell['restrict']==1:
             target=next((c for c in [self.state['self']]+self.state['characters'] if c['player_id']==target_id),None)
             if not target:raise EOError('That player is no longer nearby')
-        else:raise EOError('This skill needs a different target; group skills require party support')
+        else:raise EOError('Choose a valid target for this skill')
         me=self.state['self']
         if abs(target['x']-me['x'])+abs(target['y']-me['y'])>11:raise EOError('The target is too far away')
         if target_kind=='self' and spell['type']==0 and me.get('hp',0)>=me.get('maxhp',1):raise EOError('Your health is already full. Nothing was cast.')
@@ -89,13 +93,20 @@ class SkillsMixin:
                     self.cancel_spell();self.events.append(dict(kind='spell_failed',message='The target is no longer here.'));return
                 if abs(target['x']-self.state['self']['x'])+abs(target['y']-self.state['self']['y'])>11:
                     self.cancel_spell();self.events.append(dict(kind='spell_failed',message='The target is out of range.'));return
+            if cast['target_kind']=='player':
+                peer=next((p for p in [self.state['self']]+self.state['characters'] if p['player_id']==cast['target_id']),None)
+                if not peer or abs(peer['x']-self.state['self']['x'])+abs(peer['y']-self.state['self']['y'])>11:
+                    self.cancel_spell();self.events.append(dict(kind='spell_failed',message='The player is no longer nearby.'));return
+            if cast['target_kind']=='group' and not getattr(self,'party_members',[]):
+                self.cancel_spell();self.events.append(dict(kind='spell_failed',message='You are no longer in a party.'));return
             if self.state['self'].get('tp',0)<spell_definitions()[cast['spell_id']]['tp']:
                 self.cancel_spell();self.events.append(dict(kind='spell_failed',message='Not enough TP.'));return
             # Timestamp units are 10 ms, independent of transport/polling jitter.
             ticks=spell_definitions()[cast['spell_id']]['cast_time']*48
             release_timestamp=cast['timestamp']+ticks
             self.timestamp=max(self.timestamp,release_timestamp)
-            if cast['target_kind'] in ('self','area'):self.send(12,30,number(1,1)+number(cast['spell_id'],2)+number(release_timestamp,3))
+            if cast['target_kind']=='group':self.send(12,33,number(cast['spell_id'],2)+number(release_timestamp,3))
+            elif cast['target_kind'] in ('self','area'):self.send(12,30,number(1,1)+number(cast['spell_id'],2)+number(release_timestamp,3))
             else:self.send(12,31,number(2 if cast['target_kind']=='npc' else 1,1)+number(1,1)+number(1,2)+number(cast['spell_id'],2)+number(cast['target_id'],2)+number(release_timestamp,3))
             cast['released']=True
         elif now>=cast['timeout_at']:
@@ -169,6 +180,8 @@ class SkillsMixin:
         elif (f,a)==(12,30):
             pid=r.num(2);ident=r.num(2);gain=r.num(4);percent=r.num()
             event.update(kind='spell_heal',player_id=pid,target_id=pid,spell_id=ident,hp_gain=gain,hp_percent=percent)
+            for member in getattr(self,'party_members',[]):
+                if member['player_id']==pid:member['hp_percent']=percent
             if pid==self.player_id and len(r.rest())>=4:
                 values.update(hp=r.num(2),tp=r.num(2));event['hp_gain']=max(0,values['hp']-self.state['self'].get('hp',values['hp']));self.casting=None
         elif (f,a)==(12,31):
@@ -176,6 +189,19 @@ class SkillsMixin:
             event.update(kind='spell_heal',player_id=pid,target_id=victim,spell_id=ident,hp_gain=gain,hp_percent=percent)
             if victim==self.player_id and len(r.rest())>=2:values['hp']=r.num(2)
             if pid==self.player_id:self.casting=None
+        elif (f,a)==(12,33):
+            ident=r.num(2);pid=r.num(2);tp=r.num(2);gain=r.num(2)
+            targets=[]
+            while r.rest():
+                if r.take(5)!=b'\xff'*5:raise EOError('Invalid group heal target')
+                victim=r.num(2);percent=r.num();hp=r.num(2)
+                targets.append(dict(player_id=victim,hp_percent=percent,hp=hp))
+            event.update(kind='spell_group',player_id=pid,spell_id=ident,hp_gain=gain,targets=targets)
+            for victim in targets:
+                if victim['player_id']==self.player_id:values['hp']=victim['hp']
+                for member in getattr(self,'party_members',[]):
+                    if member['player_id']==victim['player_id']:member['hp_percent']=victim['hp_percent']
+            if pid==self.player_id:values['tp']=tp;self.casting=None
         elif f==16 and a in (9,4,2):
             if not hasattr(self,'spells'):self.spells=[]
             old_level=next((s['level'] for s in self.spells if s['id']==Reader(p[2:4]).num(2)),0) if a==2 else 0

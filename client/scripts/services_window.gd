@@ -20,6 +20,7 @@ var state: Dictionary = {}
 var left_rows: Array = []
 var right_rows: Array = []
 var inspected: Dictionary = {}
+var party_button: Button
 
 func build(owner_game: Node, parent: Control) -> void:
 	game = owner_game
@@ -55,6 +56,8 @@ func build(owner_game: Node, parent: Control) -> void:
 	primary = game._button(card, "", Vector2(228, 560), Vector2(226, 54), _primary, true)
 	secondary = game._button(card, "", Vector2(470, 560), Vector2(226, 54), _secondary)
 	extra = game._button(card, "", Vector2(712, 560), Vector2(244, 54), _extra)
+	party_button = game._button(card,"Invite to party",Vector2(608,490),Vector2(340,46),func() -> void: game.party_ui.invite(int(state.get("player_id",0))))
+	party_button.hide()
 	panel.hide()
 
 func _list(card: Control, at: Vector2) -> ItemList:
@@ -129,6 +132,7 @@ func refresh() -> void:
 	var storage: bool = mode in ["locker", "chest"]
 	var trading: bool = mode == "trade"
 	var inspect: bool = mode == "inspect"
+	party_button.visible = inspect
 	left.visible = storage or trading
 	right.visible = storage or trading
 	left_heading.visible = left.visible
