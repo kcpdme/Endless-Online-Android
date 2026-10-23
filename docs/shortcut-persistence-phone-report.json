@@ -1,0 +1,14 @@
+{
+  "result": "passed",
+  "version": "0.35.2",
+  "version_code": 49,
+  "package": "com.cloudgameboy.astervale",
+  "device": "Galaxy S23 Ultra (SM-S918B)",
+  "install_method": "full streamed update, no incremental install",
+  "installed_apk_sha256": "2984dd7560251889b58abcdcd9ca82ad424aea1d2649ec66a6b27fab4b205d93",
+  "installed_apk_matches_release": true,
+  "original_first_install_time_preserved": true,
+  "process_running": true,
+  "startup_script_or_fatal_errors": 0,
+  "timestamp": "2026-10-23T18:12:35.486021+00:00"
+}

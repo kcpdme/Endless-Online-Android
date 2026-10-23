@@ -220,3 +220,13 @@ Native extension family231/action3 confirms casterPID2/spellID2/x1/y1/TP2/hits1
 (9bytes). It broadcasts area visuals and ends empty casts. Only the caster
 adopts its TP. Original family44 per-target damage/death packets remain intact.
 The client shows the5×5 frost pulse and original hit effects on each target.
+
+### Character shortcut preferences (v0.35.2)
+
+`enter` includes `shortcuts` with saved `items` and `skills` arrays (two IDs per
+group). An absent group has never been saved; `[0, 0]` is an explicitly empty
+group. `shortcuts_set` takes `kind`, `first`, `second` and returns the acknowledged
+`kind` and `slots`. Account and character scope come from native authentication
+and entry. No client-supplied identity is used. Saves persist in the dedicated
+`ASTER_VALE_SHORTCUT_DB` SQLite file, separate from native character data.
+See [shortcut migration, validation and deployment](../docs/SHORTCUTS.md).

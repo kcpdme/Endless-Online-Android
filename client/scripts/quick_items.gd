@@ -104,7 +104,7 @@ func open(index: int) -> void:
 
 func assign(ident: int) -> void:
 	slots[selected_slot] = ident
-	Store.write_slots(settings_path, identity, slots)
+	game.online.shortcuts.save_slots("items", settings_path, identity, slots)
 	panel.hide()
 	refresh()
 
@@ -118,16 +118,14 @@ func refresh() -> void:
 	if not current.is_empty() and current != identity:
 		identity = current
 		slots.assign([0, 0])
-		var saved: Array = Store.read_slots(settings_path, identity)
-		if saved.size() == 2: slots.assign(saved)
-		else:
-			for item: Dictionary in game.online.inventory_items():
-				var ident: int = int(item.id)
-				var info: Dictionary = game.online.item_info("item:%d" % ident)
-				if int(info.get("type", -1)) != 3 or game.online.bag_amount(ident) <= 0: continue
-				if slots[0] == 0 and int(info.get("hp", 0)) > 0: slots[0] = ident
-				elif slots[1] == 0 and int(info.get("tp", 0)) > 0: slots[1] = ident
-			Store.write_slots(settings_path, identity, slots)
+		var defaults: Array[int] = [0, 0]
+		for item: Dictionary in game.online.inventory_items():
+			var ident: int = int(item.id)
+			var info: Dictionary = game.online.item_info("item:%d" % ident)
+			if int(info.get("type", -1)) != 3 or game.online.bag_amount(ident) <= 0: continue
+			if defaults[0] == 0 and int(info.get("hp", 0)) > 0: defaults[0] = ident
+			elif defaults[1] == 0 and int(info.get("tp", 0)) > 0: defaults[1] = ident
+		slots.assign(game.online.shortcuts.load_slots("items", settings_path, identity, defaults))
 	if held_slot >= 0 and not held_opened and game._modal_open(): cancel_hold()
 	if held_slot >= 0 and not held_opened and Time.get_ticks_msec() - held_at >= 500:
 		held_opened = true

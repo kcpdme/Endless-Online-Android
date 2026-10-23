@@ -1,0 +1,9 @@
+{
+  "all_four_restore_after_local_data_loss": true,
+  "checks": 16,
+  "explicit_zero_and_depleted_items": true,
+  "local_migration": true,
+  "reconnect_pending_retry": true,
+  "result": "passed",
+  "stale_ack_no_revert": true
+}

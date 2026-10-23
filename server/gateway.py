@@ -3,6 +3,7 @@
 import argparse, collections, json, select, socket, socketserver, time, threading
 from eo_session import EOError
 from auth_sessions import AuthSessions
+from shortcuts import ShortcutStore
 from live_session import LiveSession as Session
 
 class Handler(socketserver.StreamRequestHandler):
@@ -81,10 +82,15 @@ class Handler(socketserver.StreamRequestHandler):
             username=str(r['username']).strip().lower()
             if self.server.auth_sessions.resume(username,str(r.get('resume_token','')),self):time.sleep(.2)
             data=s.login(username,str(r['password']))
+            s.shortcut_account=username
             data['resume_token']=self.server.auth_sessions.issue(username,self)
             return data
         if op=='create_character':return s.create_character(str(r['name']),int(r.get('gender',1)),int(r.get('hairstyle',1)),int(r.get('haircolor',0)),int(r.get('race',0)))
-        if op=='enter':s.enter(int(r['character_id']));return s.snapshot()
+        if op=='enter':
+            s.enter(int(r['character_id']));data=s.snapshot()
+            data['shortcuts']=self.server.shortcuts.read(s)
+            return data
+        if op=='shortcuts_set':return self.server.shortcuts.write(s,r['kind'],r['first'],r['second'])
         if op=='move':return s.move(int(r['direction']),int(r['input_seq']),int(r['map_id']),int(r['x']),int(r['y']),bool(r.get('open_door',False)))
         if op=='refresh':s.refresh();return s.snapshot()
         if op=='walk':s.walk(int(r['direction']),bool(r.get('open_door',False)));return s.snapshot()
@@ -166,6 +172,7 @@ def main():
     if a.host!='127.0.0.1' or a.eo_host!='127.0.0.1':p.error('This development adapter enforces loopback for both connections. TLS/public hosting is a separate milestone.')
     with Server((a.host,a.port),Handler) as server:
         server.eo_address=(a.eo_host,a.eo_port)
+        server.shortcuts=ShortcutStore()
         print(f'Aster Vale local EO gateway listening on {a.host}:{a.port} -> etheos {a.eo_host}:{a.eo_port}',flush=True)
         try:server.serve_forever()
         except KeyboardInterrupt:pass

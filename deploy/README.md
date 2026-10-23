@@ -88,3 +88,14 @@ Do not re-enable vulnerable legacy verification to avoid password recovery.
 Use `server/reset_password.py` as described in the server README; it preserves
 character rows. Existing account data is retained, but old version-2 passwords
 cannot prove the original full password and require an operator reset.
+
+### v0.35.2 shortcut preference storage
+
+Create `/opt/aster-vale/preferences` with owner `astervale:astervale`, mode 0700,
+before applying the updated gateway unit (or equivalent `[Service]` drop-in):
+`Environment=ASTER_VALE_SHORTCUT_DB=/opt/aster-vale/preferences/shortcuts.sqlite3`
+and `ReadWritePaths=/opt/aster-vale/preferences`. Deploy `shortcuts.py` alongside
+`gateway.py`, reload systemd, and restart only the gateway. Include the dedicated
+shortcut database in SQLite-consistent backups. No native world restart, schema
+change, or existing character-data rewrite is required. Old clients remain
+compatible. See [preference behavior and verification](../docs/SHORTCUTS.md).

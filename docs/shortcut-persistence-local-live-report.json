@@ -1,0 +1,14 @@
+{
+  "result": "passed",
+  "modes": [
+    "seed",
+    "restore"
+  ],
+  "independent_clean_user_directories": true,
+  "native_login_and_enter": true,
+  "actual_item_and_skill_assignment_ui": true,
+  "all_four_restored_from_server": true,
+  "restore_did_not_overwrite_server": true,
+  "native_inventory_and_learned_spells_unchanged": true,
+  "dev_fixture_only": true
+}

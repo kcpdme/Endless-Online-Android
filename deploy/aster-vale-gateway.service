@@ -15,6 +15,8 @@ NoNewPrivileges=true
 PrivateTmp=true
 ProtectHome=true
 ProtectSystem=strict
+Environment=ASTER_VALE_SHORTCUT_DB=/opt/aster-vale/preferences/shortcuts.sqlite3
+ReadWritePaths=/opt/aster-vale/preferences
 
 RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
 MemoryMax=160M

@@ -8,8 +8,8 @@ This public repository contains source code, content import tools, build scripts
 
 After importing content and building, install `builds/aster-vale-debug.apk` on an Android device (Android 7 / API 24 or later). This development build includes ARM64 and x86_64. Open **Aster Vale**, choose **Play online** to join the persistent shared world, or **Explore offline** for local practice. The build is signed with a development key, not configured for Google Play release.
 
-The current Android package is **`com.cloudgameboy.astervale`**, version 0.35.1
-(code 48). It installs separately from the earlier `io.astervale.prototype` app;
+The current Android package is **`com.cloudgameboy.astervale`**, version 0.35.2
+(code 49). It installs separately from the earlier `io.astervale.prototype` app;
 online accounts remain on the same server. Release APK and AAB exports use the
 same private release signing key.
 
@@ -22,7 +22,18 @@ The offline exploration mode remains available alongside hosted online play. It 
 - Progress saves locally. The menu includes a confirmed reset.
 - Desktop controls: WASD/arrows, hold the mouse on the weapon icon to repeat attacks, Space for one attack, I for bag, C for paperdoll, E to collect, Escape to close a screen or open the menu.
 
+Install signed updates with `python3 scripts/install_android.py`. It uses a full
+APK update (`--no-incremental -r`), verifies the installed bytes and version, and
+checks that Android kept the app's original installation timestamp. Use the same
+package and signing key; uninstalling or clearing data removes device settings.
+
 ## Play online
+
+Version **0.35.2** saves the two skill and two consumable shortcuts on the server
+for each character. Existing local choices migrate on first login; a fresh install
+restores server choices. Empty slots and depleted consumables remain assigned as
+chosen. Interrupted saves retry from a local pending record without reverting a
+newer selection. See [shortcut persistence](docs/SHORTCUTS.md).
 
 Version **0.35.1** fixes wrong-direction joystick starts. Both bases stay neutral on touch-down and choose movement from the drag. Joystick drags walk immediately without the old 80 ms turn hold or an extra Face request; keyboard turn timing stays classic. Straight up/down/left/right input is stable in isometric mode too. See [startup regression evidence](docs/MOVEMENT.md#version-0351--code-48-correct-and-immediate-touch-starts).
 

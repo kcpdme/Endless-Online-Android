@@ -1,0 +1,13 @@
+{
+  "result": "passed",
+  "backup": "/opt/aster-vale/backups/shortcuts-v49-20261023T180931Z",
+  "active_sessions_before_adapter_restart": 1,
+  "native_world_restarted": false,
+  "native_character_database_edited": false,
+  "preferences_database": "/opt/aster-vale/preferences/shortcuts.sqlite3",
+  "adapter_only": true,
+  "source_sha256": {
+    "gateway.py": "119f63a5e1ffac96e60e4a761047b93987032647ac22811f96ef7ec28061bce2",
+    "shortcuts.py": "f47a8c6458ffd8933b9aabc20cc2045108954f7bd5f12e264e313df9bc7101ef"
+  }
+}

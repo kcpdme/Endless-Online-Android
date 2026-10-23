@@ -15,5 +15,20 @@ static func write_slots(path: String, identity: String, slots: Array) -> void:
 		var raw: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
 		if raw is Dictionary: data = raw
 	data[identity] = slots.duplicate()
-	var file: FileAccess = FileAccess.open(path, FileAccess.WRITE)
-	if file != null: file.store_string(JSON.stringify(data))
+	_write(path, data)
+
+static func clear_slots(path: String, identity: String) -> void:
+	if not FileAccess.file_exists(path): return
+	var data: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
+	if data is Dictionary:
+		data.erase(identity)
+		_write(path, data)
+
+static func _write(path: String, data: Dictionary) -> void:
+	var temporary: String = path + ".tmp"
+	var file: FileAccess = FileAccess.open(temporary, FileAccess.WRITE)
+	if file == null: return
+	file.store_string(JSON.stringify(data))
+	file.flush()
+	file.close()
+	DirAccess.rename_absolute(temporary, path)

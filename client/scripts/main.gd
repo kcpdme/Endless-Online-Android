@@ -285,6 +285,7 @@ func _walkable(tile: Vector2i) -> bool:
 func _process(delta: float) -> void:
 	if skills_ui != null: skills_ui.tick()
 	if quick_items != null: quick_items.refresh()
+	if online != null: online.shortcuts.tick()
 	if chat_ui != null: chat_ui.tick()
 	if guild_ui != null: guild_ui.tick()
 	time_alive += delta

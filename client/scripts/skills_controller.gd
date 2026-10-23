@@ -98,7 +98,7 @@ func build(owner_game: Node, parent: Control) -> void:
 			var old: int = slots.find(selected)
 			if old >= 0: slots[old] = slots[slot]
 			slots[slot] = selected
-			Store.write_slots(settings_path, shortcut_identity, slots)
+			game.online.shortcuts.save_slots("skills", settings_path, shortcut_identity, slots)
 			panel.hide()
 			refresh()
 		)
@@ -239,20 +239,18 @@ func refresh() -> void:
 		character_id = int(game.online.player.get("character_id", -1))
 		ready_at = 0
 		last_rows = ""
-		var saved: Array = Store.read_slots(settings_path, identity)
-		slots.assign(saved if saved.size() == 2 else [0, 0])
-		if saved.is_empty():
-			for spell: Dictionary in learned:
-				var index: int = slots.find(0)
-				if index < 0: break
-				if not slots.has(int(spell.id)): slots[index] = int(spell.id)
-			Store.write_slots(settings_path, identity, slots)
+		var defaults: Array[int] = [0, 0]
+		for spell: Dictionary in learned:
+			var index: int = defaults.find(0)
+			if index < 0: break
+			if not defaults.has(int(spell.id)): defaults[index] = int(spell.id)
+		slots.assign(game.online.shortcuts.load_slots("skills", settings_path, identity, defaults))
 	# Only an authoritative learned list can invalidate an unlearned skill.
 	if active and game.online.player.has("spells"):
 		for index: int in range(slots.size()):
 			if slots[index] != 0 and not known(slots[index]):
 				slots[index] = 0
-				Store.write_slots(settings_path, shortcut_identity, slots)
+				game.online.shortcuts.save_slots("skills", settings_path, shortcut_identity, slots)
 	for index: int in range(buttons.size()):
 		var button: Button = buttons[index]
 		button.visible = active and game.started and not game._modal_open()

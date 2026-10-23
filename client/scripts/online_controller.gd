@@ -1,6 +1,7 @@
 extends Node
 ## Owns online UI/session state. No passwords, server position, or items enter the offline save.
 const OnlineSession = preload("res://scripts/online_session.gd")
+var shortcuts: RefCounted = preload("res://scripts/shortcut_sync.gd").new()
 var drop_ui: RefCounted
 var game: Node
 var session: OnlineSession
@@ -261,6 +262,9 @@ func _set_status(value: String) -> void:
 	if status_label != null: status_label.text = value
 
 func _on_message(message: Dictionary) -> void:
+	if str(message.get("op", "")) == "shortcuts_set":
+		shortcuts.response(message)
+		return
 	game.chat_ui.response(message)
 	game.redeem_ui.response(message)
 	game.guild_ui.response(message)
@@ -421,6 +425,8 @@ func _apply_snapshot(data: Dictionary, entering: bool = false) -> void:
 	if data.has("player"):
 		var previous_sitting: int = int(player.get("sitting", 0))
 		player = data.player as Dictionary
+		if data.has("shortcuts"):
+			shortcuts.begin(self, data.shortcuts as Dictionary)
 		defeated = bool((player.get("stats", {}) as Dictionary).get("dead", false))
 		var map_id: int = int(player.get("map_id", player.get("map", 5)))
 		if map_id != int(game.world.get("id", 5)):
@@ -724,6 +730,7 @@ func _facing(value: Variant) -> String:
 	return ["south", "west", "north", "east"][clampi(int(value), 0, 3)]
 
 func _on_closed(reason: String) -> void:
+	shortcuts.disconnected()
 	game.drink_effects.clear()
 	creation_panel.hide()
 	game.inn_ui.panel.hide()
