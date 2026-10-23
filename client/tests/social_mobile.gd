@@ -27,18 +27,21 @@ func run() -> void:
 	c.character_cards.get_child(1).pressed.emit(); c._enter_selected()
 	check(wire.calls.back().op == "enter" and int(wire.calls.back().fields.character_id) == 20,"Card selects native ID and enters selected character")
 	c.panel.hide(); game.welcome.hide(); c.active = true; game.online_mode = true; game.started = true
-	c.player = {"name":"actor","player_id":100,"character_id":1,"x":40,"y":40,"map_id":5,"tp":100,"hp":1,"max_hp":100,"inventory":[],"spells":[{"id":6},{"id":8},{"id":3},{"id":17}],"equipment":{}}
+	c.player = {"name":"actor","player_id":100,"character_id":1,"x":40,"y":40,"map_id":5,"tp":100,"hp":1,"max_hp":100,"inventory":[],"spells":[{"id":1},{"id":2},{"id":3},{"id":6},{"id":7},{"id":8},{"id":11},{"id":13},{"id":17},{"id":18},{"id":20},{"id":22},{"id":28},{"id":30}],"equipment":{}}
 	c.players.assign([{"name":"peer","player_id":200,"x":41,"y":40}]); c.host_field.text = "wss://test.invalid/ws"
 	var skills: RefCounted = game.skills_ui; skills.settings_path = "user://social-test-skills.json"; skills.shortcut_identity = c.profile_identity()
 	game.player_tile = Vector2i(40,40); game.player_world = game.tile_position(game.player_tile)
-	for ident: int in [6,8]:
-		skills.slots.assign([ident,0]); skills.ready_at = 0; skills.casting.clear(); skills.press(0)
-		check(skills.target_panel.visible and skills.target_list.item_count == 2,"Target heal offers self and nearby player")
-		for index: int in range(2):
-			if index == 1: skills.casting.clear(); skills.ready_at = 0; skills.press(0)
-			skills.target_list.select(index); press_text(skills.target_panel,"Heal selected player")
-			check(wire.calls.back().op == "spell_cast" and wire.calls.back().fields.target_kind == "player" and int(wire.calls.back().fields.target_id) == (100 if index == 0 else 200),"Heal sends correct native player target")
-		skills.casting.clear(); skills.ready_at = 0
+	for ident: int in [2,6,7,8,11,13,20,22,28,30]:
+		for pid: int in [100,200]:
+			skills.slots.assign([ident,0]); skills.ready_at = 0; skills.casting.clear(); skills.armed = 0; skills.press(0)
+			check(skills.armed==ident and not skills.target_panel.visible,"Heal defaults to direct world targeting")
+			var at: Vector2 = game.player_world if pid==100 else game.tile_position(Vector2i(41,40))
+			c.map_press(at+Vector2(0,-45),true)
+			check(wire.calls.back().op == "spell_cast" and wire.calls.back().fields.target_kind == "player" and int(wire.calls.back().fields.target_id) == pid,"World heal sends correct native player target")
+			skills.casting.clear(); skills.ready_at = 0
+	skills.slots.assign([1,0]); skills.press(0)
+	check(wire.calls.back().fields.target_kind == "self" and skills.armed == 0,"Heal Self casts directly without choosing a player")
+	skills.casting.clear(); skills.ready_at = 0
 	skills.armed = 6
 	var hit: Dictionary = c.map_entity_target(game.player_world+Vector2(0,-45))
 	check(hit.get("kind") == "player" and hit.tile == Vector2i(40,40),"Own visible sprite is a reliable healing target")
@@ -64,7 +67,7 @@ func run() -> void:
 	var screenshot: String = OS.get_environment("ASTER_VALE_SCREENSHOTS")
 	if not screenshot.is_empty() and DisplayServer.get_name() != "headless":
 		c.show_login(); c._show_characters([{"id":10,"name":"one","gender":0,"race":3,"hairstyle":7,"haircolor":8,"level":50,"equipment_graphics":[1,40,44,1,33]}]); await process_frame; await process_frame; root.get_texture().get_image().save_png(screenshot)
-	var report: Dictionary = {"result":"passed" if not failed else "failed","checks":checks,"target_heals_choose_self_or_player":true,"party_and_group_heal_ui":true,"bard_36_note_keyboard":true,"login_real_appearance_and_equipment":true,"online_only_entry":true}
+	var report: Dictionary = {"result":"passed" if not failed else "failed","checks":checks,"target_heals_world_self_or_player":true,"party_and_group_heal_ui":true,"bard_36_note_keyboard":true,"login_real_appearance_and_equipment":true,"online_only_entry":true}
 	var path: String = OS.get_environment("ASTER_VALE_TEST_REPORT")
 	if not path.is_empty(): var f: FileAccess = FileAccess.open(path,FileAccess.WRITE); f.store_string(JSON.stringify(report,"  ")+"\n")
 	print("SOCIAL MOBILE: ",JSON.stringify(report)); game.queue_free(); await process_frame; await process_frame; quit(1 if failed else 0)

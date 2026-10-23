@@ -1,0 +1,12 @@
+{
+  "actual_native_small_and_big_soda_use": true,
+  "bard_music_preserves_chat_text_and_expiry": true,
+  "big_seconds": 137.5,
+  "checks": 21,
+  "dev_accounts_only": true,
+  "hiccups_and_slur_match_native_observer": true,
+  "native_drunk_emote_player_and_observer": true,
+  "result": "passed",
+  "small_seconds": 25,
+  "visible_overhead_hazy_chat": true
+}

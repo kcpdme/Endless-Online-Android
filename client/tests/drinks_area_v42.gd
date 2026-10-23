@@ -48,13 +48,17 @@ func run() -> void:
 	game.speech_layer.sync(); await process_frame
 	var bubble: Panel = game.speech_layer.bubbles[100]
 	check((bubble.get_node("Haze") as Label).visible and (bubble.get_node("Message") as Label).text.contains("*"), "Stars and subtle ghosted hazy speech are visible")
+	var speech_before: Dictionary = c.chat_bubbles[100].duplicate(true)
+	game.skills_ui.event({"kind":"bard_note","player_id":100,"note":12,"instrument":49})
+	check(c.chat_bubbles[100] == speech_before, "Bard must preserve chat text, drunk styling and speech lifetime")
+	check(game.drink_effects.music_emotes.has(100) and game.drink_effects.emotes.has(100), "Music and soda emotes can coexist with speech")
 	if OS.get_environment("EO_V42_SCREENSHOT") != "":
 		await process_frame; await RenderingServer.frame_post_draw
 		get_root().get_texture().get_image().save_png(OS.get_environment("EO_V42_SCREENSHOT"))
 	game.drink_effects.event({"kind":"drunk_ended"}); game.speech_layer.sync()
 	check(not game.drink_effects.drunk() and not (bubble.get_node("Haze") as Label).visible, "Expiry restores normal text rendering")
 	c._on_closed("Fixture disconnected")
-	check(game.drink_effects.until == 0 and game.drink_effects.emotes.is_empty(), "Disconnect clears cosmetic state")
+	check(game.drink_effects.until == 0 and game.drink_effects.emotes.is_empty() and game.drink_effects.music_emotes.is_empty(), "Disconnect clears cosmetic state")
 	game.started = false; game.queue_free(); await process_frame
 	if not failed: print("DRINKS AREA V42 PASS: ",checks," actual GUI checks")
 	quit(1 if failed else 0)

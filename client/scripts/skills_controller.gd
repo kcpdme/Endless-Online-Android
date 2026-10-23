@@ -166,7 +166,8 @@ func press(index: int) -> void:
 		return
 	armed = 0 if armed == slots[index] else slots[index]
 	if armed > 0 and int(spell.get("restrict",0)) == 1:
-		open_targets()
+		game._toast("Tap yourself or another player to heal. Tap the skill again to cancel.")
+		refresh()
 		return
 	if armed > 0: game._toast("%s: tap %s to cast. Tap the skill again to cancel." % [str(spell.get("name", "Skill")), "a player (or yourself)" if int(spell.get("restrict", 0)) == 1 else "a monster"])
 	refresh()
@@ -362,7 +363,7 @@ func event(event_data: Dictionary) -> void:
 		if game.sfx != null: game.sfx.bard(int(event_data.instrument), int(event_data.note))
 		game.online.peer_attacks[pid] = {"until": Time.get_ticks_msec()/1000.0 + 0.48, "direction": int(event_data.get("direction",0))}
 		if pid == int(game.online.player.get("player_id",-1)): game.swing_clock = 0.48
-		game.online.chat_bubbles[pid] = {"text":"♪", "start":Time.get_ticks_msec(),"until":Time.get_ticks_msec()+900}
+		game.drink_effects.event({"kind":"player_emote","player_id":pid,"emote":15})
 		return
 	if kind == "spell_group":
 		for member: Dictionary in event_data.get("targets",[]):

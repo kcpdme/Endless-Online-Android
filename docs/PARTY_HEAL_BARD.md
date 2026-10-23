@@ -1,15 +1,15 @@
 # Native parties, healing, Bard and online login
 
-Version 0.36.0 / Android code 50, same package and release certificate.
+Updated for version 0.37.0 / Android code 51, same package and release certificate.
 
 ## Healing
 
 Friendly normal-target spells previously relied on tapping a ground tile and
 could not hit the main character's visible sprite. Admin Heal, Large Heal and
-other normal friendly spells now open a player picker containing yourself and
-nearby players. Choose a player and confirm the heal. Optional world selection
-uses player sprite bounds, prioritizes friendly players over NPCs, and includes
-the main character's current rendered position. Native player IDs are sent in
+other normal friendly spells now arm world targeting. Tap the skill, then tap
+yourself or another player; tapping the same shortcut again cancels selection.
+Heal Self still casts immediately. World selection uses player sprite bounds,
+prioritizes friendly players over NPCs, and includes the main character's current rendered position. Native player IDs are sent in
 Spell_Target_Other; HP and TP change only on native spell/recovery packets.
 Targets disappearing or leaving range during the chant cancel cleanly.
 
@@ -49,8 +49,10 @@ an equipped Harp or Guitar. The adapter sends Jukebox_Use and decodes nearby
 Jukebox_Msg broadcasts, retaining native instrument, note and direction.
 The sender plays locally, matching the native protocol's omitted sender echo.
 A bounded voice pool plays the 36 original `har001..036.wav` and 36 original
-`gui001..036.wav` samples. Weapon animation and a music-note bubble accompany
-notes. Invalid notes, missing skill and unsuitable equipment are rejected.
+`gui001..036.wav` samples. Weapon animation and the original music-note emote
+accompany notes. Music and drunk emotes are independent of speech bubbles, so playing
+preserves existing chat text and its expiry, including Fairy Soda haze. Invalid
+notes, missing skill and unsuitable equipment are rejected.
 No spell cooldown, TP deduction or invented support buff is added to Bard.
 Original WAV samples remain excluded from Git with other supplied EO assets.
 
@@ -61,6 +63,10 @@ offline reset/welcome controls. Startup no longer loads a legacy offline save;
 logout stops gameplay and closes the native connection. Existing local save
 files are not deleted. Internal collision/render fixtures remain for regression
 coverage and cannot be entered through product controls.
+
+Full-screen selection always displays three slots, with empty slots opening
+full-screen appearance creation. The native account limit prevents a fourth
+character. See [character flow](CHARACTER_FLOW.md) for layout and creation checks.
 
 Character cards use the five native login paperdoll graphics (BAHSW), expanded
 to the same nine-position appearance record used by world rendering. They keep
@@ -74,14 +80,15 @@ graphics or changes equipment.
 - 161 Python unit tests, including group/target heal timestamps and ownership,
   invite/accept/decline/member/HP decoding, removal authorization, party chat,
   EXP/level-point decoding and Bard skill/instrument/note validation.
-- `client/tests/social_mobile.gd`: 24 real-scene UI checks including all target
-  choices, group cast, Bard keyboard, invitation actions, equipped preview,
+- `client/tests/social_mobile.gd`: 59 real-scene UI checks including all ten
+  targeted healing spells on self and another player, Heal Self, group cast, Bard keyboard, invitation actions, equipped preview,
   selection/login and logout. Rendered login preview inspected visually.
 - `server/test_party_live.py`: four isolated dev characters against actual
   etheos; parties of two/three, chat, group heals affecting members but not an
   outsider, ten normal healing spells, both instruments, kick and disband.
 - `server/test_party_ui.py`: actual Godot login card, party invitation/roster,
-  player-picker Large Heal, Group Heal shortcut and Bard keyboard against native
+  world-tap Admin Heal and Large Heal on self and another player, Group Heal
+  shortcut and Bard keyboard against native
   sessions.
 - `server/test_party_exp_live.py`: actual native monster kill shared by two
   members; EXP, native level-up and stat/skill points checked against the saved

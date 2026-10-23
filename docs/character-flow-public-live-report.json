@@ -1,0 +1,10 @@
+{
+  "all_three_cards_enter_correct_characters": true,
+  "checks": 48,
+  "chosen_body_skin_hair_color_native": true,
+  "dev_account_only": true,
+  "native_fourth_creation_rejected": true,
+  "new_character_selected": true,
+  "result": "passed",
+  "three_actual_native_characters_created": true
+}

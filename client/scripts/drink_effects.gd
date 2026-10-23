@@ -3,6 +3,7 @@ extends RefCounted
 var game: Node
 var until: int = 0
 var emotes: Dictionary = {}
+var music_emotes: Dictionary = {}
 
 func drunk() -> bool:
 	return Time.get_ticks_msec() < until
@@ -14,6 +15,7 @@ func receive(player: Dictionary) -> void:
 func clear() -> void:
 	until = 0
 	emotes.clear()
+	music_emotes.clear()
 
 func event(data: Dictionary) -> void:
 	var kind: String = str(data.get("kind", ""))
@@ -23,20 +25,25 @@ func event(data: Dictionary) -> void:
 	elif kind == "drunk_ended": until = 0
 	elif kind == "player_emote" and int(data.get("emote", 0)) == 11:
 		emotes[int(data.player_id)] = Time.get_ticks_msec()
+	elif kind == "player_emote" and int(data.get("emote",0)) == 15:
+		music_emotes[int(data.player_id)] = Time.get_ticks_msec()
 
 func draw() -> void:
+	_draw_emotes(emotes,int((game.manifest.get("drinks",{}) as Dictionary).get("drunk_set",10)),0.0)
+	_draw_emotes(music_emotes,14,24.0)
+
+func _draw_emotes(entries: Dictionary, set_index: int, horizontal: float) -> void:
 	var now: int = Time.get_ticks_msec()
-	var meta: Dictionary = game.manifest.get("drinks", {}) as Dictionary
-	var texture: Texture2D = game._graphic(2, 38)
+	var texture: Texture2D = game._graphic(2,38)
 	if texture == null: return
-	var frame_width: float = float(texture.get_width()) / 60.0
-	for key: Variant in emotes.keys():
-		var elapsed: int = now - int(emotes[key])
+	var frame_width: float = float(texture.get_width())/60.0
+	for key: Variant in entries.keys():
+		var elapsed: int = now-int(entries[key])
 		if elapsed >= 960:
-			emotes.erase(key)
+			entries.erase(key)
 			continue
 		var at: Vector2 = game.online.chat_bubble_position(int(key))
 		if not at.is_finite(): continue
-		var frame: int = mini(3, elapsed / 240)
-		var region: Rect2 = Rect2((int(meta.get("drunk_set", 10)) * 4 + frame) * frame_width, 0, frame_width, texture.get_height())
-		game.draw_texture_rect_region(texture, Rect2(at + Vector2(-frame_width / 2.0, -86), region.size), region)
+		var frame: int = mini(3,elapsed/240)
+		var region: Rect2 = Rect2((set_index*4+frame)*frame_width,0,frame_width,texture.get_height())
+		game.draw_texture_rect_region(texture,Rect2(at+Vector2(horizontal-frame_width/2.0,-86),region.size),region)

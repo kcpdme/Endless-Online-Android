@@ -23,6 +23,10 @@ var color_choice: OptionButton
 var creation_status: Label
 var character_preview: Control
 var character_name_field: LineEdit
+var character_flow: RefCounted = preload("res://scripts/character_flow.gd").new()
+var creating_character: bool = false
+var entering_character: bool = false
+var last_created_name: String = ""
 var character_cards: HBoxContainer
 var selection_previews: Array[Control] = []
 var character_list: ItemList
@@ -93,65 +97,7 @@ func _ready() -> void:
 func build_ui(parent: Control) -> void:
 	drop_ui = preload("res://scripts/drop_window.gd").new()
 	drop_ui.build(game, parent)
-	panel = game._modal(parent, Vector2(760, 606))
-	var card: Control = panel.get_child(0) as Control
-	game._label(card, "YOUR OWN ONLINE WORLD", Vector2(30, 20), 13, game.GOLD)
-	game._label(card, "Play online", Vector2(28, 49), 34)
-	game._button(card, "×", Vector2(674, 20), Vector2(56, 52), _close_panel)
-	game._label(card, "Server address", Vector2(30, 105), 15, game.MUTED)
-	host_field = _field(card, "wss://eo.kcpd.top/ws", Vector2(30, 130), Vector2(530, 48))
-	host_field.placeholder_text = "Server hostname or wss://…/ws"
-	host_field.text_changed.connect(func(value: String) -> void:
-		if port_field != null: port_field.editable = not (value.begins_with("ws://") or value.begins_with("wss://"))
-	)
-	port_field = SpinBox.new()
-	port_field.position = Vector2(574, 130)
-	port_field.size = Vector2(156, 48)
-	port_field.min_value = 1
-	port_field.max_value = 65535
-	port_field.value = 8079
-	port_field.editable = false
-	card.add_child(port_field)
-	auth_box = Control.new()
-	auth_box.position = Vector2(30, 200)
-	card.add_child(auth_box)
-	game._label(auth_box, "Account", Vector2.ZERO, 15, game.MUTED)
-	username_field = _field(auth_box, "", Vector2(0, 28), Vector2(700, 48))
-	username_field.placeholder_text = "Account name"
-	username_field.max_length = 16
-	game._label(auth_box, "Password", Vector2(0, 89), 15, game.MUTED)
-	password_field = _field(auth_box, "", Vector2(0, 117), Vector2(700, 48))
-	password_field.placeholder_text = "Password — never saved on this device"
-	password_field.secret = true
-	password_field.max_length = 64
-	game._button(auth_box, "Log in", Vector2(0, 188), Vector2(340, 56), func() -> void: _authenticate("login"), true)
-	game._button(auth_box, "Create account", Vector2(356, 188), Vector2(344, 56), func() -> void: _authenticate("register"))
-	character_box = Control.new()
-	character_box.position = Vector2(30, 200)
-	card.add_child(character_box)
-	character_list = ItemList.new()
-	character_list.size = Vector2(700, 118)
-	character_list.hide()
-	character_list.item_selected.connect(func(index: int) -> void: _select_character_card(index))
-	character_cards = HBoxContainer.new()
-	character_cards.size = Vector2(700,164)
-	character_cards.add_theme_constant_override("separation",12)
-	character_box.add_child(character_cards)
-	character_list.add_theme_font_size_override("font_size", 22)
-	character_list.fixed_icon_size = Vector2i(32, 32)
-	character_box.add_child(character_list)
-	game._button(character_box, "Enter selected character", Vector2(0, 176), Vector2(700, 48), _enter_selected, true)
-	game._button(character_box, "Create a new character…", Vector2(0, 232), Vector2(700, 46), func() -> void:
-		creation_panel.show()
-		_update_creation_preview()
-	)
-	character_box.hide()
-	status_label = game._label(card, "Connect to your world or create a new account.", Vector2(30, 479), 17, game.TEXT)
-	status_label.size = Vector2(700, 61)
-	status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	game._label(card, "Your characters, equipment and progress are saved on the server.", Vector2(30, 553), 14, game.MUTED)
-	panel.hide()
-	_build_character_creation(parent)
+	character_flow.build(self,parent)
 	server_label = game._label(parent, "", Vector2(390, 67), 15, game.MUTED)
 	server_label.hide()
 	loot_button = preload("res://scripts/hud_icon_button.gd").new()
@@ -165,49 +111,6 @@ func build_ui(parent: Control) -> void:
 	loot_button.add_theme_font_size_override("font_size", 17)
 	loot_button.hide()
 
-func _build_character_creation(parent: Control) -> void:
-	creation_panel = game._modal(parent, Vector2(820, 600))
-	var card: Control = creation_panel.get_child(0) as Control
-	game._label(card, "CREATE YOUR CHARACTER", Vector2(30, 22), 27, game.GOLD)
-	game._button(card, "×", Vector2(736, 14), Vector2(54, 48), func() -> void: creation_panel.hide())
-	game._label(card, "Name", Vector2(30, 79), 17, game.MUTED)
-	character_name_field = _field(card, "", Vector2(30, 105), Vector2(420, 48))
-	character_name_field.placeholder_text = "4–12 letters"
-	character_name_field.max_length = 12
-	body_choice = _appearance_choice(card, "Body", 170, ["Female", "Male"])
-	body_choice.select(1)
-	hair_choice = _appearance_choice(card, "Hair", 242, [])
-	for style: int in range(1, 21): hair_choice.add_item("Style %d" % style, style)
-	color_choice = _appearance_choice(card, "Hair color", 314, [])
-	# Numeric labels preserve the original palette order without inventing names.
-	for color: int in range(10): color_choice.add_item("Color %d" % (color + 1), color)
-	skin_choice = _appearance_choice(card, "Skin color", 386, ["White", "Tan", "Pale", "Orc"])
-	character_preview = preload("res://scripts/character_preview.gd").new()
-	character_preview.game = game
-	character_preview.position = Vector2(478, 128)
-	character_preview.size = Vector2(300, 290)
-	card.add_child(character_preview)
-	game._label(card, "Tap character to turn", Vector2(521, 427), 16, game.MUTED)
-	var starter: Label = game._label(card, "Start with 1,000 Gold, peasant clothes, a Dagger,\nan Oak Shield and Heal Self.", Vector2(30, 474), 17, game.TEXT)
-	starter.size = Vector2(748, 44)
-	game._button(card, "Back", Vector2(30, 533), Vector2(180, 46), func() -> void: creation_panel.hide())
-	game._button(card, "Create character", Vector2(226, 533), Vector2(562, 46), _create_character, true)
-	creation_status = game._label(card, "", Vector2(478, 68), 16, game.GOLD)
-	creation_status.size = Vector2(300, 70)
-	creation_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	creation_panel.hide()
-
-func _appearance_choice(card: Control, title: String, top: float, labels: Array) -> OptionButton:
-	game._label(card, title, Vector2(30, top), 17, game.MUTED)
-	var choice: OptionButton = OptionButton.new()
-	choice.position = Vector2(200, top - 7)
-	choice.size = Vector2(250, 52)
-	choice.add_theme_font_size_override("font_size", 20)
-	for index: int in range(labels.size()): choice.add_item(str(labels[index]), index)
-	choice.item_selected.connect(func(_index: int) -> void: _update_creation_preview())
-	card.add_child(choice)
-	return choice
-
 func creation_appearance() -> Dictionary:
 	return {"gender": body_choice.get_selected_id(), "hairstyle": hair_choice.get_selected_id(), "haircolor": color_choice.get_selected_id(), "race": skin_choice.get_selected_id()}
 
@@ -215,6 +118,7 @@ func _update_creation_preview() -> void:
 	if character_preview == null: return
 	character_preview.appearance = creation_appearance()
 	character_preview.queue_redraw()
+	character_flow.refresh_creation()
 
 func _field(parent: Node, value: String, at: Vector2, dimensions: Vector2) -> LineEdit:
 	var field: LineEdit = LineEdit.new()
@@ -276,6 +180,9 @@ func _on_message(message: Dictionary) -> void:
 	game.guild_ui.response(message)
 	var operation: String = str(message.get("op", message.get("event", "")))
 	if not bool(message.get("ok", true)):
+		if operation == "create_character": creating_character = false; last_created_name = ""
+		if operation == "enter": entering_character = false
+		character_flow.refresh()
 		waiting_for_walk = false
 		var reason: String = str(message.get("error", "The server refused this request."))
 		_set_status(reason)
@@ -368,34 +275,31 @@ func _show_characters(characters: Array) -> void:
 	creation_panel.hide()
 	selected_characters.clear()
 	character_list.clear()
-	selection_previews.clear()
-	for child: Node in character_cards.get_children(): character_cards.remove_child(child); child.queue_free()
+	creating_character = false
+	entering_character = false
+	var selected: int = 0
 	for raw: Variant in characters:
 		var character: Dictionary = raw as Dictionary
 		selected_characters.append(character)
-		character_list.add_item("%s   ·   Level %d" % [str(character.get("name", "Character")), int(character.get("level", 1))])
-		var index: int = selected_characters.size()-1
-		var button: Button = Button.new(); button.custom_minimum_size = Vector2(224,164); button.size_flags_horizontal = Control.SIZE_EXPAND_FILL; button.focus_mode = Control.FOCUS_NONE
-		character_cards.add_child(button)
-		button.pressed.connect(func() -> void: character_list.select(index); _select_character_card(index))
-		var preview: Control = preload("res://scripts/character_preview.gd").new()
-		preview.game = game; preview.appearance = character.duplicate(true); preview.zoom = 1.5; preview.bottom_margin = 6
-		preview.position = Vector2(-112,0); preview.size = Vector2(224,120); button.add_child(preview); preview.set_anchors_preset(Control.PRESET_CENTER_TOP,true); preview.mouse_filter = Control.MOUSE_FILTER_IGNORE; selection_previews.append(preview)
-		var label: Label = game._label(button,str(character.get("name","Character"))+" · Lv %d" % int(character.get("level",1)),Vector2(-108,130),18,game.TEXT)
-		label.set_anchors_preset(Control.PRESET_CENTER_TOP,true); label.size = Vector2(216,28); label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER; label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	if not selected_characters.is_empty(): character_list.select(0); _select_character_card(0)
+		character_list.add_item(str(character.get("name","Character")))
+		if str(character.get("name","")) == last_created_name: selected = selected_characters.size()-1
+	last_created_name = ""
+	character_flow.show_characters()
+	if not selected_characters.is_empty(): character_list.select(selected); _select_character_card(selected)
 	auth_box.hide()
 	character_box.show()
-	_set_status("Choose a character or create your first one.")
+	_set_status("Choose a character to enter the world." if not selected_characters.is_empty() else "No characters yet. Tap an empty slot to create your first one.")
 
 func _enter_selected() -> void:
+	if entering_character or creating_character: return
 	var selection: PackedInt32Array = character_list.get_selected_items()
 	if selection.is_empty():
 		_set_status("Create or select a character first.")
 		return
 	var character: Dictionary = selected_characters[selection[0]]
 	_set_status("Entering the world…")
-	session.request("enter", {"character_id": int(character.get("id", 0))})
+	entering_character = session.request("enter", {"character_id": int(character.get("id", 0))}) >= 0
+	character_flow.refresh()
 
 func _character_letters(value: String) -> bool:
 	for index: int in range(value.length()):
@@ -403,6 +307,10 @@ func _character_letters(value: String) -> bool:
 	return true
 
 func _create_character() -> void:
+	if creating_character or entering_character: return
+	if selected_characters.size() >= character_flow.MAX_CHARACTERS:
+		_set_status("This account already has all three character slots filled.")
+		return
 	var name: String = character_name_field.text.strip_edges().to_lower()
 	if name.length() < 4 or name.length() > 12 or not _character_letters(name):
 		_set_status("Choose a name with 4–12 letters.")
@@ -410,9 +318,13 @@ func _create_character() -> void:
 	_set_status("Creating your character…")
 	var fields: Dictionary = creation_appearance()
 	fields.name = name
-	session.request("create_character", fields)
+	last_created_name = name
+	creating_character = session.request("create_character", fields) >= 0
+	character_flow.refresh()
 
 func _enter_world(data: Dictionary) -> void:
+	entering_character = false
+	creation_panel.hide()
 	game.drink_effects.clear()
 	game.chat_ui.clear()
 	game.online_mode = true
@@ -743,6 +655,7 @@ func _facing(value: Variant) -> String:
 	return ["south", "west", "north", "east"][clampi(int(value), 0, 3)]
 
 func _on_closed(reason: String) -> void:
+	creating_character = false; entering_character = false; last_created_name = ""
 	shortcuts.disconnected()
 	game.party_ui.disconnected()
 	game.skills_ui.target_panel.hide(); game.skills_ui.bard_panel.hide()
@@ -1623,10 +1536,18 @@ func can_issue_walk() -> bool:
 	return active and streaming and not defeated and not recovering and not transition_pending and not game.moving and game.attack_clock <= 0.0 and pending_inputs.size() < MAX_PREDICTIONS and not session.has_blocking_requests()
 
 func _select_character_card(index: int) -> void:
+	if index < 0 or index >= selected_characters.size(): return
 	for i: int in range(character_cards.get_child_count()):
-		var button: Button = character_cards.get_child(i) as Button
-		button.modulate = Color.WHITE if i == index else Color(0.65,0.72,0.72)
-		button.tooltip_text = "Selected character" if i == index else "Tap to select"
+		var control: Button = character_cards.get_child(i) as Button
+		var selected: bool = i == index
+		var style: StyleBoxFlat = game._style(Color("173436") if selected else Color("0c2023"),game.GOLD if selected else Color("465e56"),16)
+		style.set_border_width_all(3 if selected else 1)
+		control.add_theme_stylebox_override("normal",style)
+		control.add_theme_stylebox_override("hover",style)
+		control.add_theme_stylebox_override("pressed",style)
+		var label: Label = control.find_child("Selection",true,false) as Label
+		if label != null: label.text = "Selected" if selected else "Tap to select"
+	character_flow.refresh()
 
 func log_out() -> void:
 	session.close()

@@ -8,21 +8,23 @@ This public repository contains source code, content import tools, build scripts
 
 After importing content and building, install `builds/aster-vale-debug.apk` on an Android device (Android 7 / API 24 or later). This development build includes ARM64 and x86_64. Open **Aster Vale**, log in, select your character and join the persistent shared world. The build is signed with a development key, not configured for Google Play release.
 
-The current Android package is **`com.cloudgameboy.astervale`**, version 0.36.0
-(code 50). It installs separately from the earlier `io.astervale.prototype` app;
+The current Android package is **`com.cloudgameboy.astervale`**, version 0.37.0
+(code 51). It installs separately from the earlier `io.astervale.prototype` app;
 online accounts remain on the same server. Release APK and AAB exports use the
 same private release signing key.
 
 The player entry flow is online-only. Character selection shows each character's
 native skin, body, hairstyle, hair color and equipped boots, armor, helmet,
-shield and weapon. Tap a card, then enter the selected character.
+shield and weapon. Full-screen selection has three large slots; empty slots open
+full-screen creation with Male/Female, skin, hair and a rotating preview.
+Tap a card, then enter the selected character.
 
 - Drag the lower-left joystick to move; tap clear ground to walk there.
 - Tap the weapon for manual attacks; hold to latch auto attack and tap to stop.
 - The bag and character icons open native inventory and equipment.
 - Two consumable and two skill shortcuts save per character on the server.
-- Healing shortcuts offer yourself and nearby players. Group Heal and Aura
-  cast directly on your native party. Bard opens a 36-note instrument keyboard.
+- Targeted healing shortcuts let you tap yourself or another player in the world.
+  Group Heal and Aura cast directly on your native party. Bard opens a 36-note instrument keyboard.
 - **Menu → Party** manages invitations, members, party chat and leaving.
   Inspect another player to invite them. The leader can remove members;
   leaving as leader disbands the party after confirmation.
@@ -35,11 +37,18 @@ checks that Android kept the app's original installation timestamp.
 
 ## Play online
 
+Version **0.37.0** expands login and creation to full-screen layouts, with three
+large native character slots and original body, skin, hair style and color
+choices. All normal friendly heals default to world selection: tap the skill,
+then yourself or another player. Heal Self stays immediate. Bard music emotes
+now preserve speech bubbles, including Fairy Soda hiccups and haze. Small and
+Big Soda behavior was checked with two native clients on the hosted world. See
+[character flow and Fairy Soda verification](docs/CHARACTER_FLOW.md).
+
 Version **0.36.0** completes native party invitations/joining, membership, HP,
 EXP/level-up handling, party chat, leaving and leader removal. Group Heal and
-Aura heal party members through native acknowledgements. Targeted heals offer
-an explicit picker with yourself and nearby players, with optional world
-selection. Bard plays the 36 original notes for the equipped Harp or Guitar,
+Aura heal party members through native acknowledgements. Targeted heals use
+native player IDs (v0.37.0 defaults to world selection). Bard plays the 36 original notes for the equipped Harp or Guitar,
 locally and for nearby players. Login cards render actual native character
 appearance and equipment. The entry flow is online-only. See
 [party, healing, Bard and login validation](docs/PARTY_HEAL_BARD.md).
@@ -76,7 +85,7 @@ Version **0.24** removes the pause between walking tiles and runs at the native 
 
 The Android build defaults to **`wss://eo.kcpd.top/ws`**. Create an account and character to play on the hosted world without ADB or a running development computer. The server runs on AWS behind Caddy HTTPS and proxied Cloudflare DNS. Accounts and progress on this hosted world are separate from the local development server and offline journey. See [hosting and maintenance](deploy/README.md).
 
-The world pack now includes all **282 maps**, 3,945 original warp records and their graphics. Walking into a valid exit changes the rendered map only after the real server completes its warp handshake. Doors open through native EO requests; keys and level restrictions remain server-controlled. Eight malformed legacy warp destinations on map 47 are blocked rather than sending a player outside a map. Gold banking, item lockers, equipment inspection, player trading and nearby/global/private chat now use the original native server flows. Tap a banker, a nearby locker, or another player to interact. The mobile HUD uses HP hearts and blue TP orbs with a dynamic floating joystick. It also shows the current level and a thin next-level EXP bar. The bag supports native potion/scroll use; Nearby chat closes on Send. Three touch skill shortcuts and a skill book use native learned spells. Tap an attack skill, then a monster anywhere on the screen, including the joystick area; Heal Self casts immediately on yourself. The book shows TP, chant time, skill level and original learning requirements. Tap a skill master to learn or forget; spend skill points with Train +1. Original spell icons, chanting poses and effects are rendered for you and nearby players. PvP targeting and additional NPC services remain future work. Character creation offers male/female bodies, 20 hairstyles, 10 original hair colors and the native creation skins (White, Tan, Pale, Orc), with a rotating preview.
+The world pack now includes all **282 maps**, 3,945 original warp records and their graphics. Walking into a valid exit changes the rendered map only after the real server completes its warp handshake. Doors open through native EO requests; keys and level restrictions remain server-controlled. Eight malformed legacy warp destinations on map 47 are blocked rather than sending a player outside a map. Gold banking, item lockers, equipment inspection, player trading and nearby/global/private chat now use the original native server flows. Tap a banker, a nearby locker, or another player to interact. The mobile HUD uses HP hearts and blue TP orbs with a dynamic floating joystick. It also shows the current level and a thin next-level EXP bar. The bag supports native potion/scroll use; Nearby chat closes on Send. Two touch skill shortcuts and a skill book use native learned spells. Tap an attack skill, then a monster anywhere on the screen, including the joystick area; Heal Self casts immediately on yourself. The book shows TP, chant time, skill level and original learning requirements. Tap a skill master to learn or forget; spend skill points with Train +1. Original spell icons, chanting poses and effects are rendered for you and nearby players. PvP targeting and additional NPC services remain future work. Character creation offers male/female bodies, 20 hairstyles, 10 original hair colors and the native creation skins (White, Tan, Pale, Orc), with a rotating preview.
 
 Version 0.15 gives Buy, Sell and Craft a scrolling catalog and a separate item-details column. Recipes show material icons and colored Have / Need quantities, compact prices omit redundant wording, and browsing position/quantity survive world updates. Armor gender, equipment bonuses and requirements are visible in the selected-item pane.
 

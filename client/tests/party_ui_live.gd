@@ -50,18 +50,32 @@ func run() -> void:
 	await rpc("party_accept")
 	if not check(await wait_for(func() -> bool: return game.party_ui.party.size()==2 and c.session.is_idle()),"Party roster missing after native create"):return
 	game.party_ui.panel.hide()
-	var skills: RefCounted=game.skills_ui;skills.slots.assign([8,3]);skills.press(0)
-	if not check(skills.target_panel.visible,"Large Heal must offer targets"):return
-	for index: int in range(skills.target_list.item_count):
-		if int(skills.target_list.get_item_metadata(index))==pid:skills.target_list.select(index)
-	press(skills.target_panel,"Heal selected player")
-	if not check(await wait_for(func() -> bool:return events.any(func(e: Dictionary) -> bool:return e.get("kind")=="spell_heal" and int(e.get("spell_id",0))==8 and int(e.get("target_id",0))==pid)),"UI Large Heal was not native acknowledged"):return
+	var skills: RefCounted=game.skills_ui
+	var own: int=int(c.player.player_id)
+	for ident: int in [6,8]:
+		for recipient: int in [own,pid]:
+			await create_timer(.6).timeout
+			skills.slots.assign([ident,3]);skills.press(0)
+			if not check(skills.armed==ident and not skills.target_panel.visible,"Heal must arm world targeting"):return
+			var at: Vector2=game.player_world
+			for row: Dictionary in c.players:
+				if int(row.player_id)==recipient:at=game.tile_position(Vector2i(int(row.x),int(row.y)))
+			var point: Vector2=root.get_final_transform()*game.get_global_transform_with_canvas()*(at+Vector2(0,-45))
+			var prior: int=events.size()
+			var touch: InputEventScreenTouch=InputEventScreenTouch.new();touch.index=78;touch.pressed=true;touch.position=point;Input.parse_input_event(touch);await process_frame
+			touch=touch.duplicate();touch.pressed=false;Input.parse_input_event(touch);await process_frame
+			if not check(await wait_for(func() -> bool:
+				for i: int in range(prior,events.size()):
+					var e: Dictionary=events[i]
+					if e.get("kind")=="spell_heal" and int(e.get("spell_id",0))==ident and int(e.get("target_id",0))==recipient:return true
+				return false
+			),"World touch heal was not native acknowledged for spell %d / player %d" % [ident,recipient]):return
 	await create_timer(.6).timeout;skills.press(1)
 	if not check(await wait_for(func() -> bool:return events.any(func(e: Dictionary) -> bool:return e.get("kind")=="spell_group" and int(e.get("spell_id",0))==3)),"UI Group Heal was not native acknowledged"):return
 	await create_timer(.6).timeout;skills.slots.assign([17,3]);skills.press(0);press(skills.bard_panel,"C1")
 	if not check(await wait_for(func() -> bool:return events.any(func(e: Dictionary) -> bool:return e.get("kind")=="bard_note")),"UI Bard note missing"):return
 	skills.bard_panel.hide();c.log_out();peer.close();peer.queue_free()
-	print("PARTY UI LIVE PASS: native equipped login, invite/roster, targeted Large Heal, Group Heal and Bard keyboard")
+	print("PARTY UI LIVE PASS: native equipped login, invite/roster, world-tap Admin/Large Heal on self and peer, Group Heal and Bard keyboard")
 	var report: String=OS.get_environment("ASTER_VALE_TEST_REPORT")
-	if not report.is_empty():var f: FileAccess=FileAccess.open(report,FileAccess.WRITE);f.store_string(JSON.stringify({"result":"passed","native_equipped_character_card":true,"native_party_ui_invitation_and_roster":true,"native_target_picker_large_heal":true,"native_group_heal_shortcut":true,"native_bard_keyboard":true},"  ")+"\n")
+	if not report.is_empty():var f: FileAccess=FileAccess.open(report,FileAccess.WRITE);f.store_string(JSON.stringify({"result":"passed","native_equipped_character_card":true,"native_party_ui_invitation_and_roster":true,"native_world_tap_admin_and_large_heal_self_and_peer":true,"native_group_heal_shortcut":true,"native_bard_keyboard":true},"  ")+"\n")
 	game.queue_free();await process_frame;await process_frame;quit(0)

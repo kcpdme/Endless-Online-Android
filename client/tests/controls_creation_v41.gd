@@ -78,9 +78,7 @@ func run() -> void:
 			for hair: int in range(1, 21):
 				var graphic: Dictionary = online.character_graphic({"gender":gender,"race":skin,"hairstyle":hair,"haircolor":9,"equipment_graphics":[0,0,0,0,0,0,0,0,0]})
 				check((graphic.get("layers", []) as Array).size() == 2, "Every offered body/skin/hair uses real layers")
-	var create_button: Button
-	for child: Node in online.creation_panel.get_child(0).get_children():
-		if child is Button and child.text == "Create character": create_button = child
+	var create_button: Button = online.character_flow.creation_submit
 	await touch(create_button.get_global_rect().get_center(), true, 73); await touch(create_button.get_global_rect().get_center(), false, 73)
 	check(wire.calls.size() == 1 and wire.calls[0].op == "create_character", "Actual Create button must send one native creation request")
 	if not wire.calls.is_empty():
