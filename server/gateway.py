@@ -77,6 +77,10 @@ class Handler(socketserver.StreamRequestHandler):
         s=self.session
         if not s:raise EOError('Connect to the local server first')
         if op=='ping':return {'connected':True}
+        if op=='admin_open':return s.admin_open()
+        if op=='admin_teleport':return s.admin_teleport(r.get('destination',''))
+        if op=='admin_item':return s.admin_item(r.get('item_id'))
+        if op=='admin_spawn':return s.admin_spawn(r.get('npc_id'))
         if s.trade and op in ('walk','attack','spend_stat'):raise EOError('Close the trade before acting')
         if op=='register':return s.register(str(r['username']),str(r['password']))
         if op=='login':

@@ -20,7 +20,7 @@ func _ready() -> void:
 	button_down.connect(queue_redraw)
 	button_up.connect(queue_redraw)
 	resized.connect(queue_redraw)
-	tooltip_text = {"bag": "Inventory bag", "person": "Character equipment", "chat": "Chat", "quests": "Ongoing quests", "party": "Party", "skills": "Skills", "sit": "Sit / Stand"}.get(kind, "")
+	tooltip_text = {"bag": "Inventory bag", "person": "Character equipment", "chat": "Chat", "quests": "Ongoing quests", "party": "Party", "admin": "Admin functions", "skills": "Skills", "sit": "Sit / Stand"}.get(kind, "")
 
 func _has_point(point: Vector2) -> bool:
 	var radius: float = minf(size.x, size.y) * 0.5
@@ -60,6 +60,10 @@ func _draw() -> void:
 		for y: int in [-5, 1, 7]:
 			draw_line(Vector2(-14, y), Vector2(-5, y + 2), gold, 1.8, true)
 			draw_line(Vector2(5, y + 2), Vector2(14, y), gold, 1.8, true)
+	elif kind == "admin":
+		draw_colored_polygon(PackedVector2Array([Vector2(-20,-14),Vector2(-10,-7),Vector2(0,-23),Vector2(10,-7),Vector2(20,-14),Vector2(15,16),Vector2(-15,16)]),gold)
+		draw_rect(Rect2(-15,16,30,5),light)
+		draw_circle(Vector2(0,3),4.0,ink)
 	elif kind == "party":
 		# Three people remain distinct from the single-character equipment icon.
 		for side: int in [-1, 1]:

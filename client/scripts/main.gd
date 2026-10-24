@@ -135,6 +135,7 @@ var graphics_ui: RefCounted
 var art_profile: RefCounted = preload("res://scripts/art_profile.gd").new()
 var world_services: RefCounted
 var guild_ui: RefCounted
+var admin_ui: RefCounted
 var party_ui: RefCounted
 var inn_ui: RefCounted
 var menu_button: Button
@@ -296,6 +297,7 @@ func _process(delta: float) -> void:
 	if online != null: online.shortcuts.tick()
 	if chat_ui != null: chat_ui.tick()
 	if guild_ui != null: guild_ui.tick()
+	if admin_ui != null: admin_ui.tick()
 	if party_ui != null: party_ui.tick()
 	time_alive += delta
 	animation_clock += delta
@@ -484,7 +486,7 @@ func _joystick_begin(pointer: Vector2, pointer_id: int) -> void:
 
 func _modal_open() -> bool:
 	if online != null and online.reconnection.running: return true
-	return (graphics_ui != null and graphics_ui.panel.visible) or (world_services != null and (world_services.barber_panel.visible or world_services.sign_panel.visible)) or (quest_journal != null and quest_journal.panel.visible) or (party_ui != null and party_ui.panel.visible) or (skills_ui != null and (skills_ui.target_panel.visible or skills_ui.bard_panel.visible)) or (movement_ui != null and movement_ui.panel.visible) or (guild_ui != null and guild_ui.panel.visible) or (inn_ui != null and inn_ui.panel.visible) or (quest_ui != null and quest_ui.panel.visible) or (redeem_ui != null and redeem_ui.panel.visible) or (online != null and online.panel != null and online.panel.visible) or (inventory != null and inventory.visible) or (menu != null and menu.visible) or (character_panel != null and character_panel.visible) or (stats_ui != null and stats_ui.is_open()) or (shop_ui != null and shop_ui.panel.visible) or (services_ui != null and services_ui.panel.visible) or (chat_ui != null and chat_ui.panel.visible) or (skills_ui != null and skills_ui.panel.visible) or (quick_items != null and quick_items.panel.visible)
+	return (admin_ui != null and admin_ui.panel.visible) or (graphics_ui != null and graphics_ui.panel.visible) or (world_services != null and (world_services.barber_panel.visible or world_services.sign_panel.visible)) or (quest_journal != null and quest_journal.panel.visible) or (party_ui != null and party_ui.panel.visible) or (skills_ui != null and (skills_ui.target_panel.visible or skills_ui.bard_panel.visible)) or (movement_ui != null and movement_ui.panel.visible) or (guild_ui != null and guild_ui.panel.visible) or (inn_ui != null and inn_ui.panel.visible) or (quest_ui != null and quest_ui.panel.visible) or (redeem_ui != null and redeem_ui.panel.visible) or (online != null and online.panel != null and online.panel.visible) or (inventory != null and inventory.visible) or (menu != null and menu.visible) or (character_panel != null and character_panel.visible) or (stats_ui != null and stats_ui.is_open()) or (shop_ui != null and shop_ui.panel.visible) or (services_ui != null and services_ui.panel.visible) or (chat_ui != null and chat_ui.panel.visible) or (skills_ui != null and skills_ui.panel.visible) or (quick_items != null and quick_items.panel.visible)
 
 func _begin_attack(pointer_id: int) -> void:
 	if online_mode: route.clear()
@@ -569,7 +571,7 @@ func _input(event: InputEvent) -> void:
 		if started and not _modal_open() and minimap != null and minimap.contains(event.position):
 			get_viewport().set_input_as_handled()
 			return
-		var native_control: bool = started and not _modal_open() and ((skills_ui != null and skills_ui.contains(event.position) >= 0) or (quick_items != null and quick_items.contains(event.position) >= 0) or attack_button.contains_point(event.position) or bag_button.contains_point(event.position) or sit_button.contains_point(event.position) or chat_button.contains_point(event.position) or quest_journal.button.contains_point(event.position) or (party_ui.button.visible and party_ui.button.contains_point(event.position)) or menu_button.get_global_rect().has_point(event.position) or character_button.contains_point(event.position) or joystick.contains_point(event.position) or (online_mode and (skills_ui.armed > 0 or not online.map_entity_target(_screen_to_world(event.position)).is_empty())) or (online_mode and online.loot_button.visible and online.loot_button.get_global_rect().has_point(event.position)))
+		var native_control: bool = started and not _modal_open() and ((skills_ui != null and skills_ui.contains(event.position) >= 0) or (quick_items != null and quick_items.contains(event.position) >= 0) or attack_button.contains_point(event.position) or bag_button.contains_point(event.position) or sit_button.contains_point(event.position) or chat_button.contains_point(event.position) or quest_journal.button.contains_point(event.position) or (party_ui.button.visible and party_ui.button.contains_point(event.position)) or (admin_ui.button.visible and admin_ui.button.contains_point(event.position)) or menu_button.get_global_rect().has_point(event.position) or character_button.contains_point(event.position) or joystick.contains_point(event.position) or (online_mode and (skills_ui.armed > 0 or not online.map_entity_target(_screen_to_world(event.position)).is_empty())) or (online_mode and online.loot_button.visible and online.loot_button.get_global_rect().has_point(event.position)))
 		# Godot may synthesize the mouse press before delivering its native touch.
 		if dismissing_modal or native_control or not owned_touches.is_empty():
 			get_viewport().set_input_as_handled()
@@ -642,6 +644,11 @@ func _input(event: InputEvent) -> void:
 			menu.show()
 			get_viewport().set_input_as_handled()
 			return
+		if admin_ui.button.visible and admin_ui.button.contains_point(event.position):
+			owned_touches[event.index] = true
+			admin_ui.open()
+			get_viewport().set_input_as_handled()
+			return
 		if party_ui.button.visible and party_ui.button.contains_point(event.position):
 			owned_touches[event.index] = true
 			party_ui.open()
@@ -683,6 +690,10 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		if menu_button.get_global_rect().has_point(event.position):
 			menu.show()
+			get_viewport().set_input_as_handled()
+			return
+		if admin_ui.button.visible and admin_ui.button.contains_point(event.position):
+			admin_ui.open()
 			get_viewport().set_input_as_handled()
 			return
 		if party_ui.button.visible and party_ui.button.contains_point(event.position):
@@ -1237,6 +1248,8 @@ func _build_ui() -> void:
 	guild_ui.build(self, root)
 	party_ui = preload("res://scripts/party_window.gd").new()
 	party_ui.build(self, root)
+	admin_ui = preload("res://scripts/admin_window.gd").new()
+	admin_ui.build(self, root)
 	movement_ui = preload("res://scripts/movement_settings.gd").new()
 	movement_ui.build(self, root)
 	graphics_ui = preload("res://scripts/graphics_settings.gd").new()
@@ -1658,6 +1671,9 @@ func _show_content_error() -> void:
 	push_error("Aster Vale content unavailable. Run tools/import_content.py.")
 
 func _handle_back() -> void:
+	if admin_ui != null and admin_ui.panel.visible:
+		admin_ui.close()
+		return
 	if online != null and online.reconnection.running:
 		online._on_closed("Reconnect cancelled. Please log in again.",false)
 		return

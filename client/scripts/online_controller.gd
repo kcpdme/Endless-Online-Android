@@ -193,6 +193,7 @@ func _on_message(message: Dictionary) -> void:
 	if str(message.get("op", "")) == "shortcuts_set":
 		shortcuts.response(message)
 		return
+	game.admin_ui.response(message)
 	game.chat_ui.response(message)
 	game.redeem_ui.response(message)
 	game.world_services.response(message)
@@ -304,6 +305,10 @@ func _on_message(message: Dictionary) -> void:
 				if int((player.get("equipment", {}) as Dictionary).get(str(replacement.slot), 0)) == 0:
 					session.request("equip", {"item_id": int(replacement.item_id), "subloc": int(replacement.subloc)})
 				else: game._toast("The worn item could not be removed. Your replacement remains in the bag.")
+		"admin_open":
+			pass
+		"admin_teleport", "admin_item", "admin_spawn":
+			_apply_snapshot(data)
 		"party_invite", "party_join", "party_accept", "party_decline", "party_leave", "party_kick", "party_refresh", "bard_note", "barber_open", "barber_buy", "barber_close", "guild_open", "guild_info", "guild_members", "guild_close", "guild_refresh", "guild_begin", "guild_found", "guild_support", "guild_join", "guild_recruit", "guild_deposit", "guild_description", "guild_ranks", "guild_rank", "guild_kick", "guild_leave", "guild_disband", "guild_chat", "inn_open", "inn_quote", "inn_sleep", "inn_register", "inn_remove", "inn_close", "quest_open", "quest_reply", "quest_close", "quest_list", "sit", "world", "refresh", "snapshot", "attack", "pickup", "equip", "spend_stat", "shop_buy", "shop_sell", "shop_craft", "bank_deposit", "bank_withdraw", "bank_upgrade", "locker_deposit", "locker_withdraw", "chest_deposit", "chest_take", "chest_close", "trade_request", "trade_accept", "trade_decline", "trade_add", "trade_remove", "trade_agree", "trade_cancel", "chat_send", "item_use", "skill_learn", "skill_forget", "skill_level":
 			_apply_snapshot(data)
 		"redeem_code":
@@ -741,6 +746,7 @@ func _on_closed(reason: String, allow_retry: bool = true) -> void:
 	creating_character = false; entering_character = false; last_created_name = ""
 	auth_credentials.clear()
 	shortcuts.disconnected()
+	game.admin_ui.disconnected()
 	game.party_ui.disconnected()
 	game.skills_ui.target_panel.hide(); game.skills_ui.bard_panel.hide()
 	game.drink_effects.clear()
