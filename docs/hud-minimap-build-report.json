@@ -1,0 +1,60 @@
+{
+  "version": "0.39.5",
+  "version_code": 61,
+  "bytes": 251418747,
+  "sha256": "613c8a72c9ee0384ab772636c21442374b83d5b40d0f3158408694f729b7deaa",
+  "release_signature_and_16k_alignment_verified": true,
+  "minimap": {
+    "previous_panel": [
+      240,
+      188
+    ],
+    "panel": [
+      288,
+      212
+    ],
+    "previous_tile": [
+      14,
+      7
+    ],
+    "tile": [
+      20,
+      10
+    ],
+    "self": "#55e888",
+    "enemies": "#ff5364",
+    "service_npc_original_color_preserved": true,
+    "joystick_area_clear": true
+  },
+  "party": "Dedicated top icon immediately beside Skills; removed from hamburger menu",
+  "menu": "Opaque full viewport with safe-area insets, close/Back, audio, movement, graphics, redeem and logout",
+  "verification": {
+    "minimap_regression_checks": 23,
+    "movement_controls": "passed",
+    "connection_recovery_checks": 23,
+    "rendered_landscape_sizes": [
+      [
+        1280,
+        720
+      ],
+      [
+        1544,
+        720
+      ]
+    ],
+    "simulated_notch_insets": "passed",
+    "native_party_and_menu_touch_while_heal_armed": "passed; no world cast or movement",
+    "menu_close_and_android_back": "passed"
+  },
+  "phone_installation": {
+    "status": "installed and verified",
+    "device": "Samsung SM-S918B",
+    "installed_version": "0.39.5",
+    "installed_version_code": 61,
+    "installed_apk_sha256_matches": true,
+    "original_first_install_time_preserved": true,
+    "cold_launch": "ok",
+    "startup_script_parse_resource_or_fatal_errors": 0,
+    "verified_at_utc": "2026-10-24T10:30:10.521254+00:00"
+  }
+}

@@ -1,5 +1,6 @@
 extends RefCounted
 var game: Node
+var button: Control
 var panel: Control
 var members: ItemList
 var nearby: ItemList
@@ -17,6 +18,13 @@ var stamp: String = ""
 var invitation_until: int = 0
 func build(owner_game: Node, parent: Control) -> void:
 	game = owner_game
+	button = preload("res://scripts/hud_icon_button.gd").new()
+	button.kind = "party"
+	button.position = Vector2(-536, 24)
+	button.size = Vector2(68, 68)
+	button.pressed.connect(open)
+	parent.add_child(button)
+	button.set_anchors_preset(Control.PRESET_TOP_RIGHT, true)
 	panel = game._modal(parent, Vector2(860,620))
 	var card: Control = panel.get_child(0)
 	game._wood_card(card)
@@ -101,5 +109,6 @@ func disconnected() -> void:
 	party.clear(); invitation.clear(); seen_invitation = ""; panel.hide(); history.clear()
 
 func tick() -> void:
+	button.visible = game.started and game.online_mode and game.online.active and not game._modal_open()
 	if not invitation.is_empty() and Time.get_ticks_msec() >= invitation_until:
 		invitation.clear(); notice.text = "Party request expired."; refresh()

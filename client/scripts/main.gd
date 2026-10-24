@@ -137,6 +137,7 @@ var world_services: RefCounted
 var guild_ui: RefCounted
 var party_ui: RefCounted
 var inn_ui: RefCounted
+var menu_button: Button
 var menu: Control
 var started_from_save: bool = false
 var debug_snapshot_time: float = -1.0
@@ -568,7 +569,7 @@ func _input(event: InputEvent) -> void:
 		if started and not _modal_open() and minimap != null and minimap.contains(event.position):
 			get_viewport().set_input_as_handled()
 			return
-		var native_control: bool = started and not _modal_open() and ((skills_ui != null and skills_ui.contains(event.position) >= 0) or (quick_items != null and quick_items.contains(event.position) >= 0) or attack_button.contains_point(event.position) or bag_button.contains_point(event.position) or sit_button.contains_point(event.position) or chat_button.contains_point(event.position) or quest_journal.button.contains_point(event.position) or character_button.contains_point(event.position) or joystick.contains_point(event.position) or (online_mode and (skills_ui.armed > 0 or not online.map_entity_target(_screen_to_world(event.position)).is_empty())) or (online_mode and online.loot_button.visible and online.loot_button.get_global_rect().has_point(event.position)))
+		var native_control: bool = started and not _modal_open() and ((skills_ui != null and skills_ui.contains(event.position) >= 0) or (quick_items != null and quick_items.contains(event.position) >= 0) or attack_button.contains_point(event.position) or bag_button.contains_point(event.position) or sit_button.contains_point(event.position) or chat_button.contains_point(event.position) or quest_journal.button.contains_point(event.position) or (party_ui.button.visible and party_ui.button.contains_point(event.position)) or menu_button.get_global_rect().has_point(event.position) or character_button.contains_point(event.position) or joystick.contains_point(event.position) or (online_mode and (skills_ui.armed > 0 or not online.map_entity_target(_screen_to_world(event.position)).is_empty())) or (online_mode and online.loot_button.visible and online.loot_button.get_global_rect().has_point(event.position)))
 		# Godot may synthesize the mouse press before delivering its native touch.
 		if dismissing_modal or native_control or not owned_touches.is_empty():
 			get_viewport().set_input_as_handled()
@@ -636,6 +637,16 @@ func _input(event: InputEvent) -> void:
 			_toggle_inventory()
 			get_viewport().set_input_as_handled()
 			return
+		if menu_button.get_global_rect().has_point(event.position):
+			owned_touches[event.index] = true
+			menu.show()
+			get_viewport().set_input_as_handled()
+			return
+		if party_ui.button.visible and party_ui.button.contains_point(event.position):
+			owned_touches[event.index] = true
+			party_ui.open()
+			get_viewport().set_input_as_handled()
+			return
 		if quest_journal.button.contains_point(event.position):
 			owned_touches[event.index] = true
 			quest_journal.open()
@@ -670,6 +681,14 @@ func _input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			return
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		if menu_button.get_global_rect().has_point(event.position):
+			menu.show()
+			get_viewport().set_input_as_handled()
+			return
+		if party_ui.button.visible and party_ui.button.contains_point(event.position):
+			party_ui.open()
+			get_viewport().set_input_as_handled()
+			return
 		var item_slot: int = quick_items.contains(event.position) if quick_items != null else -1
 		if item_slot >= 0:
 			quick_items.begin(item_slot, -2)
@@ -1141,7 +1160,7 @@ func _build_ui() -> void:
 	coin_icon.hide()
 	coin_label = _label(root, "", Vector2(429, 34), 19, GOLD)
 	coin_label.hide()
-	var menu_button: Button = _button(root, "☰", Vector2(-80, 24), Vector2(56, 54), func() -> void: menu.visible = not menu.visible)
+	menu_button = _button(root, "☰", Vector2(-80, 24), Vector2(56, 54), func() -> void: menu.visible = not menu.visible)
 	menu_button.set_anchors_preset(Control.PRESET_TOP_RIGHT, true)
 	character_button = HudIconButton.new()
 	character_button.kind = "person"
@@ -1227,7 +1246,7 @@ func _build_ui() -> void:
 	stats_ui.build(self, root)
 	redeem_ui = preload("res://scripts/redeem_window.gd").new()
 	redeem_ui.build(self, root)
-	_build_menu(root)
+	_build_menu(ui)
 	online.build_ui(root)
 	chat_ui = preload("res://scripts/chat_window.gd").new()
 	chat_ui.build(self, root)
@@ -1495,50 +1514,7 @@ func _toggle_equip() -> void:
 	_toast("%s %s." % [_item_name(selected_item), "equipped" if _is_equipped(selected_item) else "returned to your bag"])
 
 func _build_menu(parent: Node) -> void:
-	menu = _modal(parent, Vector2(540, 600))
-	var card: Control = menu.get_child(0) as Control
-	_label(card, "ASTER VALE", Vector2(30, 28), 14, GOLD)
-	_label(card, "A moment’s rest", Vector2(28, 61), 32)
-	_label(card, "Your journey is saved automatically.\nTake a breath, then return to explore.", Vector2(30, 120), 17, MUTED)
-	var music_toggle: CheckBox = CheckBox.new()
-	music_toggle.text = "Music"
-	music_toggle.position = Vector2(28, 172)
-	music_toggle.size = Vector2(122, 36)
-	music_toggle.button_pressed = music.enabled
-	music_toggle.add_theme_font_size_override("font_size", 18)
-	music_toggle.toggled.connect(music.set_enabled)
-	card.add_child(music_toggle)
-	var music_volume: HSlider = HSlider.new()
-	music_volume.position = Vector2(166, 175)
-	music_volume.size = Vector2(340, 30)
-	music_volume.min_value = 0.0
-	music_volume.max_value = 1.0
-	music_volume.step = .01
-	music_volume.value = music.volume
-	music_volume.value_changed.connect(music.set_volume)
-	card.add_child(music_volume)
-	var sound_toggle: CheckBox = CheckBox.new()
-	sound_toggle.text = "Sound effects"
-	sound_toggle.position = Vector2(28, 212)
-	sound_toggle.size = Vector2(182, 36)
-	sound_toggle.button_pressed = sfx.enabled
-	sound_toggle.add_theme_font_size_override("font_size", 18)
-	sound_toggle.toggled.connect(sfx.set_enabled)
-	card.add_child(sound_toggle)
-	var sound_volume: HSlider = HSlider.new()
-	sound_volume.position = Vector2(218, 215)
-	sound_volume.size = Vector2(288, 30)
-	sound_volume.min_value = 0; sound_volume.max_value = 1; sound_volume.step = .01
-	sound_volume.value = sfx.volume
-	sound_volume.value_changed.connect(sfx.set_volume)
-	card.add_child(sound_volume)
-	_button(card, "Movement controls", Vector2(30, 258), Vector2(280, 54), func() -> void: movement_ui.open())
-	_button(card, "Graphics", Vector2(324, 258), Vector2(186, 54), func() -> void: graphics_ui.open())
-	_button(card, "Return to the vale", Vector2(30, 322), Vector2(480, 58), func() -> void: menu.hide(), true)
-	_button(card, "Redeem Code", Vector2(30, 386), Vector2(480, 54), func() -> void: redeem_ui.open())
-	_button(card, "Party", Vector2(30, 450), Vector2(480, 54), func() -> void: party_ui.open())
-	_button(card, "Log out", Vector2(30,514),Vector2(480,48),func() -> void: menu.hide(); online.log_out())
-	menu.hide()
+	menu = preload("res://scripts/game_menu.gd").new().build(self, parent)
 
 func _confirm_reset() -> void:
 	if online_mode:

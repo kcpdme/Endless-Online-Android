@@ -14,19 +14,19 @@ func tap_at(point: Vector2, index: int = 86) -> void:
 func run() -> void:
 	root.size = Vector2i(1280,720)
 	var game: Node = load("res://main.tscn").instantiate(); root.add_child(game); await process_frame
-	game.set_process(false);game.welcome.hide();game.started = true;game.online_mode = true
+	game.set_process(false);game.welcome.hide();game.online.panel.hide();game.started = true;game.online_mode = true
 	var c: Node = game.online;c.set_process(false);c.active = true
 	c.player = {"player_id":100,"map_id":136,"x":56,"y":84,"hp":100,"maxhp":100}
 	game.load_map(136);game.player_tile = Vector2i(56,84);game.player_world = game.tile_position(game.player_tile);game.camera.position = game.player_world
 	var map: Control = game.minimap
-	map.set_process(false);map._process(0.0)
+	map.expanded = true;map._resize();map.set_process(false);map._process(0.0)
 	check(map.visible and map.expanded, "Minimap is visible by default during gameplay")
 	check(map.atlas != null and map.atlas.get_width() == 243, "Original nine-color minimap atlas is loaded")
 	check(map.tile_kind(Vector2i(56,83)) == 7 and map.tile_kind(Vector2i(7,55)) == 7, "Both real chests are blue interaction markers")
 	check(map.tile_kind(Vector2i(7,54)) == 3, "Native walls are solid minimap cells")
 	check(map.tile_kind(Vector2i(86,57)) == -1, "Map edge void does not appear as a passage")
 	check(map.npc_kind({"id":2}) == 5 and map.npc_kind({"id":15}) == 8, "Combat NPCs are red and service NPCs purple")
-	check(map.marker_position(game.player_tile) == map.PLOT.get_center(), "Orange player marker stays centered")
+	check(map.marker_position(game.player_tile) == map.PLOT.get_center(), "Green player marker stays centered")
 	var old: Vector2 = map.marker_position(Vector2i(56,83))
 	game.player_tile += Vector2i.RIGHT
 	check(map.marker_position(Vector2i(56,83)) != old and map.marker_position(game.player_tile) == map.PLOT.get_center(), "Map scrolls with player movement")

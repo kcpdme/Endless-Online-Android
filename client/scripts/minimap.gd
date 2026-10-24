@@ -1,7 +1,9 @@
 extends Control
-## Original nine-cell atlas and entity colors, in a compact touch HUD.
-const PLOT: Rect2 = Rect2(8, 42, 224, 138)
-const CELL: Vector2 = Vector2(14, 7)
+## Original map atlas with a closer local view and clear self/enemy markers.
+const PLOT: Rect2 = Rect2(8, 42, 272, 162)
+const CELL: Vector2 = Vector2(20, 10)
+const SELF_COLOR: Color = Color("55e888")
+const ENEMY_COLOR: Color = Color("ff5364")
 var game: Node
 var expanded: bool = true
 var map_id: int = -1
@@ -11,8 +13,8 @@ var atlas: Texture2D
 var clock: float = 0.0
 
 func _ready() -> void:
-	position = Vector2(28, 148)
-	size = Vector2(240, 188)
+	position = Vector2(28, 140)
+	size = Vector2(288, 212)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	atlas = game._graphic(2, 45)
 	var settings: ConfigFile = ConfigFile.new()
@@ -54,7 +56,7 @@ func press(point: Vector2) -> void:
 	if game.sfx != null: game.sfx.play_named("ButtonClick", "ui")
 
 func _resize() -> void:
-	size = Vector2(240, 188) if expanded else Vector2(100, 42)
+	size = Vector2(288, 212) if expanded else Vector2(100, 42)
 	queue_redraw()
 
 func tile_kind(tile: Vector2i) -> int:
@@ -82,6 +84,15 @@ func _cell(tile: Vector2i, kind: int, opacity: float = 0.65) -> void:
 	var width: float = float(atlas.get_width()) / 9.0
 	draw_texture_rect_region(atlas, target, Rect2(float(kind) * width, 0, width, atlas.get_height()), Color(1,1,1,opacity))
 
+func _marker(tile: Vector2i, color: Color, self_marker: bool = false) -> void:
+	var center: Vector2 = marker_position(tile)
+	var half: Vector2 = Vector2(8, 5) if self_marker else Vector2(6, 4)
+	if not PLOT.encloses(Rect2(center - half - Vector2.ONE, half * 2.0 + Vector2.ONE * 2.0)): return
+	var diamond: PackedVector2Array = PackedVector2Array([center + Vector2(0, -half.y), center + Vector2(half.x, 0), center + Vector2(0, half.y), center - Vector2(half.x, 0)])
+	draw_colored_polygon(diamond, color)
+	diamond.append(diamond[0])
+	draw_polyline(diamond, Color("efffea") if self_marker else Color("251819"), 1.5, true)
+
 func _draw() -> void:
 	if game == null or not game.started: return
 	draw_style_box(game._style(Color(0.035,0.075,0.085,0.85), Color("52665d"), 10), Rect2(Vector2.ZERO,size))
@@ -102,7 +113,9 @@ func _draw() -> void:
 			if int(peer.get("player_id",-1)) == int(game.online.player.get("player_id",-2)): continue
 			_cell(Vector2i(int(peer.x),int(peer.y)), 4, 1.0)
 		for npc: Dictionary in game.online.npcs:
-			_cell(Vector2i(int(npc.x),int(npc.y)), npc_kind(npc), 1.0)
+			var tile: Vector2i = Vector2i(int(npc.x),int(npc.y))
+			if npc_kind(npc) == 5: _marker(tile, ENEMY_COLOR)
+			else: _cell(tile, 8, 1.0)
 	elif game.enemy_health > 0:
-		_cell(game.enemy_tile, 5, 1.0)
-	_cell(game.player_tile, 6, 1.0)
+		_marker(game.enemy_tile, ENEMY_COLOR)
+	_marker(game.player_tile, SELF_COLOR, true)
