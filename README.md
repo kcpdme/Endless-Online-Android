@@ -8,8 +8,8 @@ This public repository contains source code, content import tools, build scripts
 
 After importing content and building, install `builds/aster-vale-debug.apk` on an Android device (Android 7 / API 24 or later). This development build includes ARM64 and x86_64. Open **Aster Vale**, log in, select your character and join the persistent shared world. The build is signed with a development key, not configured for Google Play release.
 
-The current Android package is **`com.cloudgameboy.astervale`**, version 0.39.1
-(code 57). It installs separately from the earlier `io.astervale.prototype` app;
+The current Android package is **`com.cloudgameboy.astervale`**, version 0.39.2
+(code 58). It installs separately from the earlier `io.astervale.prototype` app;
 online accounts remain on the same server. Release APK and AAB exports use the
 same private release signing key.
 
@@ -52,6 +52,10 @@ APK update (`--no-incremental -r`), verifies installed bytes and version, and
 checks that Android kept the app's original installation timestamp.
 
 ## Play online
+
+Version **0.39.2** adds catalog support for Skylar's Admin Blade (item 491),
+an operator-granted Lore weapon with intrinsic 1,000–1,000 damage and original
+Ultima Blade graphics. All character graphics remain Classic.
 
 Version **0.39.1** restores Classic character graphics after the painted pilot
 review. Painted assets are excluded from exports, and a saved Enhanced choice

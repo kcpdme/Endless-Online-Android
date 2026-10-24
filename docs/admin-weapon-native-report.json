@@ -1,0 +1,35 @@
+{
+  "result": "passed",
+  "fresh_dev_fixture_only": true,
+  "regular_weapon_stats": {
+    "min_damage": 6,
+    "max_damage": 12
+  },
+  "admin_weapon_stats": {
+    "min_damage": 1005,
+    "max_damage": 1005
+  },
+  "native_damage_events": [
+    {
+      "family": 26,
+      "action": 3,
+      "bytes": 11,
+      "kind": "npc_damage",
+      "player_id": 1,
+      "npc_index": 0,
+      "damage": 1507,
+      "hp_percent": 84,
+      "npc_id": 2,
+      "x": 40,
+      "y": 41,
+      "npc_direction": 0
+    }
+  ],
+  "native_damage_delta": [
+    999,
+    993
+  ],
+  "native_lore_drop_refused": true,
+  "equipment_and_damage_persist_after_world_restart": true,
+  "one_time_grant": true
+}

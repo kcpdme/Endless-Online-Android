@@ -194,3 +194,11 @@ trained levels, appends missing skills at level zero, and updates only the
 requested characters' spells field in one transaction. Re-running adds nothing.
 The public gateway has no grant operation. Party and bard casting remain
 unimplemented, even when those spells appear in the learned list.
+
+### Operator admin blade
+
+`admin_weapon.py` is a stopped-world operator utility for Skylar's dedicated
+1,000–1,000 damage weapon (item 491). It preserves all original item definitions,
+requires an administrator target, and grants one Lore item through a retry-safe
+ledger. Back up SQLite/PUB/config before use. It is not a public gateway action.
+See [admin weapon operation and validation](../docs/ADMIN_WEAPON.md).

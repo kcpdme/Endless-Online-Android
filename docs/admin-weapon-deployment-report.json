@@ -1,0 +1,25 @@
+{
+  "result": "passed",
+  "grant": {
+    "character": "skylar",
+    "item_id": 491,
+    "added": true,
+    "already_granted": false
+  },
+  "item_id": 491,
+  "name": "Skylar's Admin Blade",
+  "weapon_damage": [
+    1000,
+    1000
+  ],
+  "special": "Lore",
+  "art": "Original Ultima Blade",
+  "pub_sha256": "0ea3dc533d68bc273cd414392197e8bf1d03cb8227f12448bed86bb45b6e3fa4",
+  "backup": "/opt/aster-vale/backups/skylar-admin-weapon-20261024T061105Z",
+  "original_items_preserved": true,
+  "only_skylar_inventory_changed": true,
+  "equipment_untouched": true,
+  "all_other_characters_and_tables_preserved": true,
+  "config_and_password_salt_unchanged": true,
+  "services_active": true
+}
