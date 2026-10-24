@@ -904,6 +904,8 @@ func _draw() -> void:
 	if not online_mode and enemy_health > 0: entities.append({"kind": "enemy", "sort": depth(enemy_tile) * 100 + 70})
 	if not online_mode and loot_visible: entities.append({"kind": "loot", "sort": depth(loot_tile) * 100 + 0})
 	entities.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return int(a.sort) < int(b.sort))
+	# Captions keep screen resolution, while actor silhouettes take precedence.
+	if online_mode: nameplates.draw_world()
 	for entity: Dictionary in entities:
 		match str(entity.kind):
 			"decoration": _draw_decoration(entity.data as Dictionary)

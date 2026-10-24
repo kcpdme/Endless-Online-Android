@@ -1,14 +1,13 @@
 extends Control
-## Rasterize overhead names at HUD resolution, then align only their baselines
-## to physical pixels. World sprites and camera retain fractional movement.
+## Lay out names in screen coordinates, then draw behind world actors.
+## Only text baselines snap to physical pixels; movement stays smooth.
 var game: Node
 var entries: Array[Dictionary] = []
 var widths: Dictionary = {}
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
-	z_index = -1 # Above the world CanvasLayer, below HUD controls and dialogs.
+	z_index = -1 # Layout only; captions are drawn by the world, below HUD controls.
 	process_priority = 100
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
@@ -23,7 +22,7 @@ func sync() -> void:
 	entries.clear()
 	visible = game != null and game.started and game.online_mode and game.online.active and not game._modal_open()
 	if not visible:
-		queue_redraw()
+		if game != null: game.queue_redraw()
 		return
 	game.camera.force_update_scroll()
 	var world_to_local: Transform2D = get_global_transform_with_canvas().affine_inverse() * game.get_global_transform_with_canvas()
@@ -39,7 +38,7 @@ func sync() -> void:
 		if int(record.get("player_id",-1)) == int(online.player.get("player_id",-2)): continue
 		var pose: Dictionary = online.entity_render_pose("online_player",record)
 		_append("player:%d" % int(record.player_id),str(record.get("name","Player")),world_to_local * ((pose.position as Vector2)+Vector2(0,-66)),18,Color("b9e2c5"))
-	queue_redraw()
+	if game != null: game.queue_redraw()
 
 func _append(key: String, text: String, anchor: Vector2, font_size: int, color: Color, health: float = -1.0, bar_width: float = 0.0) -> void:
 	if text.is_empty(): return
@@ -47,16 +46,23 @@ func _append(key: String, text: String, anchor: Vector2, font_size: int, color: 
 	if not widths.has(measurement): widths[measurement] = ThemeDB.fallback_font.get_string_size(text,HORIZONTAL_ALIGNMENT_LEFT,-1,font_size).x
 	var baseline: Vector2 = pixel_aligned(anchor-Vector2(float(widths[measurement])/2.0,0))
 	if not get_viewport_rect().grow(200).has_point(get_global_transform_with_canvas()*baseline): return
-	entries.append({"key":key,"text":text,"baseline":baseline,"font_size":font_size,"color":color,"health":health,"bar_width":bar_width,"anchor":anchor})
+	var entry: Dictionary = {"key":key,"text":text,"baseline":baseline,"font_size":font_size,"color":color,"health":health,"bar_width":bar_width,"anchor":anchor}
+	entries.append(entry)
 
-func _draw() -> void:
-	for entry: Dictionary in entries:
-		if float(entry.health)>=0.0:
-			# Keep a clear gap above the screen-sized name at every camera zoom.
-			var top: Vector2 = Vector2(float(entry.anchor.x)-float(entry.bar_width)/2.0,float(entry.baseline.y)-ThemeDB.fallback_font.get_ascent(int(entry.font_size))-13)
-			var strip: Rect2 = Rect2(pixel_aligned(top),pixel_aligned(top+Vector2(float(entry.bar_width),7))-pixel_aligned(top))
-			draw_rect(strip.grow(1),Color("121b18"));draw_rect(strip,Color("50322e"))
-			var edge: Vector2 = pixel_aligned(strip.position+Vector2(strip.size.x*float(entry.health),0))
-			draw_rect(Rect2(strip.position,Vector2(edge.x-strip.position.x,strip.size.y)),Color("a6cb6f") if float(entry.health)>.3 else Color("dc6855"))
-		draw_string_outline(ThemeDB.fallback_font,entry.baseline,entry.text,HORIZONTAL_ALIGNMENT_LEFT,-1,int(entry.font_size),2,Color("15201d"))
-		draw_string(ThemeDB.fallback_font,entry.baseline,entry.text,HORIZONTAL_ALIGNMENT_LEFT,-1,int(entry.font_size),entry.color)
+func draw_world() -> void:
+	if not visible: return
+	# Cancel the world/camera transform for these commands only. Glyphs retain
+	# screen resolution, but subsequent actor sprites can occlude them.
+	game.draw_set_transform_matrix(game.get_global_transform_with_canvas().affine_inverse() * get_global_transform_with_canvas())
+	for entry: Dictionary in entries: _draw_entry(entry)
+	game.draw_set_transform_matrix(Transform2D.IDENTITY)
+
+func _draw_entry(entry: Dictionary) -> void:
+	if float(entry.health)>=0.0:
+		var top: Vector2 = Vector2(float(entry.anchor.x)-float(entry.bar_width)/2.0,float(entry.baseline.y)-ThemeDB.fallback_font.get_ascent(int(entry.font_size))-13)
+		var strip: Rect2 = Rect2(pixel_aligned(top),pixel_aligned(top+Vector2(float(entry.bar_width),7))-pixel_aligned(top))
+		game.draw_rect(strip.grow(1),Color("121b18"));game.draw_rect(strip,Color("50322e"))
+		var edge: Vector2 = pixel_aligned(strip.position+Vector2(strip.size.x*float(entry.health),0))
+		game.draw_rect(Rect2(strip.position,Vector2(edge.x-strip.position.x,strip.size.y)),Color("a6cb6f") if float(entry.health)>.3 else Color("dc6855"))
+	game.draw_string_outline(ThemeDB.fallback_font,entry.baseline,entry.text,HORIZONTAL_ALIGNMENT_LEFT,-1,int(entry.font_size),2,Color("15201d"))
+	game.draw_string(ThemeDB.fallback_font,entry.baseline,entry.text,HORIZONTAL_ALIGNMENT_LEFT,-1,int(entry.font_size),entry.color)

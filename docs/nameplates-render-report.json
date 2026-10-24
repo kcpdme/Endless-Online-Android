@@ -1,10 +1,14 @@
 {
-  "checks": 161,
+  "checks": 209,
   "distinct_glyph_images_by_scale": {
     "1.0": 1,
-    "1.5": 1
+    "1.5": 2
   },
   "input_and_modals_preserved": true,
+  "max_glyph_channel_delta_by_scale": {
+    "1.0": 0,
+    "1.5": 1
+  },
   "pixel_render_test": true,
   "result": "passed",
   "shared_interpolation": true,

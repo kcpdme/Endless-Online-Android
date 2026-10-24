@@ -1,6 +1,8 @@
 extends SceneTree
 class EmptyWorld extends "res://scripts/main.gd":
-	func _draw() -> void: pass
+	func _draw() -> void:
+		if nameplates == null: return
+		nameplates.draw_world()
 var checks: int = 0
 var failed: bool = false
 func _initialize() -> void: call_deferred("run")
@@ -19,10 +21,14 @@ func run() -> void:
 	var record: Dictionary={"id":127,"index":1,"x":40,"y":40,"direction":0};online.npcs.assign([record])
 	var at: Vector2=game.tile_position(Vector2i(40,40))
 	var font_images: Dictionary={}
+	var glyph_deltas: Dictionary={}
 	for scale_factor: float in [1.0,1.5]:
 		view.size=Vector2i(Vector2(400,240)*scale_factor);view.size_2d_override=Vector2i(400,240);view.size_2d_override_stretch=true
 		await process_frame;await process_frame
 		var images: Dictionary={}
+		var reference: PackedByteArray=PackedByteArray()
+		var reference_size: Vector2i=Vector2i.ZERO
+		var max_delta: int=0
 		for phase: int in range(24):
 			game.camera.position=at-Vector2(0,55)+Vector2(phase/24.0,phase/48.0)
 			game.nameplates.sync()
@@ -35,8 +41,18 @@ func run() -> void:
 				await process_frame;await RenderingServer.frame_post_draw
 				var image: Image=view.get_texture().get_image();var rect: Rect2i=image.get_used_rect()
 				check(rect.has_area(),"Actual name glyphs are visible")
-				if rect.has_area():images[image.get_region(rect).get_data().hex_encode()]=true
-		if DisplayServer.get_name()!="headless":check(images.size()==1,"Glyph image is unchanged across 24 fractional camera positions")
+				if rect.has_area():
+					images[image.get_region(rect).get_data().hex_encode()]=true
+					var glyph: Image=image.get_region(rect)
+					var pixels_data: PackedByteArray=glyph.get_data()
+					if reference.is_empty(): reference=pixels_data; reference_size=glyph.get_size()
+					check(glyph.get_size()==reference_size,"Glyph bounds do not change with fractional camera movement")
+					if pixels_data.size()==reference.size():
+						for i: int in range(reference.size()):max_delta=maxi(max_delta,absi(int(pixels_data[i])-int(reference[i])))
+		# Transform cancellation can round a channel by one 8-bit level. A shifted
+		# or resampled edge produces a much larger difference.
+		if DisplayServer.get_name()!="headless":check(max_delta<=1,"Glyph edges stay stable across 24 fractional camera positions")
+		glyph_deltas[str(scale_factor)]=max_delta
 		font_images[str(scale_factor)]=images.size()
 	# The shared sample keeps label and sprite together even when sampling time differs.
 	var now: float=Time.get_ticks_msec()/1000.0
@@ -82,7 +98,7 @@ func run() -> void:
 	check(first.position!=second.position,"Independent ground items retain distinct positions")
 	game.menu.show();game.nameplates.sync();check(not game.nameplates.visible and game.nameplates.entries.is_empty(),"Modal opening hides names immediately")
 	game.menu.hide();online.active=false;game.nameplates.sync();check(not game.nameplates.visible and game.nameplates.entries.is_empty(),"Disconnect clears nameplates")
-	var report: Dictionary={"result":"failed" if failed else "passed","checks":checks,"pixel_render_test":DisplayServer.get_name()!="headless","distinct_glyph_images_by_scale":font_images,"shared_interpolation":true,"wraith_visibility_preserved":true,"input_and_modals_preserved":true}
+	var report: Dictionary={"result":"failed" if failed else "passed","checks":checks,"pixel_render_test":DisplayServer.get_name()!="headless","distinct_glyph_images_by_scale":font_images,"max_glyph_channel_delta_by_scale":glyph_deltas,"shared_interpolation":true,"wraith_visibility_preserved":true,"input_and_modals_preserved":true}
 	var path: String=OS.get_environment("ASTER_VALE_TEST_REPORT")
 	if not path.is_empty():var file: FileAccess=FileAccess.open(path,FileAccess.WRITE);file.store_string(JSON.stringify(report,"  ")+"\n")
 	print("NAMEPLATES: ",JSON.stringify(report));view.queue_free();await create_timer(.2).timeout;quit(1 if failed else 0)

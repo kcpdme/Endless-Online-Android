@@ -1,0 +1,116 @@
+{
+  "cases": [
+    {
+      "covered_caption_pixels": 103,
+      "display_scale": 1.0,
+      "exposed_caption_pixels": 247,
+      "incorrect_pixels": 0,
+      "kind": "crow",
+      "max_channel_delta": 0,
+      "zoom": 1.0
+    },
+    {
+      "covered_caption_pixels": 156,
+      "display_scale": 1.0,
+      "exposed_caption_pixels": 165,
+      "incorrect_pixels": 0,
+      "kind": "crow",
+      "max_channel_delta": 0,
+      "zoom": 1.65
+    },
+    {
+      "covered_caption_pixels": 232,
+      "display_scale": 1.0,
+      "exposed_caption_pixels": 71,
+      "incorrect_pixels": 0,
+      "kind": "crow",
+      "max_channel_delta": 0,
+      "zoom": 2.5
+    },
+    {
+      "covered_caption_pixels": 136,
+      "display_scale": 1.0,
+      "exposed_caption_pixels": 983,
+      "incorrect_pixels": 0,
+      "kind": "player",
+      "max_channel_delta": 0,
+      "zoom": 1.0
+    },
+    {
+      "covered_caption_pixels": 193,
+      "display_scale": 1.0,
+      "exposed_caption_pixels": 891,
+      "incorrect_pixels": 0,
+      "kind": "player",
+      "max_channel_delta": 0,
+      "zoom": 1.65
+    },
+    {
+      "covered_caption_pixels": 10,
+      "display_scale": 1.0,
+      "exposed_caption_pixels": 1070,
+      "incorrect_pixels": 0,
+      "kind": "player",
+      "max_channel_delta": 0,
+      "zoom": 2.5
+    },
+    {
+      "covered_caption_pixels": 202,
+      "display_scale": 1.5,
+      "exposed_caption_pixels": 522,
+      "incorrect_pixels": 0,
+      "kind": "crow",
+      "max_channel_delta": 0,
+      "zoom": 1.0
+    },
+    {
+      "covered_caption_pixels": 327,
+      "display_scale": 1.5,
+      "exposed_caption_pixels": 340,
+      "incorrect_pixels": 0,
+      "kind": "crow",
+      "max_channel_delta": 0,
+      "zoom": 1.65
+    },
+    {
+      "covered_caption_pixels": 511,
+      "display_scale": 1.5,
+      "exposed_caption_pixels": 154,
+      "incorrect_pixels": 0,
+      "kind": "crow",
+      "max_channel_delta": 1,
+      "zoom": 2.5
+    },
+    {
+      "covered_caption_pixels": 283,
+      "display_scale": 1.5,
+      "exposed_caption_pixels": 2177,
+      "incorrect_pixels": 0,
+      "kind": "player",
+      "max_channel_delta": 0,
+      "zoom": 1.0
+    },
+    {
+      "covered_caption_pixels": 418,
+      "display_scale": 1.5,
+      "exposed_caption_pixels": 2051,
+      "incorrect_pixels": 0,
+      "kind": "player",
+      "max_channel_delta": 0,
+      "zoom": 1.65
+    },
+    {
+      "covered_caption_pixels": 17,
+      "display_scale": 1.5,
+      "exposed_caption_pixels": 2452,
+      "incorrect_pixels": 0,
+      "kind": "player",
+      "max_channel_delta": 0,
+      "zoom": 2.5
+    }
+  ],
+  "checks": 36,
+  "pixel_render_test": true,
+  "real_world_pipeline": true,
+  "result": "passed"
+}

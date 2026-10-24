@@ -3,6 +3,7 @@ class NPCProbe extends "res://scripts/main.gd":
 	var sample: Dictionary = {}
 	func _draw() -> void:
 		if online != null and not sample.is_empty():
+			nameplates.draw_world()
 			online.draw_entity(sample)
 var checks: int = 0
 var failed: bool = false
