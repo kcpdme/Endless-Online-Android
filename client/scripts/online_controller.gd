@@ -222,6 +222,7 @@ func _on_message(message: Dictionary) -> void:
 		if operation == "shop_open": interaction.clear()
 		if operation == "collect": pickup_pending.clear()
 		if operation in ["equip", "unequip"]: pending_equip.clear()
+		if operation.begins_with("inn_"): game.inn_ui.request_finished(reason, operation)
 		if operation == "spell_cast": game.skills_ui.cancel_cast()
 		if operation in ["item_drop", "item_junk"]:
 			drop_ui.submitting = false
@@ -240,6 +241,7 @@ func _on_message(message: Dictionary) -> void:
 			game._cancel_controls()
 			if not defeated: session.request("refresh")
 		return
+	if operation.begins_with("inn_"): game.inn_ui.request_finished("", operation)
 	var data: Dictionary = message.get("data", {}) as Dictionary
 	match operation:
 		"connect":
@@ -302,7 +304,7 @@ func _on_message(message: Dictionary) -> void:
 				if int((player.get("equipment", {}) as Dictionary).get(str(replacement.slot), 0)) == 0:
 					session.request("equip", {"item_id": int(replacement.item_id), "subloc": int(replacement.subloc)})
 				else: game._toast("The worn item could not be removed. Your replacement remains in the bag.")
-		"party_invite", "party_join", "party_accept", "party_decline", "party_leave", "party_kick", "party_refresh", "bard_note", "barber_open", "barber_buy", "barber_close", "guild_open", "guild_info", "guild_members", "guild_close", "guild_refresh", "guild_begin", "guild_found", "guild_support", "guild_join", "guild_recruit", "guild_deposit", "guild_description", "guild_ranks", "guild_rank", "guild_kick", "guild_leave", "guild_disband", "guild_chat", "inn_open", "inn_quote", "inn_sleep", "inn_close", "quest_open", "quest_reply", "quest_close", "quest_list", "sit", "world", "refresh", "snapshot", "attack", "pickup", "equip", "spend_stat", "shop_buy", "shop_sell", "shop_craft", "bank_deposit", "bank_withdraw", "bank_upgrade", "locker_deposit", "locker_withdraw", "chest_deposit", "chest_take", "chest_close", "trade_request", "trade_accept", "trade_decline", "trade_add", "trade_remove", "trade_agree", "trade_cancel", "chat_send", "item_use", "skill_learn", "skill_forget", "skill_level":
+		"party_invite", "party_join", "party_accept", "party_decline", "party_leave", "party_kick", "party_refresh", "bard_note", "barber_open", "barber_buy", "barber_close", "guild_open", "guild_info", "guild_members", "guild_close", "guild_refresh", "guild_begin", "guild_found", "guild_support", "guild_join", "guild_recruit", "guild_deposit", "guild_description", "guild_ranks", "guild_rank", "guild_kick", "guild_leave", "guild_disband", "guild_chat", "inn_open", "inn_quote", "inn_sleep", "inn_register", "inn_remove", "inn_close", "quest_open", "quest_reply", "quest_close", "quest_list", "sit", "world", "refresh", "snapshot", "attack", "pickup", "equip", "spend_stat", "shop_buy", "shop_sell", "shop_craft", "bank_deposit", "bank_withdraw", "bank_upgrade", "locker_deposit", "locker_withdraw", "chest_deposit", "chest_take", "chest_close", "trade_request", "trade_accept", "trade_decline", "trade_add", "trade_remove", "trade_agree", "trade_cancel", "chat_send", "item_use", "skill_learn", "skill_forget", "skill_level":
 			_apply_snapshot(data)
 		"redeem_code":
 			_apply_snapshot(data)
@@ -734,7 +736,7 @@ func _on_closed(reason: String, allow_retry: bool = true) -> void:
 	game.skills_ui.target_panel.hide(); game.skills_ui.bard_panel.hide()
 	game.drink_effects.clear()
 	creation_panel.hide()
-	game.inn_ui.panel.hide()
+	game.inn_ui.disconnected()
 	game.guild_ui.disconnected()
 	game.world_services.disconnected()
 	game.quest_journal.disconnected()

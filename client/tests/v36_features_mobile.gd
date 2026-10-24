@@ -15,6 +15,7 @@ func run() -> void:
 	await process_frame
 	game.music.stop()
 	game.welcome.hide()
+	game.online.panel.hide()
 	game.online_mode = true
 	game.started = true
 	game.load_map(70)
@@ -98,6 +99,7 @@ func run() -> void:
 	check(game.inn_ui.panel.visible,"Innkeeper must show sleep dialogue")
 	game.inn_ui.sleep_button.pressed.emit()
 	check(wire.calls.back().op == "inn_quote","Sleep must quote before charging Gold")
+	game.inn_ui.request_finished()
 	game.inn_ui.receive({"inn":{"npc_id":150,"npc_index":7,"vendor_id":2,"session_id":0,"cost":90}})
 	check(game.inn_ui.detail.text.contains("90 Gold"),"Native sleep cost must be visible")
 	game.inn_ui.sleep_button.pressed.emit()

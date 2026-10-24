@@ -1,0 +1,25 @@
+{
+  "version": "0.39.7",
+  "version_code": 63,
+  "bytes": 251432886,
+  "sha256": "e0700847f9dc76d95d315f709450b0a09e19220f9ac325b0e1ab7694389256c1",
+  "signature_and_16k_alignment_verified": true,
+  "native_citizenship_registration_and_switching": true,
+  "native_citizenship_renunciation": true,
+  "native_home_and_death_respawn_persistence_verified": true,
+  "native_paid_sleep_hp_tp_and_bed_warp_verified": true,
+  "native_ui_checks": 45,
+  "server_state_regression_tests": 16,
+  "connection_recovery_checks": 23,
+  "prior_inn_sleep_ui_regression": "passed",
+  "phone_installation": {
+    "status": "installed and verified",
+    "device": "Samsung SM-S918B",
+    "version": "0.39.7",
+    "version_code": 63,
+    "installed_apk_sha256_matches": true,
+    "original_first_install_time_preserved": true,
+    "app_running_without_script_parse_resource_or_fatal_errors": true,
+    "verified_at_utc": "2026-10-24T10:59:31.252638+00:00"
+  }
+}

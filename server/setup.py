@@ -130,6 +130,8 @@ WorldDumpFile = ./world.bak.json
     local.chmod(0o600)
     from configure_gameplay import configure
     configure(runtime)
+    from configure_inns import configure as configure_inns
+    configure_inns(runtime)
     if a.economy_data:
         from import_economy import install
         install(runtime,a.economy_data)

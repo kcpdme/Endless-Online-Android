@@ -1,0 +1,22 @@
+{
+  "result": "passed",
+  "backup": "/opt/aster-vale/backups/inn-citizenship-20261024T105641Z",
+  "source_sha256": {
+    "gateway.py": "108dc697bf5ecf8de99b727a72a6a3d14f9541ce850bc878fb1e72a3f0301141",
+    "inns.py": "4d56860dd1fa6d157b21c14edcc856e3c98e8c940581d2cc07e3538db450a012",
+    "configure_inns.py": "e61aa43f6c6d9cff5d513949fb1b724d0f05151b152ed5d0861567add30cd79d"
+  },
+  "native_citizenship_switching": true,
+  "home_questions_and_spawn_locations_preserved": true,
+  "native_world_not_restarted": true,
+  "live_database_not_rewritten": true,
+  "services_healthy": true,
+  "public_verification": {
+    "connect": true,
+    "ping": true,
+    "inn_register_rejects_missing_world_state": true,
+    "inn_remove_rejects_missing_world_state": true,
+    "disconnect": true,
+    "public_tls_health": true
+  }
+}

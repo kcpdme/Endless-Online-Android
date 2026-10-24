@@ -1703,7 +1703,7 @@ func _handle_back() -> void:
 	elif guild_ui != null and guild_ui.panel.visible:
 		guild_ui.close()
 	elif inn_ui != null and inn_ui.panel.visible:
-		inn_ui.close()
+		inn_ui.back()
 	elif quest_journal != null and quest_journal.panel.visible:
 		quest_journal.dismiss()
 	elif quest_ui != null and quest_ui.panel.visible:

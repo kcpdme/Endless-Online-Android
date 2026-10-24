@@ -116,6 +116,8 @@ class Handler(socketserver.StreamRequestHandler):
         if op=='guild_chat':return s.chat_send('guild',r['message'])
         if op=='guild_close':return s.guild_close()
         if op=='inn_open':return s.inn_open(int(r['npc_index']))
+        if op=='inn_register':return s.inn_register([r.get('answer1',''),r.get('answer2',''),r.get('answer3','')])
+        if op=='inn_remove':return s.inn_remove()
         if op=='inn_quote':return s.inn_quote()
         if op=='inn_sleep':return s.inn_sleep()
         if op=='inn_close':return s.inn_close()

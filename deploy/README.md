@@ -107,3 +107,12 @@ then restart the gateway. No native binary, spell-data or character-data rewrite
 is needed. Keep the existing shortcut preference storage configuration. Public
 and native regression tests use freshly provisioned dev characters; they never
 log into operator accounts. See [party/heal/Bard validation](../docs/PARTY_HEAL_BARD.md).
+
+## Inn citizenship
+
+Deploy `inns.py` and `gateway.py`. Run `configure_inns.py --runtime
+/opt/aster-vale/runtime` to enable the native question-based citizenship switch
+rule, preserving all home data and character records. Back up the private config
+first, then SIGHUP the native world to reload; restart the gateway/WebSocket
+services for the adapter code. Match the Android client that exposes registration
+and confirmed removal. See `docs/INN_CITIZENSHIP.md` and the native/UI live report.
