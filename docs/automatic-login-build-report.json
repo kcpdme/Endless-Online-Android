@@ -8,5 +8,15 @@
   "admin_blade_preserved": true,
   "secure_automatic_login_option": true,
   "connection_recovery_included": true,
-  "phone_installation": "pending: wireless ADB at last known address refuses the connection"
+  "phone_installation": "installed and verified on Samsung Galaxy S23 Ultra (SM-S918B)",
+  "phone_verification": {
+    "verified_at_utc": "2026-10-24T10:19:57.939654+00:00",
+    "installed_version": "0.39.4",
+    "installed_version_code": 60,
+    "installed_apk_sha256_matches": true,
+    "original_first_install_time_preserved": true,
+    "launch_status": "ok; full-screen login visible",
+    "startup_script_parse_resource_or_fatal_errors": 0,
+    "account_sign_in_on_phone": "left to user"
+  }
 }
