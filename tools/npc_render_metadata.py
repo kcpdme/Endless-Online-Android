@@ -240,3 +240,7 @@ NPC_STANDING_ANIMATION = {
     161,
     166,
 }
+
+# Original GFX021/6801-6812 are transparent for Ancient Wraith. Its attack
+# resources 6813-6816 are visible. These are intentional poses, not missing art.
+NPC_TRANSPARENT_POSES = {171: frozenset({'idle', 'frames'})}

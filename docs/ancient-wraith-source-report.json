@@ -1,0 +1,43 @@
+{
+  "result": "passed",
+  "npc_id": 255,
+  "graphic": 171,
+  "source_member": "gfx/gfx021.egf",
+  "source_sha256": "bd0afa80c6900daaab6fb2c8f8a4976c006e0529340b782468ea1234a008a577",
+  "invisible_states": [
+    "frames",
+    "idle"
+  ],
+  "visible_attack_resources": [
+    6813,
+    6814,
+    6815,
+    6816
+  ],
+  "shared_by_classic_and_enhanced": true,
+  "original_archives_checked": [
+    "reference/gfx.zip",
+    "work/eoserv-crawl/downloads/EOzipped028.zip"
+  ],
+  "raw_idle_walk_resources_blank": [
+    6801,
+    6802,
+    6803,
+    6804,
+    6805,
+    6806,
+    6807,
+    6808,
+    6809,
+    6810,
+    6811,
+    6812
+  ],
+  "source_attack_pixels_preserved": true,
+  "room_map_id": 277,
+  "room_name": "Ghost Mansion #4",
+  "native_npc_spawns_unchanged": 9,
+  "render_report": "docs/ancient-wraith-render-report.json",
+  "python_wraith_tests": 5,
+  "classic_character_backups_verified_unchanged": true
+}

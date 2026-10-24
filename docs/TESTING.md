@@ -179,7 +179,7 @@ python3 server/test_online.py --report /path/to/work/online-report.json
 All 22 importer/catalog tests passed against the reference content. Real-data
 checks skip when input archives/runtime data are unavailable. These cover map
 and PUB parsing, real source hashes, eight hero equipment variants, all item
-icons, 158 world NPC graphic sets/offsets and five original money piles.
+icons, 160 world NPC graphic sets/offsets and five original money piles.
 
 Native and JSON-gateway two-session tests both confirmed authoritative movement.
 Real Rat damage/death, owned-item drop/pickup, equip/unequip and SQLite position/
