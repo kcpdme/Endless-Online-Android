@@ -1,0 +1,18 @@
+{
+  "result": "passed",
+  "version": "0.38.2",
+  "version_code": 55,
+  "device": "Samsung Galaxy S23 Ultra (SM-S918B)",
+  "package": "com.cloudgameboy.astervale",
+  "apk_sha256": "99b63d20a99a9ac36a4de3b7e40200eb66460b3f0244c35af2be592fffbc1913",
+  "installed_apk_bytes_verified": true,
+  "full_update_without_uninstall": true,
+  "original_first_install_time_preserved": true,
+  "cold_launch": "passed",
+  "login_screen_visible": true,
+  "credential_plugin_initialized": true,
+  "script_or_fatal_launch_errors": [],
+  "phone_world_or_wraith_scene_test": "not_performed; app left on account login",
+  "desktop_wraith_rendering_report": "docs/ancient-wraith-render-report.json",
+  "timestamp": "2026-10-24T05:24:45.122131+00:00"
+}

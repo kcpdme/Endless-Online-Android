@@ -15,7 +15,7 @@
   "enhanced_status": "draft_disabled",
   "classic_default": true,
   "runtime_rendering_checks": "docs/character-art-profile-report.json",
-  "device_install": "pending_connection",
-  "phone_ui_test": "pending_connection",
+  "device_install": "superseded_by_installed_v0.38.2_code55",
+  "phone_ui_test": "see docs/ancient-wraith-phone-report.json",
   "timestamp": "2026-10-24T05:02:51.682467+00:00"
 }

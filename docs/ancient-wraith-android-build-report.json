@@ -18,6 +18,7 @@
   "source_import_tests": 5,
   "catalog_tests": 18,
   "character_pack_tests": 7,
-  "phone_install": "pending_adb_connection",
-  "phone_ui_test": "pending_adb_connection"
+  "phone_install": "verified_v55_hash_and_preserved_first_install_time",
+  "phone_ui_test": "cold_launch_and_account_login_verified",
+  "phone_report": "docs/ancient-wraith-phone-report.json"
 }
