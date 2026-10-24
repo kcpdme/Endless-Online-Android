@@ -1,0 +1,10 @@
+{
+  "checks": 58,
+  "landscape_dialog_fits": true,
+  "native_npc_spawn": true,
+  "native_one_item_grant": true,
+  "ordinary_player_forgery_rejected": true,
+  "result": "passed",
+  "ten_native_teleports": true,
+  "touch_and_armed_heal_consumed": true
+}

@@ -7,7 +7,7 @@ from admin_actions import DESTINATIONS
 class AdminTests(unittest.TestCase):
     def test_regular_and_pre_entry_sessions_cannot_use_any_admin_operation(self):
         for state in (None,fixture().state):
-            for operation,args in [('admin_open',()),('admin_teleport',('apozen',)),('admin_item',(1,)),('admin_spawn',(1,))]:
+            for operation,args in [('admin_open',()),('admin_teleport',('apozen',)),('admin_teleport',('anundo',)),('admin_teleport',('atlantis',)),('admin_item',(1,)),('admin_spawn',(1,))]:
                 s=fixture();s.state=state
                 with self.assertRaisesRegex(EOError,'Admin access'):getattr(s,operation)(*args)
                 self.assertEqual(s.sent,[])
@@ -37,9 +37,9 @@ class AdminTests(unittest.TestCase):
         import json
         from pathlib import Path
         maps={w['id']:w for w in (json.loads(p.read_text()) for p in (Path(__file__).resolve().parents[1]/'client/content/maps').glob('*.json'))}
-        self.assertEqual(len(DESTINATIONS),8)
-        self.assertEqual({d['key']:(d['map_id'],d['x'],d['y']) for d in DESTINATIONS[-3:]},
-                         dict(monkey_island=(271,25,54),pyramid=(229,82,112),admin_room=(21,12,6)))
+        self.assertEqual(len(DESTINATIONS),10)
+        self.assertEqual({d['key']:(d['map_id'],d['x'],d['y']) for d in DESTINATIONS[5:]},
+                         dict(monkey_island=(271,25,54),pyramid=(229,82,112),admin_room=(21,12,6),anundo=(161,32,36),atlantis=(255,12,19)))
         for d in DESTINATIONS:
             w=maps[d['map_id']];point=(d['x'],d['y'])
             self.assertTrue(0<=d['x']<w['width'] and 0<=d['y']<w['height'])

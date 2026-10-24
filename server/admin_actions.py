@@ -16,6 +16,9 @@ DESTINATIONS = (
     dict(key='monkey_island', name='Monkey Island', map_id=271, x=25, y=54),
     dict(key='pyramid', name='Pyramid', map_id=229, x=82, y=112),
     dict(key='admin_room', name='Admin Room', map_id=21, x=12, y=6),
+    # Original Anundo inn exit and Atlantis pathway arrival.
+    dict(key='anundo', name='Anundo', map_id=161, x=32, y=36),
+    dict(key='atlantis', name='Atlantis', map_id=255, x=12, y=19),
 )
 
 def command_settings():

@@ -14,6 +14,15 @@ Teleport is the first tab. Its server-owned presets are:
 | Wraith Room | 277 | 11 | 31 |
 | Reaper Cave | 109 | 7 | 13 |
 | Octopus | 155 | 8 | 11 |
+| Monkey Island | 271 | 25 | 54 |
+| Pyramid | 229 | 82 | 112 |
+| Admin Room | 21 | 12 | 6 |
+| Anundo | 161 | 32 | 36 |
+| Atlantis | 255 | 12 | 19 |
+
+Anundo uses the town landing outside its inn. Atlantis uses the original
+arrival from Atlantis Pathway, on the first Atlantis map. Reopen the Admin
+menu to fetch these server-supplied entries; no APK update is required.
 
 These tiles are walkable, outside portal tiles and fixed monster spawn centers.
 Monsters can still attack an admin at these destinations. Add future destinations
@@ -47,8 +56,12 @@ python3 server/test_inn_citizenship_ui.py --scenario admin \
   --report work/admin-live-report.json --screenshots work/admin-screenshots
 ```
 
-The 43 integration checks cover all five native teleports, one acknowledged item,
+The 58 integration checks cover all ten native teleports, one acknowledged item,
 NPC spawning, invalid IDs, touch ownership with an armed heal, dialog bounds at
 1280×720 and 1544×720, Back/logout, and a separate regular account attempting all
 four operations with a forged admin field. All fixtures use disposable accounts
 and an isolated native runtime.
+
+Anundo and Atlantis validation reports: `admin-ten-native-ui-report.json` and
+`admin-anundo-atlantis-deployment-report.json`. The latter records the live
+source hash, backup, health check and unchanged native-world identity.

@@ -1,0 +1,28 @@
+{
+  "result": "passed",
+  "backup": "/opt/aster-vale/backups/admin-warps-20261024T184955Z",
+  "source_sha256": "0110d80378a3412310729e967ccdd7438886a7c725961a565b6e19a231794ca7",
+  "gateway_healthy": true,
+  "native_world_not_restarted": true,
+  "database_not_opened": true,
+  "total_destinations": 10,
+  "new_destinations": [
+    {
+      "key": "anundo",
+      "name": "Anundo",
+      "map_id": 161,
+      "x": 32,
+      "y": 36
+    },
+    {
+      "key": "atlantis",
+      "name": "Atlantis",
+      "map_id": 255,
+      "x": 12,
+      "y": 19
+    }
+  ],
+  "native_maps_matched_tested_geometry": true,
+  "public_https_health_verified": true,
+  "all_three_services_active": true
+}
