@@ -1,0 +1,21 @@
+{
+  "result": "build_verified_device_pending",
+  "version": "0.38.1",
+  "version_code": 54,
+  "package": "com.cloudgameboy.astervale",
+  "apk_sha256": "ccaca1e402adeb4c30a2eab530e91ea34aebcdd4406d02421ece2a3ae5b6293f",
+  "apk_bytes": 251382469,
+  "release_signature_verified": true,
+  "same_release_certificate_as_installed_v53": true,
+  "alignment_16k_verified": true,
+  "apk_art_pack_files": [
+    "assets/art_packs/painted_v1/pack.json"
+  ],
+  "draft_and_test_art_excluded": true,
+  "enhanced_status": "draft_disabled",
+  "classic_default": true,
+  "runtime_rendering_checks": "docs/character-art-profile-report.json",
+  "device_install": "pending_connection",
+  "phone_ui_test": "pending_connection",
+  "timestamp": "2026-10-24T05:02:51.682467+00:00"
+}
