@@ -25,6 +25,12 @@ shield and weapon. Full-screen selection has three large slots; empty slots open
 full-screen creation with Male/Female, skin, hair and a rotating preview.
 Tap a card, then enter the selected character.
 
+Character-art development uses [separate reversible packs](client/art_packs/README.md).
+Classic assets remain intact; painted drafts live in `client/art_packs/painted_v1/`
+and are excluded from exports. Menu → Graphics can select a completed Enhanced
+release or restore Classic immediately. Enhanced is unavailable until a complete
+appearance is ready; unfinished combinations fall back to Classic together.
+
 - Drag the lower-left joystick to move; tap clear ground to walk there.
 - Tap the weapon for manual attacks; hold to latch auto attack and tap to stop.
 - The bag and character icons open native inventory and equipment.

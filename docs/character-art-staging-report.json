@@ -1,0 +1,37 @@
+{
+  "result": "passed",
+  "exported_pack_files": [
+    "art_packs/painted_v1/pack.json"
+  ],
+  "draft_source_concepts_and_test_assets_excluded": true,
+  "classic_baseline": {
+    "result": "passed",
+    "pack": "painted_v1",
+    "backup": "artifacts/graphics-backups/classic-20261024T044950794961Z",
+    "layer_sets": 1055,
+    "files": 1055,
+    "maps_copied": 0,
+    "original_assets_unchanged": true
+  },
+  "python_tool_tests": 6,
+  "runtime_report": "docs/character-art-profile-report.json",
+  "pixel_identical_classic_rollback": true,
+  "default": "classic",
+  "enhanced_release_status": "draft",
+  "painted_starter_direction_draft": "client/art_packs/painted_v1/draft/reference-sheets/starter-outfits-four-directions-v1.png",
+  "painted_animations_complete": false,
+  "server_or_maps_modified": false,
+  "checkpoint": "art-classic-baseline-v0.38.0",
+  "branch": "codex/reversible-character-art",
+  "runtime_checks": 369,
+  "client_regressions": [
+    "character_flow_mobile:153",
+    "barber_login_signs:150",
+    "guild_mobile:29",
+    "movement_controls",
+    "joystick_startup:180 traces",
+    "world_smoke"
+  ],
+  "asset_files_backed_up": 1055,
+  "android_apk_rebuilt_or_installed": false
+}

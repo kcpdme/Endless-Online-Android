@@ -681,6 +681,7 @@ func _on_closed(reason: String) -> void:
 	game.world_services.disconnected()
 	game.quest_journal.disconnected()
 	game.movement_ui.disconnected()
+	game.graphics_ui.disconnected()
 	game.music.leave_world()
 	if game.sfx != null: game.sfx.stop()
 	game.quest_ui.panel.hide()
@@ -1323,7 +1324,7 @@ func character_graphic(record: Dictionary) -> Dictionary:
 	var characters: Dictionary = game.manifest.get("characters", {}) as Dictionary
 	var layered: Dictionary = characters.get("equipment_layers", {}) as Dictionary
 	if int(layered.get("version", 0)) >= 2:
-		var definitions: Dictionary = layered.get("layers", {}) as Dictionary
+		var definitions: Dictionary = game.art_profile.definitions(record)
 		var ranged: bool = false
 		for graphic_id: Variant in layered.get("ranged_weapon_graphics", []):
 			if int(graphic_id) == int(equipment_graphics[8]): ranged = true; break

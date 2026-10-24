@@ -131,6 +131,8 @@ var quest_ui: RefCounted
 var speech_layer: Control
 var sit_button: Button
 var movement_ui: RefCounted
+var graphics_ui: RefCounted
+var art_profile: RefCounted = preload("res://scripts/art_profile.gd").new()
 var world_services: RefCounted
 var guild_ui: RefCounted
 var party_ui: RefCounted
@@ -149,6 +151,7 @@ func _ready() -> void:
 	camera.position_smoothing_speed = 8.0
 	add_child(camera)
 	_load_content()
+	art_profile.configure(manifest)
 	music = preload("res://scripts/map_music.gd").new()
 	add_child(music)
 	music.configure(manifest.get("music", {}) as Dictionary)
@@ -214,6 +217,7 @@ func load_map(map_id: int) -> bool:
 	_cancel_controls()
 	textures.clear()
 	head_images.clear()
+	art_profile.selections.clear()
 	_configure_world(data)
 	if music != null: music.enter_map(world)
 	if sfx != null: sfx.enter_map(world)
@@ -477,7 +481,7 @@ func _joystick_begin(pointer: Vector2, pointer_id: int) -> void:
 	stick = Vector2(joystick.direction)
 
 func _modal_open() -> bool:
-	return (world_services != null and (world_services.barber_panel.visible or world_services.sign_panel.visible)) or (quest_journal != null and quest_journal.panel.visible) or (party_ui != null and party_ui.panel.visible) or (skills_ui != null and (skills_ui.target_panel.visible or skills_ui.bard_panel.visible)) or (movement_ui != null and movement_ui.panel.visible) or (guild_ui != null and guild_ui.panel.visible) or (inn_ui != null and inn_ui.panel.visible) or (quest_ui != null and quest_ui.panel.visible) or (redeem_ui != null and redeem_ui.panel.visible) or (online != null and online.panel != null and online.panel.visible) or (inventory != null and inventory.visible) or (menu != null and menu.visible) or (character_panel != null and character_panel.visible) or (stats_ui != null and stats_ui.is_open()) or (shop_ui != null and shop_ui.panel.visible) or (services_ui != null and services_ui.panel.visible) or (chat_ui != null and chat_ui.panel.visible) or (skills_ui != null and skills_ui.panel.visible) or (quick_items != null and quick_items.panel.visible)
+	return (graphics_ui != null and graphics_ui.panel.visible) or (world_services != null and (world_services.barber_panel.visible or world_services.sign_panel.visible)) or (quest_journal != null and quest_journal.panel.visible) or (party_ui != null and party_ui.panel.visible) or (skills_ui != null and (skills_ui.target_panel.visible or skills_ui.bard_panel.visible)) or (movement_ui != null and movement_ui.panel.visible) or (guild_ui != null and guild_ui.panel.visible) or (inn_ui != null and inn_ui.panel.visible) or (quest_ui != null and quest_ui.panel.visible) or (redeem_ui != null and redeem_ui.panel.visible) or (online != null and online.panel != null and online.panel.visible) or (inventory != null and inventory.visible) or (menu != null and menu.visible) or (character_panel != null and character_panel.visible) or (stats_ui != null and stats_ui.is_open()) or (shop_ui != null and shop_ui.panel.visible) or (services_ui != null and services_ui.panel.visible) or (chat_ui != null and chat_ui.panel.visible) or (skills_ui != null and skills_ui.panel.visible) or (quick_items != null and quick_items.panel.visible)
 
 func _begin_attack(pointer_id: int) -> void:
 	if online_mode: route.clear()
@@ -950,19 +954,24 @@ func _frame(character: Dictionary, direction: String, state: String, phase: floa
 			frames.append(_frame(layer, direction, state, phase))
 		var key: String = "head://" + JSON.stringify(frames) + str(character.clip_black)
 		if not textures.has(key):
-			var result: Image = Image.create(192, 192, false, Image.FORMAT_RGBA8)
+			var pixel_scale: int = 1
+			for frame: Dictionary in frames: pixel_scale = maxi(pixel_scale, int(frame.get("pixel_scale", 1)))
+			var result: Image = Image.create(192 * pixel_scale, 192 * pixel_scale, false, Image.FORMAT_RGBA8)
 			for frame: Dictionary in frames:
 				var path: String = str(frame.path)
 				if not head_images.has(path): head_images[path] = _texture(path).get_image()
 				var r: Array = frame.region
-				result.blend_rect(head_images[path] as Image, Rect2i(int(r[0]), int(r[1]), int(r[2]), int(r[3])), Vector2i.ZERO)
+				var part: Image = (head_images[path] as Image).get_region(Rect2i(int(r[0]), int(r[1]), int(r[2]), int(r[3])))
+				if part.get_width() != result.get_width(): part.resize(result.get_width(), result.get_height(), Image.INTERPOLATE_NEAREST)
+				result.blend_rect(part, Rect2i(Vector2i.ZERO, part.get_size()), Vector2i.ZERO)
 			if bool(character.clip_black):
 				var bytes: PackedByteArray = result.get_data()
 				for index: int in range(0, bytes.size(), 4):
 					if bytes[index] == 0 and bytes[index + 1] == 0 and bytes[index + 2] == 0: bytes[index + 3] = 0
-				result = Image.create_from_data(192, 192, false, Image.FORMAT_RGBA8, bytes)
+				result = Image.create_from_data(192 * pixel_scale, 192 * pixel_scale, false, Image.FORMAT_RGBA8, bytes)
 			textures[key] = ImageTexture.create_from_image(result)
-		return {"path": key, "region": [0, 0, 192, 192], "offset": [0, 8]}
+		var composite: Texture2D = textures[key] as Texture2D
+		return {"path": key, "region": [0, 0, composite.get_width(), composite.get_height()], "offset": [0, 8], "pixel_scale": composite.get_width() / 192.0}
 	if character.has("layers"):
 		var layers: Array[Dictionary] = []
 		for layer: Dictionary in character.layers:
@@ -1000,7 +1009,8 @@ func _paint_character_frame(frame: Dictionary, at: Vector2, tint: Color) -> bool
 	var region: Rect2 = Rect2(float(dimensions[0]), float(dimensions[1]), float(dimensions[2]), float(dimensions[3]))
 	var raw_offset: Array = frame.get("offset", [0, 0]) as Array
 	var offset: Vector2 = Vector2(float(raw_offset[0]), float(raw_offset[1]))
-	draw_texture_rect_region(texture, Rect2(at + offset - Vector2(region.size.x / 2.0, region.size.y), region.size), region, tint)
+	var logical_size: Vector2 = region.size / maxf(1.0, float(frame.get("pixel_scale", 1)))
+	draw_texture_rect_region(texture, Rect2(at + offset - Vector2(logical_size.x / 2.0, logical_size.y), logical_size), region, tint)
 	return true
 
 func _draw_player() -> void:
@@ -1208,6 +1218,8 @@ func _build_ui() -> void:
 	party_ui.build(self, root)
 	movement_ui = preload("res://scripts/movement_settings.gd").new()
 	movement_ui.build(self, root)
+	graphics_ui = preload("res://scripts/graphics_settings.gd").new()
+	graphics_ui.build(self, root)
 	_build_paperdoll(root)
 	stats_ui = CharacterStats.new()
 	stats_ui.build(self, root)
@@ -1518,7 +1530,8 @@ func _build_menu(parent: Node) -> void:
 	sound_volume.value = sfx.volume
 	sound_volume.value_changed.connect(sfx.set_volume)
 	card.add_child(sound_volume)
-	_button(card, "Movement controls", Vector2(30, 258), Vector2(480, 54), func() -> void: movement_ui.open())
+	_button(card, "Movement controls", Vector2(30, 258), Vector2(280, 54), func() -> void: movement_ui.open())
+	_button(card, "Graphics", Vector2(324, 258), Vector2(186, 54), func() -> void: graphics_ui.open())
 	_button(card, "Return to the vale", Vector2(30, 322), Vector2(480, 58), func() -> void: menu.hide(), true)
 	_button(card, "Redeem Code", Vector2(30, 386), Vector2(480, 54), func() -> void: redeem_ui.open())
 	_button(card, "Party", Vector2(30, 450), Vector2(480, 54), func() -> void: party_ui.open())
@@ -1698,6 +1711,8 @@ func _handle_back() -> void:
 		skills_ui.panel.hide()
 	elif chat_ui != null and chat_ui.panel.visible:
 		chat_ui.close()
+	elif graphics_ui != null and graphics_ui.panel.visible:
+		graphics_ui.close()
 	elif movement_ui != null and movement_ui.panel.visible:
 		movement_ui.close()
 	elif world_services != null and world_services.sign_panel.visible:

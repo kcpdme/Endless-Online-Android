@@ -47,7 +47,9 @@ func _draw() -> void:
 		var used: Rect2 = art_cache[key]
 		if not used.has_area(): continue
 		var offset: Array = layer.get("offset",[0,0])
-		var rectangle: Rect2 = Rect2(Vector2(float(offset[0])-source.size.x/2.0,float(offset[1])-source.size.y)+used.position,used.size)
+		var pixel_scale: float = maxf(1.0, float(layer.get("pixel_scale", 1)))
+		var logical_size: Vector2 = source.size / pixel_scale
+		var rectangle: Rect2 = Rect2(Vector2(float(offset[0])-logical_size.x/2.0,float(offset[1])-logical_size.y)+used.position/pixel_scale,used.size/pixel_scale)
 		bounds = rectangle if first else bounds.merge(rectangle); first = false
 		visible_layers.append({"texture":texture,"source":Rect2(source.position+used.position,used.size),"rectangle":rectangle})
 	var scale: float = zoom

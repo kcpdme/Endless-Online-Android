@@ -1,0 +1,8 @@
+{
+  "checks": 369,
+  "classic_assets_unchanged": true,
+  "hd_logical_size_and_anchor_preserved": true,
+  "pixel_render_test": true,
+  "result": "passed",
+  "whole_outfit_fallback": true
+}

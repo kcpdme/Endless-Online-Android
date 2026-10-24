@@ -82,7 +82,7 @@ platform="Android"
 runnable=true
 export_filter="all_resources"
 include_filter="*.json"
-exclude_filter=""
+exclude_filter="art_packs/*/source/*,art_packs/*/draft/*,art_packs/*/concepts/*,art_packs/test_fixture/*"
 export_path="../builds/aster-vale-debug.apk"
 
 [preset.0.options]
@@ -109,7 +109,7 @@ platform="Web"
 runnable=true
 export_filter="all_resources"
 include_filter="*.json"
-exclude_filter=""
+exclude_filter="art_packs/*/source/*,art_packs/*/draft/*,art_packs/*/concepts/*,art_packs/test_fixture/*"
 export_path="../builds/web/index.html"
 
 [preset.1.options]
@@ -126,7 +126,7 @@ platform="Linux"
 runnable=true
 export_filter="all_resources"
 include_filter="*.json"
-exclude_filter=""
+exclude_filter="art_packs/*/source/*,art_packs/*/draft/*,art_packs/*/concepts/*,art_packs/test_fixture/*"
 export_path="../builds/linux/aster-vale.x86_64"
 
 [preset.2.options]
@@ -145,7 +145,7 @@ platform="Android"
 runnable=false
 export_filter="all_resources"
 include_filter="*.json"
-exclude_filter=""
+exclude_filter="art_packs/*/source/*,art_packs/*/draft/*,art_packs/*/concepts/*,art_packs/test_fixture/*"
 export_path="../builds/aster-vale-release.aab"
 
 [preset.3.options]
