@@ -202,3 +202,11 @@ unimplemented, even when those spells appear in the learned list.
 requires an administrator target, and grants one Lore item through a retry-safe
 ledger. Back up SQLite/PUB/config before use. It is not a public gateway action.
 See [admin weapon operation and validation](../docs/ADMIN_WEAPON.md).
+
+### Connection recovery heartbeat (v0.39.3)
+
+Deploy the updated `gateway.py` before installing the recovery client. The
+lightweight `ping` operation confirms an existing native session without a
+world Refresh or credential response. Restart gateway/WebSocket services; no
+native restart or database migration is required. See
+[recovery behavior and native outage tests](../docs/CONNECTION_RECOVERY.md).

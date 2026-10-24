@@ -1,0 +1,27 @@
+[
+  {
+    "test": "network_regressions",
+    "passed": true,
+    "errors": []
+  },
+  {
+    "test": "character_flow_mobile",
+    "passed": true,
+    "errors": []
+  },
+  {
+    "test": "barber_login_signs",
+    "passed": true,
+    "errors": []
+  },
+  {
+    "test": "movement_controls",
+    "passed": true,
+    "errors": []
+  },
+  {
+    "test": "admin_weapon",
+    "passed": true,
+    "errors": []
+  }
+]

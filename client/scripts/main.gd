@@ -170,6 +170,7 @@ func _ready() -> void:
 		_place_enemy()
 		_refresh_ui()
 		_show_welcome()
+		online.character_flow.call_deferred("try_startup_login")
 	else:
 		_show_content_error()
 	for argument: String in OS.get_cmdline_user_args():
@@ -481,6 +482,7 @@ func _joystick_begin(pointer: Vector2, pointer_id: int) -> void:
 	stick = Vector2(joystick.direction)
 
 func _modal_open() -> bool:
+	if online != null and online.reconnection.running: return true
 	return (graphics_ui != null and graphics_ui.panel.visible) or (world_services != null and (world_services.barber_panel.visible or world_services.sign_panel.visible)) or (quest_journal != null and quest_journal.panel.visible) or (party_ui != null and party_ui.panel.visible) or (skills_ui != null and (skills_ui.target_panel.visible or skills_ui.bard_panel.visible)) or (movement_ui != null and movement_ui.panel.visible) or (guild_ui != null and guild_ui.panel.visible) or (inn_ui != null and inn_ui.panel.visible) or (quest_ui != null and quest_ui.panel.visible) or (redeem_ui != null and redeem_ui.panel.visible) or (online != null and online.panel != null and online.panel.visible) or (inventory != null and inventory.visible) or (menu != null and menu.visible) or (character_panel != null and character_panel.visible) or (stats_ui != null and stats_ui.is_open()) or (shop_ui != null and shop_ui.panel.visible) or (services_ui != null and services_ui.panel.visible) or (chat_ui != null and chat_ui.panel.visible) or (skills_ui != null and skills_ui.panel.visible) or (quick_items != null and quick_items.panel.visible)
 
 func _begin_attack(pointer_id: int) -> void:
@@ -1680,6 +1682,9 @@ func _show_content_error() -> void:
 	push_error("Aster Vale content unavailable. Run tools/import_content.py.")
 
 func _handle_back() -> void:
+	if online != null and online.reconnection.running:
+		online._on_closed("Reconnect cancelled. Please log in again.",false)
+		return
 	if party_ui != null and party_ui.panel.visible:
 		party_ui.panel.hide()
 		return

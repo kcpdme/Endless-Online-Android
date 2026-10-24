@@ -6,6 +6,9 @@ signal message_received(message: Dictionary)
 signal transport_closed(reason: String)
 
 const MAX_RESPONSE_BYTES: int = 4 * 1024 * 1024
+const HEARTBEAT_INTERVAL: float = 5.0
+const HEARTBEAT_TIMEOUT: float = 8.0
+var idle_seconds: float = 0.0
 var peer: StreamPeerTCP = StreamPeerTCP.new()
 var websocket: WebSocketPeer = WebSocketPeer.new()
 var websocket_mode: bool = false
@@ -42,6 +45,7 @@ func close() -> void:
 	connected = false
 	receive_buffer.clear()
 	pending.clear()
+	idle_seconds = 0.0
 
 func request(operation: String, fields: Dictionary = {}) -> int:
 	if not connected: return -1
@@ -62,12 +66,17 @@ func request(operation: String, fields: Dictionary = {}) -> int:
 
 func _process(delta: float) -> void:
 	if not connecting and not connected: return
-	for raw_id: Variant in pending:
+	for raw_id: Variant in pending.keys():
 		var record: Dictionary = pending[raw_id] as Dictionary
 		record.age = float(record.age) + delta
-		if float(record.age) > 20.0:
+		if float(record.age) > (HEARTBEAT_TIMEOUT if str(record.op) == "ping" else 20.0):
 			_fail("The game server did not answer in time. Please reconnect.")
 			return
+	if connected:
+		idle_seconds += delta
+		if pending.is_empty() and idle_seconds >= HEARTBEAT_INTERVAL:
+			idle_seconds = 0.0
+			if request("ping") < 0: return
 	if websocket_mode:
 		_poll_websocket(delta)
 		return
@@ -136,6 +145,7 @@ func _consume_message(line: String) -> bool:
 	var message: Dictionary = parsed as Dictionary
 	pending.erase(int(message.get("id", -1)))
 	message_received.emit(message)
+	idle_seconds = 0.0
 	return true
 
 func _fail(reason: String) -> void:
@@ -143,9 +153,11 @@ func _fail(reason: String) -> void:
 	transport_closed.emit(reason)
 
 func is_idle() -> bool:
-	return pending.is_empty()
+	for record: Variant in pending.values():
+		if str(record.get("op","")) != "ping": return false
+	return true
 
 func has_blocking_requests() -> bool:
 	for record: Variant in pending.values():
-		if str(record.get("op", "")) not in ["move", "face", "strike", "collect", "spell_cast", "spell_cancel", "potion_use", "shortcuts_set"]: return true
+		if str(record.get("op", "")) not in ["ping", "move", "face", "strike", "collect", "spell_cast", "spell_cancel", "potion_use", "shortcuts_set"]: return true
 	return false

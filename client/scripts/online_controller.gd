@@ -25,6 +25,7 @@ var character_preview: Control
 var character_name_field: LineEdit
 var login_store: RefCounted=preload("res://scripts/login_store.gd").new()
 var auth_credentials: Dictionary={}
+var reconnection: RefCounted = preload("res://scripts/connection_recovery.gd").new()
 var character_flow: RefCounted = preload("res://scripts/character_flow.gd").new()
 var creating_character: bool = false
 var entering_character: bool = false
@@ -100,6 +101,7 @@ func build_ui(parent: Control) -> void:
 	drop_ui = preload("res://scripts/drop_window.gd").new()
 	drop_ui.build(game, parent)
 	character_flow.build(self,parent)
+	reconnection.build(self,parent)
 	server_label = game._label(parent, "", Vector2(390, 67), 15, game.MUTED)
 	server_label.hide()
 	loot_button = preload("res://scripts/hud_icon_button.gd").new()
@@ -150,15 +152,22 @@ func show_login() -> void:
 	panel.show()
 
 func _close_panel() -> void:
+	if reconnection.running:
+		_on_closed("Reconnect cancelled. Please log in again.",false)
+		return
 	creation_panel.hide()
 	login_retry_at = 0
 	panel.hide()
 	if not active:
-		if character_box.visible:session.close();character_box.hide();auth_box.show()
+		reconnection.forget()
+		auth_credentials.clear()
+		session.close();character_box.hide();auth_box.show()
 		game._show_welcome()
 
 func _authenticate(operation: String, retrying: bool = false) -> void:
-	if not retrying: login_retries = 0
+	if not retrying:
+		login_retries = 0
+		reconnection.forget()
 	login_retry_at = 0
 	if username_field.text.strip_edges().is_empty() or password_field.text.is_empty():
 		_set_status("Enter an account name and password.")
@@ -178,6 +187,9 @@ func _set_status(value: String) -> void:
 	if status_label != null: status_label.text = value
 
 func _on_message(message: Dictionary) -> void:
+	if str(message.get("op","")) == "ping":
+		if not bool(message.get("ok",false)) or not bool((message.get("data",{}) as Dictionary).get("connected",false)): session._fail("The game server is no longer available.")
+		return
 	if str(message.get("op", "")) == "shortcuts_set":
 		shortcuts.response(message)
 		return
@@ -193,6 +205,13 @@ func _on_message(message: Dictionary) -> void:
 		character_flow.refresh()
 		waiting_for_walk = false
 		var reason: String = str(message.get("error", "The server refused this request."))
+		if reconnection.running and operation in ["connect","login","enter","stream"]:
+			var rejected_login: bool = operation == "login" and int(message.get("error_code",0)) in [1,2,4,7]
+			_on_closed(reason,not rejected_login)
+			return
+		if operation in ["connect","stream"]:
+			_on_closed(reason)
+			return
 		_set_status(reason)
 		game._toast(reason)
 		if operation == "login" and int(message.get("error_code", 0)) == 5 and login_retries < 3:
@@ -226,26 +245,53 @@ func _on_message(message: Dictionary) -> void:
 		"connect":
 			_set_status("Server handshake accepted. Signing in…")
 			var credentials: Dictionary = {"username":auth_credentials.get("username",username_field.text.strip_edges()),"password":auth_credentials.get("password",password_field.text)}
-			if desired_auth == "login" and username_field.text.strip_edges().to_lower() == resume_username: credentials["resume_token"] = resume_token
+			if desired_auth == "login" and str(credentials.username).to_lower() == resume_username: credentials["resume_token"] = resume_token
 			session.request(desired_auth, credentials)
 		"register":
 			_set_status("Account created. Signing in…")
 			session.request("login", {"username":auth_credentials.get("username",username_field.text.strip_edges()),"password":auth_credentials.get("password",password_field.text)})
 		"login", "create_character":
 			if operation == "login" and data.has("resume_token"):
-				resume_username = username_field.text.strip_edges().to_lower()
+				resume_username = str(auth_credentials.get("username",username_field.text)).strip_edges().to_lower()
 				resume_token = str(data.resume_token)
 			login_retry_at = 0
-			if operation=="login" and character_flow.remember.button_pressed and not auth_credentials.is_empty():
-				if login_store.save_login(auth_credentials):character_flow.forget_button.show()
-				else:game._toast("Login succeeded, but this device could not save the password.")
+			if operation == "login" and not auth_credentials.is_empty(): reconnection.credentials = auth_credentials.duplicate()
+			if operation=="login" and not reconnection.running and character_flow.remember.button_pressed and not auth_credentials.is_empty():
+				if login_store.save_login(auth_credentials):
+					character_flow.forget_button.show()
+					character_flow.save_automatic_choice(character_flow.automatic.button_pressed)
+				else:
+					character_flow.save_automatic_choice(false)
+					character_flow.automatic.set_pressed_no_signal(false)
+					game._toast("Login succeeded, but this device could not save the password.")
 			auth_credentials.clear()
 			password_field.text = ""
+			if operation == "login" and reconnection.running:
+				var found: bool = false
+				for character: Dictionary in data.get("characters",[]):
+					# Native Character::id is regenerated per login. Names are the
+					# persistent identity within the already-verified account.
+					if str(character.get("name","")) == reconnection.character_name and int(character.get("id",0)) > 0:
+						reconnection.character_id = int(character.id)
+						found = true
+						break
+				if not found:
+					_on_closed("Your previous character is unavailable. Please log in again.",false)
+					return
+				entering_character = session.request("enter",{"character_id":reconnection.character_id}) >= 0
+				return
 			_show_characters(data.get("characters", []) as Array)
 		"enter":
 			_enter_world(data)
 		"stream":
 			streaming = bool(data.get("enabled", false))
+			if not streaming:
+				_on_closed("The world stream could not be restored.")
+				return
+			var resumed: bool = reconnection.running
+			reconnection.restored()
+			_set_status("Connected to your world.")
+			if resumed: game._toast("Reconnected to your world.")
 		"move", "face", "strike", "collect", "spell_cast", "spell_cancel", "online_players", "potion_use":
 			pass # Receipt only. The subsequent native Walk_Reply confirms acceptance.
 		"unequip":
@@ -281,7 +327,7 @@ func _on_message(message: Dictionary) -> void:
 			_apply_snapshot(data)
 			game.shop_ui.open(data.get("shop", {}) as Dictionary)
 		"disconnect":
-			_on_closed("Disconnected from the world.")
+			_on_closed("Disconnected from the world.",false)
 
 func _show_characters(characters: Array) -> void:
 	creation_panel.hide()
@@ -335,6 +381,7 @@ func _create_character() -> void:
 	character_flow.refresh()
 
 func _enter_world(data: Dictionary) -> void:
+	var resumed: bool = reconnection.running
 	entering_character = false
 	creation_panel.hide()
 	game.drink_effects.clear()
@@ -350,10 +397,11 @@ func _enter_world(data: Dictionary) -> void:
 	_reset_movement()
 	_apply_snapshot(data, true)
 	if not active: return
+	reconnection.entered(player)
 	session.request("stream", {"enabled": true})
 	server_label.hide()
-	_set_status("Connected to your world.")
-	game._toast("Arena · stand on a marked gate tile. Rounds every %ds." % int((game.world.arena as Dictionary).get("interval_seconds", 90)) if game.world.has("arena") else "You have entered your online world.")
+	_set_status("Restoring your world…" if resumed else "Connected to your world.")
+	if not resumed: game._toast("Arena · stand on a marked gate tile. Rounds every %ds." % int((game.world.arena as Dictionary).get("interval_seconds", 90)) if game.world.has("arena") else "You have entered your online world.")
 
 func _apply_snapshot(data: Dictionary, entering: bool = false) -> void:
 	for raw: Variant in data.get("events", []):
@@ -498,6 +546,7 @@ func _sync_inventory() -> void:
 		if int(entry.get("id", 0)) == 1: game.coins = int(entry.get("amount", 0))
 
 func _process(delta: float) -> void:
+	reconnection.process(delta)
 	if server_label != null:
 		server_label.visible = false
 	if login_retry_at > 0 and Time.get_ticks_msec() >= login_retry_at:
@@ -668,7 +717,16 @@ func _facing(value: Variant) -> String:
 	if value is String: return value as String
 	return ["south", "west", "north", "east"][clampi(int(value), 0, 3)]
 
-func _on_closed(reason: String) -> void:
+func _retry_connection() -> void:
+	desired_auth = "login"
+	auth_credentials = reconnection.credentials.duplicate()
+	var error: Error = session.open(str(auth_credentials.host),int(auth_credentials.port))
+	if error != OK: _on_closed("Could not reach the game server.")
+
+func _on_closed(reason: String, allow_retry: bool = true) -> void:
+	var retry: bool = allow_retry and (active or reconnection.running)
+	session.close()
+	login_retry_at = 0
 	creating_character = false; entering_character = false; last_created_name = ""
 	auth_credentials.clear()
 	shortcuts.disconnected()
@@ -690,17 +748,29 @@ func _on_closed(reason: String) -> void:
 	active = false
 	_reset_movement()
 	game._cancel_controls(true)
-	if game.online_mode:
-		game.started = false
-		game._show_welcome()
+	game.started = false
+	player.clear(); players.clear(); npcs.clear(); drops.clear(); trade.clear()
+	selected_characters.clear(); character_list.clear()
 	server_label.hide()
 	panel.hide()
 	game.inventory.hide()
 	game.character_panel.hide()
 	game.stats_ui.dismiss()
 	game.menu.hide()
+	game.chat_ui.clear()
+	game.services_ui.panel.hide(); game.shop_ui.panel.hide()
+	game.skills_ui.panel.hide(); game.skills_ui.casting.clear(); game.skills_ui.armed = 0
+	if game.quick_items != null: game.quick_items.panel.hide(); game.quick_items.cancel_hold()
+	if retry and reconnection.lost():
+		game.queue_redraw()
+		return
+	if retry: reason = "Could not reconnect. Please log in again."
+	reconnection.forget()
+	resume_username = ""; resume_token = ""
+	game._show_welcome()
 	_set_status(reason)
 	game._toast(reason)
+	game._refresh_ui(); game.queue_redraw()
 
 func _track_entities(kind: String, rows: Array[Dictionary], id_field: String, at: float = -1.0) -> void:
 	var seen: Dictionary = {}
@@ -1579,4 +1649,4 @@ func _select_character_card(index: int) -> void:
 
 func log_out() -> void:
 	session.close()
-	_on_closed("Logged out.")
+	_on_closed("Logged out.",false)

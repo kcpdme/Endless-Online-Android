@@ -1,0 +1,10 @@
+{
+  "result": "passed",
+  "backup": "/opt/aster-vale/backups/connection-recovery-20261024T064258Z",
+  "gateway_sha256": "1c05b32c76e52355bd59ef1fc4407d0626656354a145bee7cb9899f76358e46e",
+  "native_world_not_restarted": true,
+  "database_or_config_rewrites": false,
+  "services_healthy": true,
+  "public_wss_native_handshake_heartbeat_disconnect": true,
+  "initial_early_health_check_rolled_back_safely": true
+}

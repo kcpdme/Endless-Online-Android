@@ -1,0 +1,12 @@
+{
+  "version": "0.39.4",
+  "version_code": 60,
+  "bytes": 251413742,
+  "sha256": "806af15d3f1be8b174e940afc2c6a7869b289b042233741eb2709198de0dbc65",
+  "signature_and_16k_alignment_verified": true,
+  "classic_graphics_preserved": true,
+  "admin_blade_preserved": true,
+  "secure_automatic_login_option": true,
+  "connection_recovery_included": true,
+  "phone_installation": "pending: wireless ADB at last known address refuses the connection"
+}

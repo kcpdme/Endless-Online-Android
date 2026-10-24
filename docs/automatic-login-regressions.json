@@ -1,0 +1,36 @@
+[
+  {
+    "test": "connection_recovery",
+    "passed": true,
+    "errors": []
+  },
+  {
+    "test": "network_regressions",
+    "passed": true,
+    "errors": [],
+    "initial_parallel_errors": [
+      "ERROR: 2 resources still in use at exit (run with --verbose for details)."
+    ],
+    "isolated_recheck": "passed; initial parallel run had a shutdown-only resource warning"
+  },
+  {
+    "test": "character_flow_mobile",
+    "passed": true,
+    "errors": []
+  },
+  {
+    "test": "barber_login_signs",
+    "passed": true,
+    "errors": []
+  },
+  {
+    "test": "movement_controls",
+    "passed": true,
+    "errors": []
+  },
+  {
+    "test": "admin_weapon",
+    "passed": true,
+    "errors": []
+  }
+]

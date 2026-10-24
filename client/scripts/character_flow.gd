@@ -16,6 +16,9 @@ var gender_buttons: Array[Button] = []
 var restored_login: Dictionary={}
 var restoring_login: bool=false
 var remember: CheckBox
+var automatic: CheckBox
+var options_path: String = "user://login_options.cfg"
+var startup_login_checked: bool = false
 var forget_button: Button
 var creation_hint: Label
 
@@ -64,10 +67,16 @@ func build(owner: Node, parent: Control) -> void:
 	text(form,"Password",19,game.MUTED); c.password_field = field(form,"Password"); c.password_field.secret = true; c.password_field.max_length = 64
 	remember=CheckBox.new();remember.text="Remember login on this device";remember.custom_minimum_size.y=48;remember.add_theme_font_size_override("font_size",19);remember.visible=c.login_store.available();form.add_child(remember)
 	remember.toggled.connect(func(enabled: bool) -> void:
-		if not enabled:c.login_store.forget()
+		if not enabled:
+			c.login_store.forget(); automatic.set_pressed_no_signal(false); save_automatic_choice(false)
+	)
+	automatic = CheckBox.new(); automatic.text = "Sign in automatically next time"; automatic.custom_minimum_size.y = 48; automatic.add_theme_font_size_override("font_size",19); automatic.visible = c.login_store.available(); form.add_child(automatic)
+	automatic.toggled.connect(func(enabled: bool) -> void:
+		if enabled: remember.set_pressed_no_signal(true)
+		else: save_automatic_choice(false)
 	)
 	forget_button=button(form,"Forget saved login",func() -> void:
-		c.login_store.forget();remember.set_pressed_no_signal(false);c.password_field.text="";c.auth_credentials.clear();restored_login.clear();forget_button.hide()
+		c.login_store.forget();remember.set_pressed_no_signal(false);automatic.set_pressed_no_signal(false);save_automatic_choice(false);c.password_field.text="";c.auth_credentials.clear();c.reconnection.forget();restored_login.clear();forget_button.hide()
 	);forget_button.hide()
 	var actions: HBoxContainer = HBoxContainer.new(); actions.add_theme_constant_override("separation",14); form.add_child(actions)
 	button(actions,"Log in",func() -> void: c._authenticate("login"),true)
@@ -226,8 +235,29 @@ func restore_login() -> void:
 	c.username_field.text=str(saved.get("username",""));c.password_field.text=str(saved.get("password",""))
 	restored_login={"host":saved.get("host",""),"port":saved.get("port",8079),"username":saved.get("username","")};restoring_login=false
 	remember.set_pressed_no_signal(true);forget_button.show()
+	automatic.set_pressed_no_signal(automatic_enabled())
+
+func automatic_enabled() -> bool:
+	var config: ConfigFile = ConfigFile.new()
+	return config.load(options_path) == OK and bool(config.get_value("login","automatic",false))
+
+func save_automatic_choice(enabled: bool) -> void:
+	# Only the opt-in flag is stored here. Passwords remain in Android Keystore.
+	var config: ConfigFile = ConfigFile.new(); config.set_value("login","automatic",enabled)
+	if config.save(options_path) != OK: game._toast("Your automatic login choice could not be saved.")
+
+func try_startup_login() -> void:
+	if startup_login_checked: return
+	startup_login_checked = true
+	if not c.login_store.available() or not automatic_enabled() or c.active or c.session.connecting or c.session.connected: return
+	var saved: Dictionary = c.login_store.load_login()
+	if str(saved.get("password","")).is_empty() or str(saved.get("username","")).is_empty(): return
+	# A manual edit before startup completes must never forward a saved password.
+	if c.host_field.text.strip_edges() != str(saved.get("host","")) or int(c.port_field.value) != int(saved.get("port",0)) or c.username_field.text.strip_edges() != str(saved.username) or c.password_field.text != str(saved.password): return
+	c._authenticate("login")
 
 func credentials_edited() -> void:
 	if restoring_login or restored_login.is_empty():return
 	if c.host_field.text.strip_edges()!=str(restored_login.get("host","")) or int(c.port_field.value)!=int(restored_login.get("port",8079)) or c.username_field.text.strip_edges()!=str(restored_login.get("username","")):
 		c.password_field.text="";remember.set_pressed_no_signal(false);restored_login.clear()
+		automatic.set_pressed_no_signal(false)

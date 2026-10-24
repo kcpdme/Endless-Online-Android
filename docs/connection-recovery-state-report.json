@@ -1,0 +1,11 @@
+{
+  "checks": 23,
+  "manual_logout_and_back_cancel": true,
+  "no_plaintext_persistence": true,
+  "overall_timeout_seconds": 30,
+  "result": "passed",
+  "retry_attempt_limit": 3,
+  "same_character_only": true,
+  "silent_heartbeat_timeout": true,
+  "stale_logged_in_state_cleared": true
+}

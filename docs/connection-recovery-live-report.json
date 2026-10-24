@@ -1,0 +1,11 @@
+{
+  "automatic_startup_native_login": true,
+  "checks": 17,
+  "inventory_preserved": true,
+  "native_reauthentication_and_same_character_entry": true,
+  "no_operator_account_used": true,
+  "permanent_outage_returns_to_login": true,
+  "real_native_world_restart": true,
+  "real_silent_websocket_blackhole": true,
+  "result": "passed"
+}

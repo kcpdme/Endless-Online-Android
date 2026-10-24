@@ -76,6 +76,7 @@ class Handler(socketserver.StreamRequestHandler):
             return {'connected':False}
         s=self.session
         if not s:raise EOError('Connect to the local server first')
+        if op=='ping':return {'connected':True}
         if s.trade and op in ('walk','attack','spend_stat'):raise EOError('Close the trade before acting')
         if op=='register':return s.register(str(r['username']),str(r['password']))
         if op=='login':

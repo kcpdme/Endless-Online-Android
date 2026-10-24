@@ -1,0 +1,11 @@
+{
+  "version": "0.39.3",
+  "version_code": 59,
+  "sha256": "0ce3f6b81212cd0e68042216d42bb634e2f1d7c94294107d2424ed32f070f1b9",
+  "bytes": 251406265,
+  "signature_and_16k_alignment_verified": true,
+  "classic_graphics_preserved": true,
+  "admin_blade_preserved": true,
+  "recovery_controller_packaged": true,
+  "stream_acknowledgement_required": true
+}
