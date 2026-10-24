@@ -1,0 +1,12 @@
+{
+  "checks": 161,
+  "distinct_glyph_images_by_scale": {
+    "1.0": 1,
+    "1.5": 1
+  },
+  "input_and_modals_preserved": true,
+  "pixel_render_test": true,
+  "result": "passed",
+  "shared_interpolation": true,
+  "wraith_visibility_preserved": true
+}

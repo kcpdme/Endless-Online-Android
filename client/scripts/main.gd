@@ -129,6 +129,7 @@ var sfx: Node
 var quest_journal: RefCounted
 var quest_ui: RefCounted
 var speech_layer: Control
+var nameplates: Control
 var sit_button: Button
 var movement_ui: RefCounted
 var graphics_ui: RefCounted
@@ -913,7 +914,6 @@ func _draw() -> void:
 	if online_mode: skills_ui.draw_orphans()
 	for decoration: Dictionary in decorations:
 		if str(decoration.layer) == "overlay2" and visible_rect.has_point(tile_position(decoration.tile)): _draw_decoration(decoration)
-	if online_mode: online.draw_npc_combat_overlays()
 	for number: Dictionary in damage_numbers:
 		var at: Vector2 = number.position as Vector2
 		at.y -= (0.8 - float(number.time)) * 28.0
@@ -1275,6 +1275,9 @@ func _build_ui() -> void:
 	speech_layer = preload("res://scripts/speech_bubbles.gd").new()
 	speech_layer.game = self
 	root.add_child(speech_layer)
+	nameplates = preload("res://scripts/nameplates.gd").new()
+	nameplates.name = "Nameplates"; nameplates.game = self
+	root.add_child(nameplates)
 	# Godot GUI hit testing follows tree order, even when z_index draws a
 	# curtain above a later-created HUD button. Keep all modal roots last.
 	for child: Node in root.get_children():

@@ -25,6 +25,7 @@ func _run() -> void:
 	capture.set_process(false)
 	c.session = capture
 	game.welcome.hide()
+	game.online.panel.hide()
 	game.online_mode = true
 	game.started = true
 	c.active = true

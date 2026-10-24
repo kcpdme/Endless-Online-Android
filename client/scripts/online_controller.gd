@@ -417,6 +417,7 @@ func _enter_world(data: Dictionary) -> void:
 	if not resumed: game._toast("Arena · stand on a marked gate tile. Rounds every %ds." % int((game.world.arena as Dictionary).get("interval_seconds", 90)) if game.world.has("arena") else "You have entered your online world.")
 
 func _apply_snapshot(data: Dictionary, entering: bool = false) -> void:
+	render_pose_cache.clear()
 	if data.has("world_rules"): world_rules = data.world_rules as Dictionary
 	for raw: Variant in data.get("events", []):
 		if raw is Dictionary and str(raw.get("kind", "")) == "map_transition": entering = true
@@ -906,11 +907,28 @@ func npc_name_layout(graphic: Dictionary, direction: String, _fighting: bool) ->
 	# Keep the name at its idle height; combat adds a strip above the name.
 	return {"head": head, "name": Vector2(0, head.y - 5), "health": Rect2(Vector2(-36 if float(region[2]) > 100 else -17, head.y - 25), Vector2(72 if float(region[2]) > 100 else 34, 5))}
 
+var render_pose_cache: Dictionary = {}
+var render_pose_frame: int = -1
+
+func entity_render_pose(kind: String, record: Dictionary) -> Dictionary:
+	# Nameplates and sprite drawing must use the exact same interpolated sample,
+	# rather than sampling the clock again at different points in the frame.
+	if kind == "online_item":
+		return {"position":game.tile_position(Vector2i(int(record.x),int(record.y))),"direction":"south","state":"idle","phase":0.0}
+	var frame: int = Engine.get_process_frames()
+	if frame != render_pose_frame:
+		render_pose_frame = frame; render_pose_cache.clear()
+	var key: String = kind+":"+str(int(record.get("index" if kind=="online_npc" else "player_id",-1)))
+	if not render_pose_cache.has(key):
+		var pose: Dictionary = entity_animation(kind,record)
+		pose.position = _remote_position(str(pose.key),game.tile_position(Vector2i(int(record.x),int(record.y))))
+		render_pose_cache[key] = pose
+	return render_pose_cache[key]
+
 func draw_entity(entity: Dictionary) -> void:
 	var record: Dictionary = entity.data as Dictionary
-	var tile: Vector2i = Vector2i(int(record.get("x", 0)), int(record.get("y", 0)))
-	var animation: Dictionary = entity_animation(str(entity.kind), record)
-	var at: Vector2 = _remote_position(str(animation.key), game.tile_position(tile))
+	var animation: Dictionary = entity_render_pose(str(entity.kind), record)
+	var at: Vector2 = animation.position as Vector2
 	var direction: String = str(animation.direction)
 	var state: String = str(animation.state)
 	var phase: float = float(animation.phase)
@@ -928,19 +946,12 @@ func draw_entity(entity: Dictionary) -> void:
 		var graphic: Dictionary = npc_graphics.get(str(int(info.get("graphic", 0))), {}) as Dictionary
 		if not graphic.is_empty(): game._draw_character_frame(graphic, at, direction, state, Color("ffb8a0") if Time.get_ticks_msec() < int(npc_hit_until.get(int(record.index), 0)) else Color.WHITE, phase if state in ["frames", "attack"] else -1.0)
 		else: game.draw_circle(at + Vector2(0, -12), 5.0, Color("e7bd70"))
-		var health: float = npc_health_fraction(int(record.get("index", -1)))
-		var layout: Dictionary = npc_name_layout(graphic, direction, health >= 0.0)
-		var name: String = str(info.get("name", "NPC %s" % npc_id))
-		var text_width: float = ThemeDB.fallback_font.get_string_size(name, HORIZONTAL_ALIGNMENT_LEFT, -1, 10).x
-		if health < 0.0 and npc_pose_visible(graphic, state): game.draw_string(ThemeDB.fallback_font, at + (layout.name as Vector2) - Vector2(text_width / 2.0, 0), name, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, game.TEXT)
 	elif str(entity.kind) == "online_player":
 		var graphic: Dictionary = character_graphic(record)
 		if not graphic.is_empty(): game._draw_character_frame(graphic, at, direction, state, Color.WHITE, phase if state in ["frames", "attack"] else -1.0)
 		else:
 			game.draw_circle(at + Vector2(0, -12), 7.0, Color("a6cec0"))
 			game.draw_string(ThemeDB.fallback_font, at + Vector2(-32, -42), "Appearance pending", HORIZONTAL_ALIGNMENT_LEFT, -1, 9, game.MUTED)
-		var name: String = str(record.get("name", "Player"))
-		game.draw_string(ThemeDB.fallback_font, at + player_name_offset(name), name, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color("b9e2c5"))
 	elif str(entity.kind) == "online_item":
 		var definitions: Dictionary = catalog.get("items", {}) as Dictionary
 		var info: Dictionary = definitions.get(str(int(record.get("id", 0))), {}) as Dictionary
@@ -1488,27 +1499,6 @@ func npc_feedback_anchor(record: Dictionary, fallback: Vector2i) -> Vector2:
 	var at: Vector2 = _remote_position("npc:%d" % index, game.tile_position(fallback))
 	var layout: Dictionary = npc_name_layout(npc_graphic(record), _facing(record.get("direction", 0)), true)
 	return at + (layout.head as Vector2) + Vector2(0, -28)
-
-func draw_npc_combat_overlays() -> void:
-	for record: Dictionary in npcs:
-		var health: float = npc_health_fraction(int(record.index))
-		if health < 0.0: continue
-		var graphic: Dictionary = npc_graphic(record)
-		var animation: Dictionary = entity_animation("online_npc", record)
-		if not npc_pose_visible(graphic, str(animation.state)): continue
-		var at: Vector2 = _remote_position("npc:%d" % int(record.index), game.tile_position(Vector2i(int(record.x), int(record.y))))
-		var info: Dictionary = (catalog.get("npcs", {}) as Dictionary).get(str(int(record.id)), {}) as Dictionary
-		var layout: Dictionary = npc_name_layout(graphic, _facing(record.get("direction", 0)), true)
-		var strip: Rect2 = layout.health as Rect2
-		strip.position += at
-		game.draw_rect(strip.grow(1), Color("121b18"))
-		game.draw_rect(strip, Color("50322e"))
-		game.draw_rect(Rect2(strip.position, Vector2(strip.size.x * health, strip.size.y)), Color("a6cb6f") if health > .3 else Color("dc6855"))
-		var text: String = str(info.get("name", "NPC"))
-		var font: Font = ThemeDB.fallback_font
-		var origin: Vector2 = at + (layout.name as Vector2) - Vector2(font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 10).x / 2, 0)
-		game.draw_string_outline(font, origin, text, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, 3, Color.BLACK)
-		game.draw_string(font, origin, text, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, game.TEXT)
 
 func npc_health_fraction(index: int) -> float:
 	var health: Dictionary = npc_health.get(index, {}) as Dictionary

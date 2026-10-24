@@ -4,7 +4,6 @@ class NPCProbe extends "res://scripts/main.gd":
 	func _draw() -> void:
 		if online != null and not sample.is_empty():
 			online.draw_entity(sample)
-			online.draw_npc_combat_overlays()
 var checks: int = 0
 var failed: bool = false
 func _initialize() -> void: call_deferred("run")
@@ -25,7 +24,10 @@ func caption(view: SubViewport, game: Node) -> Image:
 func run() -> void:
 	var view: SubViewport = SubViewport.new(); view.size = Vector2i(512,512); view.transparent_bg = true; view.world_2d = World2D.new(); view.render_target_update_mode = SubViewport.UPDATE_ALWAYS; root.add_child(view)
 	var game: NPCProbe = NPCProbe.new(); view.add_child(game); await process_frame
-	game.set_process(false); game.online.set_process(false); game.hud_root.hide(); game.music.stop(); game.camera.enabled = false; game.camera.position = Vector2.ZERO; game.position = Vector2(200,200)
+	game.set_process(false); game.online.set_process(false); game.music.stop(); game.camera.enabled = false; game.camera.position = Vector2.ZERO; game.position = Vector2(200,200)
+	game.started=true;game.menu.hide();game.welcome.hide()
+	for child: Node in game.hud_root.get_children():
+		if child is Control and child != game.nameplates: child.hide(); child.set_process(false)
 	game.online_mode = true; game.online.active = true
 	var record: Dictionary = {"id":255,"index":1,"x":0,"y":0,"direction":0}
 	game.online.npcs.assign([record]); game.sample = {"kind":"online_npc","data":record}

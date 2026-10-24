@@ -16,6 +16,7 @@ func run() -> void:
 	await process_frame
 	game.set_process(false)
 	game.welcome.hide()
+	game.online.panel.hide()
 	game.started = true
 	game.online_mode = true
 	var online: Node = game.online
