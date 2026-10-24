@@ -159,7 +159,7 @@ class RuntimeCatalogTests(unittest.TestCase):
         for spawn in selected['npc_spawns']:
             definition=self.catalog['npcs'][str(spawn['id'])]
             self.assertIn(str(definition['graphic']),self.manifest['characters']['npcs'])
-        self.assertEqual(len(self.manifest['characters']['npcs']),159)
+        self.assertEqual(len(self.manifest['characters']['npcs']),160)
     def test_all_world_npc_offsets_match_reference_formulas(self):
         npcs=self.manifest['characters']['npcs']
         self.assertTrue(set(map(int,npcs)).issubset(set(NPC_RENDER_METADATA)))
@@ -195,7 +195,7 @@ class RuntimeCatalogTests(unittest.TestCase):
                 frames=npc['idle'][direction]
                 for frame in frames if isinstance(frames,list) else [frames]:
                     with Image.open(CONTENT/frame['path'].removeprefix('res://content/')) as image:
-                        x,y,right,bottom=image.getbbox()
+                        x,y,right,bottom=image.getbbox() or (0,0,0,0)
                         self.assertEqual(frame['visible_bounds'],[x,y,right-x,bottom-y])
 
     def test_added_weapons_have_original_distinct_four_direction_appearances(self):
@@ -250,7 +250,7 @@ class RuntimeCatalogTests(unittest.TestCase):
         self.assertTrue(all(row['source_map']==47 for row in validation['invalid_warps']))
 
     def test_every_catalog_item_icon_and_ground_sprite_is_exported(self):
-        self.assertEqual([r['npc_graphic'] for r in self.catalog['missing_graphics']],[171])
+        self.assertEqual(self.catalog['missing_graphics'],[])
         for item in self.catalog['items'].values():
             if not item['graphic']:continue
             for role in ['icon','ground']:

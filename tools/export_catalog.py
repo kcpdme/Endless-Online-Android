@@ -73,7 +73,7 @@ def parse_npcs(data):
     return npcs
 
 
-from npc_render_metadata import NPC_RENDER_METADATA, NPC_STANDING_ANIMATION
+from npc_render_metadata import NPC_RENDER_METADATA, NPC_STANDING_ANIMATION, NPC_TRANSPARENT_POSES
 SERVER_BLOCKING_SPECS={0,1,2,3,4,5,6,7,9,16,18,20,21,22,23,24,25,26,27,28}
 
 MONEY_GRAPHICS=[{'minimum_amount':amount,'ground':f'23:{gid}'}
@@ -100,10 +100,12 @@ def export_npc(graphic,definition_name,image,out):
     npc['render_metadata']=dict(zip(['x_offset','y_offset','attack_x_offset','attack_y_offset','name_label_offset'],metadata))
     npc['render_metadata']['source']='EndlessClient NPCMetadataProvider.cs / NPCRenderer.UpdateDrawAreas'
     npc['animate_idle']=graphic in NPC_STANDING_ANIMATION
+    transparent_poses=NPC_TRANSPARENT_POSES.get(graphic,frozenset())
+    if transparent_poses:npc['transparent_poses']=sorted(transparent_poses)
     base=(graphic-1)*40
     standing={gid:image(21,base+gid) for gid in range(1,5)}
     usable_standing=[gid for gid,img in standing.items() if img.getbbox()]
-    if not usable_standing:raise UnsupportedNPCArt(f'NPC graphic{graphic} has no visible original standing art')
+    if not usable_standing and not transparent_poses:raise UnsupportedNPCArt(f'NPC graphic{graphic} has no visible original standing art')
     npc['pose_fallbacks']=[]
     for direction,back,flip in [('south',0,False),('east',0,True),('north',1,True),('west',1,False)]:
         for state,offsets in [('idle',([1+back*2,2+back*2] if npc['animate_idle'] else [1+back*2])),('frames',[5+back*4+i for i in range(4)]),('attack',[13+back*2+i for i in range(2)])]:
@@ -111,12 +113,13 @@ def export_npc(graphic,definition_name,image,out):
             for index,offset in enumerate(offsets):
                 frame=image(21,base+offset)
                 fallback=None
-                if not frame.getbbox():
+                if not frame.getbbox() and state not in transparent_poses:
+                    if not usable_standing:raise UnsupportedNPCArt(f'NPC graphic{graphic} has blank unexpected {state} art')
                     fallback=next((gid for gid in [1+back*2,2+back*2]+usable_standing if gid in usable_standing))
                     frame=standing[fallback]
                     npc['pose_fallbacks'].append({'state':state,'direction':direction,'frame':index,'blank_source_graphic_id':base+offset,'fallback_source_graphic_id':base+fallback})
                 if flip:frame=ImageOps.mirror(frame)
-                left,top,right,bottom=frame.getbbox()
+                left,top,right,bottom=frame.getbbox() or (0,0,0,0)
                 name=f'characters/npc{graphic}_{direction}_{state}_{index}.png';frame.save(out/name)
                 frames.append({'path':'res://content/'+name,'region':[0,0,frame.width,frame.height],'offset':npc_frame_offset(metadata,direction,'idle' if fallback else state,0 if fallback else index),
                                'visible_bounds':[left,top,right-left,bottom-top],

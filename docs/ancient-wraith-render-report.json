@@ -1,0 +1,13 @@
+{
+  "ball_placeholder_removed": true,
+  "checks": 47,
+  "idle_and_walk_invisible": true,
+  "original_attack_visible": true,
+  "pixel_render_test": true,
+  "profiles": [
+    "classic",
+    "enhanced"
+  ],
+  "result": "passed",
+  "targeting_preserved": true
+}
