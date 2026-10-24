@@ -42,7 +42,7 @@ func _draw_emotes(entries: Dictionary, set_index: int, horizontal: float) -> voi
 		if elapsed >= 960:
 			entries.erase(key)
 			continue
-		var at: Vector2 = game.online.chat_bubble_position(int(key))
+		var at: Vector2 = game.online.player_visual_position(int(key))
 		if not at.is_finite(): continue
 		var frame: int = mini(3,elapsed/240)
 		var region: Rect2 = Rect2((set_index*4+frame)*frame_width,0,frame_width,texture.get_height())

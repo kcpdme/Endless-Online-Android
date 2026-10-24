@@ -125,6 +125,7 @@ var waypoint: Vector2i = Vector2i(-1, -1)
 var modal_input_until: int = 0
 var redeem_ui: RefCounted
 var music: Node
+var stepping_stones: RefCounted = preload("res://scripts/stepping_stones.gd").new()
 var sfx: Node
 var quest_journal: RefCounted
 var quest_ui: RefCounted
@@ -462,6 +463,16 @@ func _step(direction: Vector2i) -> void:
 	player_tile = target
 	step_progress = 0.0
 	moving = true
+	play_stone_step(step_origin_tile,target)
+
+func local_render_pose() -> Dictionary:
+	var state: String = "frames" if moving else "cast" if online_mode and skills_ui.is_chanting(int(online.player.get("player_id",0))) else "attack" if swing_clock>0.0 else "idle"
+	if online_mode and online.seated(): state="sit_chair" if int(online.player.sitting)==1 else "sit_floor"
+	var base: Dictionary = {"position":player_world,"direction":facing,"state":state,"phase":animation_clock if moving else -1.0}
+	return stepping_stones.pose(base,tile_specs,step_origin_tile,player_tile,step_progress)
+
+func play_stone_step(from: Vector2i, to: Vector2i) -> void:
+	if sfx!=null and stepping_stones.crosses(tile_specs,from,to):sfx.play_named("JumpStone","step")
 
 func _cancel_movement(force_stop: bool = false) -> void:
 	movement_keys.clear()
@@ -1055,12 +1066,11 @@ func _draw_player() -> void:
 	draw_circle(Vector2.ZERO, 10.0, Color(0, 0, 0, 0.30))
 	draw_set_transform(Vector2.ZERO)
 	if online_mode: skills_ui.draw_effect("player", int(online.player.get("player_id", 0)), player_world, false)
-	var state: String = "frames" if moving else "cast" if online_mode and skills_ui.is_chanting(int(online.player.get("player_id", 0))) else "attack" if swing_clock > 0.0 else "idle"
-	if online_mode and online.seated(): state = "sit_chair" if int(online.player.sitting) == 1 else "sit_floor"
-	if not _draw_character_frame(_active_hero(), player_world, facing, state, Color("ff8888") if player_hit_flash > 0.0 else Color.WHITE):
-		# Explicitly identified placeholder if the optional character conversion is unavailable.
-		draw_circle(player_world + Vector2(0, -18), 9, Color("82bfa2"))
-		draw_circle(player_world + Vector2(0, -32), 6, GOLD)
+	var pose: Dictionary = local_render_pose()
+	var at: Vector2 = pose.position
+	if not _draw_character_frame(_active_hero(),at,str(pose.direction),str(pose.state),Color("ff8888") if player_hit_flash>0.0 else Color.WHITE,float(pose.phase)):
+		draw_circle(at+Vector2(0,-18),9,Color("82bfa2"))
+		draw_circle(at+Vector2(0,-32),6,GOLD)
 	if swing_clock > 0.0 and not bool(_active_hero().get("ranged", false)):
 		var aim: Vector2 = (tile_position(enemy_tile) - player_world).normalized()
 		if online_mode:

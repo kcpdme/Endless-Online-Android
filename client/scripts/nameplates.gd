@@ -57,14 +57,11 @@ func _actors() -> Array[Dictionary]:
 		if pid < 0 or (record != online.player and pid == own_id): continue
 		var local: bool = pid == own_id
 		var pose: Dictionary
-		if local:
-			var state: String = "frames" if game.moving else "cast" if game.skills_ui.is_chanting(pid) else "attack" if game.swing_clock>0.0 else "idle"
-			if online.seated(): state = "sit_chair" if int(online.player.sitting)==1 else "sit_floor"
-			pose = {"position":game.player_world, "direction":game.facing, "state":state, "phase":game.ONLINE_ATTACK_SWING_DURATION-game.swing_clock if state=="attack" else game.animation_clock}
+		if local: pose = game.local_render_pose()
 		else: pose = online.entity_render_pose("online_player",record)
 		# Classic player labels sit above the stable standing body, not equipment.
 		var top: Vector2 = Vector2(0, -82 if not str(pose.state).begins_with("sit_") else -72)
-		actors.append({"key":"player:%d" % pid, "id":pid, "text":str(record.get("name", "")), "pose":pose, "graphic":online.character_graphic(record), "top":top, "font":maxi(1,roundi(11.0*game.camera.zoom.x)), "color":Color("b9e2c5"), "health":-1.0, "sort":game.depth(game._world_tile(pose.position))*100+(30 if local else 55)})
+		actors.append({"key":"player:%d" % pid, "id":pid, "text":str(record.get("name", "")), "pose":pose, "graphic":online.character_graphic(record), "top":top, "font":maxi(1,roundi(11.0*game.camera.zoom.x)), "color":Color("b9e2c5"), "health":-1.0, "sort":game.depth(game._world_tile(pose.get("ground_position",pose.position)))*100+(30 if local else 55)})
 	return actors
 
 func _frame_parts(actor: Dictionary, standing: bool = false) -> Array:
@@ -151,7 +148,7 @@ func sync() -> void:
 		var health: float = float(actor.health)
 		var text: String = str(actor.text) if str(actor.key)==selected and health<0.0 and not speech_visible else ""
 		if text.is_empty() and health<0.0: continue
-		var top: Vector2 = world_to_local*((actor.pose.position as Vector2)+(actor.top as Vector2))
+		var top: Vector2 = world_to_local*((actor.pose.get("ground_position",actor.pose.position) as Vector2)+(actor.top as Vector2))
 		var count: int = entries.size()
 		_append(str(actor.key),text,top,int(actor.font),actor.color,health,40.0*game.camera.zoom.x)
 		if text.is_empty() or entries.size()==count: continue
@@ -162,7 +159,7 @@ func sync() -> void:
 		# sprite at the boundary cannot toggle it on and off every pixel.
 		label_rect = label_rect.grow(6.0 if obstructed_key==str(actor.key) else 2.0)
 		for other: Dictionary in actors:
-			if other.key==actor.key: continue
+			if other.key==actor.key and not bool(actor.pose.get("hopping",false)): continue
 			var body: Rect2 = _actor_bounds(other)
 			if body.has_area() and label_rect.intersects(world_to_local*body):
 				blocked=true;break

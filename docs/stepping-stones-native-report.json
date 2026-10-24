@@ -1,0 +1,46 @@
+{
+  "checks": 32,
+  "crossings": [
+    {
+      "hop": true,
+      "local_peak": 16.0,
+      "observer_peak": 16.0,
+      "tile": [
+        13,
+        15
+      ]
+    },
+    {
+      "hop": true,
+      "local_peak": 16.0,
+      "observer_peak": 16.0,
+      "tile": [
+        14,
+        15
+      ]
+    },
+    {
+      "hop": true,
+      "local_peak": 16.0,
+      "observer_peak": 16.0,
+      "tile": [
+        15,
+        15
+      ]
+    },
+    {
+      "hop": false,
+      "local_peak": 0.0,
+      "observer_peak": 0.0,
+      "tile": [
+        16,
+        15
+      ]
+    }
+  ],
+  "map_id": 7,
+  "operator_characters_modified": false,
+  "real_godot_gateway_native_world": true,
+  "result": "passed",
+  "two_native_players": true
+}

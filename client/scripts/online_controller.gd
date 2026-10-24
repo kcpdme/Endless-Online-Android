@@ -628,6 +628,7 @@ func request_step(direction: Vector2i) -> void:
 	transition_pending = passage
 	refresh_clock = 0.0
 	_start_step(target, game._direction_name(single))
+	game.play_stone_step(game.step_origin_tile,target)
 
 func _open_bumped_chest(tile: Vector2i) -> void:
 	# Original ArrowKeyController dispatches chest interaction on a blocked step.
@@ -828,6 +829,8 @@ func _track_entities(kind: String, rows: Array[Dictionary], id_field: String, at
 		if end < now: motion.walk_start = start
 		# Original EO queues/replays adjacent steps instead of restarting the
 		# current interpolation from a fractional position on every packet.
+		if kind=="player" and int(record.get(id_field,-1))!=int(player.get("player_id",-2)):
+			game.play_stone_step(game._world_tile(motion.to),tile)
 		steps.append({"from":motion.to,"to":target,"start":start,"direction":_facing(record.get("direction", 0))})
 		motion.to = target
 		motion.tile = tile
@@ -844,7 +847,7 @@ func _remote_sample(key: String, fallback: Vector2, now: float) -> Dictionary:
 	var step: Dictionary = steps[0]
 	var elapsed: float = now - float(step.start)
 	var fraction: float = clampf(elapsed / MOVE_SECONDS, 0.0, 1.0)
-	return {"position":(step.from as Vector2).lerp(step.to as Vector2, fraction),"state":"frames" if elapsed >= 0.0 and elapsed < MOVE_SECONDS else "idle","phase":maxf(0.0, now - float(motion.walk_start)),"direction":step.direction}
+	return {"position":(step.from as Vector2).lerp(step.to as Vector2, fraction),"state":"frames" if elapsed >= 0.0 and elapsed < MOVE_SECONDS else "idle","phase":maxf(0.0, now - float(motion.walk_start)),"direction":step.direction,"from_tile":game._world_tile(step.from),"to_tile":game._world_tile(step.to),"step_progress":fraction}
 
 func _remote_position(key: String, fallback: Vector2) -> Vector2:
 	return _remote_sample(key, fallback, Time.get_ticks_msec() / 1000.0).position
@@ -867,7 +870,7 @@ func entities() -> Array[Dictionary]:
 func entity_animation(kind: String, record: Dictionary) -> Dictionary:
 	var key: String = ("npc:" + str(int(record.get("index", -1)))) if kind == "online_npc" else ("player:" + str(int(record.get("player_id", -1))))
 	var now: float = Time.get_ticks_msec() / 1000.0
-	var sample: Dictionary = _remote_sample(key, Vector2.ZERO, now)
+	var sample: Dictionary = _remote_sample(key,game.tile_position(Vector2i(int(record.get("x",0)),int(record.get("y",0)))),now)
 	var phase: float = float(sample.phase)
 	var state: String = str(sample.state)
 	var direction: String = str(sample.get("direction", _facing(record.get("direction", 0)))) if state == "frames" else _facing(record.get("direction", 0))
@@ -883,7 +886,7 @@ func entity_animation(kind: String, record: Dictionary) -> Dictionary:
 	if kind == "online_player" and int(record.get("sitting", 0)) > 0:
 		state = "sit_chair" if int(record.sitting) == 1 else "sit_floor"
 		direction = _facing(record.get("direction", 0))
-	return {"key": key, "state": state, "phase": phase, "direction": direction}
+	return {"key":key,"state":state,"phase":phase,"direction":direction,"position":sample.position,"from_tile":sample.get("from_tile",Vector2i.ZERO),"to_tile":sample.get("to_tile",Vector2i.ZERO),"step_progress":sample.get("step_progress",1.0)}
 
 func player_name_offset(name: String) -> Vector2:
 	# Original CharacterRenderer centers the measured label on the 18px body,
@@ -923,7 +926,7 @@ func entity_render_pose(kind: String, record: Dictionary) -> Dictionary:
 	var key: String = kind+":"+str(int(record.get("index" if kind=="online_npc" else "player_id",-1)))
 	if not render_pose_cache.has(key):
 		var pose: Dictionary = entity_animation(kind,record)
-		pose.position = _remote_position(str(pose.key),game.tile_position(Vector2i(int(record.x),int(record.y))))
+		if kind=="online_player":pose=game.stepping_stones.pose(pose,game.tile_specs,pose.from_tile,pose.to_tile,float(pose.step_progress))
 		render_pose_cache[key] = pose
 	return render_pose_cache[key]
 
@@ -965,6 +968,12 @@ func draw_entity(entity: Dictionary) -> void:
 		if texture != null: game.draw_texture(texture, at - texture.get_size() / 2.0)
 
 	if str(entity.kind) != "online_item": game.skills_ui.draw_effect(effect_kind, effect_id, at, true)
+
+func player_visual_position(pid: int) -> Vector2:
+	if pid==int(player.get("player_id",-1)):return game.local_render_pose().position
+	for peer: Dictionary in players:
+		if int(peer.get("player_id",-1))==pid:return entity_render_pose("online_player",peer).position
+	return Vector2.INF
 
 func chat_bubble_position(pid: int) -> Vector2:
 	if pid < 0:
@@ -1167,7 +1176,7 @@ func map_entity_target(point: Vector2) -> Dictionary:
 		for peer: Dictionary in candidates:
 			var pid: int = int(peer.get("player_id",0))
 			var tile: Vector2i = Vector2i(int(peer.get("x",0)),int(peer.get("y",0)))
-			var at: Vector2 = game.player_world if pid == int(player.get("player_id",-1)) else _remote_position("player:%d" % pid,game.tile_position(tile))
+			var at: Vector2 = game.local_render_pose().position if pid == int(player.get("player_id",-1)) else entity_render_pose("online_player",peer).position
 			if Rect2(at-Vector2(24,76),Vector2(48,82)).has_point(point): return {"tile":tile,"kind":"player"}
 	# Ground loot gets a touch target matching its visible art, including tall items.
 	for drop: Dictionary in ([] if game.skills_ui.armed > 0 else drops):
@@ -1213,7 +1222,7 @@ func map_entity_target(point: Vector2) -> Dictionary:
 	for peer: Dictionary in players:
 		if int(peer.get("player_id", 0)) == int(player.get("player_id", 0)): continue
 		var tile: Vector2i = Vector2i(int(peer.x), int(peer.y))
-		var at: Vector2 = _remote_position("player:%d" % int(peer.player_id), game.tile_position(tile))
+		var at: Vector2 = entity_render_pose("online_player",peer).position
 		if Rect2(at - Vector2(24, 66), Vector2(48, 72)).has_point(point): return {"tile": tile, "kind": "player"}
 	return {}
 

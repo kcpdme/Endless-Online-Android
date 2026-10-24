@@ -1,0 +1,30 @@
+{
+  "checks": 109,
+  "four_directions": [
+    {
+      "direction": "south",
+      "equipment_layers_move_together": true,
+      "peak_lift": 16
+    },
+    {
+      "direction": "west",
+      "equipment_layers_move_together": true,
+      "peak_lift": 16
+    },
+    {
+      "direction": "north",
+      "equipment_layers_move_together": true,
+      "peak_lift": 16
+    },
+    {
+      "direction": "east",
+      "equipment_layers_move_together": true,
+      "peak_lift": 16
+    }
+  ],
+  "ground_position_preserved": true,
+  "native_sound_id": 41,
+  "pixel_render_test": true,
+  "queued_peer_segments": true,
+  "result": "passed"
+}
