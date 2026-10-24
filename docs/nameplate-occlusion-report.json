@@ -1,116 +1,135 @@
 {
   "cases": [
     {
-      "covered_caption_pixels": 103,
+      "clearance_hysteresis": true,
       "display_scale": 1.0,
-      "exposed_caption_pixels": 247,
-      "incorrect_pixels": 0,
       "kind": "crow",
-      "max_channel_delta": 0,
+      "no_fragments": true,
       "zoom": 1.0
     },
     {
-      "covered_caption_pixels": 156,
+      "clearance_hysteresis": true,
       "display_scale": 1.0,
-      "exposed_caption_pixels": 165,
-      "incorrect_pixels": 0,
       "kind": "crow",
-      "max_channel_delta": 0,
+      "no_fragments": true,
       "zoom": 1.65
     },
     {
-      "covered_caption_pixels": 232,
+      "clearance_hysteresis": true,
       "display_scale": 1.0,
-      "exposed_caption_pixels": 71,
-      "incorrect_pixels": 0,
       "kind": "crow",
-      "max_channel_delta": 0,
+      "no_fragments": true,
       "zoom": 2.5
     },
     {
-      "covered_caption_pixels": 136,
+      "clearance_hysteresis": true,
       "display_scale": 1.0,
-      "exposed_caption_pixels": 983,
-      "incorrect_pixels": 0,
       "kind": "player",
-      "max_channel_delta": 0,
+      "no_fragments": true,
       "zoom": 1.0
     },
     {
-      "covered_caption_pixels": 193,
+      "clearance_hysteresis": true,
       "display_scale": 1.0,
-      "exposed_caption_pixels": 891,
-      "incorrect_pixels": 0,
       "kind": "player",
-      "max_channel_delta": 0,
+      "no_fragments": true,
       "zoom": 1.65
     },
     {
-      "covered_caption_pixels": 10,
+      "clearance_hysteresis": true,
       "display_scale": 1.0,
-      "exposed_caption_pixels": 1070,
-      "incorrect_pixels": 0,
       "kind": "player",
-      "max_channel_delta": 0,
+      "no_fragments": true,
       "zoom": 2.5
     },
     {
-      "covered_caption_pixels": 202,
-      "display_scale": 1.5,
-      "exposed_caption_pixels": 522,
-      "incorrect_pixels": 0,
-      "kind": "crow",
-      "max_channel_delta": 0,
+      "clearance_hysteresis": true,
+      "display_scale": 1.0,
+      "kind": "guild_bob",
+      "no_fragments": true,
       "zoom": 1.0
     },
     {
-      "covered_caption_pixels": 327,
-      "display_scale": 1.5,
-      "exposed_caption_pixels": 340,
-      "incorrect_pixels": 0,
-      "kind": "crow",
-      "max_channel_delta": 0,
+      "clearance_hysteresis": true,
+      "display_scale": 1.0,
+      "kind": "guild_bob",
+      "no_fragments": true,
       "zoom": 1.65
     },
     {
-      "covered_caption_pixels": 511,
-      "display_scale": 1.5,
-      "exposed_caption_pixels": 154,
-      "incorrect_pixels": 0,
-      "kind": "crow",
-      "max_channel_delta": 1,
+      "clearance_hysteresis": true,
+      "display_scale": 1.0,
+      "kind": "guild_bob",
+      "no_fragments": true,
       "zoom": 2.5
     },
     {
-      "covered_caption_pixels": 283,
+      "clearance_hysteresis": true,
       "display_scale": 1.5,
-      "exposed_caption_pixels": 2177,
-      "incorrect_pixels": 0,
-      "kind": "player",
-      "max_channel_delta": 0,
+      "kind": "crow",
+      "no_fragments": true,
       "zoom": 1.0
     },
     {
-      "covered_caption_pixels": 418,
+      "clearance_hysteresis": true,
       "display_scale": 1.5,
-      "exposed_caption_pixels": 2051,
-      "incorrect_pixels": 0,
-      "kind": "player",
-      "max_channel_delta": 0,
+      "kind": "crow",
+      "no_fragments": true,
       "zoom": 1.65
     },
     {
-      "covered_caption_pixels": 17,
+      "clearance_hysteresis": true,
       "display_scale": 1.5,
-      "exposed_caption_pixels": 2452,
-      "incorrect_pixels": 0,
+      "kind": "crow",
+      "no_fragments": true,
+      "zoom": 2.5
+    },
+    {
+      "clearance_hysteresis": true,
+      "display_scale": 1.5,
       "kind": "player",
-      "max_channel_delta": 0,
+      "no_fragments": true,
+      "zoom": 1.0
+    },
+    {
+      "clearance_hysteresis": true,
+      "display_scale": 1.5,
+      "kind": "player",
+      "no_fragments": true,
+      "zoom": 1.65
+    },
+    {
+      "clearance_hysteresis": true,
+      "display_scale": 1.5,
+      "kind": "player",
+      "no_fragments": true,
+      "zoom": 2.5
+    },
+    {
+      "clearance_hysteresis": true,
+      "display_scale": 1.5,
+      "kind": "guild_bob",
+      "no_fragments": true,
+      "zoom": 1.0
+    },
+    {
+      "clearance_hysteresis": true,
+      "display_scale": 1.5,
+      "kind": "guild_bob",
+      "no_fragments": true,
+      "zoom": 1.65
+    },
+    {
+      "clearance_hysteresis": true,
+      "display_scale": 1.5,
+      "kind": "guild_bob",
+      "no_fragments": true,
       "zoom": 2.5
     }
   ],
-  "checks": 36,
+  "checks": 96,
   "pixel_render_test": true,
   "real_world_pipeline": true,
-  "result": "passed"
+  "result": "passed",
+  "scenery_checks": 6
 }

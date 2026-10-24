@@ -3,7 +3,6 @@ class NPCProbe extends "res://scripts/main.gd":
 	var sample: Dictionary = {}
 	func _draw() -> void:
 		if online != null and not sample.is_empty():
-			nameplates.draw_world()
 			online.draw_entity(sample)
 var checks: int = 0
 var failed: bool = false
@@ -18,10 +17,14 @@ func sprite(view: SubViewport, game: Node) -> Image:
 	var capture: Image = await body(view, game)
 	return capture.get_region(Rect2i(60, 62, 80, 75))
 func caption(view: SubViewport, game: Node) -> Image:
-	var layout: Dictionary = game.online.npc_name_layout(game.online.npc_graphic(game.online.npcs[0]), "south", false)
-	var baseline: Vector2 = game.position + game.tile_position(Vector2i.ZERO) + (layout.name as Vector2)
+	await process_frame # Attack state changes take effect in the next shared render sample.
+	game.nameplates.sync()
+	check(not game.nameplates.entries.is_empty(),"Visible attack has an inspect label or combat HP entry")
+	if game.nameplates.entries.is_empty():return Image.create(1,1,false,Image.FORMAT_RGBA8)
+	var entry: Dictionary = game.nameplates.entries[0]
 	game.queue_redraw(); await process_frame; await RenderingServer.frame_post_draw
-	return view.get_texture().get_image().get_region(Rect2i(int(baseline.x)-100, int(baseline.y)-14, 200, 15))
+	var top: Vector2 = entry.anchor
+	return view.get_texture().get_image().get_region(Rect2i(int(top.x)-100,int(top.y)-2,200,30))
 func run() -> void:
 	var view: SubViewport = SubViewport.new(); view.size = Vector2i(512,512); view.transparent_bg = true; view.world_2d = World2D.new(); view.render_target_update_mode = SubViewport.UPDATE_ALWAYS; root.add_child(view)
 	var game: NPCProbe = NPCProbe.new(); view.add_child(game); await process_frame
@@ -29,7 +32,9 @@ func run() -> void:
 	game.started=true;game.menu.hide();game.welcome.hide()
 	for child: Node in game.hud_root.get_children():
 		if child is Control and child != game.nameplates: child.hide(); child.set_process(false)
+	game.nameplates.set_process_input(false)
 	game.online_mode = true; game.online.active = true
+	game.nameplates.inspected_key="npc:1";game.nameplates.inspected_until=Time.get_ticks_msec()+60000;game.nameplates.inspected_map=int(game.world.get("id",-1))
 	var record: Dictionary = {"id":255,"index":1,"x":0,"y":0,"direction":0}
 	game.online.npcs.assign([record]); game.sample = {"kind":"online_npc","data":record}
 	var graphic: Dictionary = game.online.npc_graphic(record)
@@ -64,7 +69,7 @@ func run() -> void:
 		check(game.online.entity_animation("online_npc",record).state == "attack", "Native NPC attack selects attack artwork")
 		if DisplayServer.get_name() != "headless":
 			check((await sprite(view,game)).get_used_rect().has_area(), "Original attack sprite is visibly drawn in " + mode)
-			check((await caption(view,game)).get_used_rect().has_area(), "Combat name becomes visible during attack in " + mode)
+			check((await caption(view,game)).get_used_rect().has_area(), "Combat HP becomes visible during attack in " + mode)
 		game.online.npc_attack_until.clear()
 		if DisplayServer.get_name() != "headless": check(not (await body(view,game)).get_used_rect().has_area(), "Body, name and HP strip disappear again after attacking in " + mode)
 		game.online.npc_health.clear(); game.online.npc_attack_until[1] = Time.get_ticks_msec() / 1000.0 + .30

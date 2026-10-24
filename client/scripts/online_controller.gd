@@ -905,7 +905,9 @@ func npc_name_layout(graphic: Dictionary, direction: String, _fighting: bool) ->
 	var head: Vector2 = Vector2(float(offset[0]) - float(region[2]) / 2.0 + float(visible[0]) + float(visible[2]) / 2.0, float(offset[1]) - float(region[3]) + float(visible[1]))
 	# NPCRenderer.HorizontalCenter cancels the sprite's asymmetric X offset.
 	# Keep the name at its idle height; combat adds a strip above the name.
-	return {"head": head, "name": Vector2(0, head.y - 5), "health": Rect2(Vector2(-36 if float(region[2]) > 100 else -17, head.y - 25), Vector2(72 if float(region[2]) > 100 else 34, 5))}
+	var classic_top: float = -32.0-float((graphic.get("render_metadata",{}) as Dictionary).get("name_label_offset",0))
+	if pose=="attack" and is_equal_approx(classic_top,-32.0): classic_top=head.y-18.0
+	return {"classic_top":Vector2(0,classic_top),"head": head, "name": Vector2(0, head.y - 5), "health": Rect2(Vector2(-36 if float(region[2]) > 100 else -17, head.y - 25), Vector2(72 if float(region[2]) > 100 else 34, 5))}
 
 var render_pose_cache: Dictionary = {}
 var render_pose_frame: int = -1
@@ -1152,6 +1154,7 @@ func map_target(point: Vector2, fallback: Vector2i) -> Vector2i:
 	return hit.get("tile", fallback) as Vector2i
 
 func map_press(point: Vector2, entities_only: bool = false) -> bool:
+	game.nameplates.inspect_world(point)
 	var hit: Dictionary = map_entity_target(point)
 	if hit.is_empty() and entities_only and game.skills_ui.armed == 0: return false
 	map_click(hit.get("tile", game._world_tile(point)) as Vector2i, str(hit.get("kind", "")))

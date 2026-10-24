@@ -8,8 +8,8 @@ This public repository contains source code, content import tools, build scripts
 
 After importing content and building, install `builds/aster-vale-debug.apk` on an Android device (Android 7 / API 24 or later). This development build includes ARM64 and x86_64. Open **Aster Vale**, log in, select your character and join the persistent shared world. The build is signed with a development key, not configured for Google Play release.
 
-The current Android package is **`com.cloudgameboy.astervale`**, version 0.40.4
-(code 70). It installs separately from the earlier `io.astervale.prototype` app;
+The current Android package is **`com.cloudgameboy.astervale`**, version 0.40.5
+(code 71). It installs separately from the earlier `io.astervale.prototype` app;
 online accounts remain on the same server. Release APK and AAB exports use the
 same private release signing key.
 
@@ -53,11 +53,12 @@ checks that Android kept the app's original installation timestamp.
 
 ## Play online
 
-Version **0.40.4** keeps overhead names behind character silhouettes, including
-crows sharing a player’s tile. Names render at screen resolution with pixel-aligned
-baselines and a consistent outline. Names and combat HP bars follow the same
-interpolated sample as their sprites, while hidden Wraiths keep hidden captions.
-See [nameplate rendering verification](docs/NAMEPLATES.md).
+Version **0.40.5** restores classic inspection names: hover on desktop, or tap
+an NPC/player on phone to reveal its name for three seconds. Idle names no
+longer cover characters. Names use original NPC height metadata and stable
+screen-aligned glyphs. Combat HP and speech replace the normal label; a label
+that overlaps another character hides completely until clear.
+See [nameplate behavior and rendering verification](docs/NAMEPLATES.md).
 
 Version **0.40.2** sets monster EXP to **5×** and repairs three solid Estaq
 exit tiles, with matching native and mobile geometry. Desert, Naqid and island

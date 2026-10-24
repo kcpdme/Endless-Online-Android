@@ -1,0 +1,8 @@
+{
+  "checks": 653,
+  "classic_hover_and_metadata": true,
+  "combat_and_speech_priority": true,
+  "mobile_tap_inspection": true,
+  "result": "passed",
+  "transparent_pixel_hit_test": true
+}

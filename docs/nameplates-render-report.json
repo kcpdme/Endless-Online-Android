@@ -1,13 +1,17 @@
 {
-  "checks": 209,
+  "checks": 403,
   "distinct_glyph_images_by_scale": {
-    "1.0": 1,
-    "1.5": 2
+    "npc:1.0": 1,
+    "npc:1.5": 1,
+    "player:1.0": 1,
+    "player:1.5": 1
   },
   "input_and_modals_preserved": true,
   "max_glyph_channel_delta_by_scale": {
-    "1.0": 0,
-    "1.5": 1
+    "npc:1.0": 0,
+    "npc:1.5": 0,
+    "player:1.0": 0,
+    "player:1.5": 0
   },
   "pixel_render_test": true,
   "result": "passed",
