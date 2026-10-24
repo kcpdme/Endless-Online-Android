@@ -29,6 +29,17 @@ def checkout(name, path):
     actual = subprocess.check_output(['git', '-C', str(path), 'rev-parse', 'HEAD'], text=True).strip()
     if actual != commit: raise RuntimeError(f'Wrong revision for {name}')
 
+def apply_patches(source, patches):
+    def applied(patch):
+        return subprocess.run(['git','-C',str(source),'apply','--reverse','--check',str(patch)],capture_output=True).returncode == 0
+    classic = next((p for p in patches if p.name == 'etheos-classic-gold.patch'), None)
+    classic_applied = classic is not None and applied(classic)
+    for patch in patches:
+        # The classic patch nests/replaces the old weighted-rate block, so its
+        # presence also proves the superseded drop-rate patch was applied.
+        if patch.name == 'etheos-drop-rate.patch' and classic_applied: continue
+        if not applied(patch): run('git','-C',source,'apply',patch)
+
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('--state-dir', type=pathlib.Path, default=ROOT / '.local')
@@ -45,10 +56,8 @@ def main():
     deps = state / 'deps'; deps.mkdir(exist_ok=True)
     source = state / 'source'; build = state / 'build'; build.mkdir(exist_ok=True)
     checkout('etheos', source)
-    patches = [ROOT / 'patches' / name for name in ('etheos-password-v3.patch', 'etheos-redeem.patch', 'etheos-character-hp.patch', 'etheos-spikes.patch', 'etheos-mobile-spells.patch', 'etheos-mobile-feedback.patch', 'etheos-skill-training.patch', 'etheos-drop-rate.patch', 'etheos-protect-service-npcs.patch', 'etheos-starter-kit.patch', 'etheos-ice-blast-area.patch', 'etheos-npc-chat.patch', 'etheos-pk-feedback.patch')]
-    for patch in patches:
-        applied = subprocess.run(['git','-C',str(source),'apply','--reverse','--check',str(patch)],capture_output=True).returncode == 0
-        if not applied: run('git','-C',source,'apply',patch)
+    patches = [ROOT / 'patches' / name for name in ('etheos-password-v3.patch', 'etheos-redeem.patch', 'etheos-character-hp.patch', 'etheos-spikes.patch', 'etheos-mobile-spells.patch', 'etheos-mobile-feedback.patch', 'etheos-skill-training.patch', 'etheos-drop-rate.patch', 'etheos-protect-service-npcs.patch', 'etheos-starter-kit.patch', 'etheos-ice-blast-area.patch', 'etheos-npc-chat.patch', 'etheos-pk-feedback.patch', 'etheos-classic-gold.patch')]
+    apply_patches(source, patches)
     (source / 'json').mkdir(exist_ok=True)
     shutil.copy2(download(*JSON, deps / 'json.hpp'), source / 'json/json.hpp')
     checkout('bcrypt', build / 'bcrypt-src')
@@ -152,6 +161,8 @@ WorldDumpFile = ./world.bak.json
     npc_combat = configure_npc_combat(runtime)
     from configure_feature_content import configure as configure_features
     feature_content = configure_features(runtime)
+    from configure_classic_economy import configure as configure_classic_economy
+    classic_economy = configure_classic_economy(runtime)
     # Avoid loading SQL Server defaults at all (SQLite-only build).
     (runtime / 'config/database.ini').write_text('INCLUDE = ./config/database/sqlite.ini\nInstallSQL = ./install.sql\nAutoCreateDatabase = no\nDBPassFile =\nDBAuthType = sql\n')
     shutil.copy2(build / 'etheos', runtime / 'etheos')
@@ -161,7 +172,7 @@ WorldDumpFile = ./world.bak.json
               'sample':{'url':SAMPLE[0],'sha256':SAMPLE[1]}, 'sqlite':{'url':SQLITE[0],'sha256':SQLITE[1]}, 'nlohmann_json':{'url':JSON[0],'sha256':JSON[1]},
               'numbered_maps':len(maps),'highest_map_id':max(int(x.stem) for x in maps),
               'quest_conversion':'Generated .eqf copies with logged conservative legacy-syntax fixes. Original .txt bytes preserved. Real parser validation recorded separately.',
-              'quests':quests,'feature_content':feature_content,'runtime':str(runtime),'binding':'127.0.0.1:8078','database':'SQLite',
+              'quests':quests,'feature_content':feature_content,'classic_economy':classic_economy,'runtime':str(runtime),'binding':'127.0.0.1:8078','database':'SQLite',
               'original_npc_combat':npc_combat,
               'rights':'Reference content only; redistribution/publication permissions unresolved.'}
     (state / 'content-report.json').write_text(json.dumps(report, indent=2)+'\n')

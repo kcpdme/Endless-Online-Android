@@ -1,0 +1,6 @@
+{
+  "result": "passed",
+  "public_tls_handshake": true,
+  "unauthenticated_features_rejected": true,
+  "public_health": true
+}

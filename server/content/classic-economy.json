@@ -1,0 +1,6484 @@
+{
+  "version": 1,
+  "captured_date": "2026-10-24",
+  "sources": {
+    "shops": {
+      "url": "https://apollo-games.com/eoclassic/shops.php",
+      "sha256": "7901d7524c537d35b903ae9877a47a721dd3c255b60ffea4e35e67687cae9167"
+    },
+    "shop1": {
+      "url": "https://apollo-games.com/eoclassic/shop.php?shop=1",
+      "sha256": "06eaa1b00459b9ec5612ea23fa5738eed4f5c71b5ec89938bb7e7b6e6c453031"
+    },
+    "shop2": {
+      "url": "https://apollo-games.com/eoclassic/shop.php?shop=2",
+      "sha256": "dbde04a9ea63c90ea21952b4ff21fb9efe1546c822d573213e0925090a5f4995"
+    },
+    "shop3": {
+      "url": "https://apollo-games.com/eoclassic/shop.php?shop=3",
+      "sha256": "647f781ec191f0d3a204a3eef278ea4a222fb9c90a5bc9d8b90ec499563df003"
+    },
+    "shop4": {
+      "url": "https://apollo-games.com/eoclassic/shop.php?shop=4",
+      "sha256": "1e74be01c186397193fde596e422bfa69d53eee75fd3881f973b5fd017432fdf"
+    },
+    "shop5": {
+      "url": "https://apollo-games.com/eoclassic/shop.php?shop=5",
+      "sha256": "6e52d0e67e4be47db7df507bffccf503528c9edca447ef7cb77f5367cb1e8cc9"
+    },
+    "shop6": {
+      "url": "https://apollo-games.com/eoclassic/shop.php?shop=6",
+      "sha256": "a5a1448012b1e6bc7be75ba5c5d00cad3295e78e3d28bd48819c2ebcd416e161"
+    },
+    "shop7": {
+      "url": "https://apollo-games.com/eoclassic/shop.php?shop=7",
+      "sha256": "98e714e1ec7a1770d6b93da9e4df162095e829e675b0896e7f733ae0447f18cf"
+    },
+    "shop8": {
+      "url": "https://apollo-games.com/eoclassic/shop.php?shop=8",
+      "sha256": "98642539839fa27688bda0129fd96625df75ac416dda64ac368c7a456ce181c0"
+    },
+    "shop9": {
+      "url": "https://apollo-games.com/eoclassic/shop.php?shop=9",
+      "sha256": "452e52720f50963b9c20789026153a272063722e4c3e1bee704e46ba1fe84bad"
+    },
+    "shop10": {
+      "url": "https://apollo-games.com/eoclassic/shop.php?shop=10",
+      "sha256": "1f89c386c381318722ac3d6b9bbd970af476ec261413dcab935876d198a5945c"
+    },
+    "shop11": {
+      "url": "https://apollo-games.com/eoclassic/shop.php?shop=11",
+      "sha256": "4e193d9b0d579d816d12fd6cd1cacce3b3566bf6f3e4207c6915c923004c8002"
+    },
+    "shop12": {
+      "url": "https://apollo-games.com/eoclassic/shop.php?shop=12",
+      "sha256": "27206cff0d02f645479a5842ee527668117f0903b37a4543db959d142c45fc87"
+    },
+    "shop13": {
+      "url": "https://apollo-games.com/eoclassic/shop.php?shop=13",
+      "sha256": "5acc7c0fbfc5091b1008d4c8e1655e94a33f8baa888260d60e5e37b24a354b20"
+    },
+    "shop14": {
+      "url": "https://apollo-games.com/eoclassic/shop.php?shop=14",
+      "sha256": "68f5a2b0286c80c57e2246c2660fd3db4856c4dede87759def662059d3507ffc"
+    },
+    "shop15": {
+      "url": "https://apollo-games.com/eoclassic/shop.php?shop=15",
+      "sha256": "3c8aab6a3c7d768e9be6ba75da8421b25b575a61deda5c49674cc16a7174b3cb"
+    },
+    "shop16": {
+      "url": "https://apollo-games.com/eoclassic/shop.php?shop=16",
+      "sha256": "dbb494fa87bd7d17aeca8b980e6d0780230e8e1ea140d20fa8ef3de4d7aff908"
+    },
+    "shop17": {
+      "url": "https://apollo-games.com/eoclassic/shop.php?shop=17",
+      "sha256": "fc09d588427b8db8abb1645b173c9f2e936182b52c34d480879968081840b194"
+    },
+    "shop18": {
+      "url": "https://apollo-games.com/eoclassic/shop.php?shop=18",
+      "sha256": "8b8fc254efc37376d5938b7fd927689c4ecf54fba64924d48b5efeace9ace7ac"
+    },
+    "shop19": {
+      "url": "https://apollo-games.com/eoclassic/shop.php?shop=19",
+      "sha256": "16aee73506d6f4fe8800e7d4032026f262416c62ae7f155786b76a5c8765700a"
+    },
+    "shop20": {
+      "url": "https://apollo-games.com/eoclassic/shop.php?shop=20",
+      "sha256": "b1cd144b1621b68a629232af92d4ff7ffc413fcf020eb50cd8dc1e960728ea42"
+    },
+    "shop21": {
+      "url": "https://apollo-games.com/eoclassic/shop.php?shop=21",
+      "sha256": "c7fb2a341230e88a40937d21f8c419299f49457c0efd1595a5d8f0e2a71e8bbf"
+    },
+    "shop22": {
+      "url": "https://apollo-games.com/eoclassic/shop.php?shop=22",
+      "sha256": "3e5f4c331c4e7e116e0a35fabf986991aaa941280d8d38db43277d558aef5fad"
+    },
+    "shop23": {
+      "url": "https://apollo-games.com/eoclassic/shop.php?shop=23",
+      "sha256": "b2eb7bbfa77ea5364171ffddbb63fbd7aa0b0d2e3e11e12e03bf7ef15e7ee90b"
+    },
+    "shop24": {
+      "url": "https://apollo-games.com/eoclassic/shop.php?shop=24",
+      "sha256": "450ce0280083335f213e3d9020f148ae4c2d1d2b70104d7e890ffee415cc008b"
+    },
+    "shop25": {
+      "url": "https://apollo-games.com/eoclassic/shop.php?shop=25",
+      "sha256": "6192b3b70d912cf2ce3560203e26ae34a14f981ff6505e273d1b250e6cf2c130"
+    },
+    "shop26": {
+      "url": "https://apollo-games.com/eoclassic/shop.php?shop=26",
+      "sha256": "2c8ff7d5b1f3cd4ddb05e6408ed7904b47f37ec8d9c0eb6ec3e1818a8744ba84"
+    },
+    "shop27": {
+      "url": "https://apollo-games.com/eoclassic/shop.php?shop=27",
+      "sha256": "847b79b42696f16cb06c5584b679ba97e27672bf49ce38d9df70abbb72517d9a"
+    },
+    "shop28": {
+      "url": "https://apollo-games.com/eoclassic/shop.php?shop=28",
+      "sha256": "b3486135dcf48767e5143b0470a0bb8bc5263e2999c374e3e7553df3fa9513d1"
+    },
+    "shop29": {
+      "url": "https://apollo-games.com/eoclassic/shop.php?shop=29",
+      "sha256": "3029caa1094b7c4c3991af37ad1e01aa8d1685fdf216525ea3c63cc692db2e74"
+    },
+    "shop30": {
+      "url": "https://apollo-games.com/eoclassic/shop.php?shop=30",
+      "sha256": "77e4c136b29fe3b44ca4dec2c7c9c7c952c8de4710b06a4c790fae9e89208139"
+    },
+    "shop31": {
+      "url": "https://apollo-games.com/eoclassic/shop.php?shop=31",
+      "sha256": "7bf73b06b3d584e892d518871468187f39f81cca44e2609df27a9079fcd37acf"
+    },
+    "shop32": {
+      "url": "https://apollo-games.com/eoclassic/shop.php?shop=32",
+      "sha256": "d195ffbb054bff8df791b1ac0e720128a2d6eb1c589f3538d3ec3864a27c4b87"
+    },
+    "shop33": {
+      "url": "https://apollo-games.com/eoclassic/shop.php?shop=33",
+      "sha256": "59e1ee04ee55da96dd2c7a4f0dec2045ed43f16897bfe8151359e41837c5944c"
+    },
+    "shop34": {
+      "url": "https://apollo-games.com/eoclassic/shop.php?shop=34",
+      "sha256": "3a628664d7a29d3cb2de11e7b2ddf8f3d1e916036558d47fac53c847c1424383"
+    },
+    "shop35": {
+      "url": "https://apollo-games.com/eoclassic/shop.php?shop=35",
+      "sha256": "d8b0e6cb9a0bc5ddd756113da351500ab9f9eb79fc4aed2d8827f016e050bbba"
+    },
+    "shop36": {
+      "url": "https://apollo-games.com/eoclassic/shop.php?shop=36",
+      "sha256": "0d38d55759bfc4fe844062f6f3d855c6e1b9115dda25da43099b9172903eae0e"
+    },
+    "shop37": {
+      "url": "https://apollo-games.com/eoclassic/shop.php?shop=37",
+      "sha256": "70ac6732eedab7923a54b71461697544839ae5a5298695f264bf3d795d174c26"
+    },
+    "shop38": {
+      "url": "https://apollo-games.com/eoclassic/shop.php?shop=38",
+      "sha256": "1c1dac31fbd2dc167b201423ca07210aa327bf52ed72effd1c9a7c6b7d1209a4"
+    },
+    "shop39": {
+      "url": "https://apollo-games.com/eoclassic/shop.php?shop=39",
+      "sha256": "82ae38ac012c3c87d8b189c869ae677bfd57c7906053f9f7ef1689615e857aaa"
+    },
+    "shop40": {
+      "url": "https://apollo-games.com/eoclassic/shop.php?shop=40",
+      "sha256": "880709f3716752e70cea312920dbd70da88955902ad5bafabb1d4dff73830f1c"
+    },
+    "shop41": {
+      "url": "https://apollo-games.com/eoclassic/shop.php?shop=41",
+      "sha256": "694a5042ed5c6cdbd242763e13e94fd73960bf39d100b94c14c3e305b5136875"
+    },
+    "shop42": {
+      "url": "https://apollo-games.com/eoclassic/shop.php?shop=42",
+      "sha256": "6decfbac487f3bf4f7dbfc9dc3b1ce1d1a0622673c9dee99a9d6bc6493aa17f3"
+    },
+    "gold": {
+      "url": "https://apollo-games.com/eoclassic/item.php?item=1",
+      "sha256": "ceba67996d5be2c11116941d7e198aa8c1d118eee264390528b87b5427d04833"
+    },
+    "npc1": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=1",
+      "sha256": "0af1577edc6425754222a509b8af45aa98a4b8347b30bfc5bbeb7a935b854fa4"
+    },
+    "npc2": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=2",
+      "sha256": "45a2859338ff57ade0f8128e3f0f2ec410de009fba7e0363dc4fe3e61790e7cb"
+    },
+    "npc3": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=3",
+      "sha256": "c1e976d97e1e84a7a790b986db474bc0634c4056e26f2391a9eea08fa12ab2c4"
+    },
+    "npc4": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=4",
+      "sha256": "ed781cbadf8e4de618246447e81a94d9af1c614562da17b2558e1da45f757750"
+    },
+    "npc5": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=5",
+      "sha256": "9d0cbb8018261e54b59f0e18090107896f9d199eb8e15443ce61b21f1c19bb67"
+    },
+    "npc6": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=6",
+      "sha256": "d0b31b5a159cbec29965f4a61c8da4c2e85101ef9df21a912d32fda0138b74be"
+    },
+    "npc7": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=7",
+      "sha256": "f6369e4cdfa25b377e6d89628c03cac52a3c15ec049424d43b1f12250a9a7788"
+    },
+    "npc8": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=8",
+      "sha256": "6cf53aeee08e3e83cb2fb79ca87067de95592c92ed623e8aaa35e642c4f993eb"
+    },
+    "npc9": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=9",
+      "sha256": "f2d304c2161e11e07848c07183c1e51e06653dca473ead919da67d9e71bfec68"
+    },
+    "npc10": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=10",
+      "sha256": "d390a41818fcece1e21629f9fc42fe7871d840bd8d0d6aef9d85bdeae3b4b93d"
+    },
+    "npc11": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=11",
+      "sha256": "bf2c7320c4926a4aa35e6882f0ea0278f4a8325b60df175e1d00afd6fa1b87af"
+    },
+    "npc12": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=12",
+      "sha256": "99df8a567a573691d9216a1f2934b5452764cf278c40749937fee93a30947773"
+    },
+    "npc13": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=13",
+      "sha256": "c802e4aaa1c1c6eedec4346ecb8218dcadface23ce818293249aa9b56e8458b6"
+    },
+    "npc14": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=14",
+      "sha256": "3420e75d81435b665327a1e2ef95bca328435484b4f85627ec4e4b730f444050"
+    },
+    "npc17": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=17",
+      "sha256": "0e59e42f01d8c41e6d2e0e65116cdb12b72f0a0018890e03257c9817581ef094"
+    },
+    "npc18": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=18",
+      "sha256": "9a3f60d6dcfa043d4817ef6205a5713eab4913ff121c91c5c08f1bc5e69c2e66"
+    },
+    "npc19": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=19",
+      "sha256": "c14e2cbe55eacdb87eca35cf3e027b7009d8def4d204b0beaf4b49b2c1a4615c"
+    },
+    "npc20": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=20",
+      "sha256": "f15282a4497810fa76425e7f01dbbbf6600f53fc2fc809db0af74e60ddb111e8"
+    },
+    "npc35": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=35",
+      "sha256": "058d535d65a65b0b91a02ecb05325aa1c7c35d14c267f10d608b4cfdd3ee1cdb"
+    },
+    "npc47": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=47",
+      "sha256": "dda55efa8cf007e815dbdaf87c945c72236cd64ff1ea72593107f6ad012e1832"
+    },
+    "npc48": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=48",
+      "sha256": "89e89a858169915c737ce0ed75d2696c861558d3e7e4af1eb1c8327e8915c87d"
+    },
+    "npc51": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=51",
+      "sha256": "1ae00cd8305055c74dc68367d07a9307a3527757749106e2d0619010acde8c8c"
+    },
+    "npc59": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=59",
+      "sha256": "7cd1cdaec89bcb3f91dffeb8dbf4fcf91760a9cf353e042ec8ab48a4ed472fd0"
+    },
+    "npc60": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=60",
+      "sha256": "15d921cd125e87419bea04b511f891e71638f323fff4b9def14b994b1b6eea24"
+    },
+    "npc61": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=61",
+      "sha256": "c0c2f8afebadfb5b8838f543b008918c88f4c6f9630d25f893714f0b965b75d9"
+    },
+    "npc62": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=62",
+      "sha256": "24d8ebb15ab57145385f23467d93cb99479eed22651d28f6cdc9aeb3a8050df0"
+    },
+    "npc63": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=63",
+      "sha256": "a11d55221f53ec5fc4376b55d4babe88da64a1f12f2a1d2efc61e7143d63b53d"
+    },
+    "npc64": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=64",
+      "sha256": "5e2126cb8560397acbb60c73d781cbaf466c502e045fe301cfbc55b361b3a34f"
+    },
+    "npc65": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=65",
+      "sha256": "beead6cdfea90bacf6533d9e735afb2e1ef24d72dad01e7811d7be3e749c05dd"
+    },
+    "npc68": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=68",
+      "sha256": "fccd463141a981b96daaf7333ec4d0c57edb6f8a7cb92333e4a4cf2774feaefc"
+    },
+    "npc69": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=69",
+      "sha256": "2cbf8af8356b4650607d8b6da90a51a64af075a118dce737a7936bdf16622753"
+    },
+    "npc70": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=70",
+      "sha256": "e4fb6943cbb6fdfd257be644326f4ec3c0b79c89268720e6525277b85e03c5eb"
+    },
+    "npc71": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=71",
+      "sha256": "c7e8cacf3d2d6de511adeb91b7ddd744af219dba2e5bb2f502fd112e5a40e734"
+    },
+    "npc72": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=72",
+      "sha256": "4f6abd42168d59c2e12c1ddf2f8de5c58c4665a0c94e8fc2e603ddb3fdfb21b0"
+    },
+    "npc73": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=73",
+      "sha256": "fcdc79abbd693c3c4f61516bde5b563096baf3792f69d63f522077f81cb75cdf"
+    },
+    "npc74": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=74",
+      "sha256": "8abc2d981394d9f45ccd57ea52c6836e7d8ed88839386cf7e1fd1c2c2c0b96f9"
+    },
+    "npc77": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=77",
+      "sha256": "76ee3ca63b60bfef297b9e649a7f36c6f410c20bd976779e68ed84707c96c677"
+    },
+    "npc78": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=78",
+      "sha256": "306424c435ac78eb526a45cbade57d7f7a9da096dc5643b41dbf3e835600e20c"
+    },
+    "npc79": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=79",
+      "sha256": "d3e7caf443f62087c5934f4b85647809fe3d044606d1e144bea05ec32863d397"
+    },
+    "npc80": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=80",
+      "sha256": "ef1f720f98eefeaacde4c338d5550fbdfbbfc53eb68537205c8f6154965655f8"
+    },
+    "npc81": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=81",
+      "sha256": "382ded08856226f2f778be4241fe0f376a2d038615212965ebcd88344edd7945"
+    },
+    "npc82": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=82",
+      "sha256": "4fe5b5e66856b9026a152474663decd3c5945a0f7c0d9933659021a92bc71de0"
+    },
+    "npc83": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=83",
+      "sha256": "202b10455260e27f0e020df01dd01da823d5090835a778221e80e82a97e6861e"
+    },
+    "npc84": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=84",
+      "sha256": "75d4bbff5fb8aa88a2ea69276544be84d3ff37f2e30b8a03452bfebfb476efed"
+    },
+    "npc85": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=85",
+      "sha256": "8b6ae1d659a2c35a0aea4e611146db6bcbb8af98f523eda8a568b539b9a416aa"
+    },
+    "npc86": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=86",
+      "sha256": "513d5335e30a3c60fe3f79ae875ebfb628ce5f82839df4cccacb425adfed51ba"
+    },
+    "npc89": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=89",
+      "sha256": "4fc6e1ad6275ca39c24c83f2420f5fd462f041c91efcf02752f610d8234fa202"
+    },
+    "npc90": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=90",
+      "sha256": "0e14a46ad75e319bf5cb20669bb217275ea1a30ffca60b6130e064798ac1bd40"
+    },
+    "npc91": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=91",
+      "sha256": "e325d38dcda1529442c6fb3c385a9e6da1d17ebf10df5d071c650e369b6fdbdb"
+    },
+    "npc92": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=92",
+      "sha256": "487aa494cbc46fbee5d7bb0dab1b06900a516be76d89fdd56bf7d640d8b6bae8"
+    },
+    "npc93": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=93",
+      "sha256": "419b0bcf88296423e7b0b28d54df512676ac8380567b665cc0e9e717d6461eab"
+    },
+    "npc94": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=94",
+      "sha256": "a0465267e98807c15a46cd4f25c154557f314f8fdab68cdf53479a282b2adf9e"
+    },
+    "npc95": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=95",
+      "sha256": "cc54b4a7d30776647d5fae4ef8b03fa025f67b551fe431b54fa00585e60798c1"
+    },
+    "npc96": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=96",
+      "sha256": "a1238bbdaaf9822cb568a90e2e83cfede23d19de7711c5bf94b57e18905dd415"
+    },
+    "npc97": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=97",
+      "sha256": "e523f13b07c61b1d34e14867fad50907a7124525b1adcbc33d9a03f3a5a982a2"
+    },
+    "npc98": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=98",
+      "sha256": "9b769b7c57a8f39dbf7d43c1035b440275da7bb567cee4b87d264ac30722b756"
+    },
+    "npc101": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=101",
+      "sha256": "3c7cfa799083c4002a0ea23d3de877268ef6bdfeee175dd78b99251523a16060"
+    },
+    "npc102": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=102",
+      "sha256": "206194ca49dbab997656a8fa561af21535957f0f39461204c97d36417fad24ec"
+    },
+    "npc103": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=103",
+      "sha256": "0270c0fe683a7437b6b901601022b630082b10c33ca9bb8eec403e44fb452404"
+    },
+    "npc104": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=104",
+      "sha256": "d3d3493df8755411548ce7a66c52ca3d1283140b5526f8f93f5a755c4c5ab417"
+    },
+    "npc105": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=105",
+      "sha256": "c9a456d4f734ad5026bc356fe815ccb4736a87122e40422af278d342f3750896"
+    },
+    "npc113": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=113",
+      "sha256": "8dae14844d8c38652335c5a6a9e47cb6abfedb9c0df440ce9ded424c6f3ff397"
+    },
+    "npc117": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=117",
+      "sha256": "93f8941760b17768fbb71d5ad2aa1a968eba7fb79aea4bc2d2c58470621860af"
+    },
+    "npc118": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=118",
+      "sha256": "7fcc136e8377404e2ef28ea5f0666fc122ec3dbfd30cf9b57a083c888f984330"
+    },
+    "npc119": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=119",
+      "sha256": "0ef13fbe82c09d20670568dbdc7f5c154c27708258fde55d1a3be147af8a7c5a"
+    },
+    "npc120": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=120",
+      "sha256": "0634bc9917682a17dc15d9c6f3206376cc366a8a2445bb85ab81fb968b25dc3c"
+    },
+    "npc121": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=121",
+      "sha256": "e14e7c3fe517ed143ec2df20886c3ea1db78a29e53ade807f7abe94e9216df81"
+    },
+    "npc122": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=122",
+      "sha256": "5609629dd60f8618f16d9719cbc5384057270a4df4bc103f7e844394bba7746c"
+    },
+    "npc123": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=123",
+      "sha256": "30ad9f0ed0f1d09934166d83b6130f70da3f059e5a6a407b601401f5e86d5ab0"
+    },
+    "npc125": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=125",
+      "sha256": "625cd6b072c23947cbd9323bc12def372e38948317634f0301b62d0973e77ee7"
+    },
+    "npc127": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=127",
+      "sha256": "4511e20cd2fa2b4bb34316a1e28780362a51dc344452fdb886ea0b366435aac5"
+    },
+    "npc128": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=128",
+      "sha256": "b6e7168d8f021984b8d0b87497ed23278d4781aa09f4a8235d04e3981d38b2ef"
+    },
+    "npc129": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=129",
+      "sha256": "d5e47b9b870e0ad8dd3b5c6ebcf2c97cd0a169c829bd71fd2f31f821531d0717"
+    },
+    "npc130": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=130",
+      "sha256": "b6577062337af0457b6ab2ad746300675d0c3f4973d1c600dd44b31e1e2d146d"
+    },
+    "npc131": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=131",
+      "sha256": "03e9fc096deba14c492f59143596db99ecd648fee7a0710aa19d324ce2df9cd2"
+    },
+    "npc132": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=132",
+      "sha256": "d085e620da939083b12a515c70320ff523be5f27c72715bc84424892e76c5058"
+    },
+    "npc133": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=133",
+      "sha256": "75b1f5a21cafce9bd1b67827dc5d4c10fc6a5161f98155871a80efe94939cb0b"
+    },
+    "npc134": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=134",
+      "sha256": "8c0cd357ed592fe8ebe6fd9d007c1f41601479ae4392fb69c5a2a8952168b2f5"
+    },
+    "npc135": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=135",
+      "sha256": "4111e13c7dce28209d3f513613bbe2355cf955dc8d4b9ff467d88cfb76ef521b"
+    },
+    "npc136": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=136",
+      "sha256": "28c855e34c74e8d1286c7dda7200025ce6b6e858354b7b152ab0bca99c3d3026"
+    },
+    "npc137": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=137",
+      "sha256": "c174c44063ddbb14ff72f6a78dea478e9455daaf303ff7584e03bc5406c2ccb1"
+    },
+    "npc138": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=138",
+      "sha256": "edfda3981817c7171f1d735ee6bf48855a09a87a3d28f2bf41a7f5f6a2c60c7f"
+    },
+    "npc139": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=139",
+      "sha256": "22339e0af3acf96a1426f26368d5375ab92d783f1d433d5f5fd5241091479465"
+    },
+    "npc140": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=140",
+      "sha256": "fe634bc03fc11fadf1337c2709cda600fc7908af9b45b45e7ff7d7f0e9b0428b"
+    },
+    "npc141": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=141",
+      "sha256": "a40afb209ec3dcf9c08e7740a28981c732551581fa7d2be4c3a7ef67d6c11ab8"
+    },
+    "npc142": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=142",
+      "sha256": "d06ee39598516e636fe1221385e6d029285ea43f03a6266d47c945e8c6770db8"
+    },
+    "npc143": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=143",
+      "sha256": "c53f8f51d2768094bea311b61fc74d4d84e9d5ecfe9b6e43929b0737dbc53da0"
+    },
+    "npc145": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=145",
+      "sha256": "027783140c664777c94c06906684c182f87e13e74f8a7e4f49927356c0e914c6"
+    },
+    "npc146": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=146",
+      "sha256": "6e8809c1dcf467d14d8fe4e40326111e218e0a8af81ee0846cd79de3ebc7a4a7"
+    },
+    "npc147": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=147",
+      "sha256": "3858a5318e6f0297b16dd21608e9a75a756aacee05f557fd25dec17556139d98"
+    },
+    "npc149": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=149",
+      "sha256": "4c4c80b0f33af4ac1e5016010f47576426cca24affcd4be69966af54bc136a74"
+    },
+    "npc151": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=151",
+      "sha256": "3a39076b2aca9ae24e4494a63e2d6e55cb0af226b712fc7af29fa788d5e3fff8"
+    },
+    "npc170": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=170",
+      "sha256": "cad75e93909f33e6d25b7abbc4e6378b1559c7303815122dc3b2f4eae544458c"
+    },
+    "npc171": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=171",
+      "sha256": "a16c4a1978f2941c35a20b474154bf4f5816b1d1fa59f37b64f95c1fb996af9f"
+    },
+    "npc172": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=172",
+      "sha256": "b766b14f0a2478283d0bf4b66dd82aa0e6668cf309e5ab239059667dd66363aa"
+    },
+    "npc173": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=173",
+      "sha256": "e5a01a8ce228ea42f14bc265cb6eacc9506043055dff5f00c5525c397c68f7ba"
+    },
+    "npc174": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=174",
+      "sha256": "7d5a396d8092422b6cdb3d6329227bdba749472ce24db320efb886241ddaf135"
+    },
+    "npc178": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=178",
+      "sha256": "2ffdf72c11f1dd106a9beda368b2fdd79a98d2a95a01766cf6a48298db120fd4"
+    },
+    "npc181": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=181",
+      "sha256": "406333423d6b3e2fd55343afdfc8ae56fd77b270453f7b9d45176d7f4497b803"
+    },
+    "npc182": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=182",
+      "sha256": "f98ef43b0b018c00e1ac1822801ddf04386c235457f9dcd631eba55ca073c7d4"
+    },
+    "npc183": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=183",
+      "sha256": "881788a5f52c9bc48742112f21c1ac62c26f7f11526f3078555e2c47d2880b43"
+    },
+    "npc184": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=184",
+      "sha256": "07107f4405f8b35487aa043a752265e3353d9d729c8f8c8878563d74484625f8"
+    },
+    "npc185": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=185",
+      "sha256": "0eb09b1a7aef101e30b0a162d3b8a0ea3cafd5927613c242d7946f7946009a9b"
+    },
+    "npc186": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=186",
+      "sha256": "10c22ee322d4d8230595db8862298f17929f7568606fb21b5e33ccec22540c2d"
+    },
+    "npc187": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=187",
+      "sha256": "53652bc924addc3ef709179790494fef4f24b821b685ed1e4cbd391fba2f05fa"
+    },
+    "npc191": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=191",
+      "sha256": "60ac9cc11551c53da1ead0e49259e370c0188d16c6f4adf19a26aef21d267ffd"
+    },
+    "npc194": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=194",
+      "sha256": "e97822ed5ae6e587af5c8c61e275bb626500b3210afd60e5ff8c8d67848fbe42"
+    },
+    "npc198": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=198",
+      "sha256": "274ac8fdc462e7d0ceed5f01c7f8460e98153fef864c8d4e2fbbc0485fd5b252"
+    },
+    "npc201": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=201",
+      "sha256": "a5b6ff4454b256f98cbfc3a1d412a47a6aab1ce878afbd60e98bf95ad33ddd52"
+    },
+    "npc202": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=202",
+      "sha256": "9f24dade2ad81f06902823117773f5fd8edd7aa73e64219e575c200612f1b1d6"
+    },
+    "npc203": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=203",
+      "sha256": "1da2feb83854e1f69c5de7b34786f42a1db3f6a3bc2c820e8d8316caa6e94a27"
+    },
+    "npc204": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=204",
+      "sha256": "8ed909fde81a04dacdaf21ee56ebee3b350522a57deac7e52edef4dd60bceed9"
+    },
+    "npc205": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=205",
+      "sha256": "9afbe3b324355892b0224a867f66f2e87a76ff410ead224657ffc72b598223dd"
+    },
+    "npc206": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=206",
+      "sha256": "61c0cca2350a9482b682e16571d296a0520410b8b3924938d72694536f560aeb"
+    },
+    "npc207": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=207",
+      "sha256": "679df7acda416d977e257975ee8141f2a7826d4ab9a3dee0447dedb066788ae8"
+    },
+    "npc208": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=208",
+      "sha256": "4e6a846c97d57fed32a052cd240718701e3e101f38c7c851f6bc2c418b8a67ed"
+    },
+    "npc209": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=209",
+      "sha256": "db2f62eac88b0aad07f32ea21b6379f5af14748b0938fe144d48bd768403b64f"
+    },
+    "npc210": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=210",
+      "sha256": "ddc63f55854c2ec54957cf8340b992bd130b2ce765aa5493361d6529090d28f6"
+    },
+    "npc212": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=212",
+      "sha256": "64905ce6da2fcc95d6892bf52427f30cf7c8c52d0e2f6f29a8e330c9a853d8fc"
+    },
+    "npc213": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=213",
+      "sha256": "4c96cd8f6781bdb17de163567f284a911c355b0d6462ed4ee8d163de20c6b108"
+    },
+    "npc214": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=214",
+      "sha256": "2e15812098f68a50ed2278de428ce2665ed113ea86331a592e77ebb2893df631"
+    },
+    "npc215": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=215",
+      "sha256": "97646773bb2196988a8ea8b3d8628751362f1a205189a2c22ee6869a0b522ebf"
+    },
+    "npc216": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=216",
+      "sha256": "7d4fcb7db4a21ff469d8a39f4c81d0fd202e96dcc7b24b1c72f3467d2d41337f"
+    },
+    "npc217": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=217",
+      "sha256": "c6fa6cea845377fc6f0909003b1a014a03a7cf169327f48a84798ea5cd9127a1"
+    },
+    "npc218": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=218",
+      "sha256": "37af0c351cbb8907dc5f0a8c13199c693935f7575dfd169c2a6071e5787f6601"
+    },
+    "npc219": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=219",
+      "sha256": "d2a5a1e62a731eb2cd7dbefde998731a641769a6d4e468a4b45e512a3c582c09"
+    },
+    "npc220": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=220",
+      "sha256": "5a7bda5cef491477c084ff288edf9b9cff10d47104d6faa0d05429659fbd388a"
+    },
+    "npc222": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=222",
+      "sha256": "88872f54fa8ed4f531b4aa38b3a7afe96d0126181cc385881c86781ac0cb9a40"
+    },
+    "npc223": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=223",
+      "sha256": "25daed04008efbcb5bd8041931a4e188bab11dacd425d5d5a670931a65d59b3c"
+    },
+    "npc224": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=224",
+      "sha256": "009b723513d5eeba523196de9d90b79de317089d1832f1351f6c283fd65a24a2"
+    },
+    "npc225": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=225",
+      "sha256": "5b1d00d13f289a84e4d54178843cf86c46cb4b9523e31a69742a4a6d4c309a28"
+    },
+    "npc226": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=226",
+      "sha256": "6051a6f24590a11b4d0e332120f817ce710175c26022fd3e28a870cd96be2945"
+    },
+    "npc227": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=227",
+      "sha256": "3c333c956c7ca8bf19d2a6c0127846fd0664ab950874c4aba14d96e7ebe157bd"
+    },
+    "npc228": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=228",
+      "sha256": "139f5455eede14500bac856de43a92d60206eddf15bb35d938a09dbc9688af17"
+    },
+    "npc229": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=229",
+      "sha256": "159845f2f55e04188141647be6a0e735e7dd937feb35d043d12bf054f0048343"
+    },
+    "npc230": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=230",
+      "sha256": "302d8a6cf1298909689209cd9cc6ed6295d7ed1fad1ead6e474ebb81a469e215"
+    },
+    "npc231": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=231",
+      "sha256": "91fd7450329b2dcd6aec1f84f1e9750c9a9a4b1381db0aac8c10c3a2e8c875b7"
+    },
+    "npc232": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=232",
+      "sha256": "1fbb67741f0562bcce58693206953ab808f0cc9864b204f971bbe36011ace284"
+    },
+    "npc233": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=233",
+      "sha256": "f66f702ecb282ad99dd5d5cff1547e37c7013d639ff087f2ee6691c136551821"
+    },
+    "npc238": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=238",
+      "sha256": "d51095ad1eec6f0b06a8bf9a3176a7afde70c7963db9da5c5c6981648f6544a3"
+    },
+    "npc239": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=239",
+      "sha256": "b13d729e016f9b1a4fbac844241353b7a7c962114de23e485d8f02cf528ef1b4"
+    },
+    "npc240": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=240",
+      "sha256": "b61fd04132ddb7d2f2e40dd0bde42a75c869700e2847f16686bc004c22b95c32"
+    },
+    "npc241": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=241",
+      "sha256": "2a370a0ad03fcc5acdce91f0912ae2e8da06adf2a4ac4ce022d03656d49ee5af"
+    },
+    "npc242": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=242",
+      "sha256": "2957b5a4ade1db1bca8def1b83d17b7b182a97da0f3f995d8fef6e2af94ab84d"
+    },
+    "npc243": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=243",
+      "sha256": "0e2c5b6cd3efa5fa2e967d7554649cdaf2b570b35f7649bef62528f4350cfc10"
+    },
+    "npc244": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=244",
+      "sha256": "c1c72681835f2f3d6e4caa69b4848abeff5d6dc2ea92f4c5f682903b313e199e"
+    },
+    "npc245": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=245",
+      "sha256": "099cb981360d406b80df3356e5dd6dfa93bfc193c39b4887fd4cf61fb6a50c30"
+    },
+    "npc246": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=246",
+      "sha256": "1a660632c61b2d6234c576ee3b83aa5da0b232fc9bfeafc3d868361a4e0cf5db"
+    },
+    "npc248": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=248",
+      "sha256": "54651397c41ce611679bdd70cd87f1412a5e55a22f830a31bbc5a968227f63db"
+    },
+    "npc249": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=249",
+      "sha256": "0d9e083de553e5bd1296a0fcc09fd3bf1a99d4b7964105b3b157afade226b624"
+    },
+    "npc255": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=255",
+      "sha256": "4d477cb62fa36695a83d73908d1c1a7041794d8346fa83bdef416e1986aaf455"
+    },
+    "npc256": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=256",
+      "sha256": "f30ce9a9483f55bf26959aa110ac7302641cf301aed7f54e19f734f20229739e"
+    },
+    "npc257": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=257",
+      "sha256": "4fa1c210413e1b4b9f8ce0d7621088e6e32f773ab61888ca36d51be7b611a5e0"
+    },
+    "npc270": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=270",
+      "sha256": "8dca806f70c4d7dfa649964e6b3668f44d49f2ced7768392ba50cc8d75137ca5"
+    },
+    "npc274": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=274",
+      "sha256": "50eda046c126493f7b185b95e8c8289fac7422cc1d8612a40048ed7a23c7406d"
+    },
+    "npc285": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=285",
+      "sha256": "22c7d3047b00d3f8d98f0f74a57d608f4b8e8a7a346fe07122973c958123527c"
+    },
+    "npc287": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=287",
+      "sha256": "5ef8a8747ce739bf3401ee2fbb0d9ff392a04fc3b87f3bb17584ebf84147c866"
+    },
+    "npc288": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=288",
+      "sha256": "cd6d1d550a308c19beda4667b6f988eec70252772e407892a19c539b98c037fb"
+    },
+    "npc299": {
+      "url": "https://apollo-games.com/eoclassic/npc.php?npc=299",
+      "sha256": "5f366dd5ccf69efb109cad0b924878045a8e83b615fea4745110b1795a103c08"
+    }
+  },
+  "shops": [
+    {
+      "id": 1,
+      "name": "Aeven Weapon Smith",
+      "npc_ids": [
+        15
+      ],
+      "trade": [
+        {
+          "id": 21,
+          "buy": 100,
+          "sell": 5
+        },
+        {
+          "id": 27,
+          "buy": 350,
+          "sell": 15
+        },
+        {
+          "id": 207,
+          "buy": 500,
+          "sell": 30
+        },
+        {
+          "id": 34,
+          "buy": 650,
+          "sell": 50
+        },
+        {
+          "id": 18,
+          "buy": 1200,
+          "sell": 100
+        },
+        {
+          "id": 19,
+          "buy": 1600,
+          "sell": 100
+        },
+        {
+          "id": 283,
+          "buy": 2500,
+          "sell": 400
+        }
+      ],
+      "craft": []
+    },
+    {
+      "id": 2,
+      "name": "Aeven Armory",
+      "npc_ids": [
+        21
+      ],
+      "trade": [
+        {
+          "id": 56,
+          "buy": 100,
+          "sell": 6
+        },
+        {
+          "id": 55,
+          "buy": 300,
+          "sell": 18
+        },
+        {
+          "id": 52,
+          "buy": 500,
+          "sell": 28
+        },
+        {
+          "id": 53,
+          "buy": 800,
+          "sell": 60
+        },
+        {
+          "id": 57,
+          "buy": 1100,
+          "sell": 100
+        },
+        {
+          "id": 209,
+          "buy": 1100,
+          "sell": 100
+        },
+        {
+          "id": 28,
+          "buy": 1100,
+          "sell": 100
+        },
+        {
+          "id": 351,
+          "buy": 2200,
+          "sell": 240
+        }
+      ],
+      "craft": []
+    },
+    {
+      "id": 3,
+      "name": "Aeven Grocery",
+      "npc_ids": [
+        22
+      ],
+      "trade": [
+        {
+          "id": 2,
+          "buy": 10,
+          "sell": 0
+        },
+        {
+          "id": 3,
+          "buy": 40,
+          "sell": 5
+        },
+        {
+          "id": 4,
+          "buy": 70,
+          "sell": 10
+        },
+        {
+          "id": 5,
+          "buy": 120,
+          "sell": 10
+        },
+        {
+          "id": 331,
+          "buy": 18,
+          "sell": 2
+        },
+        {
+          "id": 8,
+          "buy": 50,
+          "sell": 2
+        },
+        {
+          "id": 161,
+          "buy": 50,
+          "sell": 2
+        },
+        {
+          "id": 162,
+          "buy": 50,
+          "sell": 2
+        },
+        {
+          "id": 46,
+          "buy": 50,
+          "sell": 2
+        },
+        {
+          "id": 13,
+          "buy": 50,
+          "sell": 2
+        },
+        {
+          "id": 6,
+          "buy": 120,
+          "sell": 8
+        },
+        {
+          "id": 7,
+          "buy": 150,
+          "sell": 8
+        },
+        {
+          "id": 65,
+          "buy": 250,
+          "sell": 6
+        },
+        {
+          "id": 408,
+          "buy": 700,
+          "sell": 70
+        }
+      ],
+      "craft": []
+    },
+    {
+      "id": 4,
+      "name": "Aeven Store",
+      "npc_ids": [
+        23
+      ],
+      "trade": [
+        {
+          "id": 151,
+          "buy": 50,
+          "sell": 3
+        },
+        {
+          "id": 130,
+          "buy": 500,
+          "sell": 50
+        },
+        {
+          "id": 145,
+          "buy": 1600,
+          "sell": 100
+        },
+        {
+          "id": 149,
+          "buy": 1600,
+          "sell": 140
+        },
+        {
+          "id": 148,
+          "buy": 1600,
+          "sell": 200
+        },
+        {
+          "id": 129,
+          "buy": 3200,
+          "sell": 200
+        },
+        {
+          "id": 146,
+          "buy": 3200,
+          "sell": 300
+        },
+        {
+          "id": 140,
+          "buy": 3200,
+          "sell": 300
+        },
+        {
+          "id": 141,
+          "buy": 6400,
+          "sell": 300
+        },
+        {
+          "id": 138,
+          "buy": 6400,
+          "sell": 400
+        },
+        {
+          "id": 172,
+          "buy": 6400,
+          "sell": 500
+        },
+        {
+          "id": 137,
+          "buy": 8000,
+          "sell": 500
+        },
+        {
+          "id": 415,
+          "buy": 9000,
+          "sell": 900
+        }
+      ],
+      "craft": [
+        {
+          "id": 464,
+          "ingredients": [
+            [
+              137,
+              1
+            ],
+            [
+              470,
+              6
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "name": "Aeven Store",
+      "npc_ids": [
+        24
+      ],
+      "trade": [
+        {
+          "id": 144,
+          "buy": 50,
+          "sell": 3
+        },
+        {
+          "id": 131,
+          "buy": 500,
+          "sell": 15
+        },
+        {
+          "id": 134,
+          "buy": 1600,
+          "sell": 40
+        },
+        {
+          "id": 132,
+          "buy": 1600,
+          "sell": 50
+        },
+        {
+          "id": 143,
+          "buy": 1600,
+          "sell": 100
+        },
+        {
+          "id": 139,
+          "buy": 3200,
+          "sell": 200
+        },
+        {
+          "id": 142,
+          "buy": 3200,
+          "sell": 250
+        },
+        {
+          "id": 154,
+          "buy": 3200,
+          "sell": 300
+        },
+        {
+          "id": 407,
+          "buy": 5000,
+          "sell": 500
+        },
+        {
+          "id": 155,
+          "buy": 6400,
+          "sell": 400
+        },
+        {
+          "id": 156,
+          "buy": 6400,
+          "sell": 420
+        },
+        {
+          "id": 133,
+          "buy": 8000,
+          "sell": 500
+        },
+        {
+          "id": 461,
+          "buy": 8800,
+          "sell": 800
+        }
+      ],
+      "craft": []
+    },
+    {
+      "id": 6,
+      "name": "Bartender",
+      "npc_ids": [
+        25
+      ],
+      "trade": [
+        {
+          "id": 210,
+          "buy": 50,
+          "sell": 0
+        },
+        {
+          "id": 211,
+          "buy": 100,
+          "sell": 0
+        }
+      ],
+      "craft": []
+    },
+    {
+      "id": 7,
+      "name": "Aeven Juweller Shop",
+      "npc_ids": [
+        26
+      ],
+      "trade": [
+        {
+          "id": 58,
+          "buy": 160,
+          "sell": 12
+        },
+        {
+          "id": 41,
+          "buy": 300,
+          "sell": 40
+        },
+        {
+          "id": 39,
+          "buy": 300,
+          "sell": 40
+        },
+        {
+          "id": 42,
+          "buy": 750,
+          "sell": 40
+        },
+        {
+          "id": 40,
+          "buy": 750,
+          "sell": 40
+        },
+        {
+          "id": 50,
+          "buy": 800,
+          "sell": 40
+        },
+        {
+          "id": 51,
+          "buy": 800,
+          "sell": 40
+        },
+        {
+          "id": 43,
+          "buy": 1000,
+          "sell": 50
+        },
+        {
+          "id": 44,
+          "buy": 1000,
+          "sell": 50
+        }
+      ],
+      "craft": []
+    },
+    {
+      "id": 8,
+      "name": "Aeven Merchant Shop",
+      "npc_ids": [
+        27
+      ],
+      "trade": [
+        {
+          "id": 72,
+          "buy": 400,
+          "sell": 40
+        },
+        {
+          "id": 73,
+          "buy": 400,
+          "sell": 40
+        },
+        {
+          "id": 74,
+          "buy": 400,
+          "sell": 40
+        },
+        {
+          "id": 75,
+          "buy": 400,
+          "sell": 40
+        },
+        {
+          "id": 76,
+          "buy": 400,
+          "sell": 40
+        },
+        {
+          "id": 77,
+          "buy": 400,
+          "sell": 40
+        },
+        {
+          "id": 78,
+          "buy": 400,
+          "sell": 40
+        },
+        {
+          "id": 79,
+          "buy": 400,
+          "sell": 40
+        },
+        {
+          "id": 71,
+          "buy": 400,
+          "sell": 40
+        },
+        {
+          "id": 226,
+          "buy": 1000,
+          "sell": 80
+        },
+        {
+          "id": 227,
+          "buy": 1000,
+          "sell": 80
+        },
+        {
+          "id": 228,
+          "buy": 1000,
+          "sell": 80
+        },
+        {
+          "id": 229,
+          "buy": 1000,
+          "sell": 80
+        },
+        {
+          "id": 230,
+          "buy": 1000,
+          "sell": 80
+        },
+        {
+          "id": 231,
+          "buy": 1000,
+          "sell": 80
+        },
+        {
+          "id": 232,
+          "buy": 1000,
+          "sell": 80
+        },
+        {
+          "id": 233,
+          "buy": 1000,
+          "sell": 80
+        },
+        {
+          "id": 234,
+          "buy": 1000,
+          "sell": 80
+        },
+        {
+          "id": 235,
+          "buy": 1500,
+          "sell": 80
+        },
+        {
+          "id": 236,
+          "buy": 1500,
+          "sell": 80
+        },
+        {
+          "id": 237,
+          "buy": 1500,
+          "sell": 80
+        }
+      ],
+      "craft": []
+    },
+    {
+      "id": 9,
+      "name": "Aeven Hat Maker",
+      "npc_ids": [
+        29
+      ],
+      "trade": [
+        {
+          "id": 193,
+          "buy": 50,
+          "sell": 5
+        },
+        {
+          "id": 194,
+          "buy": 50,
+          "sell": 5
+        },
+        {
+          "id": 195,
+          "buy": 50,
+          "sell": 5
+        },
+        {
+          "id": 182,
+          "buy": 100,
+          "sell": 10
+        },
+        {
+          "id": 183,
+          "buy": 100,
+          "sell": 10
+        },
+        {
+          "id": 184,
+          "buy": 100,
+          "sell": 10
+        },
+        {
+          "id": 185,
+          "buy": 100,
+          "sell": 10
+        },
+        {
+          "id": 186,
+          "buy": 100,
+          "sell": 10
+        },
+        {
+          "id": 188,
+          "buy": 140,
+          "sell": 10
+        },
+        {
+          "id": 189,
+          "buy": 140,
+          "sell": 10
+        },
+        {
+          "id": 190,
+          "buy": 140,
+          "sell": 10
+        },
+        {
+          "id": 191,
+          "buy": 140,
+          "sell": 10
+        },
+        {
+          "id": 192,
+          "buy": 140,
+          "sell": 10
+        },
+        {
+          "id": 198,
+          "buy": 240,
+          "sell": 24
+        },
+        {
+          "id": 392,
+          "buy": 1400,
+          "sell": 400
+        }
+      ],
+      "craft": []
+    },
+    {
+      "id": 10,
+      "name": "Aeven Shoe Maker",
+      "npc_ids": [
+        30
+      ],
+      "trade": [
+        {
+          "id": 102,
+          "buy": 50,
+          "sell": 3
+        },
+        {
+          "id": 103,
+          "buy": 50,
+          "sell": 3
+        },
+        {
+          "id": 104,
+          "buy": 50,
+          "sell": 3
+        },
+        {
+          "id": 105,
+          "buy": 50,
+          "sell": 3
+        },
+        {
+          "id": 106,
+          "buy": 50,
+          "sell": 3
+        },
+        {
+          "id": 107,
+          "buy": 50,
+          "sell": 3
+        },
+        {
+          "id": 108,
+          "buy": 50,
+          "sell": 3
+        },
+        {
+          "id": 109,
+          "buy": 50,
+          "sell": 3
+        },
+        {
+          "id": 110,
+          "buy": 50,
+          "sell": 3
+        },
+        {
+          "id": 111,
+          "buy": 50,
+          "sell": 3
+        },
+        {
+          "id": 112,
+          "buy": 50,
+          "sell": 3
+        },
+        {
+          "id": 113,
+          "buy": 50,
+          "sell": 3
+        },
+        {
+          "id": 114,
+          "buy": 50,
+          "sell": 3
+        },
+        {
+          "id": 115,
+          "buy": 50,
+          "sell": 3
+        },
+        {
+          "id": 116,
+          "buy": 50,
+          "sell": 3
+        },
+        {
+          "id": 117,
+          "buy": 50,
+          "sell": 3
+        },
+        {
+          "id": 118,
+          "buy": 50,
+          "sell": 3
+        },
+        {
+          "id": 119,
+          "buy": 50,
+          "sell": 3
+        },
+        {
+          "id": 120,
+          "buy": 50,
+          "sell": 3
+        },
+        {
+          "id": 121,
+          "buy": 50,
+          "sell": 3
+        },
+        {
+          "id": 122,
+          "buy": 50,
+          "sell": 3
+        },
+        {
+          "id": 123,
+          "buy": 50,
+          "sell": 3
+        }
+      ],
+      "craft": []
+    },
+    {
+      "id": 11,
+      "name": "Aeven Shoe Maker",
+      "npc_ids": [
+        31
+      ],
+      "trade": [
+        {
+          "id": 80,
+          "buy": 400,
+          "sell": 40
+        },
+        {
+          "id": 81,
+          "buy": 400,
+          "sell": 40
+        },
+        {
+          "id": 82,
+          "buy": 400,
+          "sell": 40
+        },
+        {
+          "id": 83,
+          "buy": 400,
+          "sell": 40
+        },
+        {
+          "id": 84,
+          "buy": 400,
+          "sell": 40
+        },
+        {
+          "id": 85,
+          "buy": 400,
+          "sell": 40
+        },
+        {
+          "id": 86,
+          "buy": 400,
+          "sell": 40
+        },
+        {
+          "id": 87,
+          "buy": 400,
+          "sell": 40
+        },
+        {
+          "id": 88,
+          "buy": 400,
+          "sell": 40
+        },
+        {
+          "id": 89,
+          "buy": 400,
+          "sell": 40
+        },
+        {
+          "id": 90,
+          "buy": 400,
+          "sell": 40
+        },
+        {
+          "id": 91,
+          "buy": 400,
+          "sell": 40
+        },
+        {
+          "id": 92,
+          "buy": 400,
+          "sell": 40
+        },
+        {
+          "id": 93,
+          "buy": 400,
+          "sell": 40
+        },
+        {
+          "id": 94,
+          "buy": 400,
+          "sell": 40
+        },
+        {
+          "id": 95,
+          "buy": 400,
+          "sell": 40
+        },
+        {
+          "id": 96,
+          "buy": 400,
+          "sell": 40
+        },
+        {
+          "id": 97,
+          "buy": 400,
+          "sell": 40
+        },
+        {
+          "id": 98,
+          "buy": 400,
+          "sell": 40
+        },
+        {
+          "id": 99,
+          "buy": 400,
+          "sell": 40
+        },
+        {
+          "id": 100,
+          "buy": 400,
+          "sell": 40
+        },
+        {
+          "id": 101,
+          "buy": 400,
+          "sell": 40
+        }
+      ],
+      "craft": []
+    },
+    {
+      "id": 12,
+      "name": "Aeven Staff Smith",
+      "npc_ids": [
+        33
+      ],
+      "trade": [
+        {
+          "id": 29,
+          "buy": 200,
+          "sell": 10
+        },
+        {
+          "id": 23,
+          "buy": 400,
+          "sell": 10
+        },
+        {
+          "id": 206,
+          "buy": 1000,
+          "sell": 40
+        },
+        {
+          "id": 205,
+          "buy": 2200,
+          "sell": 40
+        },
+        {
+          "id": 224,
+          "buy": 3400,
+          "sell": 40
+        },
+        {
+          "id": 290,
+          "buy": 5000,
+          "sell": 500
+        }
+      ],
+      "craft": []
+    },
+    {
+      "id": 13,
+      "name": "Barber Shop",
+      "npc_ids": [
+        34
+      ],
+      "trade": [
+        {
+          "id": 212,
+          "buy": 100,
+          "sell": 0
+        },
+        {
+          "id": 213,
+          "buy": 100,
+          "sell": 0
+        },
+        {
+          "id": 214,
+          "buy": 100,
+          "sell": 0
+        },
+        {
+          "id": 215,
+          "buy": 100,
+          "sell": 0
+        },
+        {
+          "id": 216,
+          "buy": 100,
+          "sell": 0
+        },
+        {
+          "id": 217,
+          "buy": 100,
+          "sell": 0
+        },
+        {
+          "id": 218,
+          "buy": 100,
+          "sell": 0
+        },
+        {
+          "id": 219,
+          "buy": 100,
+          "sell": 0
+        },
+        {
+          "id": 220,
+          "buy": 100,
+          "sell": 0
+        },
+        {
+          "id": 221,
+          "buy": 100,
+          "sell": 0
+        }
+      ],
+      "craft": []
+    },
+    {
+      "id": 14,
+      "name": "Witch",
+      "npc_ids": [
+        36
+      ],
+      "trade": [
+        {
+          "id": 248,
+          "buy": 0,
+          "sell": 10
+        },
+        {
+          "id": 249,
+          "buy": 0,
+          "sell": 10
+        },
+        {
+          "id": 250,
+          "buy": 0,
+          "sell": 15
+        },
+        {
+          "id": 258,
+          "buy": 0,
+          "sell": 15
+        },
+        {
+          "id": 259,
+          "buy": 0,
+          "sell": 15
+        },
+        {
+          "id": 256,
+          "buy": 0,
+          "sell": 20
+        },
+        {
+          "id": 257,
+          "buy": 0,
+          "sell": 20
+        },
+        {
+          "id": 264,
+          "buy": 0,
+          "sell": 20
+        },
+        {
+          "id": 318,
+          "buy": 0,
+          "sell": 20
+        },
+        {
+          "id": 319,
+          "buy": 0,
+          "sell": 20
+        },
+        {
+          "id": 251,
+          "buy": 0,
+          "sell": 25
+        },
+        {
+          "id": 252,
+          "buy": 0,
+          "sell": 25
+        },
+        {
+          "id": 260,
+          "buy": 0,
+          "sell": 25
+        },
+        {
+          "id": 14,
+          "buy": 0,
+          "sell": 30
+        },
+        {
+          "id": 261,
+          "buy": 0,
+          "sell": 30
+        },
+        {
+          "id": 262,
+          "buy": 0,
+          "sell": 30
+        },
+        {
+          "id": 299,
+          "buy": 0,
+          "sell": 30
+        },
+        {
+          "id": 300,
+          "buy": 0,
+          "sell": 30
+        },
+        {
+          "id": 322,
+          "buy": 0,
+          "sell": 30
+        },
+        {
+          "id": 353,
+          "buy": 0,
+          "sell": 30
+        },
+        {
+          "id": 356,
+          "buy": 0,
+          "sell": 30
+        },
+        {
+          "id": 253,
+          "buy": 0,
+          "sell": 40
+        },
+        {
+          "id": 254,
+          "buy": 0,
+          "sell": 40
+        },
+        {
+          "id": 255,
+          "buy": 0,
+          "sell": 40
+        },
+        {
+          "id": 263,
+          "buy": 0,
+          "sell": 40
+        },
+        {
+          "id": 265,
+          "buy": 0,
+          "sell": 40
+        },
+        {
+          "id": 320,
+          "buy": 0,
+          "sell": 40
+        },
+        {
+          "id": 321,
+          "buy": 0,
+          "sell": 40
+        },
+        {
+          "id": 358,
+          "buy": 0,
+          "sell": 40
+        },
+        {
+          "id": 277,
+          "buy": 0,
+          "sell": 50
+        },
+        {
+          "id": 308,
+          "buy": 0,
+          "sell": 50
+        },
+        {
+          "id": 323,
+          "buy": 0,
+          "sell": 50
+        },
+        {
+          "id": 355,
+          "buy": 0,
+          "sell": 50
+        },
+        {
+          "id": 278,
+          "buy": 0,
+          "sell": 60
+        },
+        {
+          "id": 354,
+          "buy": 0,
+          "sell": 60
+        },
+        {
+          "id": 395,
+          "buy": 0,
+          "sell": 60
+        },
+        {
+          "id": 400,
+          "buy": 0,
+          "sell": 60
+        },
+        {
+          "id": 402,
+          "buy": 0,
+          "sell": 60
+        },
+        {
+          "id": 396,
+          "buy": 0,
+          "sell": 70
+        },
+        {
+          "id": 397,
+          "buy": 0,
+          "sell": 70
+        },
+        {
+          "id": 398,
+          "buy": 0,
+          "sell": 70
+        },
+        {
+          "id": 399,
+          "buy": 0,
+          "sell": 100
+        },
+        {
+          "id": 478,
+          "buy": 0,
+          "sell": 60
+        },
+        {
+          "id": 480,
+          "buy": 0,
+          "sell": 60
+        },
+        {
+          "id": 473,
+          "buy": 0,
+          "sell": 60
+        },
+        {
+          "id": 469,
+          "buy": 0,
+          "sell": 220
+        },
+        {
+          "id": 470,
+          "buy": 0,
+          "sell": 220
+        },
+        {
+          "id": 475,
+          "buy": 0,
+          "sell": 40
+        },
+        {
+          "id": 483,
+          "buy": 0,
+          "sell": 40
+        },
+        {
+          "id": 20,
+          "buy": 200,
+          "sell": 20
+        },
+        {
+          "id": 127,
+          "buy": 250,
+          "sell": 20
+        },
+        {
+          "id": 128,
+          "buy": 250,
+          "sell": 20
+        },
+        {
+          "id": 173,
+          "buy": 300,
+          "sell": 0
+        },
+        {
+          "id": 174,
+          "buy": 300,
+          "sell": 0
+        },
+        {
+          "id": 175,
+          "buy": 300,
+          "sell": 0
+        },
+        {
+          "id": 176,
+          "buy": 800,
+          "sell": 0
+        },
+        {
+          "id": 177,
+          "buy": 800,
+          "sell": 0
+        },
+        {
+          "id": 178,
+          "buy": 800,
+          "sell": 0
+        }
+      ],
+      "craft": [
+        {
+          "id": 271,
+          "ingredients": [
+            [
+              259,
+              3
+            ],
+            [
+              250,
+              2
+            ],
+            [
+              15,
+              2
+            ]
+          ]
+        },
+        {
+          "id": 270,
+          "ingredients": [
+            [
+              249,
+              4
+            ],
+            [
+              248,
+              4
+            ],
+            [
+              260,
+              2
+            ],
+            [
+              263,
+              2
+            ]
+          ]
+        },
+        {
+          "id": 269,
+          "ingredients": [
+            [
+              257,
+              6
+            ],
+            [
+              253,
+              4
+            ],
+            [
+              254,
+              4
+            ],
+            [
+              265,
+              4
+            ]
+          ]
+        },
+        {
+          "id": 272,
+          "ingredients": [
+            [
+              271,
+              2
+            ],
+            [
+              258,
+              4
+            ],
+            [
+              256,
+              4
+            ],
+            [
+              265,
+              2
+            ]
+          ]
+        },
+        {
+          "id": 245,
+          "ingredients": [
+            [
+              254,
+              6
+            ],
+            [
+              252,
+              6
+            ],
+            [
+              261,
+              9
+            ],
+            [
+              14,
+              9
+            ]
+          ]
+        },
+        {
+          "id": 247,
+          "ingredients": [
+            [
+              151,
+              3
+            ],
+            [
+              255,
+              3
+            ],
+            [
+              263,
+              1
+            ],
+            [
+              15,
+              5
+            ]
+          ]
+        },
+        {
+          "id": 266,
+          "ingredients": [
+            [
+              251,
+              3
+            ],
+            [
+              265,
+              2
+            ],
+            [
+              1,
+              100
+            ]
+          ]
+        },
+        {
+          "id": 267,
+          "ingredients": [
+            [
+              251,
+              4
+            ],
+            [
+              265,
+              5
+            ],
+            [
+              1,
+              200
+            ]
+          ]
+        },
+        {
+          "id": 276,
+          "ingredients": [
+            [
+              268,
+              1
+            ],
+            [
+              257,
+              5
+            ],
+            [
+              248,
+              5
+            ],
+            [
+              263,
+              2
+            ]
+          ]
+        },
+        {
+          "id": 274,
+          "ingredients": [
+            [
+              155,
+              1
+            ],
+            [
+              272,
+              1
+            ],
+            [
+              261,
+              12
+            ],
+            [
+              262,
+              12
+            ]
+          ]
+        },
+        {
+          "id": 275,
+          "ingredients": [
+            [
+              138,
+              1
+            ],
+            [
+              272,
+              1
+            ],
+            [
+              261,
+              12
+            ],
+            [
+              262,
+              12
+            ]
+          ]
+        },
+        {
+          "id": 281,
+          "ingredients": [
+            [
+              37,
+              1
+            ],
+            [
+              272,
+              1
+            ],
+            [
+              282,
+              1
+            ],
+            [
+              278,
+              4
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": 15,
+      "name": "Desert Shop",
+      "npc_ids": [
+        37
+      ],
+      "trade": [
+        {
+          "id": 2,
+          "buy": 5,
+          "sell": 0
+        },
+        {
+          "id": 4,
+          "buy": 20,
+          "sell": 0
+        },
+        {
+          "id": 375,
+          "buy": 120,
+          "sell": 10
+        },
+        {
+          "id": 3,
+          "buy": 40,
+          "sell": 0
+        },
+        {
+          "id": 5,
+          "buy": 80,
+          "sell": 0
+        },
+        {
+          "id": 376,
+          "buy": 240,
+          "sell": 10
+        },
+        {
+          "id": 377,
+          "buy": 500,
+          "sell": 0
+        },
+        {
+          "id": 9,
+          "buy": 50,
+          "sell": 0
+        },
+        {
+          "id": 10,
+          "buy": 50,
+          "sell": 0
+        },
+        {
+          "id": 16,
+          "buy": 75,
+          "sell": 0
+        },
+        {
+          "id": 17,
+          "buy": 100,
+          "sell": 0
+        }
+      ],
+      "craft": [
+        {
+          "id": 15,
+          "ingredients": [
+            [
+              16,
+              1
+            ],
+            [
+              264,
+              1
+            ],
+            [
+              1,
+              75
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": 16,
+      "name": "Centaur Shoe Maker",
+      "npc_ids": [
+        38
+      ],
+      "trade": [
+        {
+          "id": 80,
+          "buy": 350,
+          "sell": 80
+        },
+        {
+          "id": 81,
+          "buy": 350,
+          "sell": 80
+        },
+        {
+          "id": 82,
+          "buy": 350,
+          "sell": 80
+        },
+        {
+          "id": 83,
+          "buy": 350,
+          "sell": 80
+        },
+        {
+          "id": 84,
+          "buy": 350,
+          "sell": 80
+        },
+        {
+          "id": 85,
+          "buy": 350,
+          "sell": 80
+        },
+        {
+          "id": 86,
+          "buy": 350,
+          "sell": 80
+        },
+        {
+          "id": 87,
+          "buy": 350,
+          "sell": 80
+        },
+        {
+          "id": 88,
+          "buy": 350,
+          "sell": 80
+        },
+        {
+          "id": 89,
+          "buy": 350,
+          "sell": 80
+        },
+        {
+          "id": 90,
+          "buy": 350,
+          "sell": 80
+        },
+        {
+          "id": 91,
+          "buy": 350,
+          "sell": 80
+        },
+        {
+          "id": 92,
+          "buy": 350,
+          "sell": 80
+        },
+        {
+          "id": 93,
+          "buy": 350,
+          "sell": 80
+        },
+        {
+          "id": 94,
+          "buy": 350,
+          "sell": 80
+        },
+        {
+          "id": 95,
+          "buy": 350,
+          "sell": 80
+        },
+        {
+          "id": 96,
+          "buy": 350,
+          "sell": 80
+        },
+        {
+          "id": 97,
+          "buy": 350,
+          "sell": 80
+        },
+        {
+          "id": 98,
+          "buy": 350,
+          "sell": 80
+        },
+        {
+          "id": 99,
+          "buy": 350,
+          "sell": 80
+        },
+        {
+          "id": 100,
+          "buy": 350,
+          "sell": 80
+        },
+        {
+          "id": 101,
+          "buy": 350,
+          "sell": 80
+        },
+        {
+          "id": 382,
+          "buy": 500,
+          "sell": 80
+        },
+        {
+          "id": 383,
+          "buy": 500,
+          "sell": 80
+        }
+      ],
+      "craft": []
+    },
+    {
+      "id": 17,
+      "name": "Centaur Hat Maker",
+      "npc_ids": [
+        39
+      ],
+      "trade": [
+        {
+          "id": 198,
+          "buy": 200,
+          "sell": 40
+        },
+        {
+          "id": 180,
+          "buy": 250,
+          "sell": 50
+        },
+        {
+          "id": 181,
+          "buy": 350,
+          "sell": 60
+        },
+        {
+          "id": 179,
+          "buy": 500,
+          "sell": 70
+        },
+        {
+          "id": 187,
+          "buy": 600,
+          "sell": 80
+        },
+        {
+          "id": 196,
+          "buy": 600,
+          "sell": 80
+        },
+        {
+          "id": 315,
+          "buy": 1000,
+          "sell": 200
+        },
+        {
+          "id": 443,
+          "buy": 1200,
+          "sell": 400
+        },
+        {
+          "id": 392,
+          "buy": 1400,
+          "sell": 400
+        }
+      ],
+      "craft": []
+    },
+    {
+      "id": 18,
+      "name": "Centaur Armory",
+      "npc_ids": [
+        40
+      ],
+      "trade": [
+        {
+          "id": 56,
+          "buy": 100,
+          "sell": 0
+        },
+        {
+          "id": 55,
+          "buy": 400,
+          "sell": 0
+        },
+        {
+          "id": 52,
+          "buy": 600,
+          "sell": 0
+        },
+        {
+          "id": 53,
+          "buy": 700,
+          "sell": 0
+        },
+        {
+          "id": 57,
+          "buy": 900,
+          "sell": 0
+        },
+        {
+          "id": 209,
+          "buy": 900,
+          "sell": 0
+        }
+      ],
+      "craft": []
+    },
+    {
+      "id": 19,
+      "name": "Centaur Weapon Smith",
+      "npc_ids": [
+        41
+      ],
+      "trade": [
+        {
+          "id": 35,
+          "buy": 500,
+          "sell": 50
+        },
+        {
+          "id": 36,
+          "buy": 500,
+          "sell": 50
+        },
+        {
+          "id": 31,
+          "buy": 500,
+          "sell": 50
+        },
+        {
+          "id": 26,
+          "buy": 700,
+          "sell": 50
+        },
+        {
+          "id": 30,
+          "buy": 1000,
+          "sell": 100
+        },
+        {
+          "id": 32,
+          "buy": 1500,
+          "sell": 150
+        },
+        {
+          "id": 24,
+          "buy": 1700,
+          "sell": 170
+        },
+        {
+          "id": 25,
+          "buy": 1700,
+          "sell": 170
+        },
+        {
+          "id": 33,
+          "buy": 2000,
+          "sell": 170
+        },
+        {
+          "id": 225,
+          "buy": 3000,
+          "sell": 170
+        }
+      ],
+      "craft": []
+    },
+    {
+      "id": 20,
+      "name": "Port Shop",
+      "npc_ids": [
+        42
+      ],
+      "trade": [
+        {
+          "id": 136,
+          "buy": 1000,
+          "sell": 80
+        },
+        {
+          "id": 135,
+          "buy": 2000,
+          "sell": 160
+        },
+        {
+          "id": 169,
+          "buy": 2000,
+          "sell": 160
+        },
+        {
+          "id": 166,
+          "buy": 2000,
+          "sell": 250
+        },
+        {
+          "id": 170,
+          "buy": 4000,
+          "sell": 260
+        },
+        {
+          "id": 158,
+          "buy": 4000,
+          "sell": 260
+        },
+        {
+          "id": 47,
+          "buy": 4000,
+          "sell": 500
+        },
+        {
+          "id": 165,
+          "buy": 6000,
+          "sell": 500
+        }
+      ],
+      "craft": []
+    },
+    {
+      "id": 21,
+      "name": "Port Shop",
+      "npc_ids": [
+        43
+      ],
+      "trade": [
+        {
+          "id": 48,
+          "buy": 1000,
+          "sell": 80
+        },
+        {
+          "id": 163,
+          "buy": 2000,
+          "sell": 80
+        },
+        {
+          "id": 164,
+          "buy": 2000,
+          "sell": 80
+        },
+        {
+          "id": 168,
+          "buy": 2000,
+          "sell": 140
+        },
+        {
+          "id": 152,
+          "buy": 4000,
+          "sell": 190
+        },
+        {
+          "id": 157,
+          "buy": 4000,
+          "sell": 300
+        },
+        {
+          "id": 167,
+          "buy": 4000,
+          "sell": 500
+        },
+        {
+          "id": 147,
+          "buy": 6000,
+          "sell": 600
+        }
+      ],
+      "craft": []
+    },
+    {
+      "id": 22,
+      "name": "Event Shop",
+      "npc_ids": [
+        44
+      ],
+      "trade": [
+        {
+          "id": 159,
+          "buy": 5,
+          "sell": 0
+        },
+        {
+          "id": 160,
+          "buy": 5,
+          "sell": 0
+        }
+      ],
+      "craft": []
+    },
+    {
+      "id": 23,
+      "name": "Ice Shop (Armory)",
+      "npc_ids": [
+        49
+      ],
+      "trade": [
+        {
+          "id": 280,
+          "buy": 6000,
+          "sell": 500
+        },
+        {
+          "id": 279,
+          "buy": 6000,
+          "sell": 500
+        },
+        {
+          "id": 369,
+          "buy": 16000,
+          "sell": 1000
+        },
+        {
+          "id": 370,
+          "buy": 16000,
+          "sell": 1000
+        },
+        {
+          "id": 289,
+          "buy": 500,
+          "sell": 50
+        },
+        {
+          "id": 259,
+          "buy": 0,
+          "sell": 40
+        }
+      ],
+      "craft": []
+    },
+    {
+      "id": 24,
+      "name": "Ice shop (Smith)",
+      "npc_ids": [
+        50
+      ],
+      "trade": [
+        {
+          "id": 259,
+          "buy": 0,
+          "sell": 40
+        },
+        {
+          "id": 284,
+          "buy": 5700,
+          "sell": 500
+        },
+        {
+          "id": 285,
+          "buy": 7900,
+          "sell": 800
+        },
+        {
+          "id": 286,
+          "buy": 9900,
+          "sell": 1200
+        }
+      ],
+      "craft": [
+        {
+          "id": 282,
+          "ingredients": [
+            [
+              27,
+              1
+            ],
+            [
+              259,
+              60
+            ],
+            [
+              1,
+              250
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": 25,
+      "name": "Illusion Shop",
+      "npc_ids": [
+        52
+      ],
+      "trade": [
+        {
+          "id": 293,
+          "buy": 3,
+          "sell": 0
+        },
+        {
+          "id": 294,
+          "buy": 5,
+          "sell": 0
+        },
+        {
+          "id": 292,
+          "buy": 8,
+          "sell": 0
+        },
+        {
+          "id": 291,
+          "buy": 20,
+          "sell": 0
+        },
+        {
+          "id": 295,
+          "buy": 25,
+          "sell": 0
+        },
+        {
+          "id": 296,
+          "buy": 40,
+          "sell": 0
+        }
+      ],
+      "craft": []
+    },
+    {
+      "id": 26,
+      "name": "Marble Shop",
+      "npc_ids": [
+        87
+      ],
+      "trade": [
+        {
+          "id": 318,
+          "buy": 0,
+          "sell": 25
+        },
+        {
+          "id": 319,
+          "buy": 0,
+          "sell": 25
+        },
+        {
+          "id": 320,
+          "buy": 0,
+          "sell": 25
+        },
+        {
+          "id": 321,
+          "buy": 0,
+          "sell": 25
+        },
+        {
+          "id": 322,
+          "buy": 0,
+          "sell": 25
+        },
+        {
+          "id": 323,
+          "buy": 0,
+          "sell": 25
+        },
+        {
+          "id": 309,
+          "buy": 0,
+          "sell": 25
+        },
+        {
+          "id": 360,
+          "buy": 2000,
+          "sell": 200
+        },
+        {
+          "id": 301,
+          "buy": 0,
+          "sell": 10
+        },
+        {
+          "id": 302,
+          "buy": 0,
+          "sell": 10
+        },
+        {
+          "id": 303,
+          "buy": 0,
+          "sell": 10
+        },
+        {
+          "id": 304,
+          "buy": 0,
+          "sell": 10
+        },
+        {
+          "id": 305,
+          "buy": 0,
+          "sell": 10
+        },
+        {
+          "id": 306,
+          "buy": 0,
+          "sell": 10
+        },
+        {
+          "id": 307,
+          "buy": 0,
+          "sell": 10
+        },
+        {
+          "id": 471,
+          "buy": 0,
+          "sell": 40
+        },
+        {
+          "id": 476,
+          "buy": 0,
+          "sell": 40
+        }
+      ],
+      "craft": [
+        {
+          "id": 311,
+          "ingredients": [
+            [
+              318,
+              8
+            ],
+            [
+              320,
+              8
+            ],
+            [
+              322,
+              10
+            ],
+            [
+              1,
+              250
+            ]
+          ]
+        },
+        {
+          "id": 312,
+          "ingredients": [
+            [
+              319,
+              8
+            ],
+            [
+              320,
+              8
+            ],
+            [
+              322,
+              10
+            ]
+          ]
+        },
+        {
+          "id": 406,
+          "ingredients": [
+            [
+              396,
+              10
+            ],
+            [
+              405,
+              6
+            ],
+            [
+              402,
+              6
+            ],
+            [
+              399,
+              3
+            ]
+          ]
+        },
+        {
+          "id": 313,
+          "ingredients": [
+            [
+              319,
+              6
+            ],
+            [
+              322,
+              10
+            ],
+            [
+              322,
+              1
+            ]
+          ]
+        },
+        {
+          "id": 314,
+          "ingredients": [
+            [
+              320,
+              6
+            ],
+            [
+              321,
+              6
+            ],
+            [
+              323,
+              4
+            ],
+            [
+              315,
+              1
+            ]
+          ]
+        },
+        {
+          "id": 324,
+          "ingredients": [
+            [
+              311,
+              1
+            ],
+            [
+              312,
+              1
+            ],
+            [
+              1,
+              250
+            ]
+          ]
+        },
+        {
+          "id": 330,
+          "ingredients": [
+            [
+              322,
+              4
+            ],
+            [
+              318,
+              4
+            ],
+            [
+              323,
+              4
+            ],
+            [
+              321,
+              4
+            ]
+          ]
+        },
+        {
+          "id": 328,
+          "ingredients": [
+            [
+              338,
+              10
+            ],
+            [
+              337,
+              10
+            ],
+            [
+              340,
+              20
+            ],
+            [
+              339,
+              1
+            ]
+          ]
+        },
+        {
+          "id": 327,
+          "ingredients": [
+            [
+              328,
+              6
+            ]
+          ]
+        },
+        {
+          "id": 361,
+          "ingredients": [
+            [
+              301,
+              2
+            ],
+            [
+              302,
+              3
+            ],
+            [
+              303,
+              2
+            ],
+            [
+              304,
+              6
+            ]
+          ]
+        },
+        {
+          "id": 363,
+          "ingredients": [
+            [
+              302,
+              2
+            ],
+            [
+              305,
+              4
+            ],
+            [
+              306,
+              2
+            ],
+            [
+              307,
+              6
+            ]
+          ]
+        },
+        {
+          "id": 362,
+          "ingredients": [
+            [
+              361,
+              2
+            ],
+            [
+              363,
+              2
+            ],
+            [
+              307,
+              10
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": 27,
+      "name": "Hula Hula Shoppe",
+      "npc_ids": [
+        99
+      ],
+      "trade": [
+        {
+          "id": 332,
+          "buy": 4,
+          "sell": 1
+        },
+        {
+          "id": 333,
+          "buy": 4,
+          "sell": 1
+        },
+        {
+          "id": 334,
+          "buy": 25000,
+          "sell": 10000
+        },
+        {
+          "id": 335,
+          "buy": 25000,
+          "sell": 10000
+        }
+      ],
+      "craft": []
+    },
+    {
+      "id": 28,
+      "name": "Cyndi Item Shop",
+      "npc_ids": [
+        100
+      ],
+      "trade": [
+        {
+          "id": 258,
+          "buy": 0,
+          "sell": 5
+        },
+        {
+          "id": 21,
+          "buy": 25,
+          "sell": 5
+        },
+        {
+          "id": 151,
+          "buy": 25,
+          "sell": 1
+        },
+        {
+          "id": 144,
+          "buy": 25,
+          "sell": 1
+        },
+        {
+          "id": 408,
+          "buy": 600,
+          "sell": 60
+        }
+      ],
+      "craft": [
+        {
+          "id": 21,
+          "ingredients": [
+            [
+              258,
+              2
+            ]
+          ]
+        },
+        {
+          "id": 27,
+          "ingredients": [
+            [
+              253,
+              4
+            ],
+            [
+              254,
+              2
+            ],
+            [
+              1,
+              50
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": 29,
+      "name": "Ancient Shop",
+      "npc_ids": [
+        106
+      ],
+      "trade": [
+        {
+          "id": 345,
+          "buy": 4000,
+          "sell": 400
+        },
+        {
+          "id": 348,
+          "buy": 6000,
+          "sell": 400
+        },
+        {
+          "id": 343,
+          "buy": 7000,
+          "sell": 400
+        },
+        {
+          "id": 347,
+          "buy": 8000,
+          "sell": 400
+        }
+      ],
+      "craft": []
+    },
+    {
+      "id": 30,
+      "name": "Ancient Shop",
+      "npc_ids": [
+        107
+      ],
+      "trade": [
+        {
+          "id": 346,
+          "buy": 4000,
+          "sell": 400
+        },
+        {
+          "id": 344,
+          "buy": 6000,
+          "sell": 400
+        },
+        {
+          "id": 342,
+          "buy": 7000,
+          "sell": 400
+        }
+      ],
+      "craft": []
+    },
+    {
+      "id": 31,
+      "name": "Babarian Shop",
+      "npc_ids": [
+        108
+      ],
+      "trade": [
+        {
+          "id": 67,
+          "buy": 300,
+          "sell": 30
+        },
+        {
+          "id": 68,
+          "buy": 500,
+          "sell": 50
+        },
+        {
+          "id": 64,
+          "buy": 1000,
+          "sell": 50
+        }
+      ],
+      "craft": []
+    },
+    {
+      "id": 32,
+      "name": "Ariolus",
+      "npc_ids": [
+        109
+      ],
+      "trade": [
+        {
+          "id": 349,
+          "buy": 25000,
+          "sell": 2000
+        },
+        {
+          "id": 350,
+          "buy": 50000,
+          "sell": 6000
+        },
+        {
+          "id": 3,
+          "buy": 25,
+          "sell": 0
+        },
+        {
+          "id": 5,
+          "buy": 50,
+          "sell": 0
+        }
+      ],
+      "craft": [
+        {
+          "id": 349,
+          "ingredients": [
+            [
+              353,
+              10
+            ],
+            [
+              354,
+              10
+            ],
+            [
+              356,
+              10
+            ],
+            [
+              357,
+              10
+            ]
+          ]
+        },
+        {
+          "id": 350,
+          "ingredients": [
+            [
+              349,
+              2
+            ],
+            [
+              358,
+              10
+            ],
+            [
+              352,
+              1
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": 33,
+      "name": "Rauchel",
+      "npc_ids": [
+        110
+      ],
+      "trade": [],
+      "craft": [
+        {
+          "id": 359,
+          "ingredients": [
+            [
+              357,
+              1
+            ],
+            [
+              358,
+              1
+            ],
+            [
+              326,
+              1
+            ],
+            [
+              353,
+              1
+            ]
+          ]
+        },
+        {
+          "id": 460,
+          "ingredients": [
+            [
+              414,
+              1
+            ],
+            [
+              470,
+              2
+            ],
+            [
+              469,
+              2
+            ],
+            [
+              477,
+              20
+            ]
+          ]
+        },
+        {
+          "id": 465,
+          "ingredients": [
+            [
+              413,
+              1
+            ],
+            [
+              470,
+              2
+            ],
+            [
+              469,
+              2
+            ],
+            [
+              477,
+              20
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": 34,
+      "name": "Xmas Shop",
+      "npc_ids": [
+        112
+      ],
+      "trade": [
+        {
+          "id": 273,
+          "buy": 2,
+          "sell": 0
+        }
+      ],
+      "craft": []
+    },
+    {
+      "id": 35,
+      "name": "Anundo Armory",
+      "npc_ids": [
+        126
+      ],
+      "trade": [
+        {
+          "id": 380,
+          "buy": 1500,
+          "sell": 240
+        },
+        {
+          "id": 378,
+          "buy": 2200,
+          "sell": 320
+        },
+        {
+          "id": 379,
+          "buy": 3000,
+          "sell": 400
+        }
+      ],
+      "craft": []
+    },
+    {
+      "id": 36,
+      "name": "Halowdale Smith",
+      "npc_ids": [
+        163
+      ],
+      "trade": [
+        {
+          "id": 24,
+          "buy": 1700,
+          "sell": 170
+        },
+        {
+          "id": 25,
+          "buy": 1700,
+          "sell": 170
+        },
+        {
+          "id": 33,
+          "buy": 2000,
+          "sell": 170
+        },
+        {
+          "id": 225,
+          "buy": 2600,
+          "sell": 170
+        },
+        {
+          "id": 391,
+          "buy": 3800,
+          "sell": 400
+        }
+      ],
+      "craft": []
+    },
+    {
+      "id": 37,
+      "name": "Halowdale Grocery",
+      "npc_ids": [
+        164
+      ],
+      "trade": [
+        {
+          "id": 2,
+          "buy": 10,
+          "sell": 1
+        },
+        {
+          "id": 3,
+          "buy": 36,
+          "sell": 1
+        },
+        {
+          "id": 4,
+          "buy": 64,
+          "sell": 0
+        },
+        {
+          "id": 5,
+          "buy": 103,
+          "sell": 0
+        },
+        {
+          "id": 13,
+          "buy": 168,
+          "sell": 0
+        },
+        {
+          "id": 162,
+          "buy": 52,
+          "sell": 0
+        },
+        {
+          "id": 40,
+          "buy": 52,
+          "sell": 0
+        }
+      ],
+      "craft": []
+    },
+    {
+      "id": 38,
+      "name": "Halowdale Armory",
+      "npc_ids": [
+        179
+      ],
+      "trade": [
+        {
+          "id": 417,
+          "buy": 7000,
+          "sell": 700
+        },
+        {
+          "id": 416,
+          "buy": 9000,
+          "sell": 900
+        },
+        {
+          "id": 423,
+          "buy": 600,
+          "sell": 6
+        }
+      ],
+      "craft": [
+        {
+          "id": 424,
+          "ingredients": [
+            [
+              423,
+              10
+            ],
+            [
+              337,
+              32
+            ],
+            [
+              338,
+              42
+            ]
+          ]
+        },
+        {
+          "id": 425,
+          "ingredients": [
+            [
+              423,
+              10
+            ],
+            [
+              78,
+              25
+            ],
+            [
+              469,
+              6
+            ],
+            [
+              470,
+              6
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": 39,
+      "name": "Fruits",
+      "npc_ids": [
+        211
+      ],
+      "trade": [
+        {
+          "id": 437,
+          "buy": 25,
+          "sell": 4
+        },
+        {
+          "id": 438,
+          "buy": 25,
+          "sell": 4
+        },
+        {
+          "id": 439,
+          "buy": 25,
+          "sell": 4
+        },
+        {
+          "id": 440,
+          "buy": 25,
+          "sell": 4
+        },
+        {
+          "id": 441,
+          "buy": 25,
+          "sell": 4
+        },
+        {
+          "id": 442,
+          "buy": 25,
+          "sell": 4
+        }
+      ],
+      "craft": []
+    },
+    {
+      "id": 40,
+      "name": "Dragon Warrior",
+      "npc_ids": [
+        253
+      ],
+      "trade": [
+        {
+          "id": 469,
+          "buy": 0,
+          "sell": 250
+        }
+      ],
+      "craft": []
+    },
+    {
+      "id": 41,
+      "name": "Ben Potion Shop",
+      "npc_ids": [
+        262
+      ],
+      "trade": [
+        {
+          "id": 2,
+          "buy": 10,
+          "sell": 0
+        },
+        {
+          "id": 3,
+          "buy": 40,
+          "sell": 5
+        }
+      ],
+      "craft": []
+    },
+    {
+      "id": 42,
+      "name": "Baru Shop",
+      "npc_ids": [
+        304
+      ],
+      "trade": [],
+      "craft": [
+        {
+          "id": 430,
+          "ingredients": [
+            [
+              460,
+              1
+            ],
+            [
+              491,
+              40
+            ]
+          ]
+        },
+        {
+          "id": 431,
+          "ingredients": [
+            [
+              465,
+              1
+            ],
+            [
+              491,
+              40
+            ]
+          ]
+        }
+      ]
+    }
+  ],
+  "gold": [
+    {
+      "npc_id": 2,
+      "minimum": 0,
+      "maximum": 3,
+      "chance": 10.0
+    },
+    {
+      "npc_id": 6,
+      "minimum": 1,
+      "maximum": 10,
+      "chance": 20.0
+    },
+    {
+      "npc_id": 7,
+      "minimum": 1,
+      "maximum": 5,
+      "chance": 10.0
+    },
+    {
+      "npc_id": 8,
+      "minimum": 2,
+      "maximum": 10,
+      "chance": 20.0
+    },
+    {
+      "npc_id": 9,
+      "minimum": 50,
+      "maximum": 300,
+      "chance": 50.0
+    },
+    {
+      "npc_id": 35,
+      "minimum": 5,
+      "maximum": 30,
+      "chance": 10.0
+    },
+    {
+      "npc_id": 47,
+      "minimum": 1,
+      "maximum": 5,
+      "chance": 5.0
+    },
+    {
+      "npc_id": 48,
+      "minimum": 5,
+      "maximum": 20,
+      "chance": 5.0
+    },
+    {
+      "npc_id": 68,
+      "minimum": 100,
+      "maximum": 1000,
+      "chance": 0.1
+    },
+    {
+      "npc_id": 74,
+      "minimum": 10,
+      "maximum": 100,
+      "chance": 5.0
+    },
+    {
+      "npc_id": 91,
+      "minimum": 1,
+      "maximum": 100,
+      "chance": 10.0
+    },
+    {
+      "npc_id": 92,
+      "minimum": 1,
+      "maximum": 10,
+      "chance": 5.0
+    },
+    {
+      "npc_id": 94,
+      "minimum": 20,
+      "maximum": 30,
+      "chance": 10.0
+    },
+    {
+      "npc_id": 95,
+      "minimum": 200,
+      "maximum": 300,
+      "chance": 10.0
+    },
+    {
+      "npc_id": 96,
+      "minimum": 200,
+      "maximum": 300,
+      "chance": 10.0
+    },
+    {
+      "npc_id": 97,
+      "minimum": 1,
+      "maximum": 10,
+      "chance": 80.0
+    },
+    {
+      "npc_id": 98,
+      "minimum": 1,
+      "maximum": 10,
+      "chance": 80.0
+    },
+    {
+      "npc_id": 113,
+      "minimum": 25,
+      "maximum": 50,
+      "chance": 5.0
+    },
+    {
+      "npc_id": 118,
+      "minimum": 600,
+      "maximum": 1200,
+      "chance": 75.47
+    },
+    {
+      "npc_id": 120,
+      "minimum": 1000,
+      "maximum": 2400,
+      "chance": 40.0
+    },
+    {
+      "npc_id": 127,
+      "minimum": 1,
+      "maximum": 100,
+      "chance": 10.0
+    },
+    {
+      "npc_id": 128,
+      "minimum": 5,
+      "maximum": 20,
+      "chance": 20.0
+    },
+    {
+      "npc_id": 130,
+      "minimum": 5,
+      "maximum": 10,
+      "chance": 20.0
+    },
+    {
+      "npc_id": 131,
+      "minimum": 10,
+      "maximum": 20,
+      "chance": 20.0
+    },
+    {
+      "npc_id": 132,
+      "minimum": 10,
+      "maximum": 20,
+      "chance": 10.0
+    },
+    {
+      "npc_id": 139,
+      "minimum": 1,
+      "maximum": 20,
+      "chance": 20.0
+    },
+    {
+      "npc_id": 141,
+      "minimum": 1,
+      "maximum": 100,
+      "chance": 5.0
+    },
+    {
+      "npc_id": 142,
+      "minimum": 500,
+      "maximum": 1000,
+      "chance": 90.0
+    },
+    {
+      "npc_id": 149,
+      "minimum": 100,
+      "maximum": 199,
+      "chance": 88.24
+    },
+    {
+      "npc_id": 170,
+      "minimum": 1,
+      "maximum": 3,
+      "chance": 10.0
+    },
+    {
+      "npc_id": 171,
+      "minimum": 10,
+      "maximum": 111,
+      "chance": 5.0
+    },
+    {
+      "npc_id": 182,
+      "minimum": 10,
+      "maximum": 200,
+      "chance": 90.0
+    },
+    {
+      "npc_id": 183,
+      "minimum": 100,
+      "maximum": 800,
+      "chance": 10.0
+    },
+    {
+      "npc_id": 184,
+      "minimum": 1,
+      "maximum": 300,
+      "chance": 20.0
+    },
+    {
+      "npc_id": 206,
+      "minimum": 100,
+      "maximum": 200,
+      "chance": 1.0
+    },
+    {
+      "npc_id": 207,
+      "minimum": 1,
+      "maximum": 10,
+      "chance": 60.0
+    },
+    {
+      "npc_id": 208,
+      "minimum": 1,
+      "maximum": 100,
+      "chance": 5.0
+    },
+    {
+      "npc_id": 214,
+      "minimum": 1,
+      "maximum": 10,
+      "chance": 50.0
+    },
+    {
+      "npc_id": 216,
+      "minimum": 1,
+      "maximum": 20,
+      "chance": 90.0
+    },
+    {
+      "npc_id": 218,
+      "minimum": 10,
+      "maximum": 60,
+      "chance": 5.0
+    },
+    {
+      "npc_id": 223,
+      "minimum": 10,
+      "maximum": 60,
+      "chance": 5.0
+    },
+    {
+      "npc_id": 224,
+      "minimum": 10,
+      "maximum": 100,
+      "chance": 5.0
+    },
+    {
+      "npc_id": 225,
+      "minimum": 100,
+      "maximum": 500,
+      "chance": 40.0
+    },
+    {
+      "npc_id": 243,
+      "minimum": 20,
+      "maximum": 40,
+      "chance": 30.0
+    },
+    {
+      "npc_id": 244,
+      "minimum": 10,
+      "maximum": 22,
+      "chance": 10.0
+    },
+    {
+      "npc_id": 245,
+      "minimum": 1,
+      "maximum": 20,
+      "chance": 50.0
+    },
+    {
+      "npc_id": 246,
+      "minimum": 10,
+      "maximum": 30,
+      "chance": 80.0
+    },
+    {
+      "npc_id": 249,
+      "minimum": 1,
+      "maximum": 10,
+      "chance": 10.0
+    },
+    {
+      "npc_id": 257,
+      "minimum": 10000,
+      "maximum": 20000,
+      "chance": 98.04
+    },
+    {
+      "npc_id": 288,
+      "minimum": 7,
+      "maximum": 14,
+      "chance": 10.0
+    }
+  ],
+  "npc_drops": [
+    {
+      "npc_id": 1,
+      "drops": [
+        {
+          "id": 248,
+          "minimum": 1,
+          "maximum": 2,
+          "chance": 30.0
+        }
+      ]
+    },
+    {
+      "npc_id": 2,
+      "drops": [
+        {
+          "id": 249,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        },
+        {
+          "id": 1,
+          "minimum": 0,
+          "maximum": 3,
+          "chance": 10.0
+        }
+      ]
+    },
+    {
+      "npc_id": 3,
+      "drops": [
+        {
+          "id": 99,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 1.0
+        },
+        {
+          "id": 100,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 1.0
+        },
+        {
+          "id": 250,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        }
+      ]
+    },
+    {
+      "npc_id": 4,
+      "drops": [
+        {
+          "id": 21,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 5.0
+        },
+        {
+          "id": 27,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 5.0
+        },
+        {
+          "id": 207,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 5.0
+        },
+        {
+          "id": 251,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        }
+      ]
+    },
+    {
+      "npc_id": 5,
+      "drops": [
+        {
+          "id": 41,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 5.0
+        },
+        {
+          "id": 42,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 5.0
+        },
+        {
+          "id": 252,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 60.0
+        }
+      ]
+    },
+    {
+      "npc_id": 6,
+      "drops": [
+        {
+          "id": 253,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        },
+        {
+          "id": 254,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 20.0
+        },
+        {
+          "id": 1,
+          "minimum": 1,
+          "maximum": 10,
+          "chance": 20.0
+        }
+      ]
+    },
+    {
+      "npc_id": 7,
+      "drops": [
+        {
+          "id": 144,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 5.0
+        },
+        {
+          "id": 151,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 5.0
+        },
+        {
+          "id": 258,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        },
+        {
+          "id": 1,
+          "minimum": 1,
+          "maximum": 5,
+          "chance": 10.0
+        }
+      ]
+    },
+    {
+      "npc_id": 8,
+      "drops": [
+        {
+          "id": 1,
+          "minimum": 2,
+          "maximum": 10,
+          "chance": 20.0
+        },
+        {
+          "id": 54,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        },
+        {
+          "id": 58,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        },
+        {
+          "id": 255,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        }
+      ]
+    },
+    {
+      "npc_id": 9,
+      "drops": [
+        {
+          "id": 288,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 1.0
+        },
+        {
+          "id": 297,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 1.0
+        },
+        {
+          "id": 316,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 1.0
+        },
+        {
+          "id": 22,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 5.0
+        },
+        {
+          "id": 37,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 5.0
+        },
+        {
+          "id": 317,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 5.0
+        },
+        {
+          "id": 124,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        },
+        {
+          "id": 125,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        },
+        {
+          "id": 126,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        },
+        {
+          "id": 1,
+          "minimum": 50,
+          "maximum": 300,
+          "chance": 50.0
+        }
+      ]
+    },
+    {
+      "npc_id": 10,
+      "drops": [
+        {
+          "id": 256,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        },
+        {
+          "id": 257,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        }
+      ]
+    },
+    {
+      "npc_id": 11,
+      "drops": [
+        {
+          "id": 62,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 5.0
+        },
+        {
+          "id": 64,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 5.0
+        },
+        {
+          "id": 65,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 5.0
+        },
+        {
+          "id": 66,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 5.0
+        },
+        {
+          "id": 67,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 5.0
+        },
+        {
+          "id": 68,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 5.0
+        },
+        {
+          "id": 69,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 5.0
+        },
+        {
+          "id": 263,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        }
+      ]
+    },
+    {
+      "npc_id": 12,
+      "drops": [
+        {
+          "id": 197,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 5.0
+        },
+        {
+          "id": 264,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        }
+      ]
+    },
+    {
+      "npc_id": 13,
+      "drops": [
+        {
+          "id": 38,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 1.0
+        },
+        {
+          "id": 238,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 1.0
+        },
+        {
+          "id": 259,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        }
+      ]
+    },
+    {
+      "npc_id": 14,
+      "drops": [
+        {
+          "id": 223,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 1.0
+        },
+        {
+          "id": 203,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 1.0
+        },
+        {
+          "id": 260,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 5.0
+        },
+        {
+          "id": 222,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 1.0
+        }
+      ]
+    },
+    {
+      "npc_id": 17,
+      "drops": [
+        {
+          "id": 261,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 5.0
+        },
+        {
+          "id": 14,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 5.0
+        }
+      ]
+    },
+    {
+      "npc_id": 18,
+      "drops": [
+        {
+          "id": 261,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        },
+        {
+          "id": 262,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        },
+        {
+          "id": 14,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 20.0
+        },
+        {
+          "id": 60,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 1.0
+        },
+        {
+          "id": 59,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 1.0
+        }
+      ]
+    },
+    {
+      "npc_id": 19,
+      "drops": [
+        {
+          "id": 261,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        },
+        {
+          "id": 262,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        },
+        {
+          "id": 14,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 5.0
+        },
+        {
+          "id": 59,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 1.0
+        },
+        {
+          "id": 60,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 1.0
+        }
+      ]
+    },
+    {
+      "npc_id": 20,
+      "drops": [
+        {
+          "id": 268,
+          "minimum": 1,
+          "maximum": 10,
+          "chance": 1.0
+        },
+        {
+          "id": 11,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 5.0
+        },
+        {
+          "id": 265,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        }
+      ]
+    },
+    {
+      "npc_id": 35,
+      "drops": [
+        {
+          "id": 1,
+          "minimum": 5,
+          "maximum": 30,
+          "chance": 10.0
+        }
+      ]
+    },
+    {
+      "npc_id": 47,
+      "drops": [
+        {
+          "id": 277,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 5.0
+        },
+        {
+          "id": 1,
+          "minimum": 1,
+          "maximum": 5,
+          "chance": 5.0
+        }
+      ]
+    },
+    {
+      "npc_id": 48,
+      "drops": [
+        {
+          "id": 278,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 5.0
+        },
+        {
+          "id": 1,
+          "minimum": 5,
+          "maximum": 20,
+          "chance": 5.0
+        }
+      ]
+    },
+    {
+      "npc_id": 51,
+      "drops": [
+        {
+          "id": 287,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 1.0
+        }
+      ]
+    },
+    {
+      "npc_id": 59,
+      "drops": [
+        {
+          "id": 307,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        }
+      ]
+    },
+    {
+      "npc_id": 60,
+      "drops": [
+        {
+          "id": 303,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        }
+      ]
+    },
+    {
+      "npc_id": 61,
+      "drops": [
+        {
+          "id": 302,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        }
+      ]
+    },
+    {
+      "npc_id": 62,
+      "drops": [
+        {
+          "id": 301,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        }
+      ]
+    },
+    {
+      "npc_id": 63,
+      "drops": [
+        {
+          "id": 304,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        }
+      ]
+    },
+    {
+      "npc_id": 64,
+      "drops": [
+        {
+          "id": 305,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        }
+      ]
+    },
+    {
+      "npc_id": 65,
+      "drops": [
+        {
+          "id": 306,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        }
+      ]
+    },
+    {
+      "npc_id": 68,
+      "drops": [
+        {
+          "id": 1,
+          "minimum": 100,
+          "maximum": 1000,
+          "chance": 0.1
+        },
+        {
+          "id": 203,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 1.0
+        },
+        {
+          "id": 352,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 5.0
+        },
+        {
+          "id": 260,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 5.0
+        }
+      ]
+    },
+    {
+      "npc_id": 69,
+      "drops": [
+        {
+          "id": 299,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        }
+      ]
+    },
+    {
+      "npc_id": 70,
+      "drops": [
+        {
+          "id": 299,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        }
+      ]
+    },
+    {
+      "npc_id": 71,
+      "drops": [
+        {
+          "id": 298,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 5.0
+        },
+        {
+          "id": 299,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        }
+      ]
+    },
+    {
+      "npc_id": 72,
+      "drops": [
+        {
+          "id": 299,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        }
+      ]
+    },
+    {
+      "npc_id": 73,
+      "drops": []
+    },
+    {
+      "npc_id": 74,
+      "drops": [
+        {
+          "id": 308,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        },
+        {
+          "id": 1,
+          "minimum": 10,
+          "maximum": 100,
+          "chance": 5.0
+        }
+      ]
+    },
+    {
+      "npc_id": 77,
+      "drops": [
+        {
+          "id": 310,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 20.0
+        },
+        {
+          "id": 309,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        }
+      ]
+    },
+    {
+      "npc_id": 78,
+      "drops": [
+        {
+          "id": 310,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 20.0
+        },
+        {
+          "id": 309,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        }
+      ]
+    },
+    {
+      "npc_id": 79,
+      "drops": [
+        {
+          "id": 310,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 20.0
+        },
+        {
+          "id": 309,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        }
+      ]
+    },
+    {
+      "npc_id": 80,
+      "drops": [
+        {
+          "id": 318,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        }
+      ]
+    },
+    {
+      "npc_id": 81,
+      "drops": [
+        {
+          "id": 319,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        }
+      ]
+    },
+    {
+      "npc_id": 82,
+      "drops": [
+        {
+          "id": 321,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        }
+      ]
+    },
+    {
+      "npc_id": 83,
+      "drops": [
+        {
+          "id": 320,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        }
+      ]
+    },
+    {
+      "npc_id": 84,
+      "drops": [
+        {
+          "id": 322,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        }
+      ]
+    },
+    {
+      "npc_id": 85,
+      "drops": [
+        {
+          "id": 322,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        }
+      ]
+    },
+    {
+      "npc_id": 86,
+      "drops": [
+        {
+          "id": 323,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        }
+      ]
+    },
+    {
+      "npc_id": 89,
+      "drops": []
+    },
+    {
+      "npc_id": 90,
+      "drops": [
+        {
+          "id": 326,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        }
+      ]
+    },
+    {
+      "npc_id": 91,
+      "drops": [
+        {
+          "id": 338,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        },
+        {
+          "id": 1,
+          "minimum": 1,
+          "maximum": 100,
+          "chance": 10.0
+        },
+        {
+          "id": 329,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 5.0
+        }
+      ]
+    },
+    {
+      "npc_id": 92,
+      "drops": [
+        {
+          "id": 337,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 5.0
+        },
+        {
+          "id": 1,
+          "minimum": 1,
+          "maximum": 10,
+          "chance": 5.0
+        },
+        {
+          "id": 329,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 5.0
+        }
+      ]
+    },
+    {
+      "npc_id": 93,
+      "drops": [
+        {
+          "id": 340,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        },
+        {
+          "id": 341,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 1.0
+        }
+      ]
+    },
+    {
+      "npc_id": 94,
+      "drops": [
+        {
+          "id": 340,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        },
+        {
+          "id": 1,
+          "minimum": 20,
+          "maximum": 30,
+          "chance": 10.0
+        },
+        {
+          "id": 341,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 1.0
+        }
+      ]
+    },
+    {
+      "npc_id": 95,
+      "drops": [
+        {
+          "id": 1,
+          "minimum": 200,
+          "maximum": 300,
+          "chance": 10.0
+        }
+      ]
+    },
+    {
+      "npc_id": 96,
+      "drops": [
+        {
+          "id": 339,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        },
+        {
+          "id": 1,
+          "minimum": 200,
+          "maximum": 300,
+          "chance": 10.0
+        }
+      ]
+    },
+    {
+      "npc_id": 97,
+      "drops": [
+        {
+          "id": 358,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        },
+        {
+          "id": 1,
+          "minimum": 1,
+          "maximum": 10,
+          "chance": 80.0
+        }
+      ]
+    },
+    {
+      "npc_id": 98,
+      "drops": [
+        {
+          "id": 355,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        },
+        {
+          "id": 1,
+          "minimum": 1,
+          "maximum": 10,
+          "chance": 80.0
+        }
+      ]
+    },
+    {
+      "npc_id": 101,
+      "drops": [
+        {
+          "id": 356,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        }
+      ]
+    },
+    {
+      "npc_id": 102,
+      "drops": [
+        {
+          "id": 356,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        },
+        {
+          "id": 357,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 5.0
+        }
+      ]
+    },
+    {
+      "npc_id": 103,
+      "drops": [
+        {
+          "id": 354,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        }
+      ]
+    },
+    {
+      "npc_id": 104,
+      "drops": [
+        {
+          "id": 353,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        }
+      ]
+    },
+    {
+      "npc_id": 105,
+      "drops": []
+    },
+    {
+      "npc_id": 113,
+      "drops": [
+        {
+          "id": 366,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 1.0
+        },
+        {
+          "id": 364,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 5.0
+        },
+        {
+          "id": 1,
+          "minimum": 25,
+          "maximum": 50,
+          "chance": 5.0
+        }
+      ]
+    },
+    {
+      "npc_id": 117,
+      "drops": [
+        {
+          "id": 396,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        }
+      ]
+    },
+    {
+      "npc_id": 118,
+      "drops": [
+        {
+          "id": 297,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 0.94
+        },
+        {
+          "id": 373,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 4.72
+        },
+        {
+          "id": 368,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 4.72
+        },
+        {
+          "id": 124,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 4.72
+        },
+        {
+          "id": 125,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 4.72
+        },
+        {
+          "id": 126,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 4.72
+        },
+        {
+          "id": 1,
+          "minimum": 600,
+          "maximum": 1200,
+          "chance": 75.47
+        }
+      ]
+    },
+    {
+      "npc_id": 119,
+      "drops": []
+    },
+    {
+      "npc_id": 120,
+      "drops": [
+        {
+          "id": 372,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 1.0
+        },
+        {
+          "id": 26,
+          "minimum": 2,
+          "maximum": 2,
+          "chance": 40.0
+        },
+        {
+          "id": 1,
+          "minimum": 1000,
+          "maximum": 2400,
+          "chance": 40.0
+        }
+      ]
+    },
+    {
+      "npc_id": 121,
+      "drops": [
+        {
+          "id": 395,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        }
+      ]
+    },
+    {
+      "npc_id": 122,
+      "drops": [
+        {
+          "id": 411,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 5.0
+        }
+      ]
+    },
+    {
+      "npc_id": 123,
+      "drops": []
+    },
+    {
+      "npc_id": 125,
+      "drops": []
+    },
+    {
+      "npc_id": 127,
+      "drops": [
+        {
+          "id": 371,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 1.0
+        },
+        {
+          "id": 381,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 1.0
+        },
+        {
+          "id": 1,
+          "minimum": 1,
+          "maximum": 100,
+          "chance": 10.0
+        }
+      ]
+    },
+    {
+      "npc_id": 128,
+      "drops": [
+        {
+          "id": 211,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 30.0
+        },
+        {
+          "id": 1,
+          "minimum": 5,
+          "maximum": 20,
+          "chance": 20.0
+        }
+      ]
+    },
+    {
+      "npc_id": 129,
+      "drops": []
+    },
+    {
+      "npc_id": 130,
+      "drops": [
+        {
+          "id": 385,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 5.0
+        },
+        {
+          "id": 386,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 5.0
+        },
+        {
+          "id": 1,
+          "minimum": 5,
+          "maximum": 10,
+          "chance": 20.0
+        }
+      ]
+    },
+    {
+      "npc_id": 131,
+      "drops": [
+        {
+          "id": 1,
+          "minimum": 10,
+          "maximum": 20,
+          "chance": 20.0
+        }
+      ]
+    },
+    {
+      "npc_id": 132,
+      "drops": [
+        {
+          "id": 1,
+          "minimum": 10,
+          "maximum": 20,
+          "chance": 10.0
+        },
+        {
+          "id": 442,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 90.0
+        }
+      ]
+    },
+    {
+      "npc_id": 133,
+      "drops": []
+    },
+    {
+      "npc_id": 134,
+      "drops": []
+    },
+    {
+      "npc_id": 135,
+      "drops": [
+        {
+          "id": 400,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        }
+      ]
+    },
+    {
+      "npc_id": 136,
+      "drops": [
+        {
+          "id": 400,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        }
+      ]
+    },
+    {
+      "npc_id": 137,
+      "drops": [
+        {
+          "id": 403,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        }
+      ]
+    },
+    {
+      "npc_id": 138,
+      "drops": [
+        {
+          "id": 420,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 1.0
+        },
+        {
+          "id": 401,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        }
+      ]
+    },
+    {
+      "npc_id": 139,
+      "drops": [
+        {
+          "id": 393,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 1.0
+        },
+        {
+          "id": 405,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        },
+        {
+          "id": 1,
+          "minimum": 1,
+          "maximum": 20,
+          "chance": 20.0
+        }
+      ]
+    },
+    {
+      "npc_id": 140,
+      "drops": [
+        {
+          "id": 402,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        }
+      ]
+    },
+    {
+      "npc_id": 141,
+      "drops": [
+        {
+          "id": 435,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 1.0
+        },
+        {
+          "id": 432,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 5.0
+        },
+        {
+          "id": 1,
+          "minimum": 1,
+          "maximum": 100,
+          "chance": 5.0
+        }
+      ]
+    },
+    {
+      "npc_id": 142,
+      "drops": [
+        {
+          "id": 389,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 1.0
+        },
+        {
+          "id": 390,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 1.0
+        },
+        {
+          "id": 387,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 1.0
+        },
+        {
+          "id": 388,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 1.0
+        },
+        {
+          "id": 1,
+          "minimum": 500,
+          "maximum": 1000,
+          "chance": 90.0
+        }
+      ]
+    },
+    {
+      "npc_id": 143,
+      "drops": []
+    },
+    {
+      "npc_id": 145,
+      "drops": [
+        {
+          "id": 398,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        }
+      ]
+    },
+    {
+      "npc_id": 146,
+      "drops": [
+        {
+          "id": 397,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        }
+      ]
+    },
+    {
+      "npc_id": 147,
+      "drops": [
+        {
+          "id": 399,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        }
+      ]
+    },
+    {
+      "npc_id": 149,
+      "drops": [
+        {
+          "id": 387,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 0.98
+        },
+        {
+          "id": 388,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 0.98
+        },
+        {
+          "id": 404,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 9.8
+        },
+        {
+          "id": 1,
+          "minimum": 100,
+          "maximum": 199,
+          "chance": 88.24
+        }
+      ]
+    },
+    {
+      "npc_id": 151,
+      "drops": []
+    },
+    {
+      "npc_id": 170,
+      "drops": [
+        {
+          "id": 484,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 1.0
+        },
+        {
+          "id": 1,
+          "minimum": 1,
+          "maximum": 3,
+          "chance": 10.0
+        }
+      ]
+    },
+    {
+      "npc_id": 171,
+      "drops": [
+        {
+          "id": 1,
+          "minimum": 10,
+          "maximum": 111,
+          "chance": 5.0
+        },
+        {
+          "id": 2,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 0.1
+        },
+        {
+          "id": 3,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 0.1
+        }
+      ]
+    },
+    {
+      "npc_id": 172,
+      "drops": []
+    },
+    {
+      "npc_id": 173,
+      "drops": []
+    },
+    {
+      "npc_id": 174,
+      "drops": []
+    },
+    {
+      "npc_id": 178,
+      "drops": []
+    },
+    {
+      "npc_id": 181,
+      "drops": []
+    },
+    {
+      "npc_id": 182,
+      "drops": [
+        {
+          "id": 409,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 1.0
+        },
+        {
+          "id": 410,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 1.0
+        },
+        {
+          "id": 413,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 1.0
+        },
+        {
+          "id": 414,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 1.0
+        },
+        {
+          "id": 1,
+          "minimum": 10,
+          "maximum": 200,
+          "chance": 90.0
+        }
+      ]
+    },
+    {
+      "npc_id": 183,
+      "drops": [
+        {
+          "id": 422,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 1.0
+        },
+        {
+          "id": 466,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 1.0
+        },
+        {
+          "id": 444,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 1.0
+        },
+        {
+          "id": 1,
+          "minimum": 100,
+          "maximum": 800,
+          "chance": 10.0
+        }
+      ]
+    },
+    {
+      "npc_id": 184,
+      "drops": [
+        {
+          "id": 434,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 1.0
+        },
+        {
+          "id": 433,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 1.0
+        },
+        {
+          "id": 1,
+          "minimum": 1,
+          "maximum": 300,
+          "chance": 20.0
+        }
+      ]
+    },
+    {
+      "npc_id": 185,
+      "drops": []
+    },
+    {
+      "npc_id": 186,
+      "drops": []
+    },
+    {
+      "npc_id": 187,
+      "drops": []
+    },
+    {
+      "npc_id": 191,
+      "drops": []
+    },
+    {
+      "npc_id": 194,
+      "drops": []
+    },
+    {
+      "npc_id": 198,
+      "drops": []
+    },
+    {
+      "npc_id": 201,
+      "drops": []
+    },
+    {
+      "npc_id": 202,
+      "drops": []
+    },
+    {
+      "npc_id": 203,
+      "drops": []
+    },
+    {
+      "npc_id": 204,
+      "drops": []
+    },
+    {
+      "npc_id": 205,
+      "drops": []
+    },
+    {
+      "npc_id": 206,
+      "drops": [
+        {
+          "id": 297,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 1.0
+        },
+        {
+          "id": 316,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 1.0
+        },
+        {
+          "id": 423,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 1.0
+        },
+        {
+          "id": 444,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 1.0
+        },
+        {
+          "id": 430,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 1.0
+        },
+        {
+          "id": 431,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 1.0
+        },
+        {
+          "id": 428,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 1.0
+        },
+        {
+          "id": 429,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 1.0
+        },
+        {
+          "id": 438,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 1.0
+        },
+        {
+          "id": 1,
+          "minimum": 100,
+          "maximum": 200,
+          "chance": 1.0
+        },
+        {
+          "id": 273,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 90.0
+        }
+      ]
+    },
+    {
+      "npc_id": 207,
+      "drops": [
+        {
+          "id": 427,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 1.0
+        },
+        {
+          "id": 1,
+          "minimum": 1,
+          "maximum": 10,
+          "chance": 60.0
+        }
+      ]
+    },
+    {
+      "npc_id": 208,
+      "drops": [
+        {
+          "id": 428,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 0.1
+        },
+        {
+          "id": 429,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 0.1
+        },
+        {
+          "id": 1,
+          "minimum": 1,
+          "maximum": 100,
+          "chance": 5.0
+        }
+      ]
+    },
+    {
+      "npc_id": 209,
+      "drops": [
+        {
+          "id": 426,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 1.0
+        },
+        {
+          "id": 444,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 1.0
+        },
+        {
+          "id": 447,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 1.0
+        }
+      ]
+    },
+    {
+      "npc_id": 210,
+      "drops": []
+    },
+    {
+      "npc_id": 212,
+      "drops": [
+        {
+          "id": 479,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        }
+      ]
+    },
+    {
+      "npc_id": 213,
+      "drops": []
+    },
+    {
+      "npc_id": 214,
+      "drops": [
+        {
+          "id": 453,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 5.0
+        },
+        {
+          "id": 1,
+          "minimum": 1,
+          "maximum": 10,
+          "chance": 50.0
+        },
+        {
+          "id": 474,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        }
+      ]
+    },
+    {
+      "npc_id": 215,
+      "drops": []
+    },
+    {
+      "npc_id": 216,
+      "drops": [
+        {
+          "id": 468,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 1.0
+        },
+        {
+          "id": 455,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 1.0
+        },
+        {
+          "id": 1,
+          "minimum": 1,
+          "maximum": 20,
+          "chance": 90.0
+        }
+      ]
+    },
+    {
+      "npc_id": 217,
+      "drops": []
+    },
+    {
+      "npc_id": 218,
+      "drops": [
+        {
+          "id": 1,
+          "minimum": 10,
+          "maximum": 60,
+          "chance": 5.0
+        },
+        {
+          "id": 478,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        }
+      ]
+    },
+    {
+      "npc_id": 219,
+      "drops": []
+    },
+    {
+      "npc_id": 220,
+      "drops": []
+    },
+    {
+      "npc_id": 222,
+      "drops": []
+    },
+    {
+      "npc_id": 223,
+      "drops": [
+        {
+          "id": 1,
+          "minimum": 10,
+          "maximum": 60,
+          "chance": 5.0
+        },
+        {
+          "id": 480,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        }
+      ]
+    },
+    {
+      "npc_id": 224,
+      "drops": [
+        {
+          "id": 454,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 5.0
+        },
+        {
+          "id": 1,
+          "minimum": 10,
+          "maximum": 100,
+          "chance": 5.0
+        },
+        {
+          "id": 473,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        }
+      ]
+    },
+    {
+      "npc_id": 225,
+      "drops": [
+        {
+          "id": 457,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 0.05
+        },
+        {
+          "id": 456,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 1.0
+        },
+        {
+          "id": 458,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 1.0
+        },
+        {
+          "id": 459,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 1.0
+        },
+        {
+          "id": 1,
+          "minimum": 100,
+          "maximum": 500,
+          "chance": 40.0
+        },
+        {
+          "id": 470,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        },
+        {
+          "id": 469,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        }
+      ]
+    },
+    {
+      "npc_id": 226,
+      "drops": [
+        {
+          "id": 471,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 5.0
+        }
+      ]
+    },
+    {
+      "npc_id": 227,
+      "drops": []
+    },
+    {
+      "npc_id": 228,
+      "drops": []
+    },
+    {
+      "npc_id": 229,
+      "drops": []
+    },
+    {
+      "npc_id": 230,
+      "drops": []
+    },
+    {
+      "npc_id": 231,
+      "drops": [
+        {
+          "id": 483,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 5.0
+        }
+      ]
+    },
+    {
+      "npc_id": 232,
+      "drops": [
+        {
+          "id": 477,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 5.0
+        }
+      ]
+    },
+    {
+      "npc_id": 233,
+      "drops": [
+        {
+          "id": 482,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 5.0
+        }
+      ]
+    },
+    {
+      "npc_id": 238,
+      "drops": []
+    },
+    {
+      "npc_id": 239,
+      "drops": [
+        {
+          "id": 481,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 5.0
+        }
+      ]
+    },
+    {
+      "npc_id": 240,
+      "drops": []
+    },
+    {
+      "npc_id": 241,
+      "drops": []
+    },
+    {
+      "npc_id": 242,
+      "drops": [
+        {
+          "id": 475,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 5.0
+        }
+      ]
+    },
+    {
+      "npc_id": 243,
+      "drops": [
+        {
+          "id": 1,
+          "minimum": 20,
+          "maximum": 40,
+          "chance": 30.0
+        },
+        {
+          "id": 161,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 5.0
+        }
+      ]
+    },
+    {
+      "npc_id": 244,
+      "drops": [
+        {
+          "id": 439,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        },
+        {
+          "id": 1,
+          "minimum": 10,
+          "maximum": 22,
+          "chance": 10.0
+        },
+        {
+          "id": 476,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 5.0
+        }
+      ]
+    },
+    {
+      "npc_id": 245,
+      "drops": [
+        {
+          "id": 323,
+          "minimum": 1,
+          "maximum": 2,
+          "chance": 50.0
+        },
+        {
+          "id": 1,
+          "minimum": 1,
+          "maximum": 20,
+          "chance": 50.0
+        }
+      ]
+    },
+    {
+      "npc_id": 246,
+      "drops": [
+        {
+          "id": 355,
+          "minimum": 1,
+          "maximum": 2,
+          "chance": 5.0
+        },
+        {
+          "id": 1,
+          "minimum": 10,
+          "maximum": 30,
+          "chance": 80.0
+        }
+      ]
+    },
+    {
+      "npc_id": 248,
+      "drops": []
+    },
+    {
+      "npc_id": 249,
+      "drops": [
+        {
+          "id": 439,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        },
+        {
+          "id": 1,
+          "minimum": 1,
+          "maximum": 10,
+          "chance": 10.0
+        }
+      ]
+    },
+    {
+      "npc_id": 255,
+      "drops": [
+        {
+          "id": 457,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 1.0
+        },
+        {
+          "id": 2,
+          "minimum": 100,
+          "maximum": 1000,
+          "chance": 10.0
+        }
+      ]
+    },
+    {
+      "npc_id": 256,
+      "drops": []
+    },
+    {
+      "npc_id": 257,
+      "drops": [
+        {
+          "id": 199,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 0.98
+        },
+        {
+          "id": 200,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 0.98
+        },
+        {
+          "id": 1,
+          "minimum": 10000,
+          "maximum": 20000,
+          "chance": 98.04
+        }
+      ]
+    },
+    {
+      "npc_id": 270,
+      "drops": []
+    },
+    {
+      "npc_id": 274,
+      "drops": []
+    },
+    {
+      "npc_id": 285,
+      "drops": []
+    },
+    {
+      "npc_id": 287,
+      "drops": [
+        {
+          "id": 489,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 10.0
+        }
+      ]
+    },
+    {
+      "npc_id": 288,
+      "drops": [
+        {
+          "id": 1,
+          "minimum": 7,
+          "maximum": 14,
+          "chance": 10.0
+        },
+        {
+          "id": 487,
+          "minimum": 1,
+          "maximum": 1,
+          "chance": 5.0
+        }
+      ]
+    },
+    {
+      "npc_id": 299,
+      "drops": []
+    }
+  ]
+}

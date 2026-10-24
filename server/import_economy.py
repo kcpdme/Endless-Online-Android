@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Stage supplied original NPC shops/drops without touching accounts or password salt."""
+"""Stage supplied NPC shops/drops (EODelta baseline) without touching accounts or password salt."""
 import argparse, hashlib, json, pathlib, re
 
 def install(runtime, source_data):

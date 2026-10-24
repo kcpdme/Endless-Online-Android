@@ -51,7 +51,7 @@ func build(owner_game: Node, parent: Control) -> void:
 	summary.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	summary.add_theme_constant_override("separation", 16)
 	scroll.add_child(summary)
-	var info: Label = game._label(summary, "Citizenship sets the town where you return after death.\nSleeping restores HP and TP and takes you to a bed.", Vector2.ZERO, 19, game.MUTED)
+	var info: Label = game._label(summary, "Citizenship sets the town where you return after death.\nSleeping restores HP and TP and takes you to a bed.\nClassic fee: 1 Gold per missing HP + 1 Gold per missing TP.", Vector2.ZERO, 19, game.MUTED)
 	info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	register_button = button(summary, "Citizenship · Set respawn here", open_registration, true)
 	sleep_button = button(summary, "Sleep · Ask price", func() -> void: send("inn_sleep" if state.has("cost") else "inn_quote"))

@@ -86,9 +86,16 @@ def configure(runtime):
     shop=runtime/'data/aster-vale-shops.ini'
     if not shop.exists():shop=runtime/'data/shops.ini'
     text=shop.read_text();version=re.search(r'^Version\s*=\s*(\d+)',text,re.M);vendor=900 if version and int(version[1])>=2 else 304
-    recipe=f'{vendor}.name = Baru Tailor\n{vendor}.craft = 430,492,5,1,10000,0,0,0,0, 431,492,5,1,10000,0,0,0,0\n'
-    if f'{vendor}.craft' not in text:shop.write_text(text.rstrip()+'\n\n# Aster Vale restored Baru tailoring.\n'+recipe)
-    elif recipe.strip() not in text:raise ValueError('Tailor service ID is occupied')
+    recipe=f'{vendor}.name = Baru Shop\n{vendor}.craft = 430,460,1,492,40,0,0,0,0,431,465,1,492,40,0,0,0,0\n'
+    current=re.search(r'^'+str(vendor)+r'\.craft\s*=\s*(.*)$',text,re.M)
+    expected=recipe.split('.craft = ',1)[1].strip()
+    if not current:shop.write_text(text.rstrip()+'\n\n# Aster Vale restored Baru tailoring.\n'+recipe)
+    elif current[1].replace(' ','')!=expected:
+        legacy='430,492,5,1,10000,0,0,0,0,431,492,5,1,10000,0,0,0,0'
+        if current[1].replace(' ','')!=legacy:raise ValueError('Tailor service ID is occupied')
+        text=text[:current.start()]+f'{vendor}.craft = '+expected+text[current.end():]
+        text=re.sub(r'^'+str(vendor)+r'\.name\s*=.*$',f'{vendor}.name = Baru Shop',text,flags=re.M)
+        shop.write_text(text)
     speech=runtime/'data/speech.ini';text=speech.read_text()
     for ident,line in [(303,'Cool supplies are always welcome.'),(305,'The court welcomes travelers who lend a hand.')]:
         if f'{ident}.speech.1' not in text:text+=f'\n{ident}.frequency = 30\n{ident}.chance = 25%\n{ident}.speech.1 = {line}\n'

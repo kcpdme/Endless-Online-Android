@@ -79,8 +79,9 @@ hand-in, EXP/Gold rewards and native one-time completion history:
 34 at 20,21). Its original objective/removal mismatch is corrected: it consumes
 5 Ice Cube (337) and 5 Ice Gem (338), and grants Baru Flock (new item **492**).
 Original state names and daily reset are retained. The new Baru Tailor (NPC
-304, map 5 at 37,46) crafts Baru/Baruta (430/431) for five Flocks and 10,000
-Gold. Item **491 remains Skylar's 1,000-damage admin blade**.
+304, map 5 at 37,46) initially crafted Baru/Baruta (430/431) for five Flocks and
+10,000 Gold. Version 0.40.1 restores the classic recipe: one Oron/Orona plus
+40 Flocks, with no extra Gold fee; see [the economy follow-up](CLASSIC_ECONOMY_AND_SCROLLING.md). Item **491 remains Skylar's 1,000-damage admin blade**.
 
 Only the Shepherd and Royal Envoy gain configured ambient chatter. The change
 does not manufacture ambient lines for every existing NPC.

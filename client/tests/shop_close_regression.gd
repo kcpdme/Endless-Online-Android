@@ -8,6 +8,7 @@ func run() -> void:
 	await process_frame
 	await process_frame
 	game.welcome.hide()
+	game.online.panel.hide()
 	game.started = true
 	game.online_mode = true
 	game.online.active = true
@@ -17,7 +18,7 @@ func run() -> void:
 	var close_button: Button
 	for child: Node in game.shop_ui.panel.get_child(0).get_children():
 		if child is Button and child.text == "×": close_button = child
-	var at: Vector2 = close_button.get_global_rect().intersection(game.chat_button.get_global_rect()).get_center()
+	var at: Vector2 = root.get_final_transform()*close_button.get_global_rect().get_center()
 	print("CLOSE / CHAT OVERLAP: ", close_button.get_global_rect().intersection(game.chat_button.get_global_rect()))
 	# Android can deliver emulated mouse and native touch for a single gesture.
 	var mouse: InputEventMouseButton = InputEventMouseButton.new()
@@ -43,7 +44,7 @@ func run() -> void:
 	assert(not game.chat_ui.panel.visible, "Shop close gesture must not open conversation")
 	await create_timer(.3).timeout
 	# A fresh deliberate chat gesture must still work after the close gesture.
-	touch.position = game.chat_button.get_global_rect().get_center()
+	touch.position = root.get_final_transform()*game.chat_button.get_global_rect().get_center()
 	touch.pressed = true
 	Input.parse_input_event(touch.duplicate())
 	touch.pressed = false

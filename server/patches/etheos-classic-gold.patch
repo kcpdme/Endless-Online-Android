@@ -1,0 +1,77 @@
+--- a/src/npc.cpp
++++ b/src/npc.cpp
+@@ -598,20 +598,50 @@
+ 	}
+ 	else if (dropratemode == 3)
+ 	{
+-		// Mode3 used to ignore DropRate. Scale the whole weighted table, keeping
+-		// relative item chances and the original100% total-probability ceiling.
+-		double rate = std::max(0.0, droprate);
+-		double total = 0.0;
+-		UTIL_FOREACH_CREF(this->Data().drops, checkdrop)
+-			total += checkdrop->chance * rate;
+-		double roll = util::rand(0.0, std::max(100.0, total));
+-
+-		UTIL_FOREACH_CREF(this->Data().drops, checkdrop)
+-		{
+-			if (roll >= checkdrop->chance_offset * rate && roll < (checkdrop->chance_offset+checkdrop->chance) * rate)
+-			{
+-				drop = checkdrop.get();
+-				break;
++		// Gold has its own classic probability; item boosts consume only the
++		// remaining probability. At most one pile/item is dropped per kill.
++		double goldrate = this->map->world->config["GoldDropRate"];
++		if (goldrate < 0.0)
++		{
++			// Mode3 used to ignore DropRate. Scale the whole weighted table, keeping
++			// relative item chances and the original100% total-probability ceiling.
++			double rate = std::max(0.0, droprate);
++			double total = 0.0;
++			UTIL_FOREACH_CREF(this->Data().drops, checkdrop)
++				total += checkdrop->chance * rate;
++			double roll = util::rand(0.0, std::max(100.0, total));
++
++			UTIL_FOREACH_CREF(this->Data().drops, checkdrop)
++			{
++				if (roll >= checkdrop->chance_offset * rate && roll < (checkdrop->chance_offset+checkdrop->chance) * rate)
++				{
++					drop = checkdrop.get();
++					break;
++				}
++			}
++		}
++		else
++		{
++			double gold_total = 0.0, item_total = 0.0;
++			UTIL_FOREACH_CREF(this->Data().drops, candidate)
++			{
++				if (candidate->id == 1) gold_total += candidate->chance * goldrate;
++				else item_total += candidate->chance * std::max(0.0, droprate);
++			}
++			double gold_scale = gold_total > 100.0 ? 100.0 / gold_total : 1.0;
++			double remaining = std::max(0.0, 100.0 - gold_total * gold_scale);
++			double item_scale = item_total > remaining ? remaining / item_total : 1.0;
++			double roll = util::rand(0.0, 100.0), offset = 0.0;
++			UTIL_FOREACH_CREF(this->Data().drops, candidate)
++			{
++				double chance = candidate->chance * (candidate->id == 1
++					? goldrate * gold_scale : std::max(0.0, droprate) * item_scale);
++				if (roll >= offset && roll < offset + chance)
++				{
++					drop = candidate.get();
++					break;
++				}
++				offset += chance;
+ 			}
+ 		}
+ 	}
+--- a/src/eoserv_config.cpp
++++ b/src/eoserv_config.cpp
+@@ -221,6 +221,7 @@
+ 	eoserv_config_default(config, "Deadly"             , false);
+ 	eoserv_config_default(config, "ExpRate"            , 1.0);
+ 	eoserv_config_default(config, "DropRate"           , 1.0);
++	eoserv_config_default(config, "GoldDropRate"       , -1.0);
+ 	eoserv_config_default(config, "MobRate"            , 1.0);
+ 	eoserv_config_default(config, "PKRate"             , 0.75);
+ 	eoserv_config_default(config, "CriticalRate"       , 0.00);

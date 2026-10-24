@@ -15,6 +15,7 @@ func run() -> void:
 	await process_frame
 	game.set_process(false)
 	game.welcome.hide()
+	game.online.panel.hide()
 	game.music.stop()
 	game.online_mode = true
 	game.started = true

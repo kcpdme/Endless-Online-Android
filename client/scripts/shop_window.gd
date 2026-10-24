@@ -102,11 +102,6 @@ func build(owner_game: Node, parent: Control) -> void:
 	status = game._label(card, "", Vector2(330, 628), 15, game.TEXT)
 	status.size = Vector2(760, 20)
 	status.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	var touch_input: Node = preload("res://scripts/shop_touch_input.gd").new()
-	touch_input.panel = panel
-	touch_input.catalog = list
-	touch_input.details = details_scroll
-	card.add_child(touch_input)
 	panel.hide()
 
 func close() -> void:

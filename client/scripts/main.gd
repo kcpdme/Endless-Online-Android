@@ -1279,6 +1279,8 @@ func _build_ui() -> void:
 	# curtain above a later-created HUD button. Keep all modal roots last.
 	for child: Node in root.get_children():
 		if child.has_meta("game_modal"): root.move_child(child, -1)
+	var scrolling: Node = preload("res://scripts/mobile_scroll.gd").new()
+	scrolling.name = "MobileScroll"; scrolling.game = self; root.add_child(scrolling)
 
 func _modal(parent: Node, size: Vector2) -> Control:
 	var curtain: ColorRect = ColorRect.new()

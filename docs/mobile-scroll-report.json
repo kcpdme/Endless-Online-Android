@@ -1,0 +1,9 @@
+{
+  "button_swipes_do_not_activate": true,
+  "checks": 13,
+  "item_list_drag": true,
+  "quest_card_drag": true,
+  "result": "passed",
+  "text_fields_preserved": true,
+  "wide_scrollbars": true
+}
