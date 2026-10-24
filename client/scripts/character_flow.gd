@@ -78,6 +78,7 @@ func build(owner: Node, parent: Control) -> void:
 	if not art_path.is_empty() and ResourceLoader.exists(art_path):art.texture=load(art_path)
 	art.expand_mode=TextureRect.EXPAND_IGNORE_SIZE;art.stretch_mode=TextureRect.STRETCH_KEEP_ASPECT_CENTERED;art.custom_minimum_size=Vector2(280,300);art.size_flags_vertical=Control.SIZE_EXPAND_FILL;art.size_flags_horizontal=Control.SIZE_EXPAND_FILL;note.add_child(art)
 	text(note,"Aster Vale",30,game.GOLD).horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
+	button(note,"Preview character graphics",func() -> void:game.graphics_ui.open())
 	server_toggle = button(c.auth_box,"Server settings",func() -> void: server_options.visible = not server_options.visible)
 	server_options = HBoxContainer.new(); server_options.add_theme_constant_override("separation",14); c.auth_box.add_child(server_options)
 	c.host_field = field(server_options,"Server hostname or wss://…/ws"); c.host_field.text = "wss://eo.kcpd.top/ws"

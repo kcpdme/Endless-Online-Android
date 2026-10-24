@@ -1,0 +1,11 @@
+{
+  "checks": 329,
+  "exact_equipment_coverage": true,
+  "login_preview_without_credentials_changed": true,
+  "pixel_identical_classic_rollback": true,
+  "pixel_render_test": true,
+  "published_appearances": 2,
+  "published_frames": 96,
+  "result": "passed",
+  "world_draw_changes": true
+}

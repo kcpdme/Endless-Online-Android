@@ -8,8 +8,8 @@ This public repository contains source code, content import tools, build scripts
 
 After importing content and building, install `builds/aster-vale-debug.apk` on an Android device (Android 7 / API 24 or later). This development build includes ARM64 and x86_64. Open **Aster Vale**, log in, select your character and join the persistent shared world. The build is signed with a development key, not configured for Google Play release.
 
-The current Android package is **`com.cloudgameboy.astervale`**, version 0.38.2
-(code 55). It installs separately from the earlier `io.astervale.prototype` app;
+The current Android package is **`com.cloudgameboy.astervale`**, version 0.39.0
+(code 56). It installs separately from the earlier `io.astervale.prototype` app;
 online accounts remain on the same server. Release APK and AAB exports use the
 same private release signing key.
 
@@ -52,6 +52,13 @@ APK update (`--no-incremental -r`), verifies installed bytes and version, and
 checks that Android kept the app's original installation timestamp.
 
 ## Play online
+
+Version **0.39.0** delivers the first playable painted character pilot. Open
+**Preview character graphics** on login, choose **Enhanced**, and try the
+animation and direction controls. **Menu → Graphics** changes world rendering.
+The pilot covers male/female peasant outfits with Brown Boots and default
+skin/hair, unarmed with no hat or shield. Other looks use Classic. Choose
+**Classic** to revert immediately. See [pilot scope and verification](docs/ENHANCED_PILOT_PLAN.md).
 
 Version **0.38.2** restores Ancient Wraith's original transparent idle/walking
 frames and visible attack artwork. It removes the gold missing-art ball in

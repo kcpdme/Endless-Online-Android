@@ -49,6 +49,7 @@ func run() -> void:
 	var art: RefCounted = game.art_profile
 	art.settings_path = "user://graphics-regression.cfg"
 	art.select_mode("classic", false)
+	art.load_pack("user://not-installed-art/pack.json")
 	check(not art.ready(), "Staged drafts are unavailable to the production selector")
 	check(not art.select_mode("enhanced", false), "Unpublished art cannot be enabled")
 	check(art.load_pack(FIXTURE + "pack.json"), "Ready regression release loads")

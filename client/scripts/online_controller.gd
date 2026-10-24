@@ -1321,6 +1321,8 @@ func nearby_count() -> int:
 func character_graphic(record: Dictionary) -> Dictionary:
 	var equipment_graphics: Array = record.get("equipment_graphics", []) as Array
 	if equipment_graphics.size() != 9: return {}
+	var painted: Dictionary = game.art_profile.appearance(record)
+	if not painted.is_empty(): return painted
 	var characters: Dictionary = game.manifest.get("characters", {}) as Dictionary
 	var layered: Dictionary = characters.get("equipment_layers", {}) as Dictionary
 	if int(layered.get("version", 0)) >= 2:

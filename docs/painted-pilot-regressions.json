@@ -1,0 +1,67 @@
+[
+  {
+    "test": "painted_pilot",
+    "passed": true,
+    "exit": 0,
+    "errors": []
+  },
+  {
+    "test": "art_profiles",
+    "passed": true,
+    "exit": 0,
+    "errors": []
+  },
+  {
+    "test": "ancient_wraith",
+    "passed": true,
+    "exit": 0,
+    "errors": []
+  },
+  {
+    "test": "character_flow_mobile",
+    "passed": true,
+    "exit": 0,
+    "errors": []
+  },
+  {
+    "test": "barber_login_signs",
+    "passed": true,
+    "exit": 0,
+    "errors": []
+  },
+  {
+    "test": "movement_controls",
+    "passed": true,
+    "exit": 0,
+    "errors": []
+  },
+  {
+    "test": "joystick_startup",
+    "passed": true,
+    "exit": 0,
+    "errors": [],
+    "isolated_recheck": {
+      "delayed_first_steps": 0,
+      "extra_face_requests": 0,
+      "first_frame_motion": 180,
+      "fps": [
+        30,
+        60,
+        120
+      ],
+      "landing_points": 5,
+      "modes": 4,
+      "result": "passed",
+      "steps_before_drag": 0,
+      "traces": 180,
+      "wrong_first_directions": 0
+    },
+    "parallel_run_note": "Initial parallel graphical run had one delayed first step; isolated rerun passed all 180 traces. Multiple windows can trigger application focus cancellation."
+  },
+  {
+    "test": "world_smoke",
+    "passed": true,
+    "exit": 0,
+    "errors": []
+  }
+]

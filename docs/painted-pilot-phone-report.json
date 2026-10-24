@@ -1,0 +1,20 @@
+{
+  "result": "passed",
+  "device": "Samsung Galaxy S23 Ultra (SM-S918B)",
+  "version": "0.39.0",
+  "version_code": 56,
+  "full_update_verified": true,
+  "first_install_timestamp_preserved": true,
+  "installed_sha256": "d90bcf01b1943dececcfb50d2e45f99ff20975a9f70294d6e9e0057a0e12bf5a",
+  "startup_login_unclipped": true,
+  "classic_and_enhanced_visible": true,
+  "walk_preview_pixels_change": [
+    true,
+    true
+  ],
+  "pose_picker_visible_and_usable": true,
+  "runtime_script_or_fatal_errors": [],
+  "restart_preference_test": "Godot runtime test; Android session was left available for user testing.",
+  "screenshots": "work/painted-pilot-phone/",
+  "world_coverage": "Resolver/world pixel test on desktop; Android visual check uses the comparison preview, which shows the supported pilot outfits."
+}

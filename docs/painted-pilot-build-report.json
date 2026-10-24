@@ -1,0 +1,13 @@
+{
+  "version": "0.39.0",
+  "version_code": 56,
+  "bytes": 255906528,
+  "sha256": "d90bcf01b1943dececcfb50d2e45f99ff20975a9f70294d6e9e0057a0e12bf5a",
+  "active_pack": "pilot02",
+  "published_appearances": 2,
+  "referenced_textures": [
+    "art_packs/painted_v1/releases/pilot02/peasant_0.png",
+    "art_packs/painted_v1/releases/pilot02/peasant_1.png"
+  ],
+  "source_draft_concepts_fixtures_excluded": true
+}

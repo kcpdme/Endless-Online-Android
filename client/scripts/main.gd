@@ -962,8 +962,10 @@ func _frame(character: Dictionary, direction: String, state: String, phase: floa
 				if not head_images.has(path): head_images[path] = _texture(path).get_image()
 				var r: Array = frame.region
 				var part: Image = (head_images[path] as Image).get_region(Rect2i(int(r[0]), int(r[1]), int(r[2]), int(r[3])))
-				if part.get_width() != result.get_width(): part.resize(result.get_width(), result.get_height(), Image.INTERPOLATE_NEAREST)
-				result.blend_rect(part, Rect2i(Vector2i.ZERO, part.get_size()), Vector2i.ZERO)
+				var source_scale: float = maxf(1.0,float(frame.get("pixel_scale",1)))
+				if source_scale != pixel_scale: part.resize(roundi(part.get_width()*pixel_scale/source_scale),roundi(part.get_height()*pixel_scale/source_scale),Image.INTERPOLATE_NEAREST)
+				var rect: Rect2 = _frame_rectangle(frame,Vector2(float(r[2]),float(r[3])))
+				result.blend_rect(part, Rect2i(Vector2i.ZERO, part.get_size()), Vector2i((Vector2(96,184)+rect.position)*pixel_scale))
 			if bool(character.clip_black):
 				var bytes: PackedByteArray = result.get_data()
 				for index: int in range(0, bytes.size(), 4):
@@ -1002,15 +1004,22 @@ func _draw_character_frame(character: Dictionary, at: Vector2, direction: String
 		return true
 	return _paint_character_frame(frame, at, tint)
 
+func _frame_rectangle(frame: Dictionary, source_size: Vector2) -> Rect2:
+	var pixel_scale: float = maxf(1.0,float(frame.get("pixel_scale",1)))
+	var size: Vector2 = source_size/pixel_scale
+	var raw_canvas: Array = frame.get("logical_canvas",[size.x,size.y])
+	var canvas: Vector2 = Vector2(float(raw_canvas[0]),float(raw_canvas[1]))
+	var raw_trim: Array = frame.get("trim_offset",[0,0])
+	var raw_offset: Array = frame.get("offset",[0,0])
+	return Rect2(Vector2(float(raw_offset[0]),float(raw_offset[1]))-Vector2(canvas.x/2.0,canvas.y)+Vector2(float(raw_trim[0]),float(raw_trim[1])),size)
+
 func _paint_character_frame(frame: Dictionary, at: Vector2, tint: Color) -> bool:
 	var texture: Texture2D = _texture(str(frame.get("path", "")))
 	if texture == null: return false
 	var dimensions: Array = frame.get("region", [0, 0, texture.get_width(), texture.get_height()]) as Array
 	var region: Rect2 = Rect2(float(dimensions[0]), float(dimensions[1]), float(dimensions[2]), float(dimensions[3]))
-	var raw_offset: Array = frame.get("offset", [0, 0]) as Array
-	var offset: Vector2 = Vector2(float(raw_offset[0]), float(raw_offset[1]))
-	var logical_size: Vector2 = region.size / maxf(1.0, float(frame.get("pixel_scale", 1)))
-	draw_texture_rect_region(texture, Rect2(at + offset - Vector2(logical_size.x / 2.0, logical_size.y), logical_size), region, tint)
+	var target: Rect2 = _frame_rectangle(frame,region.size)
+	draw_texture_rect_region(texture, Rect2(at+target.position,target.size), region, tint)
 	return true
 
 func _draw_player() -> void:

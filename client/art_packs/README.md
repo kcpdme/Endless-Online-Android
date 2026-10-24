@@ -10,7 +10,7 @@ painted_v1/
   draft/                   Writable copies and in-progress layered animations
   concepts/                Painted style concepts and generation briefs
   releases/<stage>/        Published, independently versioned assets and descriptor
-  pack.json                Active release descriptor; status=draft until ready
+  pack.json                Active release descriptor; status=ready for the pilot
 ```
 
 Source, draft and concepts contain `.gdignore` and are explicitly excluded from
@@ -37,8 +37,9 @@ Edit only the draft PNGs and `draft/layers.json`. Preserve each animation's
 states, directions, frame counts, original logical size and feet offset. For
 2x/3x/4x source resolution, add `pixel_scale` to each frame and scale its source
 region by the same factor. The destination size and offset remain in Classic
-world pixels. This initial contract retains the full logical frame canvas;
-trimmed-frame packing can be added in a later version of the contract.
+world pixels. Compact frames may instead supply `logical_canvas` (the native frame size)
+and `trim_offset` (the crop origin in logical pixels). Validation keeps the
+crop inside that canvas and preserves the original feet offset.
 
 Complete and visually check a whole appearance: skin, hair and every visible
 equipment layer, including front/back weapon and offhand layers when equipped.
@@ -81,3 +82,31 @@ The runtime test uses deterministic brighter 2x fixtures under `test_fixture/`,
 excluded from exports. A graphical run verifies that reverting restores an
 identical Classic preview; a headless run checks metadata and fallback only.
 The fixtures are regression data, not production painted artwork.
+
+## Painted pilot delivery
+
+`pilot02` contains two composed appearances, each with 48 frames. Standing,
+walking, melee, casting and reach use a small cutout mesh rig; chair and floor
+poses use dedicated painted reference sheets. This is an animation pilot, not
+a finished modular wardrobe. Both genders require default skin 0, hair style
+1/color 0, Brown Boots graphic 4, male armor 16 or female armor 14, no hat,
+shield or weapon. These are native appearance IDs; player data never changes.
+
+The baker renders four source directions into 192×320 physical frame cells at
+4× resolution, within the native 192×192 logical canvas. Each atlas is
+1536×1920. Two loaded atlases require 23,592,960 bytes of uncompressed RGBA
+texture storage. Source, draft and test fixtures stay excluded from APKs.
+
+```sh
+godot --path client --script res://tests/bake_painted_pilot.gd
+python3 tools/publish_painted_pilot.py --release NEW_UNIQUE_NAME
+godot --headless --path client --editor --import
+godot --path client --script res://tests/painted_pilot.gd
+```
+
+Publishing requires both exact outfits, complete directions and phases,
+nonempty unclipped frames, distinct moving phases and unchanged native anchors.
+An existing release cannot be overwritten. A login preview supports both modes,
+all poses and rotation without an account or changes to typed credentials.
+The same resolver supplies actual world rendering. Unsupported appearances use
+Classic in full. The original Ancient Wraith art remains shared by both modes.

@@ -8,6 +8,14 @@ var fit_to_rect: bool = false
 var rendered_bounds: Rect2 = Rect2()
 var zoom: float = 2.0
 var bottom_margin: float = 34.0
+var pose: String = "idle"
+var animate: bool = false
+var animation_phase: float = -1.0
+
+func _process(delta: float) -> void:
+	if not animate or not is_visible_in_tree(): return
+	animation_phase = fposmod(maxf(0,animation_phase) + delta,.4 if pose == "frames" else .48)
+	queue_redraw()
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
@@ -29,7 +37,7 @@ func appearance_record() -> Dictionary:
 func _draw() -> void:
 	if game == null: return
 	var character: Dictionary = game.online.character_graphic(appearance_record())
-	var frame: Dictionary = game._frame(character,direction,"idle")
+	var frame: Dictionary = game._frame(character,direction,pose,animation_phase)
 	var layers: Array = frame.get("layers",[frame]) as Array
 	var visible_layers: Array[Dictionary] = []
 	var bounds: Rect2 = Rect2()
@@ -48,8 +56,7 @@ func _draw() -> void:
 		if not used.has_area(): continue
 		var offset: Array = layer.get("offset",[0,0])
 		var pixel_scale: float = maxf(1.0, float(layer.get("pixel_scale", 1)))
-		var logical_size: Vector2 = source.size / pixel_scale
-		var rectangle: Rect2 = Rect2(Vector2(float(offset[0])-logical_size.x/2.0,float(offset[1])-logical_size.y)+used.position/pixel_scale,used.size/pixel_scale)
+		var rectangle: Rect2 = Rect2(game._frame_rectangle(layer,source.size).position+used.position/pixel_scale,used.size/pixel_scale)
 		bounds = rectangle if first else bounds.merge(rectangle); first = false
 		visible_layers.append({"texture":texture,"source":Rect2(source.position+used.position,used.size),"rectangle":rectangle})
 	var scale: float = zoom
