@@ -1,0 +1,23 @@
+{
+  "result": "passed",
+  "version": "0.38.2",
+  "version_code": 55,
+  "apk_sha256": "99b63d20a99a9ac36a4de3b7e40200eb66460b3f0244c35af2be592fffbc1913",
+  "apk_bytes": 251387468,
+  "original_wraith_frame_resources_packaged": 28,
+  "idle_walk_transparency_metadata": true,
+  "original_attack_art_included": true,
+  "catalog_checksum_verified": true,
+  "draft_art_excluded": true,
+  "release_signature_verified": true,
+  "alignment_16k_verified": true,
+  "classic_branch_commit": "243e43a",
+  "graphics_branch_fix_commit": "bf8c534",
+  "classic_branch_render_checks": 38,
+  "classic_enhanced_render_checks": 47,
+  "source_import_tests": 5,
+  "catalog_tests": 18,
+  "character_pack_tests": 7,
+  "phone_install": "pending_adb_connection",
+  "phone_ui_test": "pending_adb_connection"
+}
