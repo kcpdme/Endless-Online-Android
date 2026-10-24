@@ -1,0 +1,53 @@
+{
+  "restored_checkpoint": "bf3faca",
+  "renderer_and_ui_byte_identical": {
+    "client/scripts/main.gd": true,
+    "client/scripts/online_controller.gd": true,
+    "client/scripts/character_preview.gd": true,
+    "client/scripts/graphics_settings.gd": true,
+    "client/scripts/character_flow.gd": true
+  },
+  "classic_render_regression": {
+    "checks": 371,
+    "classic_assets_unchanged": true,
+    "hd_logical_size_and_anchor_preserved": true,
+    "pixel_render_test": true,
+    "result": "passed",
+    "whole_outfit_fallback": true
+  },
+  "wraith_regression": {
+    "ball_placeholder_removed": true,
+    "checks": 47,
+    "idle_and_walk_invisible": true,
+    "original_attack_visible": true,
+    "pixel_render_test": true,
+    "profiles": [
+      "classic",
+      "enhanced"
+    ],
+    "result": "passed",
+    "targeting_preserved": true
+  },
+  "paused_experiment_commit": "5a12ba1",
+  "paused_experiment_branch": "codex/painted-pilot-paused",
+  "local_asset_backup": "artifacts/graphics-backups/painted-pilot02.zip",
+  "apk": {
+    "version": "0.39.1",
+    "version_code": 57,
+    "sha256": "2566556bd125b97d28eb037df569295ac82d2fe88ea1a361483857dfb20c3c55",
+    "bytes": 251387521,
+    "all_art_packs_excluded": true,
+    "release_certificate_sha256": "fbf80de525cf74dbedbcb1ae73899c6fe9a55ea9661b31e93637f074d7e979ed",
+    "signature_and_16k_alignment_verified": true
+  },
+  "phone": {
+    "result": "passed",
+    "model": "Samsung Galaxy S23 Ultra",
+    "version": "0.39.1",
+    "version_code": 57,
+    "installed_apk_sha256_verified": true,
+    "original_first_install_timestamp_preserved": true,
+    "launch_script_or_fatal_errors": [],
+    "screenshot": "work/classic-rollback-phone.png"
+  }
+}

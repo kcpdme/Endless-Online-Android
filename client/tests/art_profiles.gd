@@ -59,7 +59,10 @@ func run() -> void:
 	check(art.definitions(record)["armor:1"].idle.south.pixel_scale == 2, "Completed outfit uses replacement layers")
 	var fresh: RefCounted = preload("res://scripts/art_profile.gd").new()
 	fresh.settings_path = art.settings_path; fresh.configure(game.manifest)
-	check(fresh.mode == "enhanced", "Selection survives restarting the profile controller")
+	check(fresh.mode == "classic" and not fresh.ready(), "A Classic-only build resets a stale Enhanced preference")
+	var reset_config: ConfigFile = ConfigFile.new(); reset_config.load(art.settings_path)
+	check(reset_config.get_value("graphics","characters","") == "classic", "Classic rollback is saved for later launches")
+	check(not fresh.select_mode("enhanced",false), "A removed pack cannot be re-enabled")
 	var missing: Variant = art.replacements["boots:1"]
 	art.replacements.erase("boots:1"); art.validated.clear(); art.selections.clear()
 	check(art.definitions(record)["armor:1"].idle.south.path == classic["armor:1"].idle.south.path, "One missing layer falls back to the entire Classic outfit")

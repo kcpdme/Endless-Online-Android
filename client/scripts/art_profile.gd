@@ -15,7 +15,11 @@ func configure(manifest: Dictionary) -> void:
 	load_pack(PACK_PATH)
 	var config: ConfigFile = ConfigFile.new()
 	if config.load(settings_path) == OK:
-		mode = "enhanced" if config.get_value("graphics", "characters", "classic") == "enhanced" else "classic"
+		var saved: String = str(config.get_value("graphics", "characters", "classic"))
+		mode = "enhanced" if saved == "enhanced" and ready() else "classic"
+		if saved == "enhanced" and not ready():
+			config.set_value("graphics", "characters", "classic")
+			config.save(settings_path)
 
 func load_pack(path: String) -> bool:
 	replacements.clear(); validated.clear(); selections.clear(); texture_sizes.clear()

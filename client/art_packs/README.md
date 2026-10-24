@@ -1,5 +1,10 @@
 # Reversible character art packs
 
+The painted experiment is paused after phone review. Version 0.39.1 exports
+Classic only and excludes this whole directory. The experimental code is saved
+in `codex/painted-pilot-paused` (`5a12ba1`); local artwork and its backup remain
+separate for future work. The workflow below is retained for that future work.
+
 Classic character art remains in `client/content/characters/`. Its original
 manifest is never rewritten by this workflow. New local assets live alongside
 it in `client/art_packs/painted_v1/`; maps are outside the pack's scope.
