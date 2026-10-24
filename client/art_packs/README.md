@@ -29,7 +29,9 @@ python3 tools/character_art_pack.py verify --pack painted_v1
 Staging copies every existing equipment layer, preserves the originals, and
 makes an additional baseline under `artifacts/graphics-backups/classic-<time>/`.
 Existing pack folders cannot be overwritten. `source/baseline.json` locates the
-backup. Verification hashes the original, source copy and backup independently.
+backup. Verification hashes the original character images, source copy and backup independently,
+and compares the original character-layer definitions. Shared NPC or map manifest
+fixes do not invalidate the separate character-art baseline.
 
 Edit only the draft PNGs and `draft/layers.json`. Preserve each animation's
 states, directions, frame counts, original logical size and feet offset. For

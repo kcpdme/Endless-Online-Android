@@ -79,5 +79,15 @@ class CharacterArtPackTests(unittest.TestCase):
     def test_pack_name_cannot_escape_asset_directory(self):
         with self.assertRaises(ValueError): stage(self.root, '../../content')
 
+    def test_shared_npc_fix_does_not_invalidate_character_baseline(self):
+        stage(self.root, 'painted_v1')
+        path=self.root/'client/content/manifest.json'; manifest=read(path)
+        manifest['characters']['npcs']={'171':{'transparent_poses':['idle','frames']}}
+        write(path,manifest)
+        self.assertTrue(verify(self.root,'painted_v1')['original_assets_unchanged'])
+        manifest['characters']['equipment_layers']['layers']['skin:0']['idle']['south']['offset']=[0,9]
+        write(path,manifest)
+        with self.assertRaisesRegex(ValueError,'character layer definitions'):verify(self.root,'painted_v1')
+
 
 if __name__ == '__main__': unittest.main()

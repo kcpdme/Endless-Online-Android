@@ -105,8 +105,10 @@ def verify(root, pack):
             path = confined(base, base / relative)
             if not path.is_file() or digest(path) != expected:
                 raise ValueError(f'Baseline verification failed: {path}')
-    if digest(backup / 'manifest.json') != digest(root / 'client/content/manifest.json'):
-        raise ValueError('Original manifest changed since this baseline; inspect before publishing')
+    before=read(backup / 'manifest.json')['characters']['equipment_layers']
+    after=read(root / 'client/content/manifest.json')['characters']['equipment_layers']
+    if before != after:
+        raise ValueError('Original character layer definitions changed since this baseline; inspect before publishing')
     return dict(result='passed', pack=pack, **baseline, original_assets_unchanged=True)
 
 def validate_layer(original, candidate, root, draft_root, images):
