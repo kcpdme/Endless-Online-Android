@@ -78,7 +78,7 @@ acknowledgements. Moving or warping invalidates the adapter shop session. The
 native Item_Add payload is item2/uid2/amount3/x1/y1; Walk_Reply's ground-item
 layout is separately uid2/item2/x1/y1/amount3. Partial pickup subtracts only the
 acknowledged amount. Pickup and transactions do not request a full world refresh.
-Gold banking, item lockers, equipment inspection, trading, chat and skills now have separate native flows. Guild NPC opening, founding/support invitations, recruiter applications/acceptance, deposits, ranks, descriptions, leave/disband and guild chat use native Guild/Talk packets. Membership and Gold change only after native acknowledgement; silent leave/disband actions are verified through a self-paperdoll ordering barrier. Party controls remain future work.
+Gold banking, item lockers, equipment inspection, trading, chat and skills now have separate native flows. Guild NPC opening, founding/support invitations, recruiter applications/acceptance, deposits, ranks, descriptions, leave/disband and guild chat use native Guild/Talk packets. Membership and Gold change only after native acknowledgement; silent leave/disband actions are verified through a self-paperdoll ordering barrier. Party invitations, membership, group heals and Bard instruments are implemented through native packets.
 
 ## Password hash upgrade and recovery
 
@@ -135,8 +135,8 @@ python3 server/import_skills.py --runtime work/server-build/runtime --source /pa
 Restart the native world after changing its SkillsFile configuration. Setup
 also imports it when present in --economy-data. The original Version1 offers
 are preserved. Open, learn, forget and skill-point training use native16-family
-requests/acknowledgements; the adapter never grants skills. Group/party casts,
-bard effects and player-targeted offensive spells are not exposed yet.
+requests/acknowledgements; the adapter never grants skills. Group heals and Bard instruments are exposed. Player-targeted offensive spells
+are available on native PK maps, subject to native targeting rules.
 See `docs/TESTING.md` for local/public native and Godot UI regressions.
 
 ## Account rewards and test-character HP
@@ -210,3 +210,9 @@ lightweight `ping` operation confirms an existing native session without a
 world Refresh or credential response. Restart gateway/WebSocket services; no
 native restart or database migration is required. See
 [recovery behavior and native outage tests](../docs/CONNECTION_RECOVERY.md).
+
+## Restored native features (v0.40.0)
+
+All 15 integration gaps from the October audit have implementation paths and
+private native/client checks. See [the completion guide](../docs/FEATURE_COMPLETION.md)
+for operations, authored quests, content installation and verification.

@@ -1,0 +1,14 @@
+--- a/src/map.cpp
++++ b/src/map.cpp
+@@ -2143,6 +2143,11 @@
+ 		builder.AddShort(victim->tp);
+ 		victim->Send(builder);
+ 
++		PacketBuilder caster_stats(PACKET_RECOVER, PACKET_PLAYER, 4);
++		caster_stats.AddShort(from->hp);
++		caster_stats.AddShort(from->tp);
++		from->Send(caster_stats);
++
+ 		if (victim->party)
+ 		{
+ 			victim->party->UpdateHP(victim);

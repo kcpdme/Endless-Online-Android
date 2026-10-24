@@ -77,6 +77,21 @@ class Handler(socketserver.StreamRequestHandler):
         s=self.session
         if not s:raise EOError('Connect to the local server first')
         if op=='ping':return {'connected':True}
+        if op=='feature_open':return s.feature_open(str(r['kind']),r.get('npc_index',0),r.get('x',0),r.get('y',0),r.get('player_id',0))
+        if op=='feature_action':
+            data=s.feature_action(str(r['kind']),str(r['action']),r.get('ident',0),r.get('text',''),r.get('body',''))
+            if r['kind']=='reset' and data.get('feature',{}).get('reset'):
+                self.server.shortcuts.write(s,'skills',0,0)
+                data['shortcuts']=self.server.shortcuts.read(s)
+            return data
+        if op=='delete_character':
+            result=s.delete_character(r['character_id'],r['name'])
+            self.server.shortcuts.remove_deleted_character(s,result['deleted'])
+            return result
+        if op=='change_password':
+            result=s.change_password(str(r['old_password']),str(r['new_password']))
+            self.server.auth_sessions.forget(self)
+            return result
         if op=='admin_open':return s.admin_open()
         if op=='admin_teleport':return s.admin_teleport(r.get('destination',''))
         if op=='admin_item':return s.admin_item(r.get('item_id'))

@@ -122,7 +122,7 @@ class Session:
     def login(self,username,password):
         self.send(4,1,string(username)+string(password));data=self.wait(4,3,timeout=15);r=Reader(data);code=r.num(2)
         if code!=3:raise LoginError(code)
-        self.characters=self.parse_characters(r);return {'characters':self.characters}
+        self.characters=self.parse_characters(r);self.account_name=username.strip().lower();return {'characters':self.characters}
     def parse_characters(self,r):
         count=r.num();r.take(2);result=[]
         for _ in range(count):

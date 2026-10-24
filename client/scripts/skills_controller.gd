@@ -82,7 +82,7 @@ func build(owner_game: Node, parent: Control) -> void:
 	card.add_child(list)
 	var detail_scroll: ScrollContainer = ScrollContainer.new()
 	detail_scroll.position = Vector2(414, 90)
-	detail_scroll.size = Vector2(404, 275)
+	detail_scroll.size = Vector2(404, 235)
 	detail_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	card.add_child(detail_scroll)
 	detail = game._label(detail_scroll, "", Vector2.ZERO, 18)
@@ -105,6 +105,10 @@ func build(owner_game: Node, parent: Control) -> void:
 			panel.hide()
 			refresh()
 		)
+	game._button(card,"Reset all…",Vector2(414,340),Vector2(394,38),func() -> void:
+		if master.is_empty():game._toast("Visit a skill master first.");return
+		panel.hide();game.feature_ui.open("reset",{"npc_index":int(master.npc_index)})
+	)
 	panel.hide()
 	_build_targeting(parent)
 
@@ -169,7 +173,7 @@ func press(index: int) -> void:
 		game._toast("Tap yourself or another player to heal. Tap the skill again to cancel.")
 		refresh()
 		return
-	if armed > 0: game._toast("%s: tap %s to cast. Tap the skill again to cancel." % [str(spell.get("name", "Skill")), "a player (or yourself)" if int(spell.get("restrict", 0)) == 1 else "a monster"])
+	if armed > 0: game._toast("%s: tap %s to cast. Tap the skill again to cancel." % [str(spell.get("name", "Skill")), "a player (or yourself)" if int(spell.get("restrict", 0)) == 1 else "a monster or player in this PK area" if int(spell.get("restrict",0))==2 and bool(game.online.world_rules.get("pk",false)) else "a monster"])
 	refresh()
 
 func contains(point: Vector2) -> int:
@@ -186,6 +190,10 @@ func target(tile: Vector2i) -> bool:
 				cast(armed, "player", int(peer.player_id))
 				return true
 	else:
+		if int(spell.get("restrict",0)) == 2 and bool(game.online.world_rules.get("pk",false)):
+			for peer: Dictionary in game.online.players:
+				if int(peer.player_id) != int(game.online.player.player_id) and Vector2i(int(peer.x),int(peer.y)) == tile:
+					cast(armed,"player",int(peer.player_id)); return true
 		for npc: Dictionary in game.online.npcs:
 			if Vector2i(int(npc.x), int(npc.y)) == tile:
 				if not game.online.is_combat_npc(npc):

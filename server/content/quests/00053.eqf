@@ -1,0 +1,41 @@
+// Original Aster Vale quest, authored 2026-10-24. Not recovered classic EO content.
+Main
+{
+    questname "A Meal Behind Bars"
+    version 1
+}
+state Begin
+{
+    desc "Talk to Prisoner"
+    action AddNpcText(53, "Even a small meal would make this cell easier to bear. Bring 2 Small Bread. The reward is 150 EXP and 50 Gold.");
+    action AddNpcInput(53, 1, "Maybe later");
+    action AddNpcInput(53, 2, "I will help");
+    rule InputNpc(1) goto Cancel
+    rule InputNpc(2) goto Collect
+}
+state Collect
+{
+    desc "Bring 2 Small Bread to Prisoner"
+    action AddNpcText(53, "I am still waiting for 2 Small Bread.");
+    rule GotItems(162, 2) goto Ready
+}
+state Ready
+{
+    desc "Return to Prisoner"
+    action AddNpcText(53, "Thank you. These are just what I needed. Your reward is ready.");
+    rule LostItems(162, 2) goto Collect
+    rule TalkedToNpc(53) goto Reward
+}
+state Reward
+{
+    action RemoveItem(162, 2);
+    action GiveExp(150);
+    action GiveItem(1, 50);
+    action AddNpcChat(53, "Thank you for your help!");
+    action ShowHint("Completed A Meal Behind Bars: 150 EXP and 50 Gold.");
+    action End();
+}
+state Cancel
+{
+    action Reset();
+}

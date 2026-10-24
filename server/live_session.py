@@ -24,9 +24,12 @@ from skills import SkillsMixin
 from rewards import RewardsMixin
 from party import PartyMixin
 from admin_actions import AdminMixin
+from world_feedback import WorldFeedbackMixin
+from native_features import NativeFeaturesMixin
+from native_settings import world_rules
 
 
-class LiveSession(AdminMixin, BarberMixin, PartyMixin, GuildsMixin, RewardsMixin, SkillsMixin, ConsumablesMixin, InnsMixin, QuestsMixin, SeatingMixin, ChestsMixin, ServicesMixin, EconomyMixin, Session):
+class LiveSession(NativeFeaturesMixin, WorldFeedbackMixin, AdminMixin, BarberMixin, PartyMixin, GuildsMixin, RewardsMixin, SkillsMixin, ConsumablesMixin, InnsMixin, QuestsMixin, SeatingMixin, ChestsMixin, ServicesMixin, EconomyMixin, Session):
     def __init__(self,*args):
         self.init_services();self.init_skills();self.init_party();self.quest_journal=None
         self.pending_moves=deque();self.position_seq=0;self.last_input_seq=0
@@ -182,6 +185,8 @@ class LiveSession(AdminMixin, BarberMixin, PartyMixin, GuildsMixin, RewardsMixin
         self.apply_reward_packet(f,a,p)
         if self.state:self.apply_skill_packet(f,a,p)
         if not self.state:return
+        self.apply_feature_packet(f,a,p)
+        self.apply_world_feedback(f,a,p)
         event=self.events[-1]
         if event.get('kind') in ('npc_damage','npc_killed'):
             npc=next((n for n in self.state['npcs'] if n['index']==event['npc_index']),{})
@@ -319,6 +324,7 @@ class LiveSession(AdminMixin, BarberMixin, PartyMixin, GuildsMixin, RewardsMixin
 
     def snapshot(self):
         data=super().snapshot()
+        data['world_rules']=world_rules(data['map_id'])
         data['player']['drunk_seconds']=max(0,getattr(self,'drunk_until',0)-time.monotonic())
         data['party']=getattr(self,'party_members',[])
         invitation=getattr(self,'party_invitation',None)
@@ -343,7 +349,7 @@ class LiveSession(AdminMixin, BarberMixin, PartyMixin, GuildsMixin, RewardsMixin
         if not before or before['map_id']!=data['map_id'] or any(e.get('kind')=='map_transition' for e in data['events']):return data
         # Compact entity changes, like native EO: never resend the full visible world per step.
         update={k:data[k] for k in ('map_id','position_update','position_seq','correction','events')}
-        for key in ('party','party_invitation','party_notice','bank','locker','chest','trade','trade_request','casting','skillmaster','quest_dialog','quest_journal','inn','barber','guild','guild_creation','guild_invitation','guild_requests','guild_notice'):
+        for key in ('world_rules','party','party_invitation','party_notice','bank','locker','chest','trade','trade_request','casting','skillmaster','quest_dialog','quest_journal','inn','barber','guild','guild_creation','guild_invitation','guild_requests','guild_notice'):
             if data.get(key)!=before.get(key):update[key]=data.get(key)
         if data['player']!=before['player'] or data['position_update']:update['player']=data['player']
         for collection,key in [('players','player_id'),('npcs','index'),('items','uid')]:

@@ -1,0 +1,87 @@
+{
+  "result": "passed",
+  "checks": 44,
+  "verified": [
+    "native character book",
+    "native find nearby player",
+    "native whisper off ordering barrier",
+    "native whisper on ordering barrier",
+    "native manual emote",
+    "native admin help request",
+    "native board tile open",
+    "native board publish and read",
+    "native board moderation",
+    "native jukebox Gold payment",
+    "native shared jukebox track",
+    "native quest completion NPC 192",
+    "native quest NPC speech 192",
+    "no duplicate quest reward 192",
+    "native quest completion NPC 193",
+    "native quest NPC speech 193",
+    "no duplicate quest reward 193",
+    "native quest completion NPC 252",
+    "native quest NPC speech 252",
+    "no duplicate quest reward 252",
+    "native quest completion NPC 300",
+    "native quest NPC speech 300",
+    "no duplicate quest reward 300",
+    "native quest completion NPC 301",
+    "native quest NPC speech 301",
+    "no duplicate quest reward 301",
+    "native quest completion NPC 302",
+    "native quest NPC speech 302",
+    "no duplicate quest reward 302",
+    "native quest completion NPC 305",
+    "native quest NPC speech 305",
+    "no duplicate quest reward 305",
+    "native quest completion NPC 303",
+    "Baru daily consumes correct ice and grants new Flock ID",
+    "native HP drain synchronization",
+    "native TP drain synchronization",
+    "native earthquake event",
+    "native melee PK damage and HP",
+    "native offensive player spell and caster TP",
+    "native two-sided marriage approval",
+    "native wedding invitation",
+    "native wedding ceremony and both vows",
+    "native divorce and partner update",
+    "native full attribute and spell reset"
+  ],
+  "hosted_native_build": true,
+  "production_database_not_opened": true,
+  "native_sha256": "e11d56fd65ce97f0538abc07f0871fc939bc211db2bfbc86c5cfd7d24f6eb6d9",
+  "content": {
+    "authored_quest_ids": [
+      13,
+      14,
+      24,
+      52,
+      53,
+      54,
+      55
+    ],
+    "restored_daily_quest": 56,
+    "baru_flock_id": 492,
+    "admin_weapon_491_preserved": true,
+    "new_service_spawns": [
+      {
+        "map_id": 34,
+        "id": 303,
+        "x": 20,
+        "y": 21
+      },
+      {
+        "map_id": 5,
+        "id": 304,
+        "x": 37,
+        "y": 46
+      },
+      {
+        "map_id": 281,
+        "id": 305,
+        "x": 5,
+        "y": 8
+      }
+    ]
+  }
+}

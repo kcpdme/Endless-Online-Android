@@ -1,0 +1,40 @@
+diff --git a/src/quest.cpp b/src/quest.cpp
+index fe94098..674120e 100644
+--- a/src/quest.cpp
++++ b/src/quest.cpp
+@@ -11,6 +11,7 @@
+ #include "dialog.hpp"
+ #include "eoplus.hpp"
+ #include "map.hpp"
++#include "npc.hpp"
+ #include "packet.hpp"
+ #include "world.hpp"
+ 
+@@ -86,7 +87,7 @@ static void validate_state(const EOPlus::Quest& quest, const std::string& name,
+ 		{"addnpctext", 2},
+ 		{"addnpcinput", 3},
+ 
+-		{"addnpcchat", 2}, // TODO: AddNpcChat
++		{"addnpcchat", 2},
+ 		{"showhint", 1},
+ 		{"quake", {0, 1}},
+ 		{"quakeworld", {0, 1}},
+@@ -533,6 +534,18 @@ bool Quest_Context::DoAction(const EOPlus::Action& action)
+ 				return true;
+ 		}
+ 	}
++	else if (function_name == "addnpcchat")
++	{
++		int vendor_id = int(action.expr.args[0]);
++		for (NPC* npc : this->character->map->npcs)
++		{
++			if (npc->alive && npc->ENF().vendor_id == vendor_id && npc->ENF().type == ENF::Quest)
++			{
++				npc->Say(std::string(action.expr.args[1]));
++				break;
++			}
++		}
++	}
+ 	else if (function_name == "showhint")
+ 	{
+ 		this->character->StatusMsg(action.expr.args[0]);

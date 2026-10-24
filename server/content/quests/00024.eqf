@@ -1,0 +1,41 @@
+// Original Aster Vale quest, authored 2026-10-24. Not recovered classic EO content.
+Main
+{
+    questname "Pest Control Supplies"
+    version 1
+}
+state Begin
+{
+    desc "Talk to Pig Farmer"
+    action AddNpcText(24, "The rats have been troubling my animals. Bring proof that you dealt with a few. Bring 3 Rat Tail. The reward is 180 EXP and 60 Gold.");
+    action AddNpcInput(24, 1, "Maybe later");
+    action AddNpcInput(24, 2, "I will help");
+    rule InputNpc(1) goto Cancel
+    rule InputNpc(2) goto Collect
+}
+state Collect
+{
+    desc "Bring 3 Rat Tail to Pig Farmer"
+    action AddNpcText(24, "I am still waiting for 3 Rat Tail.");
+    rule GotItems(249, 3) goto Ready
+}
+state Ready
+{
+    desc "Return to Pig Farmer"
+    action AddNpcText(24, "Thank you. These are just what I needed. Your reward is ready.");
+    rule LostItems(249, 3) goto Collect
+    rule TalkedToNpc(24) goto Reward
+}
+state Reward
+{
+    action RemoveItem(249, 3);
+    action GiveExp(180);
+    action GiveItem(1, 60);
+    action AddNpcChat(24, "Thank you for your help!");
+    action ShowHint("Completed Pest Control Supplies: 180 EXP and 60 Gold.");
+    action End();
+}
+state Cancel
+{
+    action Reset();
+}

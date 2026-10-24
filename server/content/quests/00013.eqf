@@ -1,0 +1,41 @@
+// Original Aster Vale quest, authored 2026-10-24. Not recovered classic EO content.
+Main
+{
+    questname "A Little Kindness"
+    version 1
+}
+state Begin
+{
+    desc "Talk to Jessica"
+    action AddNpcText(13, "I would like to brighten this little house with flowers. Bring 1 Flower Bouquet. The reward is 120 EXP and 40 Gold.");
+    action AddNpcInput(13, 1, "Maybe later");
+    action AddNpcInput(13, 2, "I will help");
+    rule InputNpc(1) goto Cancel
+    rule InputNpc(2) goto Collect
+}
+state Collect
+{
+    desc "Bring 1 Flower Bouquet to Jessica"
+    action AddNpcText(13, "I am still waiting for 1 Flower Bouquet.");
+    rule GotItems(6, 1) goto Ready
+}
+state Ready
+{
+    desc "Return to Jessica"
+    action AddNpcText(13, "Thank you. These are just what I needed. Your reward is ready.");
+    rule LostItems(6, 1) goto Collect
+    rule TalkedToNpc(13) goto Reward
+}
+state Reward
+{
+    action RemoveItem(6, 1);
+    action GiveExp(120);
+    action GiveItem(1, 40);
+    action AddNpcChat(13, "Thank you for your help!");
+    action ShowHint("Completed A Little Kindness: 120 EXP and 40 Gold.");
+    action End();
+}
+state Cancel
+{
+    action Reset();
+}

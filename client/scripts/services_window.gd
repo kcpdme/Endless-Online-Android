@@ -20,6 +20,7 @@ var state: Dictionary = {}
 var left_rows: Array = []
 var right_rows: Array = []
 var inspected: Dictionary = {}
+var book_button: Button
 var party_button: Button
 
 func build(owner_game: Node, parent: Control) -> void:
@@ -58,6 +59,10 @@ func build(owner_game: Node, parent: Control) -> void:
 	extra = game._button(card, "", Vector2(712, 560), Vector2(244, 54), _extra)
 	party_button = game._button(card,"Invite to party",Vector2(608,490),Vector2(340,46),func() -> void: game.party_ui.invite(int(state.get("player_id",0))))
 	party_button.hide()
+	book_button = game._button(card,"Character book",Vector2(608,430),Vector2(340,46),func() -> void:
+		var pid: int=int(state.get("player_id",0));panel.hide();game.feature_ui.open("book",{"player_id":pid})
+	)
+	book_button.hide()
 	panel.hide()
 
 func _list(card: Control, at: Vector2) -> ItemList:
@@ -133,13 +138,14 @@ func refresh() -> void:
 	var trading: bool = mode == "trade"
 	var inspect: bool = mode == "inspect"
 	party_button.visible = inspect
+	book_button.visible = inspect
 	left.visible = storage or trading
 	right.visible = storage or trading
 	left_heading.visible = left.visible
 	right_heading.visible = right.visible
 	doll.visible = inspect
 	details.position = Vector2(608, 130) if inspect else Vector2(36, 132 if compact else 474)
-	details.size = Vector2(340, 390) if inspect else Vector2(916, 115 if compact else 66)
+	details.size = Vector2(340, 290) if inspect else Vector2(916, 115 if compact else 66)
 	quantity.visible = mode in ["bank", "locker", "chest", "trade"]
 	primary.visible = true
 	secondary.visible = mode != "inspect"

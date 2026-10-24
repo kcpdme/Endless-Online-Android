@@ -8,6 +8,7 @@ import time
 from eo_session import EOError, Reader, number
 from eo_stats import update
 from services import runtime_path
+from native_settings import world_rules
 
 @lru_cache(maxsize=1)
 def spell_definitions():
@@ -56,7 +57,8 @@ class SkillsMixin:
         elif spell['target']==0 and target_kind=='npc' and spell['restrict']!=1:
             target=next((n for n in self.state['npcs'] if n['index']==target_id),None)
             if not target or npc_types().get(target['id']) not in (1,2):raise EOError('Select a living monster')
-        elif spell['target']==0 and target_kind=='player' and spell['restrict']==1:
+        elif spell['target']==0 and target_kind=='player' and spell['restrict'] in (1,2):
+            if spell['restrict']==2 and (not world_rules(self.state['map_id'])['pk'] or target_id==self.player_id):raise EOError('Offensive player targeting is allowed only on PK maps')
             target=next((c for c in [self.state['self']]+self.state['characters'] if c['player_id']==target_id),None)
             if not target:raise EOError('That player is no longer nearby')
         else:raise EOError('Choose a valid target for this skill')

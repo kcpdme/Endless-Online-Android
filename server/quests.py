@@ -92,6 +92,13 @@ class QuestsMixin:
             self.events[-1].update(kind='quest_hint',message=p.decode('latin1'));self.dirty=True
         elif (f,a) in ((42,18),(42,3)):
             self.dirty=True
-        elif (f,a)==(14,11):
+        elif (f,a) in ((14,11),(14,28)):
             r=Reader(p);item_id=r.num(2);remaining=r.num(4);weight=r.num()
+            if r.rest():raise EOError('Malformed quest item removal')
             self._set_amount(item_id,remaining);self.weight=weight;self.stats['weight']=weight;self.dirty=True
+            self.events[-1].update(kind='quest_item_removed',item_id=item_id,remaining=remaining)
+        elif (f,a)==(14,26):
+            r=Reader(p);item_id=r.num(2);amount=r.num(3);weight=r.num()
+            if r.rest() or amount<=0:raise EOError('Malformed quest item reward')
+            self.inventory_add(item_id,amount);self.weight=weight;self.stats['weight']=weight;self.dirty=True
+            self.events[-1].update(kind='quest_item_received',item_id=item_id,amount=amount)

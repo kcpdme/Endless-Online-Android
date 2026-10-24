@@ -1,0 +1,9 @@
+{
+  "checks": 33,
+  "native_board_map_ui": true,
+  "native_character_deletion": true,
+  "native_password_change": true,
+  "native_social_ui": true,
+  "pk_metadata_and_reduced_motion": true,
+  "result": "passed"
+}

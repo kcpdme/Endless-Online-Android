@@ -1,0 +1,41 @@
+// Original Aster Vale quest, authored 2026-10-24. Not recovered classic EO content.
+Main
+{
+    questname "Bones for the Pack"
+    version 1
+}
+state Begin
+{
+    desc "Talk to Wolf Leader"
+    action AddNpcText(14, "Bring bones for the pack, and we will remember your help. Bring 3 Skeleton Bone. The reward is 400 EXP and 100 Gold.");
+    action AddNpcInput(14, 1, "Maybe later");
+    action AddNpcInput(14, 2, "I will help");
+    rule InputNpc(1) goto Cancel
+    rule InputNpc(2) goto Collect
+}
+state Collect
+{
+    desc "Bring 3 Skeleton Bone to Wolf Leader"
+    action AddNpcText(14, "I am still waiting for 3 Skeleton Bone.");
+    rule GotItems(261, 3) goto Ready
+}
+state Ready
+{
+    desc "Return to Wolf Leader"
+    action AddNpcText(14, "Thank you. These are just what I needed. Your reward is ready.");
+    rule LostItems(261, 3) goto Collect
+    rule TalkedToNpc(14) goto Reward
+}
+state Reward
+{
+    action RemoveItem(261, 3);
+    action GiveExp(400);
+    action GiveItem(1, 100);
+    action AddNpcChat(14, "Thank you for your help!");
+    action ShowHint("Completed Bones for the Pack: 400 EXP and 100 Gold.");
+    action End();
+}
+state Cancel
+{
+    action Reset();
+}

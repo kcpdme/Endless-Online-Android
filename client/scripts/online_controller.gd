@@ -70,6 +70,7 @@ var warp_notice_clock: float = 0.0
 var catalog: Dictionary = {}
 var request_operations: Dictionary = {}
 var interaction: Dictionary = {}
+var world_rules: Dictionary = {}
 var collect_pending: bool = false
 var loot_attempt_after: Dictionary = {}
 var pickup_pending: Dictionary = {}
@@ -193,6 +194,7 @@ func _on_message(message: Dictionary) -> void:
 	if str(message.get("op", "")) == "shortcuts_set":
 		shortcuts.response(message)
 		return
+	game.feature_ui.response(message)
 	game.admin_ui.response(message)
 	game.chat_ui.response(message)
 	game.redeem_ui.response(message)
@@ -305,6 +307,10 @@ func _on_message(message: Dictionary) -> void:
 				if int((player.get("equipment", {}) as Dictionary).get(str(replacement.slot), 0)) == 0:
 					session.request("equip", {"item_id": int(replacement.item_id), "subloc": int(replacement.subloc)})
 				else: game._toast("The worn item could not be removed. Your replacement remains in the bag.")
+		"delete_character", "change_password":
+			pass
+		"feature_open", "feature_action":
+			_apply_snapshot(data)
 		"admin_open":
 			pass
 		"admin_teleport", "admin_item", "admin_spawn":
@@ -411,6 +417,7 @@ func _enter_world(data: Dictionary) -> void:
 	if not resumed: game._toast("Arena · stand on a marked gate tile. Rounds every %ds." % int((game.world.arena as Dictionary).get("interval_seconds", 90)) if game.world.has("arena") else "You have entered your online world.")
 
 func _apply_snapshot(data: Dictionary, entering: bool = false) -> void:
+	if data.has("world_rules"): world_rules = data.world_rules as Dictionary
 	for raw: Variant in data.get("events", []):
 		if raw is Dictionary and str(raw.get("kind", "")) == "map_transition": entering = true
 	if data.has("player"):
@@ -746,6 +753,7 @@ func _on_closed(reason: String, allow_retry: bool = true) -> void:
 	creating_character = false; entering_character = false; last_created_name = ""
 	auth_credentials.clear()
 	shortcuts.disconnected()
+	game.feature_ui.disconnected()
 	game.admin_ui.disconnected()
 	game.party_ui.disconnected()
 	game.skills_ui.target_panel.hide(); game.skills_ui.bard_panel.hide()
@@ -946,6 +954,9 @@ func draw_entity(entity: Dictionary) -> void:
 	if str(entity.kind) != "online_item": game.skills_ui.draw_effect(effect_kind, effect_id, at, true)
 
 func chat_bubble_position(pid: int) -> Vector2:
+	if pid < 0:
+		for npc: Dictionary in npcs:
+			if int(npc.index) == -pid: return _remote_position("npc:%d" % -pid,game.tile_position(Vector2i(int(npc.x),int(npc.y))))
 	if pid == int(player.get("player_id", 0)): return game.player_world
 	for peer: Dictionary in players:
 		if int(peer.get("player_id", 0)) == pid:
@@ -1176,7 +1187,7 @@ func map_entity_target(point: Vector2) -> Dictionary:
 		if rectangle.has_point(point):return {"tile":tile,"kind":"sign"}
 	# Match chest/locker artwork, including its front above the blocked tile.
 	for spec: Dictionary in ([] if game.skills_ui.armed > 0 else game.world.get("tile_specs", [])):
-		if int(spec.get("spec", -1)) not in [1, 2, 3, 4, 5, 6, 7, 9, 16]: continue
+		if int(spec.get("spec", -1)) not in [1, 2, 3, 4, 5, 6, 7, 9, 16, 20, 21, 22, 23, 24, 25, 26, 27, 28]: continue
 		var tile: Vector2i = Vector2i(int(spec.x), int(spec.y))
 		for decoration: Dictionary in game.decorations:
 			if decoration.tile != tile or str(decoration.layer) != "objects": continue
@@ -1184,7 +1195,7 @@ func map_entity_target(point: Vector2) -> Dictionary:
 			if texture == null: continue
 			var size: Vector2 = texture.get_size()
 			if int(decoration.gfx) == 3 and size.x >= 128: size.x /= 4.0
-			if Rect2(game.tile_position(tile) + Vector2(-2.0 - size.x / 2.0, 14.0 - size.y), size).grow(4.0).has_point(point): return {"tile": tile, "kind": "chair" if int(spec.spec) in range(1, 8) else "chest" if int(spec.spec) == 9 else "locker"}
+			if Rect2(game.tile_position(tile) + Vector2(-2.0 - size.x / 2.0, 14.0 - size.y), size).grow(4.0).has_point(point): return {"tile": tile, "kind": "chair" if int(spec.spec) in range(1, 8) else "chest" if int(spec.spec) == 9 else "jukebox" if int(spec.spec)==28 else "board" if int(spec.spec)>=20 else "locker"}
 	for peer: Dictionary in players:
 		if int(peer.get("player_id", 0)) == int(player.get("player_id", 0)): continue
 		var tile: Vector2i = Vector2i(int(peer.x), int(peer.y))
@@ -1212,6 +1223,9 @@ func map_click(tile: Vector2i, preferred_kind: String = "") -> void:
 			game._cancel_controls()
 			interaction = {"kind": "player", "id": int(peer.player_id)}
 			return
+	for spec: Dictionary in game.world.get("tile_specs", []):
+		if int(spec.spec) in range(20,29) and Vector2i(int(spec.x),int(spec.y)) == tile:
+			game._cancel_controls();game.feature_ui.open("jukebox" if int(spec.spec)==28 else "board",{"x":tile.x,"y":tile.y});return
 	for spec: Dictionary in (game.world.get("tile_specs", []) if preferred_kind in ["", "locker", "chest", "chair"] else []):
 		if int(spec.get("spec", -1)) in [1, 2, 3, 4, 5, 6, 7, 9, 16] and Vector2i(int(spec.x), int(spec.y)) == tile:
 			interaction = {"kind": "chair" if int(spec.spec) in range(1, 8) else "chest" if int(spec.spec) == 9 else "locker", "id": 0, "x": tile.x, "y": tile.y, "spec": int(spec.spec)}
@@ -1222,11 +1236,11 @@ func map_click(tile: Vector2i, preferred_kind: String = "") -> void:
 		if Vector2i(int(npc.x), int(npc.y)) != tile: continue
 		var info: Dictionary = (catalog.get("npcs", {}) as Dictionary).get(str(int(npc.id)), {}) as Dictionary
 		var type: int = int(info.get("type", -1))
-		if type in [6, 7, 9, 10, 11, 14, 15]:
+		if type in [6, 7, 9, 10, 11, 12, 13, 14, 15]:
 			# Original EO dispatches a visible service NPC directly, including
 			# shopkeepers behind sealed counters. Never path onto their side.
 			game._cancel_controls()
-			interaction = {"kind": "barber" if type == 10 else "guild" if type == 11 else "inn" if type == 7 else "quest" if type == 15 else "skillmaster" if type == 14 else "bank" if type == 9 else "shop", "id": int(npc.index)}
+			interaction = {"kind": "law" if type == 13 else "priest" if type == 12 else "barber" if type == 10 else "guild" if type == 11 else "inn" if type == 7 else "quest" if type == 15 else "skillmaster" if type == 14 else "bank" if type == 9 else "shop", "id": int(npc.index)}
 		elif is_combat_npc(npc):
 			if game._distance(game.player_tile, tile) == 1:
 				var direction: String = game._direction_name(tile - game.player_tile)
@@ -1292,6 +1306,8 @@ func _process_interaction() -> void:
 		return
 	if game.moving or not game.route.is_empty() or not _action_ready() or game._modal_open(): return
 	if not interaction.is_empty():
+		if str(interaction.kind) in ["law","priest"]:
+			game.feature_ui.open(str(interaction.kind),{"npc_index":int(interaction.id)});interaction.clear();return
 		if str(interaction.kind) == "player":
 			session.request("inspect_player", {"player_id": int(interaction.id)})
 			interaction.clear()
@@ -1503,6 +1519,7 @@ func _process_events(events: Array) -> void:
 	for raw: Variant in events:
 		if not raw is Dictionary: continue
 		var event: Dictionary = raw as Dictionary
+		game.feature_ui.event(event)
 		game.skills_ui.event(event)
 		game.party_ui.event(event)
 		var kind: String = str(event.get("kind", event.get("type", event.get("event", ""))))
@@ -1511,12 +1528,15 @@ func _process_events(events: Array) -> void:
 		if kind.begins_with("arena_"):
 			game._toast(str(event.get("message", "")))
 			game.chat_ui.receive({"channel":"system","name":"Arena","message":str(event.get("message", ""))})
+		if kind == "npc_speech":
+			chat_bubbles[-int(event.npc_index)] = {"text":str(event.message),"until":Time.get_ticks_msec()+5500}
+			game.chat_ui.receive({"channel":"local","name":str((catalog.npcs.get(str(int(event.npc_id)),{}) as Dictionary).get("name","NPC")),"message":str(event.message)})
 		if kind == "inn_recovered": game._toast("Rested at the inn · HP and TP restored.")
 		elif kind == "quest_hint": game._toast(str(event.get("message", "")))
 		elif kind == "class_changed":
 			var class_info: Dictionary = (catalog.get("classes", {}) as Dictionary).get(str(int(event.get("class_id", 0))), {}) as Dictionary
 			game._toast("Your class is now %s." % str(class_info.get("name", "changed")))
-		if kind in ["player_damage", "npc_attack"] and event.get("source", "") != "spike":
+		if kind in ["player_damage", "npc_attack"] and event.get("source", "") not in ["spike","drain","pk"]:
 			npc_attack_until[int(event.get("npc_index", -1))] = Time.get_ticks_msec() / 1000.0 + 0.36
 			for npc: Dictionary in npcs:
 				if int(npc.index) == int(event.get("npc_index", -1)): npc.direction = int(event.get("direction", 0))
@@ -1574,6 +1594,9 @@ func _process_events(events: Array) -> void:
 				if int(event.get("exp_gain", 0)) > 0:
 					game.damage_numbers.append({"position": game.player_world + Vector2(0, -106), "value": "+%d EXP" % int(event.exp_gain), "time": 1.2, "exp_gain": true})
 				if event.has("level_up"): game._toast("Level %d reached! Stat points are available in Character Stats." % int(event.level_up))
+		if kind == "quest_item_received":
+			game._toast("Received %s ×%d." % [str(item_info("item:%d" % int(event.item_id)).get("name","Item")),int(event.amount)])
+			if game.sfx != null:game.sfx.play_named("InventoryPickup","quest")
 		if kind == "pickup":
 			network_metrics.pickups = int(network_metrics.pickups) + 1
 			pickup_pending.erase(int(event.get("uid", 0)))

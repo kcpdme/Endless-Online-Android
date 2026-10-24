@@ -51,6 +51,7 @@ func build(game: Node, parent: Node) -> Control:
 	button(game, adventure, "Return to the vale", func() -> void: page.hide(), true)
 	button(game, adventure, "Movement controls", func() -> void: game.movement_ui.open())
 	button(game, adventure, "Graphics", func() -> void: game.graphics_ui.open())
+	button(game, adventure, "Social, emotes and accessibility", func() -> void: game.feature_ui.open("social"))
 	button(game, adventure, "Redeem Code", func() -> void: game.redeem_ui.open())
 	var audio: VBoxContainer = column(columns)
 	label(game, audio, "Audio", 25, game.TEXT)

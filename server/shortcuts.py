@@ -43,6 +43,12 @@ class ShortcutStore:
             rows = db.execute('SELECT kind, first, second FROM shortcuts WHERE account=? AND character=?', identity).fetchall()
         return {kind: [first, second] for kind, first, second in rows}
 
+    def remove_deleted_character(self, session, name):
+        account=getattr(session,'account_name','')
+        if not account:raise EOError('Sign in first')
+        with self.connection() as db:
+            db.execute('DELETE FROM shortcuts WHERE account=? AND character=?',(account,name))
+
     def write(self, session, kind, first, second):
         identity = self.identity(session)
         if kind not in ('items', 'skills'):

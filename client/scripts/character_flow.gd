@@ -104,6 +104,8 @@ func build(owner: Node, parent: Control) -> void:
 	capacity = text(c.character_box,"0 / 3 characters",18,game.MUTED)
 	selection_actions = HBoxContainer.new(); selection_actions.add_theme_constant_override("separation",16); c.character_box.add_child(selection_actions)
 	create_button = button(selection_actions,"Create a new character…",open_creation)
+	button(selection_actions,"Delete selected…",func() -> void: game.feature_ui.open("delete"))
+	button(selection_actions,"Change password",func() -> void: game.feature_ui.open("password"))
 	enter_button = button(selection_actions,"Enter selected character",c._enter_selected,true)
 	c.character_box.visibility_changed.connect(func() -> void: scroll.visible = not c.character_box.visible; refresh())
 	c.character_box.hide()

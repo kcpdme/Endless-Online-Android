@@ -74,12 +74,12 @@ def parse_emf(data:bytes,map_id:int)->dict:
     r=Reader(data)
     if r.take(3)!=b'EMF': raise ValueError('not an EMF map')
     r.take(4)
-    name=decode_string(r.take(24)); r.take(2)
+    name=decode_string(r.take(24)); pk=r.num()==3; effect=r.num()
     music=r.num();music_control=r.num();ambient=r.num(2)
     width=r.num()+1; height=r.num()+1; fill=r.num(2)
     available=r.num(); scroll=r.num(); relog=[r.num(),r.num()]; r.num()
     world=dict(id=map_id,name=name,width=width,height=height,tile_width=64,tile_height=32,
-               fill_tile=fill,spawn=relog,music_id=music,music_control=music_control,ambient_sound=ambient,layers={},blocked=[],warps=[],npcs=[],tile_specs=[])
+               fill_tile=fill,spawn=relog,pk=pk,map_effect=effect,music_id=music,music_control=music_control,ambient_sound=ambient,layers={},blocked=[],warps=[],npcs=[],tile_specs=[])
     for _ in range(r.num()):
         world['npcs'].append(dict(x=r.num(),y=r.num(),id=r.num(2),spawn_type=r.num(),respawn=r.num(2),amount=r.num()))
     r.take(r.num()*4) # unused legacy entity records

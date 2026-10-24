@@ -1,0 +1,47 @@
+[
+  {
+    "archive": "trunk-305-EODelta.zip",
+    "quest_records": 2,
+    "missing_vendors_found": []
+  },
+  {
+    "archive": "gfx.zip",
+    "quest_records": 0,
+    "missing_vendors_found": []
+  },
+  {
+    "archive": "EOzipped028.zip",
+    "quest_records": 0,
+    "missing_vendors_found": []
+  },
+  {
+    "archive": "eoserv-0.7.0.zip",
+    "quest_records": 0,
+    "missing_vendors_found": []
+  },
+  {
+    "archive": "EOzipped028e.zip",
+    "quest_records": 0,
+    "missing_vendors_found": []
+  },
+  {
+    "archive": "sample-data.zip",
+    "quest_records": 36,
+    "missing_vendors_found": [
+      56
+    ]
+  },
+  {
+    "archive": "Endless-Online-Quests.rar",
+    "quest_records": 36,
+    "missing_vendors_found": [
+      56
+    ],
+    "extraction_tool": "unar"
+  },
+  {
+    "archive": "eoarchive.7z",
+    "quest_records": 0,
+    "missing_vendors_found": []
+  }
+]

@@ -1,0 +1,41 @@
+// Original Aster Vale quest, authored 2026-10-24. Not recovered classic EO content.
+Main
+{
+    questname "A Royal Offering"
+    version 1
+}
+state Begin
+{
+    desc "Talk to Royal Envoy"
+    action AddNpcText(52, "The court could use flowers after so much trouble. A small offering would lift our spirits. Bring 2 Flower Bouquet. The reward is 300 EXP and 100 Gold.");
+    action AddNpcInput(52, 1, "Maybe later");
+    action AddNpcInput(52, 2, "I will help");
+    rule InputNpc(1) goto Cancel
+    rule InputNpc(2) goto Collect
+}
+state Collect
+{
+    desc "Bring 2 Flower Bouquet to Royal Envoy"
+    action AddNpcText(52, "I am still waiting for 2 Flower Bouquet.");
+    rule GotItems(6, 2) goto Ready
+}
+state Ready
+{
+    desc "Return to Royal Envoy"
+    action AddNpcText(52, "Thank you. These are just what I needed. Your reward is ready.");
+    rule LostItems(6, 2) goto Collect
+    rule TalkedToNpc(52) goto Reward
+}
+state Reward
+{
+    action RemoveItem(6, 2);
+    action GiveExp(300);
+    action GiveItem(1, 100);
+    action AddNpcChat(52, "Thank you for your help!");
+    action ShowHint("Completed A Royal Offering: 300 EXP and 100 Gold.");
+    action End();
+}
+state Cancel
+{
+    action Reset();
+}

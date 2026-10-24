@@ -111,6 +111,7 @@ func _draw() -> void:
 	draw_style_box(game._style(Color(0.035,0.075,0.085,0.85), Color("52665d"), 10), Rect2(Vector2.ZERO,size))
 	var font: Font = ThemeDB.fallback_font
 	var title: String = (str(game.world.get("name", "Map")) if expanded else "Map") + ("  −" if expanded else "  +")
+	if game.online_mode and bool(game.online.world_rules.get("pk",false)):title="PK · "+title
 	while font.get_string_size(title, HORIZONTAL_ALIGNMENT_LEFT, -1, 14).x > size.x - 24:
 		title = title.substr(0, title.length()-4) + "… −"
 	draw_string(font, Vector2(12,27), title, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, game.TEXT)

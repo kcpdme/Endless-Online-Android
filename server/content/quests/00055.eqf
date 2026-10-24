@@ -1,0 +1,41 @@
+// Original Aster Vale quest, authored 2026-10-24. Not recovered classic EO content.
+Main
+{
+    questname "A Brave Entrance"
+    version 1
+}
+state Begin
+{
+    desc "Talk to Eddie Matador"
+    action AddNpcText(55, "You say you are brave? Bring me proof that you can handle the spiders. Bring 4 Spider Leg. The reward is 300 EXP and 80 Gold.");
+    action AddNpcInput(55, 1, "Maybe later");
+    action AddNpcInput(55, 2, "I will help");
+    rule InputNpc(1) goto Cancel
+    rule InputNpc(2) goto Collect
+}
+state Collect
+{
+    desc "Bring 4 Spider Leg to Eddie Matador"
+    action AddNpcText(55, "I am still waiting for 4 Spider Leg.");
+    rule GotItems(257, 4) goto Ready
+}
+state Ready
+{
+    desc "Return to Eddie Matador"
+    action AddNpcText(55, "Thank you. These are just what I needed. Your reward is ready.");
+    rule LostItems(257, 4) goto Collect
+    rule TalkedToNpc(55) goto Reward
+}
+state Reward
+{
+    action RemoveItem(257, 4);
+    action GiveExp(300);
+    action GiveItem(1, 80);
+    action AddNpcChat(55, "Thank you for your help!");
+    action ShowHint("Completed A Brave Entrance: 300 EXP and 80 Gold.");
+    action End();
+}
+state Cancel
+{
+    action Reset();
+}

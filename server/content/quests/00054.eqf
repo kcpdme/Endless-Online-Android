@@ -1,0 +1,41 @@
+// Original Aster Vale quest, authored 2026-10-24. Not recovered classic EO content.
+Main
+{
+    questname "Eyes in the Shadows"
+    version 1
+}
+state Begin
+{
+    desc "Talk to Shady Stefano"
+    action AddNpcText(54, "I need spider eyes for a quiet investigation. Best not to ask too many questions. Bring 3 Spider Eyes. The reward is 350 EXP and 90 Gold.");
+    action AddNpcInput(54, 1, "Maybe later");
+    action AddNpcInput(54, 2, "I will help");
+    rule InputNpc(1) goto Cancel
+    rule InputNpc(2) goto Collect
+}
+state Collect
+{
+    desc "Bring 3 Spider Eyes to Shady Stefano"
+    action AddNpcText(54, "I am still waiting for 3 Spider Eyes.");
+    rule GotItems(256, 3) goto Ready
+}
+state Ready
+{
+    desc "Return to Shady Stefano"
+    action AddNpcText(54, "Thank you. These are just what I needed. Your reward is ready.");
+    rule LostItems(256, 3) goto Collect
+    rule TalkedToNpc(54) goto Reward
+}
+state Reward
+{
+    action RemoveItem(256, 3);
+    action GiveExp(350);
+    action GiveItem(1, 90);
+    action AddNpcChat(54, "Thank you for your help!");
+    action ShowHint("Completed Eyes in the Shadows: 350 EXP and 90 Gold.");
+    action End();
+}
+state Cancel
+{
+    action Reset();
+}

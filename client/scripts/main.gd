@@ -135,6 +135,7 @@ var graphics_ui: RefCounted
 var art_profile: RefCounted = preload("res://scripts/art_profile.gd").new()
 var world_services: RefCounted
 var guild_ui: RefCounted
+var feature_ui: RefCounted
 var admin_ui: RefCounted
 var party_ui: RefCounted
 var inn_ui: RefCounted
@@ -297,6 +298,7 @@ func _process(delta: float) -> void:
 	if online != null: online.shortcuts.tick()
 	if chat_ui != null: chat_ui.tick()
 	if guild_ui != null: guild_ui.tick()
+	if feature_ui != null: feature_ui.tick()
 	if admin_ui != null: admin_ui.tick()
 	if party_ui != null: party_ui.tick()
 	time_alive += delta
@@ -486,7 +488,7 @@ func _joystick_begin(pointer: Vector2, pointer_id: int) -> void:
 
 func _modal_open() -> bool:
 	if online != null and online.reconnection.running: return true
-	return (admin_ui != null and admin_ui.panel.visible) or (graphics_ui != null and graphics_ui.panel.visible) or (world_services != null and (world_services.barber_panel.visible or world_services.sign_panel.visible)) or (quest_journal != null and quest_journal.panel.visible) or (party_ui != null and party_ui.panel.visible) or (skills_ui != null and (skills_ui.target_panel.visible or skills_ui.bard_panel.visible)) or (movement_ui != null and movement_ui.panel.visible) or (guild_ui != null and guild_ui.panel.visible) or (inn_ui != null and inn_ui.panel.visible) or (quest_ui != null and quest_ui.panel.visible) or (redeem_ui != null and redeem_ui.panel.visible) or (online != null and online.panel != null and online.panel.visible) or (inventory != null and inventory.visible) or (menu != null and menu.visible) or (character_panel != null and character_panel.visible) or (stats_ui != null and stats_ui.is_open()) or (shop_ui != null and shop_ui.panel.visible) or (services_ui != null and services_ui.panel.visible) or (chat_ui != null and chat_ui.panel.visible) or (skills_ui != null and skills_ui.panel.visible) or (quick_items != null and quick_items.panel.visible)
+	return (feature_ui != null and feature_ui.panel.visible) or (admin_ui != null and admin_ui.panel.visible) or (graphics_ui != null and graphics_ui.panel.visible) or (world_services != null and (world_services.barber_panel.visible or world_services.sign_panel.visible)) or (quest_journal != null and quest_journal.panel.visible) or (party_ui != null and party_ui.panel.visible) or (skills_ui != null and (skills_ui.target_panel.visible or skills_ui.bard_panel.visible)) or (movement_ui != null and movement_ui.panel.visible) or (guild_ui != null and guild_ui.panel.visible) or (inn_ui != null and inn_ui.panel.visible) or (quest_ui != null and quest_ui.panel.visible) or (redeem_ui != null and redeem_ui.panel.visible) or (online != null and online.panel != null and online.panel.visible) or (inventory != null and inventory.visible) or (menu != null and menu.visible) or (character_panel != null and character_panel.visible) or (stats_ui != null and stats_ui.is_open()) or (shop_ui != null and shop_ui.panel.visible) or (services_ui != null and services_ui.panel.visible) or (chat_ui != null and chat_ui.panel.visible) or (skills_ui != null and skills_ui.panel.visible) or (quick_items != null and quick_items.panel.visible)
 
 func _begin_attack(pointer_id: int) -> void:
 	if online_mode: route.clear()
@@ -967,6 +969,9 @@ func _decoration_visible(entry: Dictionary) -> bool:
 
 func map_effect_event(event: Dictionary) -> void:
 	var kind: String = str(event.get("kind", ""))
+	if kind == "quake":
+		feature_ui.quake_until=Time.get_ticks_msec()+650
+		feature_ui.quake_strength=minf(8.0,float(event.get("strength",0)))
 	if kind == "map_transition": timed_spikes_until = 0
 	elif kind == "timed_spikes": timed_spikes_until = Time.get_ticks_msec() + 1000
 	elif kind == "player_damage" and str(event.get("source", "")) == "spike":
@@ -1250,6 +1255,8 @@ func _build_ui() -> void:
 	party_ui.build(self, root)
 	admin_ui = preload("res://scripts/admin_window.gd").new()
 	admin_ui.build(self, root)
+	feature_ui = preload("res://scripts/native_features.gd").new()
+	feature_ui.build(self, root)
 	movement_ui = preload("res://scripts/movement_settings.gd").new()
 	movement_ui.build(self, root)
 	graphics_ui = preload("res://scripts/graphics_settings.gd").new()
@@ -1671,6 +1678,9 @@ func _show_content_error() -> void:
 	push_error("Aster Vale content unavailable. Run tools/import_content.py.")
 
 func _handle_back() -> void:
+	if feature_ui != null and feature_ui.panel.visible:
+		feature_ui.close()
+		return
 	if admin_ui != null and admin_ui.panel.visible:
 		admin_ui.close()
 		return

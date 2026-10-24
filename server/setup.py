@@ -45,7 +45,7 @@ def main():
     deps = state / 'deps'; deps.mkdir(exist_ok=True)
     source = state / 'source'; build = state / 'build'; build.mkdir(exist_ok=True)
     checkout('etheos', source)
-    patches = [ROOT / 'patches' / name for name in ('etheos-password-v3.patch', 'etheos-redeem.patch', 'etheos-character-hp.patch', 'etheos-spikes.patch', 'etheos-mobile-spells.patch', 'etheos-mobile-feedback.patch', 'etheos-skill-training.patch', 'etheos-drop-rate.patch', 'etheos-protect-service-npcs.patch', 'etheos-starter-kit.patch', 'etheos-ice-blast-area.patch')]
+    patches = [ROOT / 'patches' / name for name in ('etheos-password-v3.patch', 'etheos-redeem.patch', 'etheos-character-hp.patch', 'etheos-spikes.patch', 'etheos-mobile-spells.patch', 'etheos-mobile-feedback.patch', 'etheos-skill-training.patch', 'etheos-drop-rate.patch', 'etheos-protect-service-npcs.patch', 'etheos-starter-kit.patch', 'etheos-ice-blast-area.patch', 'etheos-npc-chat.patch', 'etheos-pk-feedback.patch')]
     for patch in patches:
         applied = subprocess.run(['git','-C',str(source),'apply','--reverse','--check',str(patch)],capture_output=True).returncode == 0
         if not applied: run('git','-C',source,'apply',patch)
@@ -150,6 +150,8 @@ WorldDumpFile = ./world.bak.json
     configure_rates(runtime)
     from configure_npc_combat import configure as configure_npc_combat
     npc_combat = configure_npc_combat(runtime)
+    from configure_feature_content import configure as configure_features
+    feature_content = configure_features(runtime)
     # Avoid loading SQL Server defaults at all (SQLite-only build).
     (runtime / 'config/database.ini').write_text('INCLUDE = ./config/database/sqlite.ini\nInstallSQL = ./install.sql\nAutoCreateDatabase = no\nDBPassFile =\nDBAuthType = sql\n')
     shutil.copy2(build / 'etheos', runtime / 'etheos')
@@ -159,7 +161,7 @@ WorldDumpFile = ./world.bak.json
               'sample':{'url':SAMPLE[0],'sha256':SAMPLE[1]}, 'sqlite':{'url':SQLITE[0],'sha256':SQLITE[1]}, 'nlohmann_json':{'url':JSON[0],'sha256':JSON[1]},
               'numbered_maps':len(maps),'highest_map_id':max(int(x.stem) for x in maps),
               'quest_conversion':'Generated .eqf copies with logged conservative legacy-syntax fixes. Original .txt bytes preserved. Real parser validation recorded separately.',
-              'quests':quests,'runtime':str(runtime),'binding':'127.0.0.1:8078','database':'SQLite',
+              'quests':quests,'feature_content':feature_content,'runtime':str(runtime),'binding':'127.0.0.1:8078','database':'SQLite',
               'original_npc_combat':npc_combat,
               'rights':'Reference content only; redistribution/publication permissions unresolved.'}
     (state / 'content-report.json').write_text(json.dumps(report, indent=2)+'\n')
