@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Isolated real Godot→WS→gateway→etheos inn registration, persistence and death spawn."""
+"""Isolated real Godot→WS→gateway→etheos inns, respawn, and walk-to-chest behavior."""
 import argparse,json,os,shutil,subprocess,tempfile,socket,time,re,sqlite3,select,sys
 from pathlib import Path
 from run import state_path
@@ -7,7 +7,7 @@ from configure_inns import configure
 ROOT=Path(__file__).resolve().parents[1]
 
 def main():
-    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--godot',type=Path,required=True);p.add_argument('--report',type=Path,required=True);p.add_argument('--screenshots',type=Path);a=p.parse_args()
+    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--godot',type=Path,required=True);p.add_argument('--report',type=Path,required=True);p.add_argument('--screenshots',type=Path);p.add_argument('--scenario',choices=['inn','chest'],default='inn');a=p.parse_args()
     base_state=state_path();children=[];streams=[]
     with tempfile.TemporaryDirectory(prefix='aster-inn-citizenship-') as tmp:
         base=Path(tmp);runtime=base/'runtime'
@@ -51,15 +51,20 @@ def main():
                     x,y=min(points,key=lambda q:abs(q[0]-npc['x'])+abs(q[1]-npc['y']))
                     inns.append(dict(npc_id=ident,map_id=world['id'],x=x,y=y,home=home,name=rows[home+'.name'],answers=[rows[home+'.answer'+str(i)] for i in range(1,4)]));break
             with sqlite3.connect(runtime/'database.sdb') as db:
-                db.execute('UPDATE characters SET admin=4, map=70,x=?,y=?,hp=1,tp=0,inventory=? WHERE name=? AND account=?',(inns[0]['x'],inns[0]['y'],'1,50000;',f['character_name'],f['username']))
+                mid,x,y=(53,6,24) if a.scenario=='chest' else (70,inns[0]['x'],inns[0]['y'])
+                db.execute('UPDATE characters SET admin=4,map=?,x=?,y=?,direction=2,hp=1,tp=0,inventory=? WHERE name=? AND account=?',(mid,x,y,'1,50000;',f['character_name'],f['username']))
+                if a.scenario=='chest':db.execute('UPDATE characters SET level=120,con=1000,hp=30000 WHERE name=?',(f['character_name'],))
             fixture=base/'fixture.json';fixture.write_text(json.dumps(dict(account=f,inns=inns)));fixture.chmod(0o600)
             env=dict(os.environ,XDG_DATA_HOME=str(base/'godot-data'),XDG_CONFIG_HOME=str(base/'godot-config'),ASTER_VALE_INN_FIXTURE=str(fixture),ASTER_VALE_TEST_HOST='ws://127.0.0.1:18888/ws',ASTER_VALE_TEST_REPORT=str(a.report.resolve()))
             display=['--headless']
             if a.screenshots:
                 a.screenshots.mkdir(parents=True,exist_ok=True);env['ASTER_VALE_SCREENSHOTS']=str(a.screenshots.resolve());display=[]
-            result=subprocess.run([str(a.godot.resolve()),*display,'--path',str(ROOT/'client'),'--script','res://tests/inn_citizenship_live.gd'],env=env,capture_output=True,text=True,timeout=150)
-            (ROOT/'work/inn-citizenship-godot.log').write_text(result.stdout+result.stderr)
-            assert result.returncode==0 and 'INN CITIZENSHIP LIVE:' in result.stdout and 'SCRIPT ERROR:' not in result.stderr and '\nERROR:' not in result.stderr,result.stdout[-3000:]+result.stderr[-3000:]
+            script='res://tests/chest_walk_live.gd' if a.scenario=='chest' else 'res://tests/inn_citizenship_live.gd'
+            marker='CHEST WALK LIVE:' if a.scenario=='chest' else 'INN CITIZENSHIP LIVE:'
+            result=subprocess.run([str(a.godot.resolve()),*display,'--path',str(ROOT/'client'),'--script',script],env=env,capture_output=True,text=True,timeout=150)
+            (ROOT/'work'/('chest-walk-godot.log' if a.scenario=='chest' else 'inn-citizenship-godot.log')).write_text(result.stdout+result.stderr)
+            assert result.returncode==0 and marker in result.stdout and 'SCRIPT ERROR:' not in result.stderr and '\nERROR:' not in result.stderr,result.stdout[-3000:]+result.stderr[-3000:]
+            if a.scenario=='chest':print(a.report.read_text());return
             time.sleep(.6)
             with sqlite3.connect(runtime/'database.sdb') as db:
                 assert db.execute('SELECT home FROM characters WHERE name=?',(f['character_name'],)).fetchone()[0]=='centaur','Home did not persist after UI logout'

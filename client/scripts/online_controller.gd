@@ -587,6 +587,7 @@ func request_step(direction: Vector2i) -> void:
 	var target: Vector2i = game.player_tile + single
 	if not game._can_step(game.player_tile, single):
 		request_face(game._direction_name(single))
+		if int(game.tile_specs.get(target, -1)) == 9: _open_bumped_chest(target)
 		return
 	if not can_issue_walk(): return
 	var fields: Dictionary = {"direction": _direction(game._direction_name(single))}
@@ -614,6 +615,14 @@ func request_step(direction: Vector2i) -> void:
 	transition_pending = passage
 	refresh_clock = 0.0
 	_start_step(target, game._direction_name(single))
+
+func _open_bumped_chest(tile: Vector2i) -> void:
+	# Original ArrowKeyController dispatches chest interaction on a blocked step.
+	# Wait for the preceding native Walk_Reply, so the server also sees adjacency.
+	if not _action_ready() or not can_issue_walk() or game._modal_open() or not trade.is_empty() or not game.skills_ui.casting.is_empty(): return
+	if session.request("chest_open", {"x": tile.x, "y": tile.y}) < 0: return
+	interaction.clear()
+	game._cancel_controls()
 
 func _start_step(tile: Vector2i, direction: String) -> void:
 	game.step_origin_tile = game.player_tile

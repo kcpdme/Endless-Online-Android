@@ -1,0 +1,27 @@
+{
+  "version": "0.39.8",
+  "version_code": 64,
+  "bytes": 251440583,
+  "sha256": "4b64ee94f9316137002ce944fd6a45758e83fb0b3fa769cf574b7bd26212b0fe",
+  "signature_and_16k_alignment_verified": true,
+  "includes_complete_inn_citizenship_and_respawn": true,
+  "chest_open_from_keyboard_or_joystick_bump": true,
+  "waits_for_native_movement_confirmation": true,
+  "one_open_per_held_gesture": true,
+  "native_chest_contents_keys_and_inventory_preserved": true,
+  "native_ui_checks": 13,
+  "native_chest_state_tests": 8,
+  "mobile_chest_regression": "passed",
+  "movement_controls_regression": "passed",
+  "phone_installation": {
+    "status": "installed and verified",
+    "device": "Samsung SM-S918B",
+    "version": "0.39.8",
+    "version_code": 64,
+    "installed_apk_sha256_matches": true,
+    "original_first_install_time_preserved": true,
+    "app_running_without_script_parse_resource_or_fatal_errors": true,
+    "transfer_recovery": "Streaming ADB stalled; reconnected, pushed and verified full APK, then applied local pm install -r update",
+    "verified_at_utc": "2026-10-24T11:17:39.047178+00:00"
+  }
+}

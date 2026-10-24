@@ -1,0 +1,11 @@
+{
+  "blocked_chest_tile_preserved": true,
+  "checks": 13,
+  "held_input_consumed": true,
+  "native_chest_open_count": 2,
+  "native_confirmed_adjacency": true,
+  "native_gold_deposit_reopen_and_withdraw": true,
+  "native_joystick_bump": true,
+  "native_keyboard_approach_and_bump": true,
+  "result": "passed"
+}

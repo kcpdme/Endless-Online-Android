@@ -26,7 +26,7 @@ and character records. Existing native servers can reload the rule using their
 SIGHUP config handler. Gateway changes require its normal service restart.
 
 Validation: `server/test_inn_citizenship_ui.py` creates an isolated runtime and
-fresh dev account. The actual Godot UI registers all five towns through WSS,
+fresh dev account. The actual Godot UI registers all five towns through WebSocket,
 rejects wrong answers, confirms paid sleep and bed warp, and exercises confirmed
 renunciation and Back. Native tests then verify the saved character home after
 logout, real NPC death/respawn at Centaur (map 29, 23,25), and persisted removal

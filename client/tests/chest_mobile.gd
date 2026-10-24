@@ -15,6 +15,7 @@ func run() -> void:
 	await process_frame
 	game.set_process(false)
 	game.welcome.hide()
+	game.online.panel.hide()
 	game.online_mode = true
 	game.started = true
 	game.load_map(53)
@@ -64,7 +65,34 @@ func run() -> void:
 	ui.open("locker",{"items":[]})
 	check(ui.title.text == "ITEM LOCKER" and ui.left_rows.size() == 1 and int(ui.left_rows[0].id) == 21 and ui.secondary.text == "Withdraw stack","Locker must retain separate item-only storage behavior")
 	ui.close()
-	print("CHEST MOBILE ","FAIL" if failed else "PASS",": artwork targeting, adjacent open, native loot rows, whole-stack take, acknowledged bag counts, Gold deposit and close")
+	# Walking against a real chest must open it after native movement confirms.
+	var before_open: int = wire.calls.filter(func(row: Dictionary) -> bool: return row.op == "chest_open").size()
+	game.player_tile = Vector2i(6,23);game.player_world = game.tile_position(game.player_tile);game.facing = "north"
+	game.touch_move_id = 81;game.stick = Vector2.UP
+	c.pending_inputs.assign([{"seq":1,"direction":Vector2i.UP,"sent_at":Time.get_ticks_msec()}])
+	c.request_step(Vector2i.UP)
+	check(wire.calls.filter(func(row: Dictionary) -> bool: return row.op == "chest_open").size() == before_open,"Predicted adjacency must wait for the native walk ACK")
+	c.pending_inputs.clear()
+	c.request_step(Vector2i.UP)
+	check(wire.calls.back() == {"op":"chest_open","fields":{"x":6,"y":22}},"Walking toward a blocked chest opens its original coordinates")
+	check(game.player_tile == Vector2i(6,23) and not game.moving,"Chest bump must not walk into the blocked chest tile")
+	check(game.stick == Vector2.ZERO and game.touch_move_id == -1 and game.route.is_empty(),"Chest bump consumes held movement before the reply")
+	game._process(.1)
+	check(wire.calls.filter(func(row: Dictionary) -> bool: return row.op == "chest_open").size() == before_open + 1,"A held gesture must open once without request spam")
+	c._on_message({"op":"chest_open","ok":false,"error":"This chest is locked. Bring the matching key."})
+	check(not ui.panel.visible and c.bag_amount(21) == 7,"Locked chest does not open a loot panel or fabricate items")
+	# Facing a wall cannot accidentally open a chest; every chest approach axis works.
+	var wall: Vector2i = Vector2i(7,23)
+	game.server_blocked[wall] = true
+	var count: int = wire.calls.size()
+	c.request_step(Vector2i.RIGHT)
+	check(not wire.calls.slice(count).any(func(row: Dictionary) -> bool: return row.op == "chest_open"),"Ordinary blocked tiles do not open storage")
+	game.server_blocked.erase(wall)
+	for direction: Vector2i in [Vector2i.UP,Vector2i.DOWN,Vector2i.LEFT,Vector2i.RIGHT]:
+		game.player_tile = chest_tile - direction;game.player_world = game.tile_position(game.player_tile)
+		c.request_step(direction)
+		check(wire.calls.back().op == "chest_open","Each direction opens an adjacent chest")
+	print("CHEST MOBILE ","FAIL" if failed else "PASS",": artwork targeting, adjacent open, native loot rows, whole-stack take, acknowledged bag counts, Gold deposit/close, walk bump, pending movement ACK, locked result and one open per gesture")
 	game.started = false
 	game.queue_free()
 	await process_frame
