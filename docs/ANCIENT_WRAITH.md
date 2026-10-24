@@ -39,3 +39,10 @@ visible.
 See `ancient-wraith-source-report.json` and `ancient-wraith-render-report.json`.
 The original client references are local `NPCSpriteDataCache.IsBlankSprite`,
 `NPCSpriteSheet` and `NPCRenderer.DrawToRenderTarget` from pinned EndlessClient.
+
+Names and combat HP strips now follow the same transparent pose metadata as the
+body. Idle/walking Wraiths have no world label, including after a recent hit.
+Their original attack animation reveals both the sprite and name; both hide
+again when that animation ends. Visible attack artwork also anchors the name
+above the head instead of using the empty standing frame. This is shared by
+Classic and Enhanced, without changing combat, targeting, or minimap markers.

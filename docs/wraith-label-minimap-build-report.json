@@ -1,0 +1,43 @@
+{
+  "version": "0.39.6",
+  "version_code": 62,
+  "bytes": 251420531,
+  "sha256": "33a597dffcb326458e1b095972261d1ef7a4b58ec610f7ef10797aded1e81f4d",
+  "signature_and_16k_alignment_verified": true,
+  "wraith_names": "Hidden in transparent idle/walk poses, including recent-hit combat name and HP strip; visible with attack art",
+  "minimap_markers": {
+    "self": "green home",
+    "enemies": "red skulls",
+    "other_players_and_service_npcs": "unchanged"
+  },
+  "verification": {
+    "wraith_render_checks": 53,
+    "profiles": [
+      "classic",
+      "enhanced"
+    ],
+    "minimap_checks": 23,
+    "bow_and_npc_label_regression": "passed",
+    "hud_rendered_landscape_sizes": [
+      [
+        1280,
+        720
+      ],
+      [
+        1544,
+        720
+      ]
+    ],
+    "initial_concurrent_regression_run": "Assertions passed with shutdown resource diagnostics; isolated verbose reruns passed without diagnostics"
+  },
+  "phone_installation": {
+    "status": "installed and verified",
+    "device": "Samsung SM-S918B",
+    "version": "0.39.6",
+    "version_code": 62,
+    "installed_apk_sha256_matches": true,
+    "original_first_install_time_preserved": true,
+    "cold_launch_status": "ok",
+    "verified_at_utc": "2026-10-24T10:35:48.763171+00:00"
+  }
+}

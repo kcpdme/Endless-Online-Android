@@ -1,0 +1,16 @@
+{
+  "ball_placeholder_removed": true,
+  "checks": 53,
+  "combat_labels_hidden_when_invisible": true,
+  "idle_and_walk_invisible": true,
+  "name_hidden_when_invisible": true,
+  "name_visible_during_attack": true,
+  "original_attack_visible": true,
+  "pixel_render_test": true,
+  "profiles": [
+    "classic",
+    "enhanced"
+  ],
+  "result": "passed",
+  "targeting_preserved": true
+}

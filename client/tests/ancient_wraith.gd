@@ -2,7 +2,9 @@ extends SceneTree
 class NPCProbe extends "res://scripts/main.gd":
 	var sample: Dictionary = {}
 	func _draw() -> void:
-		if online != null and not sample.is_empty(): online.draw_entity(sample)
+		if online != null and not sample.is_empty():
+			online.draw_entity(sample)
+			online.draw_npc_combat_overlays()
 var checks: int = 0
 var failed: bool = false
 func _initialize() -> void: call_deferred("run")
@@ -11,7 +13,15 @@ func check(ok: bool, message: String) -> void:
 	if not ok: failed = true; push_error(message)
 func body(view: SubViewport, game: Node) -> Image:
 	game.queue_redraw(); await process_frame; await RenderingServer.frame_post_draw
-	return view.get_texture().get_image().get_region(Rect2i(160, 172, 80, 75))
+	return view.get_texture().get_image().get_region(Rect2i(100, 110, 200, 150))
+func sprite(view: SubViewport, game: Node) -> Image:
+	var capture: Image = await body(view, game)
+	return capture.get_region(Rect2i(60, 62, 80, 75))
+func caption(view: SubViewport, game: Node) -> Image:
+	var layout: Dictionary = game.online.npc_name_layout(game.online.npc_graphic(game.online.npcs[0]), "south", false)
+	var baseline: Vector2 = game.position + game.tile_position(Vector2i.ZERO) + (layout.name as Vector2)
+	game.queue_redraw(); await process_frame; await RenderingServer.frame_post_draw
+	return view.get_texture().get_image().get_region(Rect2i(int(baseline.x)-100, int(baseline.y)-14, 200, 15))
 func run() -> void:
 	var view: SubViewport = SubViewport.new(); view.size = Vector2i(512,512); view.transparent_bg = true; view.world_2d = World2D.new(); view.render_target_update_mode = SubViewport.UPDATE_ALWAYS; root.add_child(view)
 	var game: NPCProbe = NPCProbe.new(); view.add_child(game); await process_frame
@@ -35,29 +45,37 @@ func run() -> void:
 		art.replacements = {"unrelated_equipment_fixture":{}}; modes.append("enhanced")
 	for mode: String in modes:
 		if art != null: check(art.select_mode(mode, false), "Requested graphics profile is active")
-		game.online.remote_motion.clear(); game.online.npc_attack_until.clear()
+		game.online.remote_motion.clear(); game.online.npc_attack_until.clear(); game.online.npc_health.clear()
 		if DisplayServer.get_name() != "headless":
 			var idle: Image = await body(view,game)
-			check(not idle.get_used_rect().has_area(), "No ball or body while idle in " + mode)
+			check(not idle.get_used_rect().has_area(), "No body or name while idle in " + mode)
+		# A recent hit must not expose an otherwise invisible NPC through combat labels.
+		game.online.npc_health[1] = {"percent":65,"until":Time.get_ticks_msec()+10000}
+		if DisplayServer.get_name() != "headless": check(not (await body(view,game)).get_used_rect().has_area(), "No combat name or HP strip while invisible in " + mode)
 		var now: float = Time.get_ticks_msec() / 1000.0
 		var at: Vector2 = game.tile_position(Vector2i.ZERO)
 		game.online.remote_motion["npc:1"] = {"to":at,"tile":Vector2i.ZERO,"walk_start":now,"steps":[{"from":at,"to":at,"start":now,"direction":"south"}]}
 		check(game.online.entity_animation("online_npc",record).state == "frames", "Walking interpolation remains active")
-		if DisplayServer.get_name() != "headless": check(not (await body(view,game)).get_used_rect().has_area(), "No ball or body while walking in " + mode)
+		if DisplayServer.get_name() != "headless": check(not (await body(view,game)).get_used_rect().has_area(), "No body, name or HP strip while walking in " + mode)
 		game.online.remote_motion.clear(); game.online.npc_attack_until[1] = Time.get_ticks_msec() / 1000.0 + .30
 		check(game.online.entity_animation("online_npc",record).state == "attack", "Native NPC attack selects attack artwork")
-		if DisplayServer.get_name() != "headless": check((await body(view,game)).get_used_rect().has_area(), "Original attack sprite is visibly drawn in " + mode)
+		if DisplayServer.get_name() != "headless":
+			check((await sprite(view,game)).get_used_rect().has_area(), "Original attack sprite is visibly drawn in " + mode)
+			check((await caption(view,game)).get_used_rect().has_area(), "Combat name becomes visible during attack in " + mode)
 		game.online.npc_attack_until.clear()
-		if DisplayServer.get_name() != "headless": check(not (await body(view,game)).get_used_rect().has_area(), "Wraith disappears again after attacking in " + mode)
+		if DisplayServer.get_name() != "headless": check(not (await body(view,game)).get_used_rect().has_area(), "Body, name and HP strip disappear again after attacking in " + mode)
+		game.online.npc_health.clear(); game.online.npc_attack_until[1] = Time.get_ticks_msec() / 1000.0 + .30
+		if DisplayServer.get_name() != "headless": check((await caption(view,game)).get_used_rect().has_area(), "Normal name becomes visible during attack in " + mode)
+		game.online.npc_attack_until.clear()
 		check(game.online.map_entity_target(at + Vector2(0,-10)).get("kind","") == "npc", "Invisible Wraith retains its interaction target")
 	if DisplayServer.get_name() != "headless":
 		# Positive control: this is the exact old gold-ball bug when art is missing.
 		game.manifest.characters.npcs.erase("171")
-		check((await body(view,game)).get_used_rect().has_area(), "Capture detects the old missing-art ball")
+		check((await sprite(view,game)).get_used_rect().has_area(), "Capture detects the old missing-art ball")
 		game.manifest.characters.npcs["171"] = graphic
 		record.id = 113
-		check((await body(view,game)).get_used_rect().has_area(), "Ordinary Wraith sprites stay visible")
-	var report: Dictionary = {"result":"failed" if failed else "passed","checks":checks,"profiles":modes,"pixel_render_test":DisplayServer.get_name() != "headless","original_attack_visible":true,"idle_and_walk_invisible":true,"ball_placeholder_removed":true,"targeting_preserved":true}
+		check((await sprite(view,game)).get_used_rect().has_area(), "Ordinary Wraith sprites stay visible")
+	var report: Dictionary = {"result":"failed" if failed else "passed","checks":checks,"profiles":modes,"pixel_render_test":DisplayServer.get_name() != "headless","original_attack_visible":true,"idle_and_walk_invisible":true,"ball_placeholder_removed":true,"targeting_preserved":true,"name_hidden_when_invisible":true,"combat_labels_hidden_when_invisible":true,"name_visible_during_attack":true}
 	var path: String = OS.get_environment("ASTER_VALE_TEST_REPORT")
 	if not path.is_empty():
 		var file: FileAccess = FileAccess.open(path,FileAccess.WRITE); file.store_string(JSON.stringify(report,"  ")+"\n")

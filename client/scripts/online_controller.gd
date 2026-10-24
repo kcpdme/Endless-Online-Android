@@ -865,10 +865,14 @@ func player_name_offset(name: String) -> Vector2:
 	var width: float = ThemeDB.fallback_font.get_string_size(name, HORIZONTAL_ALIGNMENT_LEFT, -1, 11).x
 	return Vector2(-width / 2.0, -66)
 
+func npc_pose_visible(graphic: Dictionary, state: String) -> bool:
+	return not (state in graphic.get("transparent_poses", []))
+
 func npc_name_layout(graphic: Dictionary, direction: String, _fighting: bool) -> Dictionary:
-	# Use the original visible standing art, including its render offset. This
-	# keeps names close to heads and stable while a walking/attack pose changes.
-	var frame: Dictionary = game._frame(graphic, direction, "idle", 0.0)
+	# Anchor labels to standing art, or attack art when standing is invisible.
+	# Ordinary NPC names retain their stable original height.
+	var pose: String = "attack" if not npc_pose_visible(graphic, "idle") else "idle"
+	var frame: Dictionary = game._frame(graphic, direction, pose, 0.0)
 	var region: Array = frame.get("region", [0, 0, 20, 24]) as Array
 	var offset: Array = frame.get("offset", [0, 0]) as Array
 	var visible: Array = frame.get("visible_bounds", [0, 0, region[2], region[3]]) as Array
@@ -903,7 +907,7 @@ func draw_entity(entity: Dictionary) -> void:
 		var layout: Dictionary = npc_name_layout(graphic, direction, health >= 0.0)
 		var name: String = str(info.get("name", "NPC %s" % npc_id))
 		var text_width: float = ThemeDB.fallback_font.get_string_size(name, HORIZONTAL_ALIGNMENT_LEFT, -1, 10).x
-		if health < 0.0: game.draw_string(ThemeDB.fallback_font, at + (layout.name as Vector2) - Vector2(text_width / 2.0, 0), name, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, game.TEXT)
+		if health < 0.0 and npc_pose_visible(graphic, state): game.draw_string(ThemeDB.fallback_font, at + (layout.name as Vector2) - Vector2(text_width / 2.0, 0), name, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, game.TEXT)
 	elif str(entity.kind) == "online_player":
 		var graphic: Dictionary = character_graphic(record)
 		if not graphic.is_empty(): game._draw_character_frame(graphic, at, direction, state, Color.WHITE, phase if state in ["frames", "attack"] else -1.0)
@@ -1456,9 +1460,12 @@ func draw_npc_combat_overlays() -> void:
 	for record: Dictionary in npcs:
 		var health: float = npc_health_fraction(int(record.index))
 		if health < 0.0: continue
+		var graphic: Dictionary = npc_graphic(record)
+		var animation: Dictionary = entity_animation("online_npc", record)
+		if not npc_pose_visible(graphic, str(animation.state)): continue
 		var at: Vector2 = _remote_position("npc:%d" % int(record.index), game.tile_position(Vector2i(int(record.x), int(record.y))))
 		var info: Dictionary = (catalog.get("npcs", {}) as Dictionary).get(str(int(record.id)), {}) as Dictionary
-		var layout: Dictionary = npc_name_layout(npc_graphic(record), _facing(record.get("direction", 0)), true)
+		var layout: Dictionary = npc_name_layout(graphic, _facing(record.get("direction", 0)), true)
 		var strip: Rect2 = layout.health as Rect2
 		strip.position += at
 		game.draw_rect(strip.grow(1), Color("121b18"))

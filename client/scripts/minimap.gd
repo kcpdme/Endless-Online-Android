@@ -86,12 +86,25 @@ func _cell(tile: Vector2i, kind: int, opacity: float = 0.65) -> void:
 
 func _marker(tile: Vector2i, color: Color, self_marker: bool = false) -> void:
 	var center: Vector2 = marker_position(tile)
-	var half: Vector2 = Vector2(8, 5) if self_marker else Vector2(6, 4)
-	if not PLOT.encloses(Rect2(center - half - Vector2.ONE, half * 2.0 + Vector2.ONE * 2.0)): return
-	var diamond: PackedVector2Array = PackedVector2Array([center + Vector2(0, -half.y), center + Vector2(half.x, 0), center + Vector2(0, half.y), center - Vector2(half.x, 0)])
-	draw_colored_polygon(diamond, color)
-	diamond.append(diamond[0])
-	draw_polyline(diamond, Color("efffea") if self_marker else Color("251819"), 1.5, true)
+	# Small outlined pictograms stay legible against both walls and passages.
+	if not PLOT.encloses(Rect2(center - Vector2(8, 8), Vector2(16, 16))): return
+	draw_set_transform(center)
+	var outline: Color = Color("10231b") if self_marker else Color("2c1016")
+	if self_marker:
+		var house: PackedVector2Array = PackedVector2Array([Vector2(-7, -1), Vector2(0, -7), Vector2(7, -1), Vector2(5, -1), Vector2(5, 6), Vector2(-5, 6), Vector2(-5, -1)])
+		draw_colored_polygon(house, color)
+		house.append(house[0])
+		draw_polyline(house, Color("efffea"), 1.25, true)
+		draw_rect(Rect2(-1.5, 1, 3, 5), outline)
+	else:
+		draw_circle(Vector2(0, -2), 6.5, outline)
+		draw_circle(Vector2(0, -2), 5.5, color)
+		draw_rect(Rect2(-4, 0, 8, 6), outline)
+		draw_rect(Rect2(-3, 0, 6, 5), color)
+		for x: float in [-2.5, 2.5]: draw_circle(Vector2(x, -2.5), 1.6, outline)
+		draw_colored_polygon(PackedVector2Array([Vector2(0, -0.5), Vector2(-1, 1.5), Vector2(1, 1.5)]), outline)
+		for x: int in [-1, 1]: draw_line(Vector2(x, 3), Vector2(x, 5), outline, 1.0)
+	draw_set_transform(Vector2.ZERO)
 
 func _draw() -> void:
 	if game == null or not game.started: return
