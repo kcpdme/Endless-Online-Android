@@ -3,6 +3,8 @@
 The production world now uses **100% monster drops**, replacing the previous
 200% multiplier and EODelta item tables. EXP remains **1000% (10×)**.
 Existing accounts, inventory, maps and character stats are preserved.
+Version 0.40.2 subsequently changes EXP to 5×; see
+[travel and rates verification](TRAVEL_AND_EXP5.md).
 
 ## Source and restoration
 

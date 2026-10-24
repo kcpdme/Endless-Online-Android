@@ -163,6 +163,8 @@ WorldDumpFile = ./world.bak.json
     feature_content = configure_features(runtime)
     from configure_classic_economy import configure as configure_classic_economy
     classic_economy = configure_classic_economy(runtime)
+    from configure_travel import configure as configure_travel
+    travel = configure_travel(runtime)
     # Avoid loading SQL Server defaults at all (SQLite-only build).
     (runtime / 'config/database.ini').write_text('INCLUDE = ./config/database/sqlite.ini\nInstallSQL = ./install.sql\nAutoCreateDatabase = no\nDBPassFile =\nDBAuthType = sql\n')
     shutil.copy2(build / 'etheos', runtime / 'etheos')
@@ -172,7 +174,7 @@ WorldDumpFile = ./world.bak.json
               'sample':{'url':SAMPLE[0],'sha256':SAMPLE[1]}, 'sqlite':{'url':SQLITE[0],'sha256':SQLITE[1]}, 'nlohmann_json':{'url':JSON[0],'sha256':JSON[1]},
               'numbered_maps':len(maps),'highest_map_id':max(int(x.stem) for x in maps),
               'quest_conversion':'Generated .eqf copies with logged conservative legacy-syntax fixes. Original .txt bytes preserved. Real parser validation recorded separately.',
-              'quests':quests,'feature_content':feature_content,'classic_economy':classic_economy,'runtime':str(runtime),'binding':'127.0.0.1:8078','database':'SQLite',
+              'quests':quests,'feature_content':feature_content,'classic_economy':classic_economy,'travel':travel,'runtime':str(runtime),'binding':'127.0.0.1:8078','database':'SQLite',
               'original_npc_combat':npc_combat,
               'rights':'Reference content only; redistribution/publication permissions unresolved.'}
     (state / 'content-report.json').write_text(json.dumps(report, indent=2)+'\n')

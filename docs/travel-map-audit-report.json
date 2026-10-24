@@ -1,0 +1,12 @@
+{
+  "maps_checked": 282,
+  "warps_checked": 3945,
+  "issue_counts": {
+    "destination_solid": 211,
+    "destination_out_of_bounds": 8
+  },
+  "scope": "Static tile/warp audit; a solid landing with a clear neighbor may still be escapable. Quest gates and intended destination replacements are not inferred.",
+  "blocked_warp_origins_before": 3,
+  "blocked_warp_origins_after": 0,
+  "remaining_legacy_destination_issues": "Eight invalid maze destinations stay unavailable through the existing client guard. Solid landing records are separately flagged; 173 point to Grocery 0,0. Intended replacement destinations require separate review."
+}

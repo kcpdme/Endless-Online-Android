@@ -1,0 +1,35 @@
+{
+  "result": "passed",
+  "backup": "/opt/aster-vale/backups/travel-exp5-20261024T163420Z",
+  "services_healthy": true,
+  "rates": {
+    "npc_exp_multiplier": 5,
+    "npc_item_drop_chance_multiplier": 1,
+    "drop_quantities_changed": false,
+    "quest_rewards_changed": false,
+    "restart_required": true
+  },
+  "travel": {
+    "map_id": 48,
+    "exits_repaired": [
+      [
+        0,
+        40
+      ],
+      [
+        0,
+        41
+      ],
+      [
+        0,
+        42
+      ]
+    ],
+    "sha256": "f88e3f1b3dafdfb49af5335b9bf4220eb910a026230e40c4e1551a1b31f0c3fc",
+    "database_opened": false
+  },
+  "account_database_bytes_unchanged_by_installer": true,
+  "all_other_maps_pub_drops_and_shops_unchanged": true,
+  "port_map_unchanged": true,
+  "native_walk_cases_passed": 8
+}

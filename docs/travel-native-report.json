@@ -1,0 +1,291 @@
+{
+  "result": "passed",
+  "checks": [
+    {
+      "name": "Port upper boat deck to Limbo Desert",
+      "passed": true,
+      "start": [
+        16,
+        40,
+        8
+      ],
+      "steps": [
+        [
+          16,
+          41,
+          8
+        ],
+        [
+          16,
+          42,
+          8
+        ],
+        [
+          16,
+          43,
+          8
+        ],
+        [
+          16,
+          44,
+          8
+        ],
+        [
+          16,
+          45,
+          8
+        ],
+        [
+          16,
+          45,
+          9
+        ],
+        [
+          16,
+          45,
+          10
+        ],
+        [
+          16,
+          45,
+          11
+        ],
+        [
+          16,
+          45,
+          12
+        ],
+        [
+          16,
+          45,
+          13
+        ],
+        [
+          16,
+          45,
+          14
+        ],
+        [
+          16,
+          45,
+          15
+        ],
+        [
+          16,
+          46,
+          15
+        ],
+        [
+          16,
+          47,
+          15
+        ],
+        [
+          16,
+          48,
+          15
+        ],
+        [
+          34,
+          50,
+          57
+        ]
+      ],
+      "expected": [
+        34,
+        50,
+        57
+      ],
+      "actual": [
+        34,
+        50,
+        57
+      ]
+    },
+    {
+      "name": "Limbo Desert return boat",
+      "passed": true,
+      "start": [
+        34,
+        50,
+        57
+      ],
+      "steps": [
+        [
+          16,
+          47,
+          15
+        ]
+      ],
+      "expected": [
+        16,
+        47,
+        15
+      ],
+      "actual": [
+        16,
+        47,
+        15
+      ]
+    },
+    {
+      "name": "Port to Naqid boat",
+      "passed": true,
+      "start": [
+        16,
+        13,
+        54
+      ],
+      "steps": [
+        [
+          181,
+          19,
+          1
+        ]
+      ],
+      "expected": [
+        181,
+        19,
+        1
+      ],
+      "actual": [
+        181,
+        19,
+        1
+      ]
+    },
+    {
+      "name": "Naqid return boat",
+      "passed": true,
+      "start": [
+        181,
+        2,
+        2
+      ],
+      "steps": [
+        [
+          16,
+          13,
+          52
+        ]
+      ],
+      "expected": [
+        16,
+        13,
+        52
+      ],
+      "actual": [
+        16,
+        13,
+        52
+      ]
+    },
+    {
+      "name": "Port to Octopus island boat",
+      "passed": true,
+      "start": [
+        16,
+        48,
+        34
+      ],
+      "steps": [
+        [
+          210,
+          29,
+          80
+        ]
+      ],
+      "expected": [
+        210,
+        29,
+        80
+      ],
+      "actual": [
+        210,
+        29,
+        80
+      ]
+    },
+    {
+      "name": "Blocked swamp exit upper",
+      "passed": true,
+      "start": [
+        48,
+        1,
+        40
+      ],
+      "steps": [
+        [
+          40,
+          42,
+          20
+        ]
+      ],
+      "expected": [
+        40,
+        42,
+        20
+      ],
+      "actual": [
+        40,
+        42,
+        20
+      ]
+    },
+    {
+      "name": "Blocked swamp exit middle",
+      "passed": true,
+      "start": [
+        48,
+        1,
+        41
+      ],
+      "steps": [
+        [
+          40,
+          42,
+          21
+        ]
+      ],
+      "expected": [
+        40,
+        42,
+        21
+      ],
+      "actual": [
+        40,
+        42,
+        21
+      ]
+    },
+    {
+      "name": "Blocked swamp exit lower",
+      "passed": true,
+      "start": [
+        48,
+        1,
+        42
+      ],
+      "steps": [
+        [
+          40,
+          42,
+          22
+        ]
+      ],
+      "expected": [
+        40,
+        42,
+        22
+      ],
+      "actual": [
+        40,
+        42,
+        22
+      ]
+    }
+  ],
+  "production_database_not_opened": true,
+  "private_native_world": true,
+  "exp_rate": "500%"
+}

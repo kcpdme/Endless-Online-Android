@@ -1,0 +1,7 @@
+{
+  "checks": 15,
+  "native_warp_requests": true,
+  "port_unchanged": true,
+  "result": "passed",
+  "three_exit_touch_paths": true
+}

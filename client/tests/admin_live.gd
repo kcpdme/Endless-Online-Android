@@ -27,6 +27,8 @@ func tap(control: Control) -> void:
 		var event: InputEventScreenTouch = InputEventScreenTouch.new()
 		event.index = 85; event.position = root.get_final_transform()*control.get_global_rect().get_center(); event.pressed = pressed
 		Input.parse_input_event(event); await process_frame
+	# Modal scrolling replays a confirmed tap on the next input frames.
+	await process_frame; await process_frame
 func screenshot(name: String) -> void:
 	var folder: String = OS.get_environment("ASTER_VALE_SCREENSHOTS")
 	if not folder.is_empty() and DisplayServer.get_name() != "headless":
@@ -51,7 +53,7 @@ func run() -> void:
 	check(ui.button.get_global_rect().end.x < game.party_ui.button.get_global_rect().position.x,"Admin is beside Party")
 	c.game.skills_ui.armed = 1
 	await tap(ui.button)
-	if not check(await wait_for(func() -> bool: return not ui.busy and ui.teleport_list.get_child_count()==5),"Native touch opens five server destinations"): finish(); return
+	if not check(await wait_for(func() -> bool: return not ui.busy and ui.teleport_list.get_child_count()==8),"Native touch opens eight server destinations"): finish(); return
 	check(ui.panel.visible and game.skills_ui.armed==0,"Admin tap consumes armed world targeting")
 	check(replies.size()==1,"One native touch must issue one menu request")
 	for dimensions: Vector2i in [Vector2i(1280,720),Vector2i(1544,720)]:
@@ -59,13 +61,17 @@ func run() -> void:
 		var card: Control = ui.panel.get_child(0)
 		check(Rect2(Vector2.ZERO,Vector2(dimensions)).encloses(card.get_global_rect()),"Admin dialog must fit landscape")
 	await screenshot("admin-teleport")
-	var locations: Array = [[119,24,29],[136,49,18],[277,11,31],[109,7,13],[155,8,11]]
-	for index: int in range(5):
+	var locations: Array = [[119,24,29],[136,49,18],[277,11,31],[109,7,13],[155,8,11],[271,25,54],[229,82,112],[21,12,6]]
+	for index: int in range(8):
 		if not ui.panel.visible:
 			await create_timer(.8).timeout; ui.open()
 			if not await wait_for(func() -> bool: return not ui.busy): check(false,"Admin reopen failed"); finish(); return
+		await process_frame; await process_frame
+		(ui.teleport_list.get_parent() as ScrollContainer).ensure_control_visible(ui.teleport_list.get_child(index))
+		await process_frame; await process_frame
+		var previous_replies: int = replies.size()
 		await tap(ui.teleport_list.get_child(index))
-		if not check(await wait_for(func() -> bool: return not ui.busy and c.session.is_idle()),"Teleport acknowledged"): finish(); return
+		if not check(await wait_for(func() -> bool: return replies.size()>previous_replies and not ui.busy and c.session.is_idle()),"Teleport acknowledged"): finish(); return
 		var d: Array = locations[index]
 		check(int(game.world.id)==int(d[0]) and game.player_tile==Vector2i(d[1],d[2]),"Native destination must match preset "+str(index))
 		check(not ui.panel.visible and bool(replies.back().get("ok",false)),"Teleport closes after native map confirmation")
@@ -103,6 +109,6 @@ func run() -> void:
 		if not check(await wait_for(func() -> bool: return replies.size()>before),"Forged operation receives rejection"): finish(); return
 		check(not bool(replies.back().get("ok",true)) and str(replies.back().get("error","")).contains("Admin access"),"Server blocks forged role for "+operation)
 	c.log_out()
-	var report: Dictionary = {"result":"failed" if failed else "passed","checks":checks,"five_native_teleports":true,"native_one_item_grant":true,"native_npc_spawn":true,"ordinary_player_forgery_rejected":true,"touch_and_armed_heal_consumed":true,"landscape_dialog_fits":true}
+	var report: Dictionary = {"result":"failed" if failed else "passed","checks":checks,"eight_native_teleports":true,"native_one_item_grant":true,"native_npc_spawn":true,"ordinary_player_forgery_rejected":true,"touch_and_armed_heal_consumed":true,"landscape_dialog_fits":true}
 	var file: FileAccess = FileAccess.open(OS.get_environment("ASTER_VALE_TEST_REPORT"),FileAccess.WRITE)
 	file.store_string(JSON.stringify(report,"  ")+"\n"); print("ADMIN LIVE: ",JSON.stringify(report)); finish()

@@ -37,9 +37,12 @@ class AdminTests(unittest.TestCase):
         import json
         from pathlib import Path
         maps={w['id']:w for w in (json.loads(p.read_text()) for p in (Path(__file__).resolve().parents[1]/'client/content/maps').glob('*.json'))}
-        self.assertEqual(len(DESTINATIONS),5)
+        self.assertEqual(len(DESTINATIONS),8)
+        self.assertEqual({d['key']:(d['map_id'],d['x'],d['y']) for d in DESTINATIONS[-3:]},
+                         dict(monkey_island=(271,25,54),pyramid=(229,82,112),admin_room=(21,12,6)))
         for d in DESTINATIONS:
             w=maps[d['map_id']];point=(d['x'],d['y'])
+            self.assertTrue(0<=d['x']<w['width'] and 0<=d['y']<w['height'])
             self.assertNotIn(point,set(map(tuple,w['server_blocked'])))
             self.assertNotIn(point,{(p['x'],p['y']) for p in w['warps']})
             self.assertNotIn(point,{(p['x'],p['y']) for p in w['npcs']})

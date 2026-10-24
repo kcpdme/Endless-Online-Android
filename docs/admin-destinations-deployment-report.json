@@ -1,0 +1,13 @@
+{
+  "result": "passed",
+  "backup": "/opt/aster-vale/backups/admin-destinations-20261024T163942Z",
+  "source_sha256": "8ebc64ebb42c1fdfd393a74b8671905e89c316e9ab63212d9f814df91fdb6be0",
+  "gateway_healthy": true,
+  "native_world_not_restarted": true,
+  "database_not_opened": true,
+  "new_destinations": [
+    "monkey_island",
+    "pyramid",
+    "admin_room"
+  ]
+}

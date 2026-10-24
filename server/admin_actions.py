@@ -12,6 +12,10 @@ DESTINATIONS = (
     dict(key='wraith_room', name='Wraith Room', map_id=277, x=11, y=31),
     dict(key='reaper_cave', name='Reaper Cave', map_id=109, x=7, y=13),
     dict(key='octopus', name='Octopus', map_id=155, x=8, y=11),
+    # Original Monkey Island quest arrival, pyramid entrance, and GM meeting room.
+    dict(key='monkey_island', name='Monkey Island', map_id=271, x=25, y=54),
+    dict(key='pyramid', name='Pyramid', map_id=229, x=82, y=112),
+    dict(key='admin_room', name='Admin Room', map_id=21, x=12, y=6),
 )
 
 def command_settings():

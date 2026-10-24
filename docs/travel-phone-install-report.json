@@ -1,0 +1,10 @@
+{
+  "result": "passed",
+  "version": "0.40.2",
+  "version_code": 68,
+  "apk_sha256": "3bc447f5f9a619833ba935753f8ab2cc750e410a0ab48128eadc8e4f132c5621",
+  "installed_hash_verified": true,
+  "first_install_identity_preserved": true,
+  "launch_running": true,
+  "script_or_fatal_errors": 0
+}
