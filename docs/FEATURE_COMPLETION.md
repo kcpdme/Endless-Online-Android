@@ -153,7 +153,11 @@ Android release: **0.40.0, code 66**, package `com.cloudgameboy.astervale`.
 Signature and 16 KiB ZIP alignment checks passed. Existing signing identity is
 retained; install with `adb install -r`, without uninstalling or clearing data.
 APK SHA-256: `cb5b8cb2ef01403791e356fed5731253573adf8a15bac1f3bc00e250ed67641b`.
-Physical-phone installation is pending wireless ADB connectivity.
+The release was installed on the Samsung SM-S918B through wireless ADB using
+`pm install -r --user 0`. The installed APK hash matches the build and original
+first-install times are preserved. The app process launched with no fatal,
+script, parse or resource errors. The phone was locked during this last check,
+so the new in-game screens were exercised in the isolated Godot/native tests.
 
 The optional items outside the audit's numbered 15—extra admin buttons, pets,
 rebirth and the paused enhanced-art experiment—remain separately scoped.

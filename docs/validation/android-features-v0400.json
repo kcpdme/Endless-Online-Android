@@ -1,0 +1,13 @@
+{
+  "result": "passed",
+  "version": "0.40.0",
+  "version_code": 66,
+  "apk_sha256": "cb5b8cb2ef01403791e356fed5731253573adf8a15bac1f3bc00e250ed67641b",
+  "same_first_install_times": true,
+  "installed_apk_matches": true,
+  "launch_running": true,
+  "launch_script_or_fatal_errors": 0,
+  "device_model": "Samsung SM-S918B",
+  "phone_locked_during_launch_check": true,
+  "physical_gameplay_ui_checked": false
+}

@@ -1,0 +1,7 @@
+{
+  "result": "passed",
+  "public_tls_websocket": true,
+  "native_handshake": true,
+  "unauthenticated_features_rejected": true,
+  "unauthenticated_deletion_rejected": true
+}
