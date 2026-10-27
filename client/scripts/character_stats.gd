@@ -27,7 +27,7 @@ func build(owner_game: Node, parent: Control) -> void:
 	vitals.position = Vector2(28, 20)
 	parent.add_child(vitals)
 	vitals.hide()
-	panel = game._modal(parent, Vector2(1050, 478))
+	panel = game._modal(parent, Vector2(1050, 570))
 	var card: Control = panel.get_child(0) as Control
 	game._wood_card(card)
 	game._label(card, "CHARACTER STATS", Vector2(40, 22), 28, game.GOLD)
@@ -69,8 +69,13 @@ func build(owner_game: Node, parent: Control) -> void:
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		classic_fields[key] = label
 	points = game._label(card, "", Vector2(40, 380), 18, game.GOLD)
-	details = game._label(card, "Equipment bonuses are included. Use + to spend earned stat points.", Vector2(40, 420), 17, game.MUTED)
-	details.size = Vector2(970,72)
+	var guidance_scroll: ScrollContainer = ScrollContainer.new()
+	guidance_scroll.position = Vector2(40, 420)
+	guidance_scroll.size = Vector2(970, 120)
+	guidance_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	card.add_child(guidance_scroll)
+	details = game._label(guidance_scroll, "Equipment bonuses are included. Use + to spend earned stat points.", Vector2.ZERO, 17, game.MUTED)
+	details.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	details.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	panel.visibility_changed.connect(func() -> void:
 		if not panel.visible: stop_repeat()

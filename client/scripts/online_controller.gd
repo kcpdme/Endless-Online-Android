@@ -1466,6 +1466,9 @@ func refresh_game_ui() -> void:
 	if game.paperdoll.information_labels.size() >= 2:
 		game.paperdoll.information_labels[0].text = str(player.get("name", "Player"))
 		game.paperdoll.information_labels[1].text = str(game.world.get("name", ""))
+	if game.paperdoll.information_labels.size() >= 3:
+		var profession: Dictionary = (catalog.get("classes", {}) as Dictionary).get(str(int(stats.get("class_id", 0))), {}) as Dictionary
+		game.paperdoll.information_labels[2].text = str(profession.get("name", "–"))
 	game.attack_button.weapon = game._item_texture("weapon") if game.equipped else null
 	game.attack_button.collecting = false
 	game.attack_button.queue_redraw()

@@ -171,10 +171,22 @@ in the long acceptance harness; all gameplay assertions and client checks
 completed successfully. Reports are saved beside this document under
 `class-signatures-*-report.json`.
 
-The signed Android release is **0.43.0 (75)**. Its signing certificate and
-embedded catalog match the accepted build. The APK is available locally at
-`builds/aster-vale-0.43.0-release.apk`. No physical Android device was connected,
-so installation and touch gameplay on a handset remain untested for this build.
+The handset follow-up release is **0.43.1 (76)**, superseding 0.43.0 (75).
+Its signing certificate and embedded catalog match the accepted build. The APK
+is available locally at `builds/aster-vale-0.43.1-release.apk`. A full update on
+the connected Galaxy S23 Ultra preserved the original install record and saved
+login. Touch testing covered egg hatching, duplicate preservation, permanent
+learning across logout/update, summon shortcuts, visible native pets, following
+movement and dismissal. Mutation tests used a disposable developer character.
+The app was left at the original saved user's character selection.
+
+Handset testing found and fixed guidance overflowing the Character Stats card
+and a missing class name in the equipment screen. Guidance now wraps inside a
+scrollable footer; all six professions passed 60 layout checks across the two
+supported viewport sizes. The final installed APK displays both fixes correctly
+and logged no script or fatal errors. See
+[class-signatures-phone-report.json](class-signatures-phone-report.json) for
+scope, hashes and preservation evidence.
 
 The level-45 comparison puts front-facing, single-target burst within about
 20% across professions, while reporting backstab, regeneration and pet output
