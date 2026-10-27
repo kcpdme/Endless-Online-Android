@@ -24,7 +24,7 @@ func run() -> void:
 	if failed: game.queue_free(); await process_frame; quit(1); return
 	c.character_list.select(0); c._enter_selected()
 	check(await wait_for(func() -> bool: return c.active and c.streaming and c.session.is_idle()), "Balance fixture enters the native world")
-	check(int(c.catalog.get("balance_version",0)) == 2, "Client receives current balance version")
+	check(int(c.catalog.get("balance_version",0)) == 3, "Client receives current balance version")
 	check((c.catalog.get("items",{}) as Dictionary).has("543"), "New equipment arrives through live catalog synchronization")
 	check(str((c.catalog.classes as Dictionary).get("3",{}).get("build_hint", "")).contains("INT"), "Class build guidance is available")
 	check(str((c.catalog.items as Dictionary).get("493",{}).get("name", "")) == "Tempest Staff", "New weapon name is visible")
@@ -38,6 +38,9 @@ func run() -> void:
 	check(c.equipment_classes(c.catalog.items["131"]).contains("Priest") and c.equipment_classes(c.catalog.items["131"]).contains("Summoner"), "Shared caster clothes display every eligible profession")
 	check(not c._equipment_problem(c.catalog.items["533"], 0).is_empty(), "Mage cannot equip the Rogue Hidden Blade")
 	check(c._equipment_problem(c.catalog.items["493"], 0).is_empty(), "JSON class access permits the Mage's own staff")
+	check(c.catalog.items.has("611") and c._catalog_texture(str(c.catalog.items["609"].icon)) != null, "Pet egg has a working inventory icon")
+	check(str(c.catalog.spells["28"].get("learn_source", "")).contains("egg"), "Pet summon explains its permanent egg unlock")
+	check(int(c.catalog.spells["49"].get("area_targets", 0)) == 3, "Mage has early bounded area magic")
 	ui.press(2); ui.selected = 9; ui.refresh_detail()
 	check(ui.detail.text.contains("/ 10"), "Spell training shows its actual cap")
 	check(ui.detail.text.contains("Attack power") and ui.detail.text.contains("TP 38"), "Skill detail shows scaled power and current TP cost")

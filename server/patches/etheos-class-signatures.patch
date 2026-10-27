@@ -1,0 +1,285 @@
+--- a/src/character.cpp
++++ b/src/character.cpp
+@@ -1108,6 +1108,12 @@
+ 	if (!this->world->config["BalanceRevamp"]) return attack + base + this->SpellLevel(id);
+ 	int clas = this->clas == 0 ? 1 : this->clas;
+ 	double scale = this->world->config["Balance." + util::to_string(clas) + ".spell_scale"];
++    // PvP forbids spirit AI, so the caster receives its missing pet budget.
++    if (this->world->config["ClassSignatureRules"] && clas == 7 && this->map
++      && (this->map->pk || this->arena || (this->world->config["GlobalPK"] && !this->world->PKExcept(this->mapid))))
++    {
++        scale = this->world->config["Balance.7.pk_spell_scale"];
++    }
+ 	int amount = int(attack * std::max(1.0, scale)) + base + 2 * std::min<int>(10, this->SpellLevel(id));
+ 	int radius = this->BalanceAreaRadius(id);
+ 	if (radius > 0) amount = int(amount * (radius == 1 ? 0.8 : 0.6));
+@@ -2541,10 +2547,65 @@
+     this->DismissCompanion(); this->tp -= spell.tp;
+     NPC *pet = new NPC(this->map, definition, spawn_x, spawn_y, 7, 0, index, true);
+     pet->companion_owner = this->PlayerID(); pet->companion_spell = id;
+-    pet->companion_expires = Timer::GetTime() + util::clamp<double>(this->world->config["CompanionLifetimeSeconds"], 2.0, 90.0); pet->companion_upkeep = Timer::GetTime() + 2.0;
++    double lifetime = this->world->config["CompanionLifetimeSeconds"];
++    pet->companion_expires = lifetime > 0.0 ? Timer::GetTime() + util::clamp<double>(lifetime,2.0,90.0) : 0.0;
++    pet->companion_upkeep = Timer::GetTime() + 2.0;
+     pet->companion_cost = this->world->config[prefix + "upkeep"];
+     pet->companion_power = this->world->config[prefix + "power"];
+     this->map->npcs.push_back(pet); pet->Spawn(); pet->act_speed = 0.35;
+     this->CompanionStatus(pet,id);
+     return true;
+ }
++
++// Position, class and weapon are all server-owned; never trust a client bonus.
++double Character::BackstabMultiplier(int tx, int ty, Direction facing) const
++{
++    if (!this->world->config["ClassSignatureRules"] || this->clas != 4
++      || !this->world->config["BalanceItem." + util::to_string(this->paperdoll[Weapon]) + ".backstab"]
++      || !this->BalanceCanEquip(this->world->eif->Get(this->paperdoll[Weapon]))) return 1.0;
++    const int dx[] = {0,-1,0,1}, dy[] = {1,0,-1,0};
++    int direction = int(facing);
++    if (direction < 0 || direction > 3 || int(this->x) != tx-dx[direction] || int(this->y) != ty-dy[direction]) return 1.0;
++    return util::rand(0,1) ? 2.0 : 1.5;
++}
++
++bool Character::SignatureCanCast(unsigned short id, int tx, int ty, bool targeted) const
++{
++    if (!this->world->config["ClassSignatureRules"] || this->SourceDutyAccess() > 0) return true;
++    const ESF_Data& spell = this->world->esf->Get(id);
++    if (spell.type != ESF::Damage) return true;
++    if (targeted && (this->clas == 4 || this->clas == 6) && util::path_length(this->x,this->y,tx,ty) > 1) return false;
++    if (this->clas == 5)
++    {
++        const EIF_Data& bow = this->world->eif->Get(this->paperdoll[Weapon]);
++        const EIF_Data& arrows = this->world->eif->Get(this->paperdoll[Shield]);
++        if (bow.type != EIF::Weapon || bow.subtype != EIF::Ranged || arrows.type != EIF::Shield || arrows.subtype != EIF::Arrows
++          || !this->BalanceCanEquip(bow) || !this->BalanceCanEquip(arrows)) return false;
++        if (targeted && util::path_length(this->x,this->y,tx,ty) > int(this->world->config["RangedDistance"])) return false;
++    }
++    return true;
++}
++
++bool Character::HatchCompanionEgg(unsigned short id)
++{
++    auto entry = this->world->config.find("BalanceEgg." + util::to_string(id) + ".spell");
++    const EIF_Data& item = this->world->eif->Get(id);
++    if (entry == this->world->config.end() && !(item.type == EIF::EffectPotion && item.classreq == 7)) return false;
++    unsigned short spell = entry == this->world->config.end() ? 0 : int(entry->second);
++    if (!this->world->config["ClassSignatureRules"] || !spell) this->StatusMsg("Spirit hatching is unavailable. The egg is kept.");
++    else if (this->clas != 7) this->StatusMsg("Only Summoners can hatch spirit eggs. The egg is kept.");
++    else if (!this->BalanceCanCast(spell)) this->StatusMsg("Reach the required level before hatching this egg. The egg is kept.");
++    else if (this->HasSpell(spell)) this->StatusMsg("You already know this spirit summon. The egg is kept.");
++    else if (this->HasItem(id) && this->AddSpell(spell))
++    {
++        this->DelItem(id,1);
++        PacketBuilder learned(PACKET_STATSKILL, PACKET_TAKE, 6);
++        learned.AddShort(spell); learned.AddInt(this->HasItem(1)); this->Send(learned);
++        this->StatusMsg("Spirit bonded! Its summon skill is yours permanently. Cast it to call your companion.");
++    }
++    // A real item acknowledgement also completes native refusals without loss.
++    PacketBuilder reply(PACKET_ITEM, PACKET_REPLY, 11);
++    reply.AddChar(EIF::EffectPotion); reply.AddShort(id); reply.AddInt(this->HasItem(id));
++    reply.AddChar(this->weight); reply.AddChar(this->maxweight); reply.AddShort(0); this->Send(reply);
++    return true;
++}
+--- a/src/character.hpp
++++ b/src/character.hpp
+@@ -333,6 +333,9 @@
+         int companion_target = -1;
+         int companion_target_type = 0;
+         double companion_command_time = 0.0;
++        double BackstabMultiplier(int target_x, int target_y, Direction facing) const;
++        bool SignatureCanCast(unsigned short id, int target_x, int target_y, bool targeted = true) const;
++        bool HatchCompanionEgg(unsigned short id);
+         bool CompanionSpell(unsigned short id);
+         void DismissCompanion();
+         void CommandCompanion(NPC *target);
+--- a/src/eoserv_config.cpp
++++ b/src/eoserv_config.cpp
+@@ -57,6 +57,9 @@
+ 	eoserv_config_default(config, "EnforceTimestamps"  , true);
+ 	eoserv_config_default(config, "CompanionLifetimeSeconds", 90.0);
+ 	eoserv_config_default(config, "ClassIdentityRules", false);
++    eoserv_config_default(config, "ClassSignatureRules", false);
++    eoserv_config_default(config, "PriestRegenRate", 0.02);
++    eoserv_config_default(config, "PriestSittingRegenRate", 0.04);
+ 	eoserv_config_default(config, "BalanceRevamp"     , false);
+ 	eoserv_config_default(config, "AllowMovingSpells"   , false);
+ 	eoserv_config_default(config, "EnforceSessions"    , true);
+--- a/src/handlers/Item.cpp
++++ b/src/handlers/Item.cpp
+@@ -56,6 +56,8 @@
+ 			q.second->UsedItem(id);
+ 		}
+ 	};
++
++	if (character->HatchCompanionEgg(id)) return;
+ 
+ 	switch (item.type)
+ 	{
+--- a/src/map.cpp
++++ b/src/map.cpp
+@@ -1561,7 +1561,8 @@
+ 				int amount = util::rand(from->mindam, from->maxdam);
+ 				double rand = util::rand(0.0, 1.0);
+ 				// Checks if target is facing you
+-				bool critical = std::abs(int(npc->direction) - from->direction) != 2 || rand < static_cast<double>(this->world->config["CriticalRate"]);
++				double backstab = from->BackstabMultiplier(npc->x,npc->y,npc->direction);
++                bool critical = (!this->world->config["ClassSignatureRules"] && std::abs(int(npc->direction) - from->direction) != 2) || rand < static_cast<double>(this->world->config["CriticalRate"]);
+ 
+ 				if (this->world->config["CriticalFirstHit"] && npc->hp == npc->ENF().hp)
+ 					critical = true;
+@@ -1572,9 +1573,9 @@
+ 				npc->FormulaVars(formula_vars, "target_");
+ 				formula_vars["modifier"] = this->world->config["MobRate"];
+ 				formula_vars["damage"] = amount;
+-				formula_vars["critical"] = critical;
+-
+-				amount = static_cast<int>(rpn_eval(rpn_parse(this->world->formulas_config["damage"]), formula_vars));
++				formula_vars["critical"] = backstab > 1.0 ? false : critical;
++
++				amount = static_cast<int>(rpn_eval(rpn_parse(this->world->formulas_config["damage"]), formula_vars) * backstab);
+ 				double hit_rate = rpn_eval(rpn_parse(this->world->formulas_config["hit_rate"]), formula_vars);
+ 
+ 				if (rand > hit_rate)
+@@ -1651,7 +1652,8 @@
+ 				int amount = util::rand(from->mindam, from->maxdam);
+ 				double rand = util::rand(0.0, 1.0);
+ 				// Checks if target is facing you
+-				bool critical = std::abs(int(character->direction) - from->direction) != 2 || rand < static_cast<double>(this->world->config["CriticalRate"]);
++				double backstab = from->BackstabMultiplier(character->x,character->y,character->direction);
++                bool critical = (!this->world->config["ClassSignatureRules"] && std::abs(int(character->direction) - from->direction) != 2) || rand < static_cast<double>(this->world->config["CriticalRate"]);
+ 
+ 				std::unordered_map<std::string, double> formula_vars;
+ 
+@@ -1659,9 +1661,9 @@
+ 				character->FormulaVars(formula_vars, "target_");
+ 				formula_vars["modifier"] = this->world->config["PKRate"];
+ 				formula_vars["damage"] = amount;
+-				formula_vars["critical"] = critical;
+-
+-				amount = static_cast<int>(rpn_eval(rpn_parse(this->world->formulas_config["damage"]), formula_vars));
++				formula_vars["critical"] = backstab > 1.0 ? false : critical;
++
++				amount = static_cast<int>(rpn_eval(rpn_parse(this->world->formulas_config["damage"]), formula_vars) * backstab);
+ 				double hit_rate = rpn_eval(rpn_parse(this->world->formulas_config["hit_rate"]), formula_vars);
+ 
+ 				if (rand > hit_rate)
+@@ -1975,7 +1977,7 @@
+ void Map::SpellAreaAttack(Character *from, unsigned short spell_id)
+ {
+ 	const ESF_Data& spell = from->world->esf->Get(spell_id);
+-	if (!from->BalanceCanCast(spell_id) || from->BalanceAreaRadius(spell_id) <= 0 || !spell || spell.type != ESF::Damage
++	if (!from->SignatureCanCast(spell_id,from->x,from->y,false) || !from->BalanceCanCast(spell_id) || from->BalanceAreaRadius(spell_id) <= 0 || !spell || spell.type != ESF::Damage
+ 	 || !from->CanInteractCombat() || from->hp <= 0 || from->tp < spell.tp)
+ 		return;
+ 
+@@ -2017,7 +2019,7 @@
+ 
+ void Map::SpellAttack(Character *from, NPC *npc, unsigned short spell_id, bool consume_tp)
+ {
+-	if (!from->CanInteractCombat())
++	if (!from->CanInteractCombat() || !from->BalanceCanCast(spell_id) || !from->SignatureCanCast(spell_id,npc->x,npc->y,consume_tp))
+ 		return;
+ 
+ 	const ESF_Data& spell = from->world->esf->Get(spell_id);
+@@ -2032,6 +2034,7 @@
+ 		int amount = util::rand(from->SpellDamageAmount(spell_id, false), from->SpellDamageAmount(spell_id, true));
+ 		double rand = util::rand(0.0, 1.0);
+ 
++		double backstab = consume_tp && !from->BalanceAreaRadius(spell_id) ? from->BackstabMultiplier(npc->x,npc->y,npc->direction) : 1.0;
+ 		bool critical = rand < static_cast<double>(this->world->config["CriticalRate"]);
+ 
+ 		std::unordered_map<std::string, double> formula_vars;
+@@ -2040,9 +2043,9 @@
+ 		npc->FormulaVars(formula_vars, "target_");
+ 		formula_vars["modifier"] = this->world->config["MobRate"];
+ 		formula_vars["damage"] = amount;
+-		formula_vars["critical"] = critical;
+-
+-		amount = static_cast<int>(rpn_eval(rpn_parse(this->world->formulas_config["damage"]), formula_vars));
++		formula_vars["critical"] = backstab > 1.0 ? false : critical;
++
++		amount = static_cast<int>(rpn_eval(rpn_parse(this->world->formulas_config["damage"]), formula_vars) * backstab);
+ 		double hit_rate = rpn_eval(rpn_parse(this->world->formulas_config["hit_rate"]), formula_vars);
+ 
+ 		if (rand > hit_rate)
+@@ -2069,7 +2072,7 @@
+ {
+ 	const ESF_Data& spell = from->world->esf->Get(spell_id);
+ 
+-	if (!spell || (spell.type != ESF::Heal && spell.type != ESF::Damage) || from->tp < spell.tp)
++	if (!from->BalanceCanCast(spell_id) || !from->SignatureCanCast(spell_id,victim->x,victim->y) || !spell || (spell.type != ESF::Heal && spell.type != ESF::Damage) || from->tp < spell.tp)
+ 		return;
+ 
+ 	if (spell.type == ESF::Damage && (from->map->pk || (this->world->config["GlobalPK"] && !this->world->PKExcept(this->id))))
+@@ -2082,6 +2085,7 @@
+ 		int amount = util::rand(from->SpellDamageAmount(spell_id, false), from->SpellDamageAmount(spell_id, true));
+ 		double rand = util::rand(0.0, 1.0);
+ 
++		double backstab = !from->BalanceAreaRadius(spell_id) ? from->BackstabMultiplier(victim->x,victim->y,victim->direction) : 1.0;
+ 		bool critical = rand < static_cast<double>(this->world->config["CriticalRate"]);
+ 
+ 		std::unordered_map<std::string, double> formula_vars;
+@@ -2090,9 +2094,9 @@
+ 		victim->FormulaVars(formula_vars, "target_");
+ 		formula_vars["modifier"] = this->world->config["PKRate"];
+ 		formula_vars["damage"] = amount;
+-		formula_vars["critical"] = critical;
+-
+-		amount = static_cast<int>(rpn_eval(rpn_parse(this->world->formulas_config["damage"]), formula_vars));
++		formula_vars["critical"] = backstab > 1.0 ? false : critical;
++
++		amount = static_cast<int>(rpn_eval(rpn_parse(this->world->formulas_config["damage"]), formula_vars) * backstab);
+ 		double hit_rate = rpn_eval(rpn_parse(this->world->formulas_config["hit_rate"]), formula_vars);
+ 
+ 		if (rand > hit_rate)
+--- a/src/npc.cpp
++++ b/src/npc.cpp
+@@ -1192,7 +1192,7 @@
+     if (!owner || owner->clas != 7 || owner->hp <= 0 || owner->nowhere
+       || !this->map->world->config["ClassIdentityRules"] || !owner->CanInteractCombat()
+       || this->map->pk || owner->arena || (this->map->world->config["GlobalPK"] && !this->map->world->PKExcept(this->map->id))
+-      || now >= this->companion_expires || util::path_length(this->x,this->y,owner->x,owner->y) > 12)
++      || (this->companion_expires > 0.0 && now >= this->companion_expires) || util::path_length(this->x,this->y,owner->x,owner->y) > 12)
+     {
+         if (owner) owner->CompanionStatus(nullptr);
+         this->Die(); return;
+--- a/src/world.cpp
++++ b/src/world.cpp
+@@ -147,6 +147,27 @@
+ 	}
+ }
+ 
++// Priest renewal runs independently of the world's slow ordinary recovery tick.
++void world_priest_renewal(void *world_void)
++{
++    World *world(static_cast<World*>(world_void));
++    if (!world->config["ClassSignatureRules"]) return;
++    for (Character *character : world->characters)
++    {
++        if ((character->clas != 2 && world->ecf->Get(character->clas).base != 2)
++          || character->hp <= 0 || character->hp >= character->maxhp || character->nowhere) continue;
++        double rate = character->sitting == SIT_STAND ? double(world->config["PriestRegenRate"]) : double(world->config["PriestSittingRegenRate"]);
++        rate = util::clamp<double>(rate,0.0,0.05);
++        if (character->map->pk || character->arena || (world->config["GlobalPK"] && !world->PKExcept(character->mapid))) rate *= 0.5;
++        if (rate <= 0.0) continue;
++        int gain = std::max(1,int(character->maxhp * rate));
++        character->hp = std::min<int>(character->maxhp,character->hp + gain);
++        PacketBuilder reply(PACKET_RECOVER, PACKET_PLAYER, 6);
++        reply.AddShort(character->hp);reply.AddShort(character->tp);reply.AddShort(0);character->Send(reply);
++        if (character->party) character->party->UpdateHP(character);
++    }
++}
++
+ void world_npc_recover(void *world_void)
+ {
+ 	World *world(static_cast<World *>(world_void));
+@@ -466,6 +487,9 @@
+ 	this->timer.Register(event);
+ 
+ 	event = new TimeEvent(world_act_npcs, this, 0.05, Timer::FOREVER);
++	this->timer.Register(event);
++
++	event = new TimeEvent(world_priest_renewal, this, 2.0, Timer::FOREVER);
+ 	this->timer.Register(event);
+ 
+ 	event = new TimeEvent(world_talk_npcs, this, 1.0, Timer::FOREVER);

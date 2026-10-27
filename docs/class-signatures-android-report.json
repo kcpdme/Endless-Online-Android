@@ -1,0 +1,12 @@
+{
+  "result": "passed",
+  "version_name": "0.43.0",
+  "version_code": 75,
+  "package": "com.cloudgameboy.astervale",
+  "signed_release": true,
+  "certificate_sha256": "fbf80de525cf74dbedbcb1ae73899c6fe9a55ea9661b31e93637f074d7e979ed",
+  "apk_sha256": "72ad1338a690ebb1537649bf09e5e1bb813e0f16cb4b51413df31f694c9b9629",
+  "catalog_matches_accepted_client": true,
+  "physical_device_install_tested": false,
+  "reason": "No adb device connected"
+}

@@ -347,9 +347,12 @@ func refresh_detail() -> void:
 		if balanced and not usable(selected): lines.append("Locked for your current class or level. Learned ownership is kept.")
 		if balanced:
 			lines.append("Requires level %d" % int(spell.get("level_requirement", 1)))
+			if spell.has("learn_source"): lines.append(str(spell.learn_source))
+			if spell.get("requires_bow", false): lines.append("Requires a bow and arrows.")
+			if int(spell.get("range", 0)) > 0: lines.append("Range: %d tiles." % int(spell.range))
 		if spell.get("effect_kind", "") == "companion":
 			var pet: Dictionary = spell.get("companion", {}) as Dictionary
-			lines.append("Dismiss your companion." if int(pet.get("npc_id", 0)) < 0 else "One spirit companion for 90 seconds. Assists your active fights; no idle hunting.")
+			lines.append("Dismiss your companion." if int(pet.get("npc_id", 0)) < 0 else "One spirit companion while upkeep TP lasts. Assists your active fights; no idle hunting.")
 			if int(pet.get("npc_id", 0)) > 0: lines.append("Upkeep: %d TP every 2 seconds. CHA and INT increase its damage." % int(pet.get("upkeep", 0)))
 		for learned: Dictionary in game.online.player.get("spells", []):
 			if int(learned.id) == selected:
@@ -366,7 +369,7 @@ func refresh_detail() -> void:
 					var low: int = int(spell.get("min_damage", 0)) + level
 					var high: int = int(spell.get("max_damage", 0)) + level
 					if balanced:
-						var scale: float = maxf(1.0, float(profession.get("spell_scale", 1.0)))
+						var scale: float = maxf(1.0, float(profession.get("pk_spell_scale", profession.get("spell_scale", 1.0)) if bool(game.online.world_rules.get("pk", false)) else profession.get("spell_scale", 1.0)))
 						var area_scale: float = float(spell.get("area_scale", 1.0))
 						low = int((int(float(stats.get("min_damage", 0)) * scale) + int(spell.get("min_damage", 0)) + mini(level, cap) * 2) * area_scale)
 						high = int((int(float(stats.get("max_damage", 0)) * scale) + int(spell.get("max_damage", 0)) + mini(level, cap) * 2) * area_scale)

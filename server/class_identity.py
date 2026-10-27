@@ -27,6 +27,9 @@ OWNERS.update({ident:(3,) for ident in (173,174,175,176,177,178,124,125,126)})
 OWNERS.update({ident:(6,) for ident in (180,196,246,247,289,330,385,386,426,447,266)})
 OWNERS.update({267:(4,),187:(2,3,7),181:(7,)})
 
+from class_signatures import ITEMS as SIGNATURE_ITEMS
+OWNERS.update({ident:(clas,) for ident,name,template,clas,role,tier in SIGNATURE_ITEMS})
+
 ROLES={2:'wisdom',3:'intelligence',4:'agility',5:'agility',6:'strength',7:'charisma'}
 
 def allowed_classes(item):
@@ -64,11 +67,11 @@ def vary_stats(item, stats, tier, crafted=False):
         if crafted:
             result['min_damage']+=1;result['max_damage']+=2;result[role]+=1
     elif item['type']==12 and tier:
-        if item['id'] in BODIES[6]:
+        if allowed_classes(item)==(6,):
             style='bulwark';result['constitution']+=max(1,tier//2);result['hp']+=4*tier
-        elif item['id'] in BODIES[4]:
+        elif allowed_classes(item)==(4,):
             style='skirmisher';result['evade']+=tier;result['accuracy']+=1
-        elif item['id'] in BODIES[5]:
+        elif allowed_classes(item)==(5,):
             style='marksman';result['accuracy']+=tier;result['hp']+=2*tier
         elif role in ('wisdom','intelligence','charisma'):
             style='focus';result['tp']+=4*tier

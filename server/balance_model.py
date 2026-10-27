@@ -5,6 +5,7 @@ Real native-session checks independently exercise the same class and spell paths
 """
 import math
 from balance_profile import ATTRIBUTES, CLASSES
+from class_signatures import SUPPORT
 
 def evaluate(expr, values):
     stack=[]
@@ -42,32 +43,46 @@ def hit_chance(accuracy,evade):return min(.95,max(.35,accuracy/(10+accuracy*.5+e
 def expected_hit(low,high,armor):return sum(max(1,int(n*100/(100+2*armor))) for n in range(low,high+1))/(high-low+1)
 
 GEAR = {
-    2:([33,23,362,534,390,495],[131,531,406,525,519,499]),
-    3:([29,205,290,389,389,493],[132,128,156,523,521,501]),
-    4:([21,26,238,327,436,497],[144,142,539,460,527,505]),
-    5:([297,511,512,316,457,496],[144,541,414,460,529,507]),
-    6:([21,19,37,287,281,498],[144,135,155,460,387,509]),
-    7:([29,35,329,513,514,494],[132,535,537,515,517,503]),
+    2:([33,23,362,534,390,495],[549,531,406,525,519,499]),
+    3:([29,205,290,389,544,493],[551,128,156,523,521,501]),
+    4:([21,26,238,327,436,497],[553,142,539,545,527,505]),
+    5:([297,511,512,316,457,496],[555,541,414,547,529,507]),
+    6:([21,19,37,287,281,498],[557,135,155,460,387,509]),
+    7:([29,35,329,513,514,494],[559,535,537,515,517,503]),
 }
 
+def loadout(profile,clas,level,index=None):
+    index=(1,8,15,25,35,45).index(level) if index is None else index
+    ids=[arr[index] for arr in GEAR[clas]]
+    if clas==5:ids.append(423)
+    tier=4 if level>=35 else 2 if level>=15 else 0
+    if tier:
+        supporting=[ident for ident,entry in SUPPORT.items() if entry['clas']==clas and entry['tier']==tier]
+        ids+=supporting+[supporting[-1]] # Both ring slots use the same legal definition.
+    else:ids += [182,80,58,41,41] # Ordinary, obtainable starter accessories.
+    return [profile['items'][str(ident)] for ident in ids]
+
 def benchmarks(profile):
-    items=profile['items'];spells=profile['spells'];rows=[]
-    for index,level in enumerate((1,8,15,25,35,45)):
+    spells=profile['spells'];rows=[]
+    for level in (1,8,15,25,35,45):
         for clas in (2,3,4,5,6,7):
-            weapon,body=(arr[index] for arr in GEAR[clas]);gear=[items[str(weapon)],items[str(body)]]
-            if clas==5:gear.append(items['423'])
-            if any(i['level_requirement']>level or i['class_requirement'] not in (0,clas) for i in gear):raise ValueError(f'Invalid benchmark loadout {clas}/{level}')
+            gear=loadout(profile,clas,level);weapon,body=gear[:2]
+            if any(i['level_requirement']>level or (i.get('allowed_classes') and clas not in i['allowed_classes']) for i in gear):raise ValueError(f'Invalid benchmark loadout {clas}/{level}')
             s=stats(clas,level,allocation(clas,level),gear)
             target_armor=level*.4;target_evade=level*.6
             basic=expected_hit(s['min_damage'],s['max_damage'],target_armor)*hit_chance(s['accuracy'],target_evade)/.5
-            ident={2:22,3:4 if level<8 else 5 if level<15 else 10 if level<25 else 15 if level<35 else 19 if level<45 else 9,4:12 if level<25 else 30,5:13 if level<25 else 36,6:32 if level<35 else 38,7:23 if level<15 else 24 if level<25 else 26 if level<45 else 29}[clas]
-            spell=spells[str(ident)];power=spell_preview(clas,spell,s,0)
-            legal=spell['level_requirement']<=level
-            cycle=max(.96,spell['cast_time']*.48+.48)
-            spell_dps=expected_hit(power['min_damage'],power['max_damage'],target_armor)*hit_chance(s['accuracy'],target_evade)/cycle if legal else 0
+            candidates=[]
+            for spell in spells.values():
+                if spell['type']!=1 or spell.get('effect_kind')=='companion' or spell.get('area_radius') or clas not in spell.get('allowed_classes',[]) or spell['level_requirement']>level:continue
+                power=spell_preview(clas,spell,s,0);cycle=max(.96,spell['cast_time']*.48+.48)
+                dps=expected_hit(power['min_damage'],power['max_damage'],target_armor)*hit_chance(s['accuracy'],target_evade)/cycle
+                candidates.append((dps,spell['id']))
+            spell_dps,ident=max(candidates) if candidates else (0,0)
+            spell=spells.get(str(ident),dict(tp=0))
             heal=spell_preview(clas,spells['1'],s)['heal'] if clas==2 else 0
             pet_power=1 if level<25 else 1.15 if level<40 else 1.3
             pet_base=int((5+level*.3+s['charisma']*.22+s['intelligence']*.12)*pet_power)
             pet_dps=expected_hit(max(1,pet_base-2),pet_base+2,target_armor)*hit_chance(s['accuracy'],target_evade) if clas==7 and level>=8 else 0
-            rows.append(dict(class_id=clas,role=CLASSES[clas]['name'],level=level,weapon_id=weapon,body_id=body,**s,basic_dps=round(basic,2),spell_dps=round(spell_dps,2),burst_dps=round(max(basic,spell_dps)+pet_dps,2),companion_dps=round(pet_dps,2),spell_id=ident,spell_tp=spell['tp'],spell_casts_from_full=s['max_tp']//spell['tp'],heal_self=heal,model='Weapon/body plus basic Archer arrows, 60/25/15 stat split; target armour 0.4×level and evade 0.6×level; no criticals, buffs, kiting or other slots. Summoner includes an adjacent, commanded spirit; burst assumes TP is available; it is not sustained DPS or farming speed.'))
+            burst=max(basic,spell_dps)+pet_dps
+            rows.append(dict(class_id=clas,role=CLASSES[clas]['name'],level=level,weapon_id=weapon['id'],body_id=body['id'],equipment_ids=[i['id'] for i in gear],**s,basic_dps=round(basic,2),spell_dps=round(spell_dps,2),burst_dps=round(burst,2),backstab_dps=round(burst*1.75,2) if clas==4 else 0,passive_hp_per_second=max(1,int(s['max_hp']*.02))/2 if clas==2 else 0,companion_dps=round(pet_dps,2),spell_id=ident,spell_tp=spell['tp'],spell_casts_from_full=s['max_tp']//spell['tp'] if spell['tp'] else 0,heal_self=heal,model='Weapon/body, head, boots, gloves and two rings, plus basic Archer arrows; 60/25/15 allocation. Target armour 0.4xlevel and evade 0.6xlevel. Front-facing single-target expectations, no criticals or kiting; Summoner has an adjacent commanded spirit. Backstab is separate and conditional. Burst assumes TP available; it is not sustained farming DPS.'))
     return rows

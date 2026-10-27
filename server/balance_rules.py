@@ -39,3 +39,17 @@ def check_equipment(session, ident):
     allowed=item.get('allowed_classes',[])
     if allowed and clas not in allowed and base not in allowed:raise EOError('This equipment belongs to another class')
     if int(session.stats.get('level',0))<item['level_requirement']:raise EOError('This equipment requires a higher level')
+
+
+def check_hatch(session, ident):
+    rules=profile();egg=rules.get('eggs',{}).get(str(ident))
+    if not egg:return
+    if int(session.stats.get('class_id',0))!=7:raise EOError('Only Summoners can hatch spirit eggs. The egg is kept.')
+    if int(session.stats.get('level',0))<egg['level']:raise EOError('Reach level %d before hatching this egg. The egg is kept.'%egg['level'])
+    if any(s['id']==egg['spell_id'] for s in session.spells):raise EOError('You already know this spirit summon. The egg is kept.')
+
+def check_spell_loadout(session, ident):
+    spell=profile().get('spells',{}).get(str(ident),{})
+    if not spell.get('requires_bow') or int(session.stats.get('admin',0))>0:return
+    items=profile()['items'];bow=items.get(str(session.equipment.get('weapon',0)),{});arrows=items.get(str(session.equipment.get('offhand',0)),{})
+    if bow.get('type')!=10 or bow.get('subtype')!=1 or arrows.get('type')!=11 or arrows.get('subtype')!=2:raise EOError('Equip a bow and arrows before using an Archer shot.')

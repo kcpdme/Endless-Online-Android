@@ -1,16 +1,16 @@
 """Versioned, shared design inputs for the native level 1–50 balance profile."""
 
-VERSION = 2
+VERSION = 3
 LEVELS = (1, 8, 15, 25, 35, 45)
 ATTRIBUTES = ('strength', 'intelligence', 'wisdom', 'agility', 'constitution', 'charisma')
 CLASSES = {
     1: dict(name='Peasant', family=4, damage='str 0.35 * agi 0.15 * +', accuracy='10 level 0.4 * + agi 0.7 * +', evade='5 agi 0.4 * +', defence='con 0.35 *', hp='35 level 3 * + con 4 * +', tp='20 level 2 * + int 2 * + wis 2 * +', spell_scale=1.0, heal_wis=.2, heal_int=.1, heal_cha=0, hint='Choose a class at the Wise Man. Use potions for recovery; only Priests cast heals.'),
-    2: dict(name='Priest', family=5, damage='wis 0.4 * int 0.2 * +', accuracy='12 level 0.5 * + wis 0.8 * +', evade='5 agi 0.35 * + wis 0.1 * +', defence='con 0.4 *', hp='35 level 2.8 * + con 4 * +', tp='45 level 3 * + int 2 * + wis 4 * +', spell_scale=1.9, heal_wis=1.2, heal_int=.3, heal_cha=0, hint='WIS first, then CON and INT. Holy Light for solo play; strongest party healing.'),
-    3: dict(name='Magician', family=2, damage='int 0.35 * wis 0.1 * +', accuracy='12 level 0.5 * + int 0.8 * +', evade='5 agi 0.35 * +', defence='con 0.3 *', hp='30 level 2.5 * + con 3.5 * +', tp='40 level 3 * + int 3 * + wis 2 * +', spell_scale=1.9, heal_wis=.35, heal_int=.15, heal_cha=0, hint='INT first, then CON and WIS. Burst damage and area spells spend TP.'),
-    4: dict(name='Rogue', family=1, damage='agi 0.45 * str 0.2 * +', accuracy='12 level 0.5 * + agi 0.9 * +', evade='8 agi 0.75 * +', defence='con 0.35 *', hp='35 level 3 * + con 4 * +', tp='25 level 1.5 * + int 1.5 * + wis 1.5 * +', spell_scale=1.6, heal_wis=.2, heal_int=.1, heal_cha=0, hint='AGI first, then CON and STR. Accurate melee, evasion and Twin Strike.'),
+    2: dict(name='Priest', family=5, damage='wis 0.4 * int 0.2 * +', accuracy='12 level 0.5 * + wis 0.8 * +', evade='5 agi 0.35 * + wis 0.1 * +', defence='con 0.4 *', hp='35 level 2.8 * + con 4 * +', tp='45 level 3 * + int 2 * + wis 4 * +', spell_scale=1.9, heal_wis=1.2, heal_int=.3, heal_cha=0, hint='WIS first, then CON and INT. Fast passive HP regeneration, holy attacks and strongest party healing.'),
+    3: dict(name='Magician', family=2, damage='int 0.35 * wis 0.1 * +', accuracy='12 level 0.5 * + int 0.8 * +', evade='5 agi 0.35 * +', defence='con 0.3 *', hp='30 level 2.5 * + con 3.5 * +', tp='40 level 3 * + int 3 * + wis 2 * +', spell_scale=2.4, heal_wis=.35, heal_int=.15, heal_cha=0, hint='INT first, then CON and WIS. Highest spell power; early and late area magic spend TP.'),
+    4: dict(name='Rogue', family=1, damage='agi 0.45 * str 0.2 * +', accuracy='12 level 0.5 * + agi 0.9 * +', evade='8 agi 0.75 * +', defence='con 0.35 *', hp='35 level 3 * + con 4 * +', tp='25 level 1.5 * + int 1.5 * + wis 1.5 * +', spell_scale=1.6, heal_wis=.2, heal_int=.1, heal_cha=0, hint='AGI first, then CON and STR. Evasion and blade backstabs: strike directly from behind for 1.5x or 2x.'),
     5: dict(name='Archer', family=3, damage='agi 0.5 * str 0.15 * +', accuracy='14 level 0.5 * + agi 0.9 * +', evade='6 agi 0.5 * +', defence='con 0.35 *', hp='35 level 3 * + con 4 * +', tp='25 level 1.5 * + wis 2 * +', spell_scale=1.6, heal_wis=.2, heal_int=.1, heal_cha=0, hint='AGI first, then CON and some STR. Equip a bow and arrows; use range and Aimed Shot.'),
-    6: dict(name='Warrior', family=0, damage='str 0.5 * agi 0.1 * +', accuracy='10 level 0.5 * + agi 0.75 * + str 0.15 * +', evade='5 agi 0.35 * +', defence='con 0.6 *', hp='45 level 3.5 * + con 5 * +', tp='20 level 1.5 * + int 1.5 * + wis 1.5 * +', spell_scale=1.4, heal_wis=.2, heal_int=.1, heal_cha=0, hint='STR and CON, with some AGI. Highest durability, steady melee and Whirlwind.'),
-    7: dict(name='Summoner', family=6, damage='cha 0.35 * int 0.2 * +', accuracy='12 level 0.5 * + cha 0.7 * + int 0.2 * +', evade='6 agi 0.35 * + cha 0.15 * +', defence='con 0.4 *', hp='35 level 3 * + con 4 * +', tp='40 level 3 * + cha 3 * + int 2 * + wis 1.5 * +', spell_scale=1.2, heal_wis=0, heal_int=0, heal_cha=0, hint='CHA first, then CON and INT. One spirit companion assists active fights; upkeep spends TP.'),
+    6: dict(name='Warrior', family=0, damage='str 0.65 * agi 0.1 * +', accuracy='10 level 0.5 * + agi 0.75 * + str 0.15 * +', evade='5 agi 0.35 * +', defence='con 0.6 *', hp='45 level 3.5 * + con 5 * +', tp='20 level 1.5 * + int 1.5 * + wis 1.5 * +', spell_scale=1.4, heal_wis=.2, heal_int=.1, heal_cha=0, hint='STR and CON, with some AGI. Highest STR attack scaling and durability; melee and Whirlwind.'),
+    7: dict(name='Summoner', family=6, damage='cha 0.35 * int 0.2 * +', accuracy='12 level 0.5 * + cha 0.7 * + int 0.2 * +', evade='6 agi 0.35 * + cha 0.15 * +', defence='con 0.4 *', hp='35 level 3 * + con 4 * +', tp='40 level 3 * + cha 3 * + int 2 * + wis 1.5 * +', spell_scale=1.2, pk_spell_scale=1.8, heal_wis=0, heal_int=0, heal_cha=0, hint='CHA first, then CON and INT. Hatch monster eggs to learn permanent summons. One spirit assists active fights; upkeep spends TP.'),
 }
 CLASSES[8] = dict(CLASSES[2], name='High Priest')
 
@@ -132,3 +132,8 @@ COMPANIONS = {
     34: dict(npc_id=308,name='Spirit Drake',template_id=225,upkeep=4,power=1.3),
     35: dict(npc_id=-1,name='Dismiss Companion',template_id=74,upkeep=0,power=0),
 }
+
+from class_signatures import ITEMS as SIGNATURE_ITEMS, SPELLS as SIGNATURE_SPELLS
+NEW_ITEMS.extend((ident,name,template,clas,role) for ident,name,template,clas,role,tier in SIGNATURE_ITEMS)
+NEW_ITEM_TIERS.update({ident:tier for ident,name,template,clas,role,tier in SIGNATURE_ITEMS})
+SPELLS.update(SIGNATURE_SPELLS)

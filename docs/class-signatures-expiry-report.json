@@ -1,0 +1,8 @@
+{
+  "result": "passed",
+  "native_companion_spawned": true,
+  "configured_expiry_seconds": 2,
+  "expired_with_mana_remaining": true,
+  "no_orphan_npc": true,
+  "isolated_database": true
+}

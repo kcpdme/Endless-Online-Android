@@ -1,0 +1,24 @@
+{
+  "result": "passed",
+  "balance_version": 3,
+  "content_unit_tests": 12,
+  "adapter_state_unit_tests": 137,
+  "native_acceptance_checks": 515,
+  "native_class_level_builds": 36,
+  "dedicated_signature_checks": 24,
+  "godot_client_checks": 24,
+  "coverage_issues": 0,
+  "complete_patch_stack_retry_identical": true,
+  "public_https_health": true,
+  "public_wss_native_acceptance": true,
+  "android_release": "0.43.0",
+  "android_version_code": 75,
+  "physical_android_device_tested": false,
+  "native_sha256": "a50744f6670ee92bbbdbf508250326454f5e3f8fd047f0a10b52f67b9a80f983",
+  "profile_sha256": "737c705561830691b3d953db181f6148aab8a4cb13cee469e333d5264970da0c",
+  "notes": [
+    "Burst comparisons are deterministic model outputs, not measured sustained farming or party performance.",
+    "Idle operator test connection logged a keepalive timeout; all native and client acceptance assertions completed successfully.",
+    "No adb device connected; physical Android installation remains untested."
+  ]
+}

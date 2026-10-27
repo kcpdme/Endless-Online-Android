@@ -8,10 +8,10 @@ ROOT=Path(__file__).resolve().parents[1]
 from eo_session import Session,number
 from test_online import dev_name
 from configure_balance import records,encode_pub,put
-from balance_model import allocation,stats,spell_preview,GEAR,benchmarks
+from balance_model import allocation,stats,spell_preview,GEAR,benchmarks,loadout
 
 def main():
-    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--runtime',type=Path,default=ROOT/'work/balance-v2/runtime');parser.add_argument('--report',type=Path,default=ROOT/'work/balance-v2/native-report.json');parser.add_argument('--godot',type=Path);parser.add_argument('--skip-stat-builds',action='store_true');args=parser.parse_args()
+    parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--runtime',type=Path,default=ROOT/'work/balance-v3/runtime');parser.add_argument('--report',type=Path,default=ROOT/'work/balance-v3/native-report.json');parser.add_argument('--godot',type=Path);parser.add_argument('--skip-stat-builds',action='store_true');args=parser.parse_args()
     processes=[];streams=[];checks=[];results=[]
     def check(ok,why):
         if not ok:raise AssertionError(why)
@@ -19,7 +19,7 @@ def main():
     with tempfile.TemporaryDirectory(prefix='aster-balance-') as tmp:
         base=Path(tmp);runtime=base/'runtime';shutil.copytree(args.runtime,runtime,ignore=shutil.ignore_patterns('database.sdb*','*.log','*.bak'))
         os.environ['ASTER_VALE_RUNTIME']=str(runtime)
-        config=runtime/'config.local.ini';config.write_text(config.read_text()+'\nPort = 18896\nRecoverSpeed = 1h\nNPCRecoverSpeed = 1h\nIPReconnectLimit = 0\n')
+        config=runtime/'config.local.ini';config.write_text(config.read_text()+'\nPort = 18896\nRecoverSpeed = 1h\nNPCRecoverSpeed = 1h\nPriestRegenRate = 0\nPriestSittingRegenRate = 0\nIPReconnectLimit = 0\n')
         # Meeting room forces relog to its NPC-boundary entry tile. Disable
         # that redirect only in this disposable map so staged combat fixtures
         # actually stand on the intended walkable room floor.
@@ -49,12 +49,15 @@ def main():
             time.sleep(.65)
             attributes=allocation(clas,level) if clas else allocation(6,level)
             index=(1,8,15,25,35,45).index(level) if index is None else index
-            weapon,body=(a[index] for a in GEAR[clas or 6]);doll=[0]*15;doll[8]=weapon;doll[4]=body
+            gear=loadout(profile,clas or 6,level,index);weapon,body=(i['id'] for i in gear[:2]);doll=[0]*15;doll[8]=weapon;doll[4]=body
+            for item in gear[2:]:
+                kind=item['type'];slot={11:7,13:6,14:0,15:1,19:10 if doll[9] else 9}.get(kind)
+                if slot is not None:doll[slot]=item['id']
             if clas==5:doll[7]=423
             with closing(sqlite3.connect(runtime/'database.sdb')) as db,db:
-                db.execute('UPDATE characters SET class=?,level=?,exp=?,gender=1,map=?,x=?,y=?,"str"=?,"int"=?,wis=?,agi=?,"con"=?,cha=?,hp=1,tp=32000,statpoints=7,skillpoints=9,spells=?,paperdoll=?,inventory=?,admin=? WHERE name=? AND account=?',(clas,level,round(level**3*133.1),*location,*(attributes[k] for k in ('strength','intelligence','wisdom','agility','constitution','charisma')),spells if spells is not None else ''.join(f'{i},0;' for i in range(1,40)),','.join(map(str,doll)),'1,20000;375,4;3,4;21,1;493,1;',admin,fixture['character_name'],fixture['username']))
+                db.execute('UPDATE characters SET class=?,level=?,exp=?,gender=1,map=?,x=?,y=?,"str"=?,"int"=?,wis=?,agi=?,"con"=?,cha=?,hp=1,tp=32000,statpoints=7,skillpoints=9,spells=?,paperdoll=?,inventory=?,admin=? WHERE name=? AND account=?',(clas,level,round(level**3*133.1),*location,*(attributes[k] for k in ('strength','intelligence','wisdom','agility','constitution','charisma')),spells if spells is not None else ''.join(f'{i},0;' for i in range(1,51)),','.join(map(str,doll)),'1,20000;375,4;3,4;21,1;493,1;',admin,fixture['character_name'],fixture['username']))
             time.sleep(.15)
-            return attributes,[profile['items'][str(weapon)],profile['items'][str(body)]]+([profile['items']['423']] if clas==5 else [])
+            return attributes,gear
         def direct(fixture):
             from live_session import LiveSession
             s=LiveSession('127.0.0.1',18896);characters=s.login(fixture['username'],fixture['password'])['characters'];s.enter(next(c['id'] for c in characters if c['name']==fixture['character_name']));s.snapshot();return s
@@ -114,7 +117,7 @@ def main():
             admin.until(lambda w:len([n for n in w['npcs'] if n['id']==1])>=6)
             for clas in (2,3,7):
                 stage(fixtures[clas],clas,45);actor=Client(url,fixtures[clas]);clients.append(actor)
-                check(actor.entry['balance_catalog']['version']==2 and len(actor.entry['balance_catalog']['items'])==543,'WebSocket delivers complete native balance catalog')
+                check(actor.entry['balance_catalog']['version']==3 and len(actor.entry['balance_catalog']['items'])==611,'WebSocket delivers complete native balance catalog')
                 spell_id={2:22,3:9,7:29}[clas];spell=profile['spells'][str(spell_id)];target=next(n for n in actor.state['npcs'] if n['id']==1)
                 actor.worlds.clear();before=actor.entry['player']['tp'];actor.call('spell_cast',spell_id=spell_id,target_kind='npc',target_id=target['index'])
                 world=actor.until(lambda w:any(e.get('spell_id')==spell_id and e.get('kind')=='npc_damage' for e in w.get('events',[])))
@@ -169,7 +172,7 @@ def main():
             try:
                 summoned=summoner.until(lambda w:any(e.get('kind')=='companion' and e.get('spell_id')==28 and e.get('npc_index') for e in w.get('events',[])))
             except Exception:
-                (ROOT/'work/balance-v2/summon-failure.json').write_text(json.dumps(dict(player=summoner.state['player'],events=[w.get('events',[]) for w in summoner.worlds],npcs=summoner.state['npcs']),indent=2))
+                (ROOT/'work/balance-v3/summon-failure.json').write_text(json.dumps(dict(player=summoner.state['player'],events=[w.get('events',[]) for w in summoner.worlds],npcs=summoner.state['npcs']),indent=2))
                 raise
             pet=summoned['companion'];check(pet and pet['npc_id']==306 and summoned['player']['tp']==before-18,f'Summoner creates a visible native spirit with one exact initial TP charge: pet={pet}, TP={summoned["player"]["tp"]}, expected={before-18}')
             check(len([n for n in summoned['npcs'] if n['id'] in (306,307,308)])==1,'One native companion is owned at a time')
@@ -286,7 +289,7 @@ def main():
                 fixture_path=base/'fixture.json';fixture_path.write_text(json.dumps(fixtures[3]));fixture_path.chmod(0o600)
                 env=dict(os.environ,ASTER_VALE_BALANCE_FIXTURE=str(fixture_path),ASTER_VALE_TEST_HOST=url,ASTER_VALE_TEST_REPORT=str((base/'ui-report.json')),XDG_DATA_HOME=str(base/'godot-data'),XDG_CONFIG_HOME=str(base/'godot-config'))
                 result=subprocess.run([str(args.godot.resolve()),'--headless','--path',str(ROOT/'client'),'--script','res://tests/balance_live.gd'],env=env,capture_output=True,text=True,timeout=90)
-                (ROOT/'work/balance-v2/ui.log').write_text(result.stdout+result.stderr)
+                (ROOT/'work/balance-v3/ui.log').write_text(result.stdout+result.stderr)
                 check(result.returncode==0 and 'BALANCE LIVE:' in result.stdout and 'SCRIPT ERROR' not in result.stderr,'Real Godot client displays live class and spell metadata')
             report=dict(result='passed',checks=len(checks),native_stat_builds=results,benchmarks=benchmarks(profile),acceptance_checks=checks,live_player_database_opened=False)
             args.report.parent.mkdir(parents=True,exist_ok=True);args.report.write_text(json.dumps(report,indent=2)+'\n');print(json.dumps({k:v for k,v in report.items() if k not in ('native_stat_builds','benchmarks','acceptance_checks')}))
@@ -302,6 +305,6 @@ def main():
             for stream in streams:stream.close()
             for name in ('native','gateway','websocket'):
                 log=base/(name+'.log')
-                if log.exists():shutil.copy2(log,ROOT/'work/balance-v2'/log.name)
+                if log.exists():shutil.copy2(log,ROOT/'work/balance-v3'/log.name)
 
 if __name__=='__main__':main()

@@ -1,5 +1,9 @@
 # Class and equipment revamp for levels 1–50
 
+Profile 3 extends this release with class signatures, permanent egg unlocks and
+complete gear coverage. See [Class signatures and eggs](CLASS_SIGNATURES_AND_EGGS.md).
+
+
 Profile 2 supersedes the class permissions and shared-heal rules of the first
 release. See [Class identity and summons](CLASS_IDENTITY_AND_SUMMONS.md) for the
 implemented rules, real pets, recipes and safe class changes.

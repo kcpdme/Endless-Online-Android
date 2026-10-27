@@ -2,7 +2,8 @@
 from pathlib import Path
 import json,shutil,sqlite3,tempfile,unittest
 from configure_balance import configure,records,decode_item,migrate_equipment,STAT_FIELDS,num
-from balance_profile import NEW_ITEMS,CLASSES,SPELLS
+from balance_profile import NEW_ITEMS,CLASSES,SPELLS,VERSION
+from class_signatures import EGGS
 from balance_model import benchmarks,evaluate
 
 BASE=Path(__file__).resolve().parents[1]/'work/server-build/runtime'
@@ -10,7 +11,7 @@ BASE=Path(__file__).resolve().parents[1]/'work/server-build/runtime'
 @unittest.skipUnless((BASE/'data/pub/dat001.eif').exists(),'native resources unavailable')
 class BalanceTests(unittest.TestCase):
     def setUp(self):
-        self.temp=tempfile.TemporaryDirectory();self.addCleanup(self.temp.cleanup);self.runtime=Path(self.temp.name)/'runtime';shutil.copytree(BASE/'data',self.runtime/'data');(self.runtime/'config.local.ini').write_text('PasswordSalt = do-not-change\nExpRate = 500%\n');(self.runtime/'etheos').write_bytes(b'isolated fixture BalanceRevamp ClassIdentityRules')
+        self.temp=tempfile.TemporaryDirectory();self.addCleanup(self.temp.cleanup);self.runtime=Path(self.temp.name)/'runtime';shutil.copytree(BASE/'data',self.runtime/'data');(self.runtime/'config.local.ini').write_text('PasswordSalt = do-not-change\nExpRate = 500%\n');(self.runtime/'etheos').write_bytes(b'isolated fixture BalanceRevamp ClassIdentityRules ClassSignatureRules')
         from configure_feature_content import configure as features
         features(self.runtime)
 
@@ -18,7 +19,7 @@ class BalanceTests(unittest.TestCase):
         report=configure(self.runtime);return report,json.loads((self.runtime/'data/balance-profile.json').read_text())
 
     def test_repeated_install_is_identical_and_preserves_private_config_and_operator_item(self):
-        original=(self.runtime/'data/pub/dat001.eif').read_bytes();a,p=self.install();first={str(f.relative_to(self.runtime)):f.read_bytes() for f in self.runtime.rglob('*') if f.is_file()};b,_=self.install();self.assertEqual(a,b);self.assertEqual(first,{str(f.relative_to(self.runtime)):f.read_bytes() for f in self.runtime.rglob('*') if f.is_file()});self.assertIn('PasswordSalt = do-not-change\nExpRate = 500%',(self.runtime/'config.local.ini').read_text());new=(self.runtime/'data/pub/dat001.eif').read_bytes();self.assertEqual(records(original,b'EIF',58)[490],records(new,b'EIF',58)[490]);self.assertEqual(len(p['items']),543)
+        original=(self.runtime/'data/pub/dat001.eif').read_bytes();a,p=self.install();first={str(f.relative_to(self.runtime)):f.read_bytes() for f in self.runtime.rglob('*') if f.is_file()};b,_=self.install();self.assertEqual(a,b);self.assertEqual(first,{str(f.relative_to(self.runtime)):f.read_bytes() for f in self.runtime.rglob('*') if f.is_file()});self.assertIn('PasswordSalt = do-not-change\nExpRate = 500%',(self.runtime/'config.local.ini').read_text());new=(self.runtime/'data/pub/dat001.eif').read_bytes();self.assertEqual(records(original,b'EIF',58)[490],records(new,b'EIF',58)[490]);self.assertEqual(len(p['items']),611)
         from admin_weapon import patch_weapon
         self.assertEqual(patch_weapon(new),(new,False));self.assertEqual(p['items']['21']['level_requirement'],0)
 
@@ -61,6 +62,39 @@ class BalanceTests(unittest.TestCase):
         self.assertTrue(any(i.get('archetype')=='precision' for i in items.values()))
         self.assertTrue(any(i.get('archetype')=='focus' for i in items.values()))
 
+    def test_all_classes_have_obtainable_full_kits_and_progression(self):
+        _,p=self.install()
+        from balance_audit import audit
+        report=audit(p);self.assertEqual(report['issues'],[]);self.assertEqual(len(report['coverage']),36)
+        for clas in range(2,8):
+            self.assertTrue(p['classes'][str(clas)]['signature']['description'])
+            learned=[s for s in p['spells'].values() if s['allowed_classes']==[clas]]
+            self.assertGreaterEqual(len(learned),6)
+            self.assertTrue(any(s['level_requirement']==1 and s['type']==1 for s in learned))
+        for row in report['coverage']:
+            if row['level']>=15:
+                for slot in ('head','boots','gloves','ring'):self.assertGreater(row['slots'][slot]['exclusive'],0)
+
+    def test_egg_drops_preserve_original_tables_and_have_reliable_recipes(self):
+        import re
+        old=(self.runtime/'data/aster-vale-drops.ini').read_text();_,p=self.install();new=(self.runtime/'data/aster-vale-drops.ini').read_text()
+        def entries(text):return {key:raw.strip() for key,raw in re.findall(r'^(\d+)[ \t]*=[ \t]*(.*)$',text,re.M)}
+        before,after=entries(old),entries(new)
+        for key,value in before.items():
+            if int(key) not in (74,82,225):self.assertEqual(after[key],value)
+            else:self.assertTrue(after[key].startswith(value))
+        from class_signatures import EGGS
+        for ident,egg in EGGS.items():
+            item=p['items'][str(ident)];self.assertEqual(item['hatch_spell'],egg['spell_id']);self.assertEqual(item['type'],23)
+            self.assertIn(f"BalanceEgg.{ident}.spell = {egg['spell_id']}",(self.runtime/'config.local.ini').read_text())
+            self.assertTrue(item['acquisition']['craft']);self.assertEqual(item['acquisition']['drop'],[egg['npc_id']])
+            self.assertTrue((Path(__file__).resolve().parents[1]/'client'/egg['icon'].removeprefix('res://')).exists())
+        offers=(self.runtime/'data/aster-vale-skills.ini').read_text()
+        from class_identity import recipe_sources
+        self.assertTrue(p['items']['436']['acquisition']['craft'])
+        for spell in (28,33,34):self.assertTrue(p['spells'][str(spell)]['learn_source'])
+        self.assertEqual(p['spells']['28']['duration'],0)
+
     def test_no_service_npcs_graphics_or_map_routes_change(self):
         before=records((self.runtime/'data/pub/dtn001.enf').read_bytes(),b'ENF',39);maps={p.name:p.read_bytes() for p in (self.runtime/'data/maps').glob('*.emf')};self.install();after=records((self.runtime/'data/pub/dtn001.enf').read_bytes(),b'ENF',39)
         for a,b in zip(before[:-1],after):
@@ -73,7 +107,7 @@ class BalanceTests(unittest.TestCase):
         source=BASE.parents[1]/'balance-v1/runtime/data'
         self.assertEqual(json.loads((source/'balance-profile.json').read_text())['version'],1)
         shutil.rmtree(self.runtime/'data');shutil.copytree(source,self.runtime/'data')
-        _,profile=self.install();self.assertEqual(profile['version'],2)
+        _,profile=self.install();self.assertEqual(profile['version'],VERSION)
         self.assertEqual(profile['spells']['1']['allowed_classes'],[2])
         self.assertEqual(profile['items']['496']['allowed_classes'],[5])
         self.assertEqual(profile['items']['533']['name'],'Hidden Blade')
@@ -97,10 +131,10 @@ class BalanceTests(unittest.TestCase):
         _,p=self.install();dbpath=self.runtime/'database.sdb'
         with sqlite3.connect(dbpath) as db:
             db.execute('CREATE TABLE characters(name TEXT PRIMARY KEY,level INT,class INT,gender INT,admin INT,inventory TEXT,paperdoll TEXT,exp INT,spells TEXT)');doll=','.join(map(str,[0,0,0,0,0,460]+[0]*9));db.execute('INSERT INTO characters VALUES (?,?,?,?,?,?,?,?,?)',('devone',10,6,1,0,'460,1;1,77;',doll,777,'1,8;'))
-        with sqlite3.connect(dbpath) as db:db.execute('CREATE TABLE aster_balance_migrations(version INTEGER PRIMARY KEY,moved_items INTEGER NOT NULL)');db.execute('INSERT INTO aster_balance_migrations VALUES (1,1)')
+        with sqlite3.connect(dbpath) as db:db.execute('CREATE TABLE aster_balance_migrations(version INTEGER PRIMARY KEY,moved_items INTEGER NOT NULL)');db.execute('INSERT INTO aster_balance_migrations VALUES (1,1)');db.execute('INSERT INTO aster_balance_migrations VALUES (2,7)')
         r=migrate_equipment(dbpath,p);self.assertEqual(r['moved_items'],1)
         with sqlite3.connect(dbpath) as db:row=db.execute('SELECT * FROM characters').fetchone()
-        with sqlite3.connect(dbpath) as db:self.assertEqual(db.execute('SELECT * FROM aster_balance_migrations ORDER BY version').fetchall(),[(1,1),(2,1)])
+        with sqlite3.connect(dbpath) as db:self.assertEqual(db.execute('SELECT * FROM aster_balance_migrations ORDER BY version').fetchall(),[(1,1),(2,7),(VERSION,1)])
         self.assertIn('460,2;',row[5]);self.assertEqual(row[7:],(777,'1,8;'));self.assertEqual(migrate_equipment(dbpath,p),dict(already_applied=True,moved_items=0))
 
     def test_migration_rolls_back_all_rows_on_malformed_inventory(self):

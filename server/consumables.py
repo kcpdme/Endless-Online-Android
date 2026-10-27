@@ -35,6 +35,8 @@ class ConsumablesMixin:
         else:self._standing()
         if kind not in USABLE_TYPES:raise EOError('This item cannot be used as a consumable')
         if self.item_amount(item_id)<=0:raise EOError('This item is no longer in your bag')
+        from balance_rules import check_hatch
+        check_hatch(self,item_id)
         me=self.state['self']
         if kind==3 and not ((item['hp']>0 and me['hp']<me['maxhp']) or (item['tp']>0 and me['tp']<me['maxtp'])):
             raise EOError('Your HP/TP is already full for this potion. Nothing was consumed.')

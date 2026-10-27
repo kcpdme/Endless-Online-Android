@@ -1,5 +1,5 @@
 """Native companion expiry acceptance in a disposable world; no player database.
-Run after installing profile 2 into work/balance-v2/runtime.
+Run after installing profile 3 into work/balance-v3/runtime.
 """
 import json,os,secrets,shutil,socket,sqlite3,subprocess,sys,tempfile,time,select
 from pathlib import Path
@@ -10,7 +10,7 @@ def main():
     from eo_session import Session
     from test_online import dev_name
     with tempfile.TemporaryDirectory(prefix='aster-pet-expiry-') as tmp:
-     r=Path(tmp)/'runtime';shutil.copytree(root/'work/balance-v2/runtime',r,ignore=shutil.ignore_patterns('database.sdb*','*.log','*.bak'))
+     r=Path(tmp)/'runtime';shutil.copytree(root/'work/balance-v3/runtime',r,ignore=shutil.ignore_patterns('database.sdb*','*.log','*.bak'))
      cfg=r/'config.local.ini';cfg.write_text(cfg.read_text()+'\nPort = 18895\nRecoverSpeed = 1h\nIPReconnectLimit = 0\nCompanionLifetimeSeconds = 2\n')
      os.environ['ASTER_VALE_RUNTIME']=str(r)
      log=(Path(tmp)/'native.log').open('w');proc=subprocess.Popen([str(r/'etheos')],cwd=r,stdout=log,stderr=subprocess.STDOUT)
@@ -36,7 +36,7 @@ def main():
        s.refresh() # Drain the NPC removal packet following ownership expiry.
        assert not any(n['id'] in (306,307,308) for n in s.state['npcs'])
        report=dict(result='passed',native_companion_spawned=True,configured_expiry_seconds=2,expired_with_mana_remaining=True,no_orphan_npc=True,isolated_database=True)
-       (root/'work/balance-v2/expiry-report.json').write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report))
+       (root/'work/balance-v3/expiry-report.json').write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report))
       finally:s.close()
      finally:proc.terminate();proc.wait(timeout=10);log.close()
 

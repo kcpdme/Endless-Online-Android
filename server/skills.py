@@ -37,8 +37,8 @@ class SkillsMixin:
 
     def cast_spell(self,spell_id,target_kind,target_id=0):
         self._mobile_action();spell_id=int(spell_id);target_id=int(target_id)
-        from balance_rules import check_spell, area_spell
-        check_spell(self,spell_id)
+        from balance_rules import check_spell, area_spell, check_spell_loadout, profile
+        check_spell(self,spell_id);check_spell_loadout(self,spell_id)
         # Native SpellCooldownTime owns recovery; do not add another preparation lock.
         if self.casting:raise EOError('Wait for your skill to finish')
         if not any(s['id']==spell_id for s in getattr(self,'spells',[])):raise EOError('You have not learned this skill')
@@ -65,7 +65,8 @@ class SkillsMixin:
             if not target:raise EOError('That player is no longer nearby')
         else:raise EOError('Choose a valid target for this skill')
         me=self.state['self']
-        if abs(target['x']-me['x'])+abs(target['y']-me['y'])>11:raise EOError('The target is too far away')
+        reach=profile().get('spells',{}).get(str(spell_id),{}).get('range',11)
+        if abs(target['x']-me['x'])+abs(target['y']-me['y'])>reach:raise EOError('The target is too far away')
         if target_kind=='self' and spell['type']==0 and me.get('hp',0)>=me.get('maxhp',1):raise EOError('Your health is already full. Nothing was cast.')
         self.timestamp+=1
         duration=spell['cast_time']*.48
@@ -95,7 +96,9 @@ class SkillsMixin:
                 target=next((n for n in self.state['npcs'] if n['index']==cast['target_id']),None)
                 if not target:
                     self.cancel_spell();self.events.append(dict(kind='spell_failed',message='The target is no longer here.'));return
-                if abs(target['x']-self.state['self']['x'])+abs(target['y']-self.state['self']['y'])>11:
+                from balance_rules import profile
+                reach=profile().get('spells',{}).get(str(cast['spell_id']),{}).get('range',11)
+                if abs(target['x']-self.state['self']['x'])+abs(target['y']-self.state['self']['y'])>reach:
                     self.cancel_spell();self.events.append(dict(kind='spell_failed',message='The target is out of range.'));return
             if cast['target_kind']=='player':
                 peer=next((p for p in [self.state['self']]+self.state['characters'] if p['player_id']==cast['target_id']),None)

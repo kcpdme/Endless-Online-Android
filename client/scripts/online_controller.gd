@@ -1024,6 +1024,7 @@ func draw_chat_bubble(pid: int, at: Vector2) -> void:
 	game.draw_string(font, origin, text, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, game.TEXT)
 
 func _catalog_texture(key: String) -> Texture2D:
+	if key.begins_with("res://icons/"): return game._texture(key)
 	var graphics: Dictionary = game.graphics as Dictionary
 	if not graphics.has(key): return null
 	return game._texture(str((graphics[key] as Dictionary).get("path", "")))
@@ -1457,7 +1458,7 @@ func refresh_game_ui() -> void:
 	game.item_title.text = str(info.get("name", "Your inventory"))
 	var usable: bool = consumable(selected)
 	game.equip_button.disabled = not owned or bag_amount(item_id(selected)) <= 0 or (not usable and int(info.get("type", 0)) not in range(10, 22)) or not _action_ready()
-	game.equip_button.text = "Use" if usable else "Equip"
+	game.equip_button.text = "Hatch" if int(item_info(selected).get("hatch_spell", 0)) > 0 else "Use" if usable else "Equip"
 	game.drop_button.disabled = not _action_ready() or bag_amount(item_id(selected)) <= 0 or int(info.get("special", 0)) == 4
 	game.junk_button.disabled = not _action_ready() or bag_amount(item_id(selected)) <= 0
 	drop_ui.refresh()

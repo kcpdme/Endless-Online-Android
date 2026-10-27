@@ -1,5 +1,9 @@
 # Class identity, companions and equipment choices
 
+Profile 3 extends this release with class signatures, permanent egg unlocks and
+complete gear coverage. See [Class signatures and eggs](CLASS_SIGNATURES_AND_EGGS.md).
+
+
 Profile 2 closes the original class-switch exploit. A character can retain a
 learned skill, but its current class must own that skill to train or cast it.
 The native server checks again when a cast executes. The client shows retained

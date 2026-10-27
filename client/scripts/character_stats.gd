@@ -190,6 +190,10 @@ func refresh() -> void:
 		item_heading.text += "  ·  Equipped" if item_is_equipped else "  ×%d" % quantity
 		if int(item.get("type", -1)) == 12: requirements.append("Female" if int(item.get("gender", 0)) == 0 else "Male")
 		item_body.text = "Damage  %d–%d\nArmor  +%d\n\nAccuracy  +%d\nEvade  +%d\n\nHP  +%d\nTP  +%d\n\n%s\n\nWeight  %d\n\nRequirements\n%s" % [int(item.get("min_damage", 0)), int(item.get("max_damage", 0)), int(item.get("armor", 0)), int(item.get("accuracy", 0)), int(item.get("evade", 0)), int(item.get("hp", 0)), int(item.get("tp", 0)), "\n".join(bonuses), int(item.get("weight", 0)), "\n".join(requirements) if not requirements.is_empty() else "None"]
+		if item.get("backstab", false): item_body.text += "\n\nRogue rear strikes: 1.5x or 2x damage, without critical stacking."
+		if int(item.get("hatch_spell", 0)) > 0:
+			var summon: Dictionary = (game.online.catalog.get("spells", {}) as Dictionary).get(str(int(item.hatch_spell)), {}) as Dictionary
+			item_body.text = "Hatch this egg to permanently learn %s.\n\nOnly Summoners at level %d or higher can hatch it. Already learned? Keep or trade the spare egg.\n\nCast the learned skill to call one spirit. Initial and upkeep TP are still required." % [str(summon.get("name", "a spirit summon")), int(item.get("level_requirement", 1))]
 		if item.get("crafted", false): item_body.text += "\n\nCrafted definition · improved combat budget"
 		if str(item.get("archetype", "balanced")) != "balanced": item_body.text += "\nStyle: %s" % str(item.archetype).capitalize()
 	var p: Dictionary = game.online.player
@@ -203,6 +207,8 @@ func refresh() -> void:
 	var classes: Dictionary = game.online.catalog.get("classes", {}) as Dictionary
 	var profession: Dictionary = classes.get(str(int(stats.get("class_id", 0))), {}) as Dictionary
 	details.text = str(profession.get("build_hint", "Equipment bonuses are included. Use + to spend earned stat points."))
+	var signature: Dictionary = profession.get("signature", {}) as Dictionary
+	if not signature.is_empty(): details.text += "\n" + str(signature.get("description", ""))
 	summary.text = "%s  ·  Level %d  ·  %s" % [str(p.get("name", "Player")), int(p.get("level", 0)), str(profession.get("name", "–"))]
 	points.text = "Stat points: %d     Skill points: %d     Max SP: %d" % [int(stats.get("stat_points", 0)), int(stats.get("skill_points", 0)), int(stats.get("max_sp", 0))]
 	for index: int in range(ATTRIBUTES.size()):

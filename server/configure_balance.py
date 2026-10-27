@@ -11,9 +11,10 @@ from contextlib import closing
 from eo_session import Reader, number
 from balance_profile import VERSION, LEVELS, ATTRIBUTES, CLASSES, SPELLS, WEAPON_TIERS, BODY_TIERS, NEW_ITEMS, NEW_ITEM_TIERS, ENCOUNTERS, COMPANIONS
 from class_identity import allowed_classes, role_for, vary_stats, recipe_sources
+from class_signatures import SIGNATURES, SUPPORT, EGGS
 
 STAT_FIELDS = {'hp':(5,2),'tp':(7,2),'min_damage':(9,2),'max_damage':(11,2),'accuracy':(13,2),'evade':(15,2),'armor':(17,2),**{k:(20+i,1) for i,k in enumerate(ATTRIBUTES)}}
-INPUTS = ('data/pub/dat001.eif','data/pub/dat001.ecf','data/pub/dsl001.esf','data/pub/dtn001.enf','data/aster-vale-shops.ini','data/quests/00004.eqf')
+INPUTS = ('data/pub/dat001.eif','data/pub/dat001.ecf','data/pub/dsl001.esf','data/pub/dtn001.enf','data/aster-vale-shops.ini','data/quests/00004.eqf','data/aster-vale-drops.ini')
 
 def digest(data): return hashlib.sha256(data).hexdigest()
 
@@ -121,6 +122,12 @@ def build_items(original, shops=""):
             if role=='strength':stats.update(hp=135,armor=30,constitution=3,accuracy=5)
             elif role=='agility':stats.update(hp=105,armor=18,accuracy=14,evade=20)
             else:stats['tp']=130
+        if ident in SUPPORT:
+            stats[role]=2 if tier==2 else 4
+            if role in ('wisdom','intelligence','charisma'):stats['tp']+=12 if tier==2 else 28
+            elif clas==4:stats['evade']+=2 if tier==2 else 4
+            elif clas==5:stats['accuracy']+=2 if tier==2 else 4
+            else:stats['hp']+=6 if tier==2 else 14;stats['armor']+=1 if tier==2 else 2
         crafted=bool(sources.get(ident,{}).get('craft')) and not sources.get(ident,{}).get('buy')
         stats,style=vary_stats(i,stats,tier,crafted)
         for key,(start,size) in STAT_FIELDS.items():put(f,start,stats[key],size)
@@ -129,12 +136,21 @@ def build_items(original, shops=""):
         if i['type']==12:put(f,35,1 if ident%2 else 0)
         rows.insert(-1,dict(id=ident,names=[name],fields=f))
         metadata[str(ident)]=dict(tier=tier,role=role,template_id=template,cosmetic=False,allowed_classes=[clas],archetype=style,crafted=crafted,acquisition=sources.get(ident,{}))
+    for ident,egg in EGGS.items():
+        if ident!=len(rows):raise ValueError('Egg definition ID collision')
+        f=bytearray(rows[egg['template_id']-1]['fields'])
+        for key,(offset,size) in STAT_FIELDS.items():put(f,offset,0,size)
+        put(f,2,23);put(f,3,0);put(f,4,3);put(f,5,0,2);put(f,37,egg['level'],2);put(f,39,7,2);put(f,55,1)
+        rows.insert(-1,dict(id=ident,names=[egg['name']],fields=f))
+        metadata[str(ident)]=dict(template_id=egg['template_id'],hatch_spell=egg['spell_id'],allowed_classes=[7],icon=egg['icon'],ground=egg['icon'],acquisition=sources.get(ident,{}))
     # Recovery quantities fit the new 1–50 HP/TP pools; retain native item types.
     for ident,hp,tp in [(2,35,0),(3,0,45),(4,85,0),(5,0,110),(375,170,0),(376,0,220),(377,120,140)]:
         f=rows[ident-1]['fields']
         if num(f,2)!=3:raise ValueError('Recovery item changed type')
         put(f,5,hp,2);put(f,7,tp,2)
     definitions={str(r['id']):dict(decode_item(r),**metadata.get(str(r['id']),{})) for r in rows[:-1]}
+    for item in definitions.values():
+        if item['type']==10:item['backstab']=item['id']==21 or item.get('allowed_classes')==[4]
     assert rows[490]['fields']==records(original,b'EIF',58)[490]['fields']
     return encode_pub(original,rows),definitions
 
@@ -146,6 +162,9 @@ def build_classes(original):
         put(row['fields'],1,p['family'])
         for a,key in enumerate(ATTRIBUTES):put(row['fields'],2+a*2,p['base_attributes'][key],2)
         result[str(ident)]=dict(id=ident,name=p['name'],base=num(row['fields'],0),type=p['family'],build_hint=p['hint'],spell_scale=p['spell_scale'],heal_wis=p['heal_wis'],heal_int=p['heal_int'],heal_cha=p['heal_cha'],base_attributes=p['base_attributes'])
+    result['7']['pk_spell_scale']=CLASSES[7]['pk_spell_scale']
+    for ident,signature in SIGNATURES.items():result[str(ident)]['signature']=signature
+    result['8']['signature']=SIGNATURES[2]
     result['0']=dict(result['1'],id=0)
     return encode_pub(original,rows),result
 
@@ -159,8 +178,11 @@ def build_spells(original):
         row['names'][0]=name;row['names'][1]=name.lower()
         for start,value,size in [(4,tp,2),(8,chant,1),(11,2 if ident==17 else 0 if hp else 1,1),(17,restrict,1),(18,target,1),(23,low,2),(25,high,2),(34,hp,2)]:put(f,start,value,size)
         result[str(ident)]=dict(id=ident,name=name,shout=name.lower(),tp=tp,cast_time=chant,type=num(f,11),restrict=restrict,target=target,min_damage=low,max_damage=high,hp=hp,level_requirement=level,allowed_classes=list(classes),area_radius=radius,area_targets=cap,area_scale=.8 if radius==1 else .6 if radius else 1,max_level=10,training_bonus=2)
+        if classes in ((4,),(6,)) and not radius:result[str(ident)]['range']=1
+        if classes==(5,):result[str(ident)].update(requires_bow=True,range=5)
+        if ident in (28,33,34):result[str(ident)]['learn_source']='Hatch a monster egg; keep the learned summon permanently'
         if ident>=32:result[str(ident)]['template_id']=16
-        if ident in COMPANIONS:result[str(ident)].update(effect_kind='companion',companion=COMPANIONS[ident],duration=90,upkeep_seconds=2)
+        if ident in COMPANIONS:result[str(ident)].update(effect_kind='companion',companion=COMPANIONS[ident],duration=0,upkeep_seconds=2)
     return encode_pub(original,rows),result
 
 def build_npcs(original):
@@ -197,7 +219,7 @@ def build_skills():
     offers=[]
     for ident,p in SPELLS.items():
         name,level,classes,*_=p
-        if classes==(-1,) or ident==17:continue
+        if classes==(-1,) or ident in (17,28,33,34):continue
         for cls in classes if len(classes)==1 else (0,):
             cost=0 if level==1 else {8:200,15:600,25:1600,30:2200,35:3000,40:4000,45:5000}.get(level,120)
             offers.extend([ident,cost,level,cls,0,0,0,0,0,0,0,0,0,0])
@@ -222,6 +244,14 @@ def build_shops(original):
         if ident==533:continue
         tier=NEW_ITEM_TIERS[ident];price=(100,600,1800,4000,10000)[tier]
         additions.extend([ident,price,price//10])
+    for ident,name,template,clas,role in NEW_ITEMS:
+        if ident<544:continue
+        tier=NEW_ITEM_TIERS[ident];price=100 if tier==0 else 900 if ident in SUPPORT and tier==2 else 5000 if ident in SUPPORT else 10000 if tier==4 else 4000
+        additions.extend([ident,price,max(1,price//10)])
+    # Reliable first upgrades; preserve rare crafted weapons as recipe rewards.
+    for ident,price in [(35,600),(329,1800),(406,1800),(156,1800),(135,600),(155,1800)]:
+        old=list(map(int,existing.split(','))) if existing else []
+        if ident not in old[::3]:additions.extend([ident,price,price//10])
     replace('33.trade',existing+(',' if existing else '')+','.join(map(str,additions)))
     replace('304.craft','430,460,1,492,6,0,0,0,0,431,465,1,492,6,0,0,0,0')
     for npc,ids in [(36,list(range(493,496))+list(range(499,505))),(87,list(range(496,499))+list(range(505,511)))]:
@@ -232,9 +262,12 @@ def build_shops(original):
             ingredient=template if ident<499 else 460 if ident%2 else 465
             new.extend([ident,ingredient,1,469,2,470,2,1,200 if ident<499 else 150])
         replace(f'{npc}.craft',existing+(',' if existing else '')+','.join(map(str,new)))
-    for vendor,recipe in [(87,'533,38,1,253,10,278,4,1,150'),(15,'543,511,1,299,8,308,3,1,100')]:
+    for vendor,recipe in [(87,'533,38,1,253,10,278,4,1,150,436,533,1,278,10,1,200,0,0'),(15,'543,511,1,299,8,308,3,1,100')]:
         match=re.search(r'^'+str(vendor)+r'\.craft[ \t]*=[ \t]*(.*)$',text,re.M);existing=match[1].strip() if match else ''
         replace(f'{vendor}.craft',existing+(',' if existing else '')+recipe)
+    match=re.search(r'^33\.craft[ \t]*=[ \t]*(.*)$',text,re.M);existing=match[1].strip() if match else ''
+    egg_recipes='609,308,5,253,5,1,100,0,0,610,321,6,320,3,1,200,0,0,611,469,2,470,2,1,200,0,0'
+    replace('33.craft',existing+(',' if existing else '')+egg_recipes)
     # Native recipe amounts are unsigned bytes and use EO char encoding.
     for value in re.findall(r'^\d+\.craft[ \t]*=[ \t]*(.*)$',text,re.M):
         if not value.strip():continue
@@ -243,6 +276,25 @@ def build_shops(original):
         if any(not 0<=parts[j]<=252 for start in range(0,len(parts),9) for j in range(start+2,start+9,2)):
             raise ValueError('Craft ingredient count exceeds native wire capacity')
     return text.encode('latin1')
+
+def build_drops(original):
+    text=original.decode('latin1')
+    for ident,egg in EGGS.items():
+        key=str(egg['npc_id']);pattern=r'^'+key+r'[ \t]*=[ \t]*(.*)$';match=re.search(pattern,text,re.M)
+        old=match[1].strip() if match else ''
+        line=key+' = '+old+(', ' if old else '')+f"{ident},1,1,{egg['chance']}"
+        text=re.sub(pattern,line,text,flags=re.M) if match else text+'\n'+line+'\n'
+    return text.encode('latin1')
+
+def drop_sources(text):
+    result={}
+    for npc,raw in re.findall(r'^(\d+)[ \t]*=[ \t]*(.*)$',text,re.M):
+        if not raw.strip():continue
+        values=[v.strip() for v in raw.split(',')]
+        if len(values)%4:raise ValueError('Invalid monster drop width')
+        for offset in range(0,len(values),4):
+            if float(values[offset+3])>0:result.setdefault(int(values[offset]),[]).append(int(npc))
+    return result
 
 def build_quest(original):
     text=original.decode('latin1')
@@ -257,7 +309,7 @@ def build_quest(original):
 def configure(runtime):
     runtime=Path(runtime)
     if any((runtime/r).is_symlink() for r in ('data','data/pub')):raise ValueError('Materialize runtime data directories first')
-    if b'ClassIdentityRules' not in (runtime/'etheos').read_bytes():raise ValueError('Install the balance-capable native binary first')
+    if b'ClassSignatureRules' not in (runtime/'etheos').read_bytes():raise ValueError('Install the balance-capable native binary first')
     baseline=runtime/'data/balance-v1-baseline';manifest_path=runtime/'data/balance-v1-manifest.json'
     old_manifest=json.loads(manifest_path.read_text()) if manifest_path.exists() else None
     if old_manifest:
@@ -266,24 +318,30 @@ def configure(runtime):
     originals={rel:(baseline/rel).read_bytes() if (baseline/rel).exists() else (runtime/rel).read_bytes() for rel in INPUTS}
     originals['data/formulas.ini']=(baseline/'data/formulas.ini').read_bytes() if (baseline/'data/formulas.ini').exists() else (runtime/'data/formulas.ini').read_bytes()
     shops=build_shops(originals['data/aster-vale-shops.ini'])
+    drops=build_drops(originals['data/aster-vale-drops.ini'])
     item_bytes,items=build_items(originals['data/pub/dat001.eif'],shops.decode('latin1'))
+    for ident,npcs_dropping in drop_sources(drops.decode('latin1')).items():
+        if str(ident) in items:items[str(ident)].setdefault('acquisition',{})['drop']=npcs_dropping
     npc_bytes,npcs=build_npcs(originals['data/pub/dtn001.enf'])
     class_bytes,classes=build_classes(originals['data/pub/dat001.ecf'])
     spell_bytes,spells=build_spells(originals['data/pub/dsl001.esf'])
-    proposed={'data/pub/dat001.eif':item_bytes,'data/pub/dat001.ecf':class_bytes,'data/pub/dsl001.esf':spell_bytes,'data/pub/dtn001.enf':npc_bytes,'data/formulas.ini':formulas(originals['data/formulas.ini']),'data/aster-vale-skills.ini':build_skills(),'data/aster-vale-shops.ini':shops,'data/quests/00004.eqf':build_quest(originals['data/quests/00004.eqf'])}
-    profile=dict(version=VERSION,levels=LEVELS,max_skill_level=10,classes=classes,spells=spells,items=items,npcs=npcs,class_identity=True,companions=COMPANIONS)
+    proposed={'data/aster-vale-drops.ini':drops,'data/pub/dat001.eif':item_bytes,'data/pub/dat001.ecf':class_bytes,'data/pub/dsl001.esf':spell_bytes,'data/pub/dtn001.enf':npc_bytes,'data/formulas.ini':formulas(originals['data/formulas.ini']),'data/aster-vale-skills.ini':build_skills(),'data/aster-vale-shops.ini':shops,'data/quests/00004.eqf':build_quest(originals['data/quests/00004.eqf'])}
+    profile=dict(version=VERSION,levels=LEVELS,max_skill_level=10,classes=classes,spells=spells,items=items,npcs=npcs,class_identity=True,class_signatures=True,companions=COMPANIONS,eggs=EGGS)
     proposed['data/balance-profile.json']=(json.dumps(profile,indent=2)+'\n').encode()
     cfg=(runtime/'config.local.ini').read_text()
-    values={'CompanionLifetimeSeconds':'90','ClassIdentityRules':'yes','BalanceRevamp':'yes','UseClassFormulas':'yes','MaxSkillLevel':'10','SkillsFile':'./data/aster-vale-skills.ini'}
+    values={'ClassSignatureRules':'yes','PriestRegenRate':'0.02','PriestSittingRegenRate':'0.04','CompanionLifetimeSeconds':'0','ClassIdentityRules':'yes','BalanceRevamp':'yes','UseClassFormulas':'yes','MaxSkillLevel':'10','SkillsFile':'./data/aster-vale-skills.ini'}
     for ident,p in CLASSES.items():
         for key in ('spell_scale','heal_wis','heal_int','heal_cha'):values[f'Balance.{ident}.{key}']=str(p[key])
+    values['Balance.7.pk_spell_scale']=str(CLASSES[7]['pk_spell_scale'])
     for ident,p in SPELLS.items():
         _,level,allowed,*_,radius,cap=p
         for key,value in [('level',level),('classes',','.join(map(str,allowed))),('radius',radius),('targets',cap)]:values[f'BalanceSpell.{ident}.{key}']=str(value)
     for ident,item in items.items():
+        values[f'BalanceItem.{ident}.backstab']='yes' if item.get('backstab') else 'no'
         values[f'BalanceItem.{ident}.classes']=','.join(map(str,item.get('allowed_classes',[])))
     for ident,pet in COMPANIONS.items():
         for key in ('npc_id','upkeep','power'):values[f'BalancePetSpell.{ident}.{key}']=str(pet[key])
+    for ident,egg in EGGS.items():values[f'BalanceEgg.{ident}.spell']=str(egg['spell_id'])
     for key,value in values.items():
         pattern=r'^'+re.escape(key)+r'\s*=.*$';line=f'{key} = {value}'.rstrip()
         cfg=re.sub(pattern,line,cfg,flags=re.M) if re.search(pattern,cfg,re.M) else cfg.rstrip()+'\n'+line+'\n'
@@ -297,7 +355,7 @@ def configure(runtime):
             if not p.exists():p.parent.mkdir(parents=True,exist_ok=True);p.write_bytes(content)
         for rel,content in proposed.items():write(rel,content)
         write('config.local.ini',cfg.encode())
-        manifest=dict(version=VERSION,installed={rel:digest(content) for rel,content in proposed.items()},original={rel:digest(content) for rel,content in originals.items()},new_item_ids=[i[0] for i in NEW_ITEMS],equipment_definitions=sum(10<=i['type']<=21 for i in items.values()),database_modified=False)
+        manifest=dict(version=VERSION,installed={rel:digest(content) for rel,content in proposed.items()},original={rel:digest(content) for rel,content in originals.items()},new_item_ids=[i[0] for i in NEW_ITEMS]+list(EGGS),equipment_definitions=sum(10<=i['type']<=21 for i in items.values()),database_modified=False)
         write('data/balance-v1-manifest.json',(json.dumps(manifest,indent=2)+'\n').encode())
     except BaseException:
         for rel,content in before.items():
