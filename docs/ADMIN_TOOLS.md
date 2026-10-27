@@ -19,10 +19,15 @@ Teleport is the first tab. Its server-owned presets are:
 | Admin Room | 21 | 12 | 6 |
 | Anundo | 161 | 32 | 36 |
 | Atlantis | 255 | 12 | 19 |
+| Kingworms Room | 229 | 20 | 20 |
+| Sky Haven | 71 | 34 | 14 |
 
 Anundo uses the town landing outside its inn. Atlantis uses the original
 arrival from Atlantis Pathway, on the first Atlantis map. Reopen the Admin
 menu to fetch these server-supplied entries; no APK update is required.
+Kingworms Room lands directly inside the pyramid's King Wurm chamber, separate
+from the existing Pyramid entrance preset. Sky Haven uses the Sky Wonder map's
+original arrival from Phoenix Field.
 
 These tiles are walkable, outside portal tiles and fixed monster spawn centers.
 Monsters can still attack an admin at these destinations. Add future destinations
@@ -56,7 +61,7 @@ python3 server/test_inn_citizenship_ui.py --scenario admin \
   --report work/admin-live-report.json --screenshots work/admin-screenshots
 ```
 
-The 58 integration checks cover all ten native teleports, one acknowledged item,
+The 64 integration checks cover all twelve native teleports, one acknowledged item,
 NPC spawning, invalid IDs, touch ownership with an armed heal, dialog bounds at
 1280×720 and 1544×720, Back/logout, and a separate regular account attempting all
 four operations with a forged admin field. All fixtures use disposable accounts
@@ -65,3 +70,7 @@ and an isolated native runtime.
 Anundo and Atlantis validation reports: `admin-ten-native-ui-report.json` and
 `admin-anundo-atlantis-deployment-report.json`. The latter records the live
 source hash, backup, health check and unchanged native-world identity.
+
+Kingworms Room and Sky Haven validation reports:
+`admin-twelve-native-ui-report.json` and
+`admin-rooms-deployment-report.json`.

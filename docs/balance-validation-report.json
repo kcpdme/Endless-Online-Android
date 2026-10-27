@@ -1,0 +1,17 @@
+{
+  "result": "passed",
+  "integration_checks": 501,
+  "native_class_level_builds": 36,
+  "godot_client_checks": 15,
+  "gateway_state_unit_tests": 135,
+  "balance_unit_tests": 7,
+  "admin_blade_unit_tests": 2,
+  "equipment_art_tests": 2,
+  "all_item_stats_match_native_pub": true,
+  "all_32_spell_art_paths_resolve": true,
+  "native_patch_stack_fresh_and_repeatable": true,
+  "unexpected_native_source_edits_refused": true,
+  "signed_android_version": "0.41.0",
+  "public_account_and_equip_flow": true,
+  "canvas_required_to_view_results": false
+}

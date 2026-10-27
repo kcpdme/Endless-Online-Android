@@ -115,6 +115,9 @@ func build(owner_game: Node, parent: Control) -> void:
 func info(ident: int) -> Dictionary:
 	return (game.online.catalog.get("spells", {}) as Dictionary).get(str(ident), {}) as Dictionary
 
+func area_skill(ident: int) -> bool:
+	return int(info(ident).get("area_radius", 0)) > 0 if int(game.online.catalog.get("balance_version", 0)) > 0 else ident in ICE_BLAST_IDS
+
 func icon(ident: int, highlight: bool = false) -> Texture2D:
 	var key: String = "%d:%s" % [ident, str(highlight)]
 	if icons.has(key): return icons[key] as Texture2D
@@ -149,6 +152,9 @@ func press(index: int) -> void:
 	if Time.get_ticks_msec() < ready_at:
 		game._toast("Your skill is recovering.")
 		return
+	if not usable(slots[index]):
+		game._toast("This skill is locked for your current class or level.")
+		return
 	var spell: Dictionary = info(slots[index])
 	if int(game.online.player.get("tp", 0)) < int(spell.get("tp", 0)):
 		game._toast("Not enough TP.")
@@ -162,7 +168,7 @@ func press(index: int) -> void:
 		return
 	game._release_attack()
 	if game.sfx != null: game.sfx.play_named("SpellActivate", "skill_select")
-	if slots[index] in ICE_BLAST_IDS:
+	if area_skill(slots[index]):
 		cast(slots[index], "area", 0)
 		return
 	if int(spell.get("target", 0)) == 1:
@@ -204,8 +210,29 @@ func target(tile: Vector2i) -> bool:
 	game._toast("Select a valid target for %s." % str(spell.get("name", "this skill")))
 	return true
 
+func class_usable(ident: int) -> bool:
+	var stats: Dictionary = game.online.player.get("stats", {}) as Dictionary
+	if int(stats.get("admin", 0)) > 0: return true
+	var allowed: Array = info(ident).get("allowed_classes", []) as Array
+	if allowed.is_empty(): return true
+	var profession: int = int(stats.get("class_id", 0))
+	var base: int = int((game.online.catalog.classes as Dictionary).get(str(profession), {}).get("base", 0))
+	# JSON arrays contain floats; Array.has uses strict Variant types.
+	for required: Variant in allowed:
+		if int(required) == profession or (int(required) > 0 and int(required) == base): return true
+	return false
+
+func usable(ident: int) -> bool:
+	if int(game.online.catalog.get("balance_version", 0)) < 2: return true
+	var stats: Dictionary = game.online.player.get("stats", {}) as Dictionary
+	if int(stats.get("admin", 0)) > 0: return true
+	return int(stats.get("level", 0)) >= int(info(ident).get("level_requirement", 1)) and class_usable(ident)
+
 func cast(ident: int, kind: String, target_id: int) -> void:
 	if not casting.is_empty() or Time.get_ticks_msec() < ready_at: return
+	if not usable(ident):
+		game._toast("This skill is locked for your current class or level.")
+		return
 	if not game.online.mobile_action_ready(): return
 	var spell: Dictionary = info(ident)
 	if kind == "npc":
@@ -289,14 +316,16 @@ func refresh() -> void:
 	heading.text = str(master.get("name", "SKILLS"))
 	var rows: Dictionary = {}
 	for spell: Dictionary in learned: rows[int(spell.id)] = spell
-	for offer: Dictionary in master.get("offers", []): rows[int(offer.id)] = offer
+	for offer: Dictionary in master.get("offers", []):
+		if int(game.online.catalog.get("balance_version", 0)) > 0 and not class_usable(int(offer.id)): continue
+		rows[int(offer.id)] = offer
 	var stamp: String = JSON.stringify([rows, learned])
 	if stamp != last_rows:
 		last_rows = stamp
 		list.clear()
 		for ident: int in rows:
 			var spell: Dictionary = info(ident)
-			var row: int = list.add_item(str(spell.get("name", "Skill %d" % ident)) + ("  ✓" if known(ident) else ""), icon(ident))
+			var row: int = list.add_item(str(spell.get("name", "Skill %d" % ident)) + ("  🔒" if not usable(ident) else "  ✓" if known(ident) else ""), icon(ident))
 			list.set_item_metadata(row, ident)
 			if ident == selected: list.select(row)
 		if selected == 0 and list.item_count > 0:
@@ -306,24 +335,47 @@ func refresh() -> void:
 
 func refresh_detail() -> void:
 	var spell: Dictionary = info(selected)
+	var balanced: bool = int(game.online.catalog.get("balance_version", 0)) > 0
+	var cap: int = int(spell.get("max_level", 100)) if balanced else 100
+	var stats: Dictionary = game.online.player.get("stats", {}) as Dictionary
+	var profession: Dictionary = (game.online.catalog.get("classes", {}) as Dictionary).get(str(int(stats.get("class_id", 0))), {}) as Dictionary
 	var lines: Array[String] = [str(spell.get("name", "No learned skills yet"))]
 	if not spell.is_empty():
 		lines.append("TP %d   ·   Chant %.2fs" % [int(spell.get("tp", 0)), float(spell.get("cast_time", 1)) * 0.48])
-		lines.append("Target: " + ("Up to 5 monsters in a 5×5 area around you" if selected in ICE_BLAST_IDS else "Yourself" if int(spell.get("target", 0)) == 1 else "Party" if int(spell.get("target", 0)) == 3 else "Friendly player" if int(spell.get("restrict", 0)) == 1 else "Monster"))
+		var area_text: String = "Up to %d monsters within %d tiles" % [int(spell.get("area_targets", 5)), int(spell.get("area_radius", 2))]
+		lines.append("Target: " + (area_text if area_skill(selected) else "Yourself" if int(spell.get("target", 0)) == 1 else "Nearby party" if int(spell.get("target", 0)) == 3 else "Friendly player" if int(spell.get("restrict", 0)) == 1 else "Monster"))
+		if balanced and not usable(selected): lines.append("Locked for your current class or level. Learned ownership is kept.")
+		if balanced:
+			lines.append("Requires level %d" % int(spell.get("level_requirement", 1)))
+		if spell.get("effect_kind", "") == "companion":
+			var pet: Dictionary = spell.get("companion", {}) as Dictionary
+			lines.append("Dismiss your companion." if int(pet.get("npc_id", 0)) < 0 else "One spirit companion for 90 seconds. Assists your active fights; no idle hunting.")
+			if int(pet.get("npc_id", 0)) > 0: lines.append("Upkeep: %d TP every 2 seconds. CHA and INT increase its damage." % int(pet.get("upkeep", 0)))
 		for learned: Dictionary in game.online.player.get("spells", []):
 			if int(learned.id) == selected:
 				var level: int = int(learned.level)
-				lines.append("Skill level %d / 100" % level)
+				lines.append("Skill level %d / %d" % [level, cap])
+				if balanced and level > cap: lines.append("Power is capped at %d. A free rebuild refunds your old training." % cap)
 				if int(spell.get("type", -1)) == 0:
 					var heal: int = int(spell.get("hp", 0)) + level
+					if balanced:
+						heal = int(spell.get("hp", 0)) + mini(level, cap) * 2 + int(float(stats.get("wisdom", 0)) * float(profession.get("heal_wis", 0)) + float(stats.get("intelligence", 0)) * float(profession.get("heal_int", 0)) + float(stats.get("charisma", 0)) * float(profession.get("heal_cha", 0)))
 					lines.append("Heals %d HP" % heal)
-					if level < 100: lines.append("Next level: %d HP (+1)" % (heal + 1))
-				elif int(spell.get("type", -1)) == 1:
+					if level < cap: lines.append("Next level: %d HP (+%d)" % [heal + (2 if balanced else 1), 2 if balanced else 1])
+				elif int(spell.get("type", -1)) == 1 and spell.get("effect_kind", "") != "companion":
 					var low: int = int(spell.get("min_damage", 0)) + level
 					var high: int = int(spell.get("max_damage", 0)) + level
-					lines.append("Spell damage bonus %d–%d" % [low, high])
-					if level < 100: lines.append("Next level: %d–%d (+1)" % [low + 1, high + 1])
-					lines.append("Adds to attack damage; defence and hit chance apply.")
+					if balanced:
+						var scale: float = maxf(1.0, float(profession.get("spell_scale", 1.0)))
+						var area_scale: float = float(spell.get("area_scale", 1.0))
+						low = int((int(float(stats.get("min_damage", 0)) * scale) + int(spell.get("min_damage", 0)) + mini(level, cap) * 2) * area_scale)
+						high = int((int(float(stats.get("max_damage", 0)) * scale) + int(spell.get("max_damage", 0)) + mini(level, cap) * 2) * area_scale)
+						lines.append("Attack power %d–%d before defence and hit chance." % [low, high])
+						if level < cap: lines.append("Training adds up to 2 power before area scaling.")
+					else:
+						lines.append("Spell damage bonus %d–%d" % [low, high])
+						if level < cap: lines.append("Next level: %d–%d (+1)" % [low + 1, high + 1])
+						lines.append("Adds to attack damage; defence and hit chance apply.")
 		for offer: Dictionary in master.get("offers", []):
 			if int(offer.id) != selected: continue
 			lines.append("Learn: %d Gold · Level %d · Class %d (0 = any)" % [int(offer.cost), int(offer.level), int(offer.class_id)])
@@ -336,7 +388,7 @@ func refresh_detail() -> void:
 	detail.text = "\n".join(lines)
 	var at_cap: bool = false
 	for learned: Dictionary in game.online.player.get("spells", []):
-		if int(learned.id) == selected and int(learned.level) >= 100: at_cap = true
+		if int(learned.id) == selected and int(learned.level) >= cap: at_cap = true
 	level_button.disabled = at_cap or not known(selected) or int((game.online.player.get("stats", {}) as Dictionary).get("skill_points", 0)) <= 0
 	learn_button.disabled = master.is_empty() or selected == 0 or known(selected)
 	forget_button.disabled = master.is_empty() or not known(selected)
@@ -394,7 +446,7 @@ func event(event_data: Dictionary) -> void:
 	var target_kind: String = "npc" if kind in ["npc_damage", "npc_killed"] else "player"
 	var ident: int = int(event_data.get("npc_index", 0)) if target_kind == "npc" else int(event_data.get("target_id", pid))
 	var at: Vector2 = game.tile_position(Vector2i(int(event_data.get("x", 0)), int(event_data.get("y", 0)))) if target_kind == "npc" else player_position(ident)
-	if game.sfx != null and int(event_data.spell_id) not in ICE_BLAST_IDS: game.sfx.effect(int(info(int(event_data.spell_id)).get("graphic", 0)))
+	if game.sfx != null and not area_skill(int(event_data.spell_id)): game.sfx.effect(int(info(int(event_data.spell_id)).get("graphic", 0)))
 	var fx: Dictionary = (info(int(event_data.spell_id)).get("effect", {}) as Dictionary).duplicate(true)
 	if not fx.is_empty():
 		fx.merge({"kind": target_kind, "id": ident, "at": at, "start": Time.get_ticks_msec()})

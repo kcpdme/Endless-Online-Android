@@ -1,0 +1,12 @@
+{
+  "result": "passed",
+  "version": "0.41.0",
+  "version_code": 73,
+  "apk_sha256": "ce0bb0a9ae35f1f38eb43bf8ba392ac12a0a9cf97122cb5f17c70a6fed1a8a68",
+  "apk_bytes": 251023678,
+  "signer_sha256": "fbf80de525cf74dbedbcb1ae73899c6fe9a55ea9661b31e93637f074d7e979ed",
+  "signature_verified": true,
+  "connected_android_devices": 0,
+  "installed_on_phone": false,
+  "catalog_balance_version": 1
+}

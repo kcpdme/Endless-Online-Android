@@ -19,6 +19,9 @@ DESTINATIONS = (
     # Original Anundo inn exit and Atlantis pathway arrival.
     dict(key='anundo', name='Anundo', map_id=161, x=32, y=36),
     dict(key='atlantis', name='Atlantis', map_id=255, x=12, y=19),
+    # Direct landing inside the King Wurm chamber, and Sky Wonder's arrival.
+    dict(key='kingworms_room', name='Kingworms Room', map_id=229, x=20, y=20),
+    dict(key='sky_haven', name='Sky Haven', map_id=71, x=34, y=14),
 )
 
 def command_settings():

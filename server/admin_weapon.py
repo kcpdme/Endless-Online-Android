@@ -36,6 +36,9 @@ def patch_weapon(data):
     fields = bytearray(entries[TEMPLATE_ID-1][2])
     if Reader(fields[2:3]).num() != 10 or Reader(fields[3:4]).num() != 0:
         raise ValueError('Template must remain a melee weapon')
+    # Canonical operator stats stay independent of balance changes to Ultima.
+    for start,size,value in [(5,2,0),(7,2,0),(13,2,4),(15,2,0),(17,2,0)]+[(n,1,0) for n in range(20,26)]:
+        fields[start:start+size] = number(value,size)
     fields[4:5] = number(4, 1)  # Native Lore: cannot trade/drop, including death.
     fields[9:11] = number(DAMAGE, 2); fields[11:13] = number(DAMAGE, 2)
     fields[37:53] = b''.join(number(0, 2) for _ in range(8))

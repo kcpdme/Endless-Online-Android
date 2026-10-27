@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Build pinned etheos + SQLite without privileged installs; stage local reference content."""
-import argparse, hashlib, json, os, pathlib, secrets, shutil, subprocess, urllib.request, zipfile
+import argparse, hashlib, json, os, pathlib, secrets, shutil, subprocess, tempfile, re, urllib.request, zipfile
 from prepare_quests import prepare
 ROOT = pathlib.Path(__file__).resolve().parent
 PINS = {
@@ -30,15 +30,34 @@ def checkout(name, path):
     if actual != commit: raise RuntimeError(f'Wrong revision for {name}')
 
 def apply_patches(source, patches):
-    def applied(patch):
-        return subprocess.run(['git','-C',str(source),'apply','--reverse','--check',str(patch)],capture_output=True).returncode == 0
-    classic = next((p for p in patches if p.name == 'etheos-classic-gold.patch'), None)
-    classic_applied = classic is not None and applied(classic)
-    for patch in patches:
-        # The classic patch nests/replaces the old weighted-rate block, so its
-        # presence also proves the superseded drop-rate patch was applied.
-        if patch.name == 'etheos-drop-rate.patch' and classic_applied: continue
-        if not applied(patch): run('git','-C',source,'apply',patch)
+    # Reconstruct the complete pinned patch stack. Later hunks can replace older
+    # contexts, so reverse-checking each patch independently is not reliable.
+    # Accept only pristine files or a known intermediate/final patch version;
+    # reject local edits before writing any source file.
+    paths = {name for p in patches for name in re.findall(r'^\+\+\+ b/(.+)$', p.read_text(), re.M)}
+    with tempfile.TemporaryDirectory(prefix='etheos-patch-check-') as directory:
+        tree = pathlib.Path(directory)
+        versions = {name: set() for name in paths}
+        for name in paths:
+            if pathlib.PurePosixPath(name).is_absolute() or '..' in pathlib.PurePosixPath(name).parts:
+                raise ValueError('Unsafe native patch path')
+            original = subprocess.check_output(['git','-C',str(source),'show','HEAD:'+name])
+            target = tree / name
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(original)
+            versions[name].add(hashlib.sha256(original).digest())
+        for patch in patches:
+            subprocess.run(['git','-C',str(tree),'apply',str(patch)],check=True)
+            for name in paths:
+                versions[name].add(hashlib.sha256((tree/name).read_bytes()).digest())
+        for name in paths:
+            if hashlib.sha256((source/name).read_bytes()).digest() not in versions[name]:
+                raise RuntimeError('Native source differs from known patch stack: '+name)
+        for name in paths:
+            expected = (tree/name).read_bytes()
+            if (source/name).read_bytes() != expected:
+                (source/name).write_bytes(expected)
+
 
 def main():
     p = argparse.ArgumentParser(description=__doc__)
@@ -56,7 +75,7 @@ def main():
     deps = state / 'deps'; deps.mkdir(exist_ok=True)
     source = state / 'source'; build = state / 'build'; build.mkdir(exist_ok=True)
     checkout('etheos', source)
-    patches = [ROOT / 'patches' / name for name in ('etheos-password-v3.patch', 'etheos-redeem.patch', 'etheos-character-hp.patch', 'etheos-spikes.patch', 'etheos-mobile-spells.patch', 'etheos-mobile-feedback.patch', 'etheos-skill-training.patch', 'etheos-drop-rate.patch', 'etheos-protect-service-npcs.patch', 'etheos-starter-kit.patch', 'etheos-ice-blast-area.patch', 'etheos-npc-chat.patch', 'etheos-pk-feedback.patch', 'etheos-classic-gold.patch')]
+    patches = [ROOT / 'patches' / name for name in ('etheos-password-v3.patch', 'etheos-redeem.patch', 'etheos-character-hp.patch', 'etheos-spikes.patch', 'etheos-mobile-spells.patch', 'etheos-mobile-feedback.patch', 'etheos-skill-training.patch', 'etheos-drop-rate.patch', 'etheos-protect-service-npcs.patch', 'etheos-starter-kit.patch', 'etheos-ice-blast-area.patch', 'etheos-npc-chat.patch', 'etheos-pk-feedback.patch', 'etheos-classic-gold.patch', 'etheos-balance-v1.patch', 'etheos-class-identity.patch')]
     apply_patches(source, patches)
     (source / 'json').mkdir(exist_ok=True)
     shutil.copy2(download(*JSON, deps / 'json.hpp'), source / 'json/json.hpp')
@@ -79,6 +98,11 @@ def main():
         '-o', build / 'native-auth')
     run(build / 'native-auth', '--self-test')
     runtime = state / 'runtime'; runtime.mkdir(exist_ok=True)
+    # A setup run restores original reference data before applying the profile,
+    # so discard only the previous local profile's generated manifest/baseline.
+    shutil.rmtree(runtime/'data/balance-v1-baseline', ignore_errors=True)
+    for generated in ('balance-v1-manifest.json','balance-profile.json'):
+        (runtime/'data'/generated).unlink(missing_ok=True)
     # Only configuration and reference game data are staged, never source git metadata.
     for name in ['config', 'lang', 'data']:
         shutil.copytree(source / name, runtime / name, dirs_exist_ok=True)
@@ -169,13 +193,15 @@ WorldDumpFile = ./world.bak.json
     (runtime / 'config/database.ini').write_text('INCLUDE = ./config/database/sqlite.ini\nInstallSQL = ./install.sql\nAutoCreateDatabase = no\nDBPassFile =\nDBAuthType = sql\n')
     shutil.copy2(build / 'etheos', runtime / 'etheos')
     shutil.copy2(build / 'native-auth', runtime / 'native-auth')
+    from configure_balance import configure as configure_balance
+    balance = configure_balance(runtime)
     report = {'source_pins':{k:{'url':v[0],'commit':v[1]} for k,v in PINS.items()},
               'local_source_patches':[{'path':str(patch.relative_to(ROOT.parent)),'sha256':hashlib.sha256(patch.read_bytes()).hexdigest()} for patch in patches],
               'sample':{'url':SAMPLE[0],'sha256':SAMPLE[1]}, 'sqlite':{'url':SQLITE[0],'sha256':SQLITE[1]}, 'nlohmann_json':{'url':JSON[0],'sha256':JSON[1]},
               'numbered_maps':len(maps),'highest_map_id':max(int(x.stem) for x in maps),
               'quest_conversion':'Generated .eqf copies with logged conservative legacy-syntax fixes. Original .txt bytes preserved. Real parser validation recorded separately.',
               'quests':quests,'feature_content':feature_content,'classic_economy':classic_economy,'travel':travel,'runtime':str(runtime),'binding':'127.0.0.1:8078','database':'SQLite',
-              'original_npc_combat':npc_combat,
+              'original_npc_combat':npc_combat,'balance':balance,
               'rights':'Reference content only; redistribution/publication permissions unresolved.'}
     (state / 'content-report.json').write_text(json.dumps(report, indent=2)+'\n')
     (ROOT / '.state-path').write_text(str(state)+'\n')

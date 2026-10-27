@@ -192,7 +192,16 @@ class LiveSession(NativeFeaturesMixin, WorldFeedbackMixin, AdminMixin, BarberMix
             npc=next((n for n in self.state['npcs'] if n['index']==event['npc_index']),{})
             if npc:event.update(npc_id=npc['id'],x=npc['x'],y=npc['y'],npc_direction=npc.get('direction',0))
         r=Reader(p)
-        if (f,a)==(31,21) and p==b'S':
+        if f==30 and a in (4,5):
+            r.take(14);ident=r.num(2)
+            if a==5:r.num(3)
+            subloc=r.num()
+            from services import item_definitions
+            kind=item_definitions().get(ident,{}).get('type')
+            key={10:'weapon',11:'offhand',12:'armor',13:'head',14:'boots',15:'gloves',16:'accessory',17:'belt',18:'necklace',19:'ring2' if subloc else 'ring1',20:'armlet2' if subloc else 'armlet1',21:'bracer2' if subloc else 'bracer1'}.get(kind)
+            if key:self.equipment[key]=ident if a==5 else 0
+            self.dirty=True
+        elif (f,a)==(31,21) and p==b'S':
             event.update(kind='timed_spikes');self.dirty=True
         elif f==45:
             from arena_events import decode_arena
@@ -325,6 +334,7 @@ class LiveSession(NativeFeaturesMixin, WorldFeedbackMixin, AdminMixin, BarberMix
     def snapshot(self):
         data=super().snapshot()
         data['world_rules']=world_rules(data['map_id'])
+        data['companion']=getattr(self,'companion',None)
         data['player']['drunk_seconds']=max(0,getattr(self,'drunk_until',0)-time.monotonic())
         data['party']=getattr(self,'party_members',[])
         invitation=getattr(self,'party_invitation',None)
@@ -349,7 +359,7 @@ class LiveSession(NativeFeaturesMixin, WorldFeedbackMixin, AdminMixin, BarberMix
         if not before or before['map_id']!=data['map_id'] or any(e.get('kind')=='map_transition' for e in data['events']):return data
         # Compact entity changes, like native EO: never resend the full visible world per step.
         update={k:data[k] for k in ('map_id','position_update','position_seq','correction','events')}
-        for key in ('world_rules','party','party_invitation','party_notice','bank','locker','chest','trade','trade_request','casting','skillmaster','quest_dialog','quest_journal','inn','barber','guild','guild_creation','guild_invitation','guild_requests','guild_notice'):
+        for key in ('companion','world_rules','party','party_invitation','party_notice','bank','locker','chest','trade','trade_request','casting','skillmaster','quest_dialog','quest_journal','inn','barber','guild','guild_creation','guild_invitation','guild_requests','guild_notice'):
             if data.get(key)!=before.get(key):update[key]=data.get(key)
         if data['player']!=before['player'] or data['position_update']:update['player']=data['player']
         for collection,key in [('players','player_id'),('npcs','index'),('items','uid')]:

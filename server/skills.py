@@ -37,6 +37,8 @@ class SkillsMixin:
 
     def cast_spell(self,spell_id,target_kind,target_id=0):
         self._mobile_action();spell_id=int(spell_id);target_id=int(target_id)
+        from balance_rules import check_spell, area_spell
+        check_spell(self,spell_id)
         # Native SpellCooldownTime owns recovery; do not add another preparation lock.
         if self.casting:raise EOError('Wait for your skill to finish')
         if not any(s['id']==spell_id for s in getattr(self,'spells',[])):raise EOError('You have not learned this skill')
@@ -44,8 +46,8 @@ class SkillsMixin:
         if not spell or spell['type'] not in (0,1):raise EOError('This native skill has no supported effect')
         if self.state['self'].get('tp',0)<spell['tp']:raise EOError('Not enough TP')
         target=self.state['self']
-        if spell_id in ICE_BLAST_IDS:
-            if target_kind not in ('area','self'):raise EOError('Ice Blast casts around you; no opponent selection is needed')
+        if area_spell(spell_id):
+            if target_kind not in ('area','self'):raise EOError('This area skill casts around you; no opponent selection is needed')
             target_kind='area';target_id=0
         elif spell['target']==3 and spell['restrict']==1:
             if target_kind!='group':raise EOError('This skill targets your party')
@@ -130,14 +132,18 @@ class SkillsMixin:
 
     def skill_change(self,action,spell_id):
         self._standing();spell_id=int(spell_id)
+        from balance_rules import profile, check_spell
+        cap=profile().get('max_skill_level',100)
         known=any(s['id']==spell_id for s in getattr(self,'spells',[]))
         if action=='level':
-            if known and next(s['level'] for s in self.spells if s['id']==spell_id)>=100:raise EOError('This skill is already at the native maximum level')
+            check_spell(self,spell_id)
+            if known and next(s['level'] for s in self.spells if s['id']==spell_id)>=cap:raise EOError('This skill is already at the native maximum level')
             if not known or self.stats.get('skill_points',0)<=0:raise EOError('No available skill point for this skill')
             self.send(16,7,number(2,1)+number(spell_id,2));self._wait_service(16,{2})
         else:
             self._near_service(getattr(self,'skillmaster',None))
             if action=='learn':
+                check_spell(self,spell_id)
                 if known:raise EOError('You already know this skill')
                 if not any(o['id']==spell_id for o in self.skillmaster['offers']):raise EOError('This master does not teach that skill')
             elif action=='forget':
@@ -150,10 +156,22 @@ class SkillsMixin:
 
     def apply_skill_packet(self,f,a,p):
         r=Reader(p);event=self.events[-1];values={}
-        if (f,a)==(AREA_FAMILY,3):
+        if (f,a)==(232,3):
+            pid=r.num(2);index=r.num();npc_id=r.num(2);tp=r.num(2);remaining=r.num(2);ident=r.num(2);target=r.num();damage=r.num(3)
+            if r.rest() or remaining>90:raise EOError('Invalid native companion update')
+            event.update(kind='companion',player_id=pid,npc_index=index,npc_id=npc_id,remaining=remaining,spell_id=ident)
+            if pid==self.player_id:
+                values['tp']=tp
+                if ident:self.casting=None
+                self.companion=dict(index=index,npc_id=npc_id,remaining=remaining) if index else None
+            if target:self.events.append(dict(kind='companion_attack',player_id=pid,npc_index=index,target_index=target,damage=damage))
+        elif (f,a)==(AREA_FAMILY,3):
             pid=r.num(2);ident=r.num(2);x=r.num();y=r.num();tp=r.num(2);hits=r.num()
-            if ident not in ICE_BLAST_IDS or hits>5 or r.rest():raise EOError('Invalid native area spell acknowledgement')
-            event.update(kind='spell_area',player_id=pid,spell_id=ident,x=x,y=y,targets=hits,width=5,height=5)
+            from balance_rules import profile, area_spell
+            definition=profile().get('spells',{}).get(str(ident),{})
+            if not area_spell(ident) or hits>int(definition.get('area_targets',5)) or r.rest():raise EOError('Invalid native area spell acknowledgement')
+            size=2*int(definition.get('area_radius',2))+1
+            event.update(kind='spell_area',player_id=pid,spell_id=ident,x=x,y=y,targets=hits,width=size,height=size)
             if pid==self.player_id:
                 values['tp']=tp;self.casting=None;event['own_cast']=True
         elif (f,a)==(12,1):

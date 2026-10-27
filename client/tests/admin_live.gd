@@ -53,7 +53,7 @@ func run() -> void:
 	check(ui.button.get_global_rect().end.x < game.party_ui.button.get_global_rect().position.x,"Admin is beside Party")
 	c.game.skills_ui.armed = 1
 	await tap(ui.button)
-	if not check(await wait_for(func() -> bool: return not ui.busy and ui.teleport_list.get_child_count()==10),"Native touch opens ten server destinations"): finish(); return
+	if not check(await wait_for(func() -> bool: return not ui.busy and ui.teleport_list.get_child_count()==12),"Native touch opens twelve server destinations"): finish(); return
 	check(ui.panel.visible and game.skills_ui.armed==0,"Admin tap consumes armed world targeting")
 	check(replies.size()==1,"One native touch must issue one menu request")
 	for dimensions: Vector2i in [Vector2i(1280,720),Vector2i(1544,720)]:
@@ -61,7 +61,7 @@ func run() -> void:
 		var card: Control = ui.panel.get_child(0)
 		check(Rect2(Vector2.ZERO,Vector2(dimensions)).encloses(card.get_global_rect()),"Admin dialog must fit landscape")
 	await screenshot("admin-teleport")
-	var locations: Array = [[119,24,29],[136,49,18],[277,11,31],[109,7,13],[155,8,11],[271,25,54],[229,82,112],[21,12,6],[161,32,36],[255,12,19]]
+	var locations: Array = [[119,24,29],[136,49,18],[277,11,31],[109,7,13],[155,8,11],[271,25,54],[229,82,112],[21,12,6],[161,32,36],[255,12,19],[229,20,20],[71,34,14]]
 	for index: int in range(locations.size()):
 		if not ui.panel.visible:
 			await create_timer(.8).timeout; ui.open()
@@ -109,6 +109,6 @@ func run() -> void:
 		if not check(await wait_for(func() -> bool: return replies.size()>before),"Forged operation receives rejection"): finish(); return
 		check(not bool(replies.back().get("ok",true)) and str(replies.back().get("error","")).contains("Admin access"),"Server blocks forged role for "+operation)
 	c.log_out()
-	var report: Dictionary = {"result":"failed" if failed else "passed","checks":checks,"ten_native_teleports":true,"native_one_item_grant":true,"native_npc_spawn":true,"ordinary_player_forgery_rejected":true,"touch_and_armed_heal_consumed":true,"landscape_dialog_fits":true}
+	var report: Dictionary = {"result":"failed" if failed else "passed","checks":checks,"twelve_native_teleports":true,"native_one_item_grant":true,"native_npc_spawn":true,"ordinary_player_forgery_rejected":true,"touch_and_armed_heal_consumed":true,"landscape_dialog_fits":true}
 	var file: FileAccess = FileAccess.open(OS.get_environment("ASTER_VALE_TEST_REPORT"),FileAccess.WRITE)
 	file.store_string(JSON.stringify(report,"  ")+"\n"); print("ADMIN LIVE: ",JSON.stringify(report)); finish()

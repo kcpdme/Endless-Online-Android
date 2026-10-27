@@ -14,6 +14,27 @@ def setup():
 def payload(*fields):return b''.join(number(value,size) for value,size in fields)
 
 class SkillsStateTests(unittest.TestCase):
+    def test_companion_changes_survive_compact_stream_updates(self):
+        s=setup()
+        before=dict(map_id=5,position_update=False,position_seq=0,correction=False,events=[],player={},players=[],npcs=[],items=[],companion=None)
+        after=dict(before,companion=dict(index=8,npc_id=306,remaining=89))
+        s.sent_state=before
+        with patch.object(s,'snapshot',return_value=after):self.assertEqual(s.world_update()['companion'],after['companion'])
+        s.sent_state=after
+        with patch.object(s,'snapshot',return_value=before):self.assertIsNone(s.world_update()['companion'])
+
+    def test_companion_upkeep_preserves_pending_cast_and_observer_mana(self):
+        s=setup();s.cast_spell(4,'npc',2);pending=s.casting
+        update=payload((100,2),(8,1),(306,2),(18,2),(88,2),(0,2),(2,1),(7,3))
+        s.apply_event(232,3,update)
+        self.assertEqual(s.stats['tp'],18);self.assertIs(s.casting,pending)
+        self.assertEqual(s.companion['npc_id'],306)
+        self.assertEqual(s.events[-1]['kind'],'companion_attack')
+        observer=setup();observer.player_id=200;observer.apply_event(232,3,update)
+        self.assertEqual(observer.stats['tp'],20);self.assertFalse(getattr(observer,'companion',None))
+        s.apply_event(232,3,payload((100,2),(0,1),(0,2),(18,2),(0,2),(35,2),(0,1),(0,3)))
+        self.assertIsNone(s.companion);self.assertIsNone(s.casting)
+
     def test_chant_does_not_block_and_release_uses_original_ticks(self):
         s=setup();before=time.monotonic();result=s.cast_spell(4,'npc',2)
         self.assertLess(time.monotonic()-before,.02);self.assertEqual(result['seconds'],.96)

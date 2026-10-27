@@ -1,0 +1,8 @@
+{
+  "checks": 15,
+  "class_build_guidance": true,
+  "level_45_equipment": true,
+  "live_native_catalog": true,
+  "result": "passed",
+  "scaled_spell_preview": true
+}

@@ -258,10 +258,9 @@ func _render_details(offer: Dictionary, id: int, reset: bool) -> void:
 		if value != 0: parts.append("%s %s%d" % [key.to_upper() if key in ["hp", "tp"] else key.capitalize(), "+" if value > 0 else "", value])
 	parts.append("Weight %d" % int(info.get("weight", 0)))
 	if int(info.get("level_requirement", 0)) > 0: parts.append("Requires level %d" % int(info.level_requirement))
-	var class_id: int = int(info.get("class_requirement", 0))
-	if class_id > 0:
-		var clas: Dictionary = (game.online.catalog.get("classes", {}) as Dictionary).get(str(class_id), {}) as Dictionary
-		parts.append("Class: %s" % str(clas.get("name", class_id)))
+	var professions: String = game.online.equipment_classes(info)
+	if not professions.is_empty(): parts.append("Class: %s" % professions)
+	if info.get("crafted", false): parts.append("Crafted definition · improved combat budget")
 	for attribute: String in ["strength", "intelligence", "wisdom", "agility", "constitution", "charisma"]:
 		if int(info.get(attribute + "_requirement", 0)) > 0: parts.append("Requires %s %d" % [attribute, int(info[attribute + "_requirement"])])
 	description = _detail_label("\n".join(parts))

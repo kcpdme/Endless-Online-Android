@@ -80,7 +80,7 @@ class Handler(socketserver.StreamRequestHandler):
         if op=='feature_open':return s.feature_open(str(r['kind']),r.get('npc_index',0),r.get('x',0),r.get('y',0),r.get('player_id',0))
         if op=='feature_action':
             data=s.feature_action(str(r['kind']),str(r['action']),r.get('ident',0),r.get('text',''),r.get('body',''))
-            if r['kind']=='reset' and data.get('feature',{}).get('reset'):
+            if r['kind']=='reset' and data.get('feature',{}).get('reset') and not data.get('feature',{}).get('preserved_spells'):
                 self.server.shortcuts.write(s,'skills',0,0)
                 data['shortcuts']=self.server.shortcuts.read(s)
             return data
@@ -109,6 +109,8 @@ class Handler(socketserver.StreamRequestHandler):
         if op=='enter':
             s.enter(int(r['character_id']));data=s.snapshot()
             data['shortcuts']=self.server.shortcuts.read(s)
+            from balance_rules import profile
+            data['balance_catalog']=profile()
             return data
         if op=='shortcuts_set':return self.server.shortcuts.write(s,r['kind'],r['first'],r['second'])
         if op=='move':return s.move(int(r['direction']),int(r['input_seq']),int(r['map_id']),int(r['x']),int(r['y']),bool(r.get('open_door',False)))
@@ -162,7 +164,11 @@ class Handler(socketserver.StreamRequestHandler):
         if op=='diagnostics':return dict(s.metrics)
         if op=='pickup':return s.pickup(int(r['uid']))
         if op in ('equip','unequip'):
-            s._standing();s.equip(int(r['item_id']),op=='unequip',int(r.get('subloc',0)));return s.snapshot()
+            s._standing()
+            if op=='equip':
+                from balance_rules import check_equipment
+                check_equipment(s,int(r['item_id']))
+            s.equip(int(r['item_id']),op=='unequip',int(r.get('subloc',0)));return s.snapshot()
         if op=='item_drop':return s.drop_item(int(r['item_id']),int(r.get('amount',1)))
         if op=='item_junk':return s.junk_item(int(r['item_id']),int(r.get('amount',1)))
         if op=='redeem_code':return s.redeem_code(str(r['code']))

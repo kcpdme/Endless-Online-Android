@@ -1,0 +1,360 @@
+--- a/src/character.cpp
++++ b/src/character.cpp
+@@ -969,6 +969,7 @@
+ 	switch (spell_target)
+ 	{
+ 		case TargetSelf:
++            if (this->CompanionSpell(spell_id)) break;
+ 			if (this->BalanceAreaRadius(spell_id) > 0 && spell.type == ESF::Damage)
+ 			{
+ 				this->map->SpellAreaAttack(this, spell_id);
+@@ -1045,6 +1046,23 @@
+ 	if (!this->world->config["BalanceRevamp"] || item.id == 0) return true;
+ 	if (item.id == 491 && this->SourceDutyAccess() == 0) return false;
+ 	const ECF_Data& ecf = this->world->ecf->Get(this->clas);
++    if (this->world->config["ClassIdentityRules"])
++    {
++        // Permission is checked on use and stat calculation, not just equip.
++        std::string allowed = this->world->config["BalanceItem." + util::to_string(item.id) + ".classes"];
++        if (!allowed.empty())
++        {
++            bool valid = false;
++            for (const auto& value : util::explode(',', allowed))
++            {
++                int required = util::to_int(value);
++                valid = valid || required == this->clas || (required > 0 && required == ecf.base);
++            }
++            if (!valid) return false;
++        }
++        if (((item.type == EIF::Weapon && item.subtype == EIF::Ranged)
++          || (item.type == EIF::Shield && item.subtype == EIF::Arrows)) && this->clas != 5) return false;
++    }
+ 	return this->level >= item.levelreq
+ 	 && (!item.classreq || this->clas == item.classreq || ecf.base == item.classreq)
+ 	 && (item.type != EIF::Armor || item.gender == this->gender);
+@@ -1054,6 +1072,8 @@
+ {
+ 	if (!this->world->config["BalanceRevamp"]) return true;
+ 	if (this->SourceDutyAccess() > 0) return true;
++    if (this->world->config["ClassIdentityRules"] && this->world->esf->Get(id).type == ESF::Heal
++      && this->clas != 2 && this->world->ecf->Get(this->clas).base != 2) return false;
+ 	std::string prefix = "BalanceSpell." + util::to_string(id) + ".";
+ 	auto required = this->world->config.find(prefix + "level");
+ 	if (required == this->world->config.end() || this->level < int(required->second)) return false;
+@@ -1218,7 +1238,7 @@
+ 		}
+ 	}
+ 
+-	if (this->level < eif.levelreq || (this->clas != eif.classreq && ecf.base != eif.classreq)
++	if (this->level < eif.levelreq || (eif.classreq && this->clas != eif.classreq && ecf.base != eif.classreq)
+ 	 || this->display_str < eif.strreq || this->display_intl < eif.intreq
+ 	 || this->display_wis < eif.wisreq || this->display_agi < eif.agireq
+ 	 || this->display_con < eif.conreq || this->display_cha < eif.chareq)
+@@ -1605,6 +1625,26 @@
+ 
+ void Character::CalculateStats(bool trigger_quests)
+ {
++    std::vector<std::pair<int,int>> displaced;
++    if (this->world->config["ClassIdentityRules"])
++    {
++        if (this->clas != 7) this->DismissCompanion();
++        if (this->spell_id && !this->BalanceCanCast(this->spell_id)) this->CancelSpell();
++        for (std::size_t slot = 0; slot < this->paperdoll.size(); ++slot)
++        {
++            int id = this->paperdoll[slot];
++            if (!id || this->BalanceCanEquip(this->world->eif->Get(id))) continue;
++            // At the bag's hard item cap retain the inert worn copy. Never lose
++            // ownership to AddItem's saturating count; no stats/use are granted.
++            if (this->HasItem(id) >= int(this->world->config["MaxItem"])) continue;
++            auto found = std::find_if(this->inventory.begin(), this->inventory.end(), [id](const Character_Item& i) { return i.id == id; });
++            if (found == this->inventory.end()) this->inventory.emplace_back(id, 1);
++            else ++found->amount;
++            this->paperdoll[slot] = 0;
++            displaced.emplace_back(id, slot);
++        }
++    }
++
+ 	const ECF_Data& ecf = world->ecf->Get(this->clas);
+ 	int family = (this->world->config["BalanceRevamp"] && this->clas == 0) ? 4 : ecf.type;
+ 
+@@ -1736,6 +1776,27 @@
+ 	if (this->maxdam == 0 || !this->world->config["BaseDamageAtZero"])
+ 		this->maxdam += int(this->world->config["BaseMaxDamage"]);
+ 
++    if (!displaced.empty() && this->online && this->map)
++    {
++        for (const auto& item : displaced)
++        {
++            PacketBuilder reply(PACKET_PAPERDOLL, PACKET_REMOVE, 43);
++            reply.AddShort(this->PlayerID()); reply.AddChar(SLOT_CLOTHES); reply.AddChar(0);
++            this->AddPaperdollData(reply, "BAHWS");
++            reply.AddShort(item.first);
++            reply.AddChar((item.second == Ring2 || item.second == Armlet2 || item.second == Bracer2) ? 1 : 0);
++            reply.AddShort(this->maxhp); reply.AddShort(this->maxtp);
++            reply.AddShort(this->display_str); reply.AddShort(this->display_intl); reply.AddShort(this->display_wis);
++            reply.AddShort(this->display_agi); reply.AddShort(this->display_con); reply.AddShort(this->display_cha);
++            reply.AddShort(this->mindam); reply.AddShort(this->maxdam); reply.AddShort(this->accuracy);
++            reply.AddShort(this->evade); reply.AddShort(this->armor); this->Send(reply);
++        }
++        PacketBuilder appearance(PACKET_AVATAR, PACKET_AGREE, 14);
++        appearance.AddShort(this->PlayerID()); appearance.AddChar(SLOT_CLOTHES); appearance.AddChar(0);
++        this->AddPaperdollData(appearance, "BAHWS");
++        for (auto *other : this->map->characters)
++            if (other != this && this->InRange(other)) other->Send(appearance);
++    }
+ 	if (trigger_quests)
+ 		this->CheckQuestRules();
+ 
+@@ -2411,3 +2472,79 @@
+ {
+ 	this->Logout();
+ }
++
++// Native owned spirits. These are session companions, never tradable NPC items.
++void Character::CompanionStatus(NPC *pet, unsigned short spell, unsigned char target, int damage)
++{
++    if (!this->map) return;
++    PacketBuilder reply(static_cast<PacketFamily>(232), PACKET_REPLY, 15);
++    reply.AddShort(this->PlayerID()); reply.AddChar(pet ? pet->index : 0);
++    reply.AddShort(pet ? pet->id : 0); reply.AddShort(this->tp);
++    reply.AddShort(pet ? util::clamp<int>(int(pet->companion_expires - Timer::GetTime()), 0, 90) : 0);
++    reply.AddShort(spell); reply.AddChar(target); reply.AddThree(std::max(0, damage));
++    for (auto *other : this->map->characters)
++        if (other == this || this->InRange(other)) other->Send(reply);
++}
++
++void Character::DismissCompanion()
++{
++    this->companion_target = -1; this->companion_command_time = 0.0;
++    if (!this->map) return;
++    std::vector<NPC*> pets;
++    for (auto *npc : this->map->npcs)
++        if (npc->companion_owner == this->PlayerID()) pets.push_back(npc);
++    for (auto *npc : pets) npc->Die();
++    if (!pets.empty()) this->CompanionStatus(nullptr);
++}
++
++void Character::CommandCompanion(NPC *target)
++{
++    if (!this->world->config["ClassIdentityRules"] || this->clas != 7 || !target) return;
++    if (target->ENF().type != ENF::Passive && target->ENF().type != ENF::Aggressive) return;
++    this->companion_target = target->index; this->companion_target_type = target->id;
++    this->companion_command_time = Timer::GetTime();
++}
++
++bool Character::CompanionSpell(unsigned short id)
++{
++    if (!this->world->config["ClassIdentityRules"]) return false;
++    std::string prefix = "BalancePetSpell." + util::to_string(id) + ".";
++    auto configured = this->world->config.find(prefix + "npc_id");
++    if (configured == this->world->config.end()) return false;
++    if (this->clas != 7 || !this->BalanceCanCast(id) || this->hp <= 0 || !this->CanInteractCombat()) return true;
++    auto existing_pet = [this]() -> NPC* {
++        for (auto *npc : this->map->npcs)
++            if (npc->companion_owner == this->PlayerID()) return npc;
++        return nullptr;
++    };
++    int definition = configured->second;
++    if (definition < 0) { this->DismissCompanion(); this->CompanionStatus(nullptr, id); return true; }
++    if (this->arena || this->map->pk || (this->world->config["GlobalPK"] && !this->world->PKExcept(this->mapid)))
++    { this->StatusMsg("Spirit companions can only be summoned outside arenas and PK areas."); this->DismissCompanion(); this->CompanionStatus(nullptr,id); return true; }
++    const ESF_Data& spell = this->world->esf->Get(id);
++    if (this->tp < spell.tp || definition <= 0 || std::size_t(definition) >= this->world->enf->data.size()) return true;
++    if (this->world->enf->Get(definition).type != 0) return true;
++    unsigned char index = this->map->GenerateNPCIndex();
++    if (index == 0 || index > 250) { this->StatusMsg("There is no room for a companion here."); this->CompanionStatus(existing_pet(),id); return true; }
++    int spawn_x = -1, spawn_y = -1;
++    for (int radius = 1; radius <= 2 && spawn_x < 0; ++radius)
++        for (int dx = -radius; dx <= radius && spawn_x < 0; ++dx)
++            for (int dy = -radius; dy <= radius; ++dy)
++            {
++                int x = int(this->x) + dx, y = int(this->y) + dy;
++                if (x < 0 || y < 0 || x > 252 || y > 252 || (dx == 0 && dy == 0)) continue;
++                if (this->map->Walkable(x,y,true) && !this->map->Occupied(x,y,Map::NPCOnly))
++                { spawn_x = x; spawn_y = y; break; }
++            }
++    if (spawn_x < 0) { this->StatusMsg("Move to an open space to summon a companion."); this->CompanionStatus(existing_pet(),id); return true; }
++    // Validate the replacement first; failure never discards an existing pet.
++    this->DismissCompanion(); this->tp -= spell.tp;
++    NPC *pet = new NPC(this->map, definition, spawn_x, spawn_y, 7, 0, index, true);
++    pet->companion_owner = this->PlayerID(); pet->companion_spell = id;
++    pet->companion_expires = Timer::GetTime() + util::clamp<double>(this->world->config["CompanionLifetimeSeconds"], 2.0, 90.0); pet->companion_upkeep = Timer::GetTime() + 2.0;
++    pet->companion_cost = this->world->config[prefix + "upkeep"];
++    pet->companion_power = this->world->config[prefix + "power"];
++    this->map->npcs.push_back(pet); pet->Spawn(); pet->act_speed = 0.35;
++    this->CompanionStatus(pet,id);
++    return true;
++}
+--- a/src/character.hpp
++++ b/src/character.hpp
+@@ -330,6 +330,13 @@
+ 		void CancelSpell();
+ 		void SpellAct();
+ 		double SpellCooldownTime() const;
++        int companion_target = -1;
++        int companion_target_type = 0;
++        double companion_command_time = 0.0;
++        bool CompanionSpell(unsigned short id);
++        void DismissCompanion();
++        void CommandCompanion(NPC *target);
++        void CompanionStatus(NPC *pet, unsigned short spell = 0, unsigned char target = 0, int damage = 0);
+ 		bool BalanceCanEquip(const EIF_Data& item) const;
+ 		bool BalanceCanCast(unsigned short spell_id) const;
+ 		int BalanceAreaRadius(unsigned short spell_id) const;
+--- a/src/eoserv_config.cpp
++++ b/src/eoserv_config.cpp
+@@ -55,6 +55,8 @@
+ 	eoserv_config_default(config, "PingRate"           , 60.0);
+ 	eoserv_config_default(config, "EnforceSequence"    , true);
+ 	eoserv_config_default(config, "EnforceTimestamps"  , true);
++	eoserv_config_default(config, "CompanionLifetimeSeconds", 90.0);
++	eoserv_config_default(config, "ClassIdentityRules", false);
+ 	eoserv_config_default(config, "BalanceRevamp"     , false);
+ 	eoserv_config_default(config, "AllowMovingSpells"   , false);
+ 	eoserv_config_default(config, "EnforceSessions"    , true);
+--- a/src/handlers/StatSkill.cpp
++++ b/src/handlers/StatSkill.cpp
+@@ -198,7 +198,7 @@
+ 			break;
+ 
+ 		case TRAIN_SKILL:
+-			if (character->skillpoints <= 0 || !character->HasSpell(stat_id)
++			if (character->skillpoints <= 0 || !character->BalanceCanCast(stat_id) || !character->HasSpell(stat_id)
+ 			 || character->SpellLevel(stat_id) >= int(character->world->config["MaxSkillLevel"]))
+ 			{
+ 				return;
+--- a/src/map.cpp
++++ b/src/map.cpp
+@@ -838,6 +838,7 @@
+ 
+ void Map::Leave(Character *character, WarpAnimation animation, bool silent)
+ {
++    character->DismissCompanion();
+ 	if (!silent)
+ 	{
+ 		PacketBuilder builder(PACKET_AVATAR, PACKET_REMOVE, 3);
+@@ -1470,7 +1471,7 @@
+ 	const EIF_Data& wepdata = this->world->eif->Get(from->paperdoll[Character::Weapon]);
+ 	const EIF_Data& shielddata = this->world->eif->Get(from->paperdoll[Character::Shield]);
+ 
+-	if (wepdata.subtype == EIF::Ranged && shielddata.subtype != EIF::Arrows)
++	if (wepdata.subtype == EIF::Ranged && (shielddata.subtype != EIF::Arrows || !from->BalanceCanEquip(shielddata)))
+ 	{
+ 		// Ranged gun hack
+ 		if (wepdata.id != 365 || wepdata.name != "Gun")
+@@ -1590,6 +1591,7 @@
+ 					amount = limitamount;
+ 				}
+ 
++				from->CommandCompanion(npc);
+ 				npc->Damage(from, amount);
+ 				// *npc may not be valid here
+ 
+@@ -2057,6 +2059,7 @@
+ 			amount = limitamount;
+ 		}
+ 
++		from->CommandCompanion(npc);
+ 		npc->Damage(from, amount, spell_id);
+ 		// *npc may not be valid here
+ 	}
+--- a/src/npc.cpp
++++ b/src/npc.cpp
+@@ -183,6 +183,7 @@
+ 
+ void NPC::Act()
+ {
++    if (this->companion_owner) { this->ActCompanion(); return; }
+ 	// Needed for the server startup spawn to work properly
+ 	if (this->ENF().child && !this->parent)
+ 	{
+@@ -1183,3 +1184,57 @@
+ 		);
+ 	}
+ }
++
++void NPC::ActCompanion()
++{
++    double now = Timer::GetTime(); this->last_act = now;
++    Character *owner = this->map->GetCharacterPID(this->companion_owner);
++    if (!owner || owner->clas != 7 || owner->hp <= 0 || owner->nowhere
++      || !this->map->world->config["ClassIdentityRules"] || !owner->CanInteractCombat()
++      || this->map->pk || owner->arena || (this->map->world->config["GlobalPK"] && !this->map->world->PKExcept(this->map->id))
++      || now >= this->companion_expires || util::path_length(this->x,this->y,owner->x,owner->y) > 12)
++    {
++        if (owner) owner->CompanionStatus(nullptr);
++        this->Die(); return;
++    }
++    if (now >= this->companion_upkeep)
++    {
++        this->companion_upkeep = now + 2.0;
++        if (owner->tp < this->companion_cost) { owner->CompanionStatus(nullptr); this->Die(); return; }
++        owner->tp -= this->companion_cost; owner->CompanionStatus(this);
++    }
++    NPC *target = nullptr;
++    if (owner->companion_target >= 0 && now - owner->companion_command_time <= 5.0)
++    {
++        NPC *candidate = this->map->GetNPCIndex(owner->companion_target);
++        if (candidate && candidate->alive && candidate->id == owner->companion_target_type
++          && (candidate->ENF().type == ENF::Passive || candidate->ENF().type == ENF::Aggressive)
++          && util::path_length(candidate->x,candidate->y,owner->x,owner->y) <= 7) target = candidate;
++    }
++    int tx = target ? target->x : owner->x, ty = target ? target->y : owner->y;
++    int distance = util::path_length(this->x,this->y,tx,ty);
++    if (target && distance <= 1 && now - this->companion_last_attack >= 1.0)
++    {
++        this->companion_last_attack = now;
++        int base = int((5.0 + owner->level * 0.3 + owner->adj_cha * 0.22 + owner->adj_intl * 0.12) * this->companion_power);
++        std::unordered_map<std::string,double> vars;
++        owner->FormulaVars(vars); target->FormulaVars(vars,"target_");
++        vars["damage"] = util::rand(std::max(1,base-2),base+2); vars["critical"] = 0;
++        vars["modifier"] = this->map->world->config["MobRate"];
++        int amount = std::max(1,int(rpn_eval(rpn_parse(this->map->world->formulas_config["damage"]),vars)));
++        if (util::rand(0.0,1.0) > rpn_eval(rpn_parse(this->map->world->formulas_config["hit_rate"]),vars)) amount = 0;
++        amount = std::min(amount,target->hp);
++        owner->CompanionStatus(this,0,target->index,amount);
++        // Normal damage owns aggro, loot, quests and party EXP. No fake rewards.
++        // This never refreshes the owner's command; idle owners stop assistance.
++        target->Damage(owner,amount);
++        return;
++    }
++    if (distance > 1)
++    {
++        Direction horizontal = tx > this->x ? DIRECTION_RIGHT : DIRECTION_LEFT;
++        Direction vertical = ty > this->y ? DIRECTION_DOWN : DIRECTION_UP;
++        bool x_first = std::abs(tx-int(this->x)) >= std::abs(ty-int(this->y));
++        if (!this->Walk(x_first ? horizontal : vertical)) this->Walk(x_first ? vertical : horizontal);
++    }
++}
+--- a/src/npc.hpp
++++ b/src/npc.hpp
+@@ -37,6 +37,14 @@
+ class NPC
+ {
+ 	public:
++        unsigned short companion_owner = 0;
++        unsigned short companion_spell = 0;
++        double companion_expires = 0.0;
++        double companion_upkeep = 0.0;
++        double companion_last_attack = 0.0;
++        int companion_cost = 0;
++        double companion_power = 1.0;
++        void ActCompanion();
+ 		bool temporary;
+ 		Direction direction;
+ 		unsigned char x, y;
+--- a/src/world.cpp
++++ b/src/world.cpp
+@@ -76,8 +76,10 @@
+ 	double current_time = Timer::GetTime();
+ 	UTIL_FOREACH(world->maps, map)
+ 	{
+-		UTIL_FOREACH(map->npcs, npc)
+-		{
++		const auto snapshot = map->npcs;
++        for (NPC *npc : snapshot)
++		{
++            if (std::find(map->npcs.begin(),map->npcs.end(),npc) == map->npcs.end()) continue;
+ 			if (npc->alive && npc->last_act + npc->act_speed < current_time)
+ 			{
+ 				npc->Act();

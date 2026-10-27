@@ -1,0 +1,34 @@
+{
+  "result": "passed",
+  "balance_version": 2,
+  "native_acceptance_checks": 515,
+  "native_stat_builds": 36,
+  "godot_client_checks": 21,
+  "gateway_state_unit_tests": 137,
+  "content_and_migration_tests": 10,
+  "native_expiry_test": true,
+  "pinned_patch_stack_retry_identical": true,
+  "diff_whitespace_check": true,
+  "live_deployment": true,
+  "public_https_and_wss": true,
+  "existing_item_ownership_preserved": true,
+  "newly_ineligible_equipped_items_returned_to_bags": 7,
+  "android": {
+    "result": "passed",
+    "version": "0.42.0",
+    "version_code": 74,
+    "apk_sha256": "02a007a485afd828b2852127a2b49b0a9a2c1a6a7f8763ca08d76cf9fc6ea5c6",
+    "apk_bytes": 251030542,
+    "signer_sha256": "fbf80de525cf74dbedbcb1ae73899c6fe9a55ea9661b31e93637f074d7e979ed",
+    "signature_verified": true,
+    "connected_android_devices": 0,
+    "installed_on_phone": false,
+    "catalog_balance_version": 2,
+    "catalog_matches_accepted_profile": true
+  },
+  "limits": [
+    "Spirit companions are PvE assistants, not tanks or unattended farmers.",
+    "Modelled burst DPS is not measured sustained farming speed.",
+    "No Android device was connected; the signed APK is ready for installation."
+  ]
+}

@@ -394,6 +394,19 @@ func _create_character() -> void:
 	character_flow.refresh()
 
 func _enter_world(data: Dictionary) -> void:
+	var balance: Dictionary = data.get("balance_catalog", {}) as Dictionary
+	catalog["balance_version"] = int(balance.get("version", 0))
+	if not balance.is_empty():
+		for section: String in ["items", "spells", "classes", "npcs"]:
+			var entries: Dictionary = balance.get(section, {}) as Dictionary
+			var current: Dictionary = catalog.get(section, {}) as Dictionary
+			for key: Variant in entries:
+				var update: Dictionary = entries[key] as Dictionary
+				var template: String = str(update.get("template_id", key))
+				var merged: Dictionary = (current.get(str(key), current.get(template, {})) as Dictionary).duplicate(true)
+				merged.merge(update, true)
+				current[str(key)] = merged
+			catalog[section] = current
 	var resumed: bool = reconnection.running
 	entering_character = false
 	creation_panel.hide()
@@ -1138,6 +1151,15 @@ func equipment_request(kind: String) -> void:
 			session.request("unequip", {"item_id": previous, "subloc": subloc})
 		else: session.request("equip", {"item_id": item_id(kind), "subloc": subloc})
 
+func equipment_classes(info: Dictionary) -> String:
+	var allowed: Array = info.get("allowed_classes", []) as Array
+	if allowed.is_empty() and int(info.get("class_requirement", 0)) > 0: allowed = [int(info.class_requirement)]
+	var names: PackedStringArray = []
+	for profession: Variant in allowed:
+		var data: Dictionary = (catalog.get("classes", {}) as Dictionary).get(str(int(profession)), {}) as Dictionary
+		names.append(str(data.get("name", "Class %d" % int(profession))))
+	return " / ".join(names)
+
 func _equipment_problem(info: Dictionary, previous: int) -> String:
 	var stats: Dictionary = player.get("stats", {}) as Dictionary
 	var worn: Dictionary = item_info("item:%d" % previous)
@@ -1147,6 +1169,11 @@ func _equipment_problem(info: Dictionary, previous: int) -> String:
 	var class_id: int = int(stats.get("class_id", 0))
 	var classes: Dictionary = catalog.get("classes", {}) as Dictionary
 	var base_class: int = int((classes.get(str(class_id), {}) as Dictionary).get("base", 0))
+	var allowed: Array = info.get("allowed_classes", []) as Array
+	var permitted: bool = allowed.is_empty()
+	for required: Variant in allowed:
+		if int(required) == class_id or (int(required) > 0 and int(required) == base_class): permitted = true
+	if not permitted: return "This item belongs to %s." % equipment_classes(info)
 	var requirement: int = int(info.get("class_requirement", 0))
 	if requirement != 0 and requirement not in [class_id, base_class]: return "This item requires a different character class."
 	for attribute: String in ["strength", "intelligence", "wisdom", "agility", "constitution", "charisma"]:
@@ -1538,11 +1565,11 @@ func _process_events(events: Array) -> void:
 		elif kind == "class_changed":
 			var class_info: Dictionary = (catalog.get("classes", {}) as Dictionary).get(str(int(event.get("class_id", 0))), {}) as Dictionary
 			game._toast("Your class is now %s." % str(class_info.get("name", "changed")))
-		if kind in ["player_damage", "npc_attack"] and event.get("source", "") not in ["spike","drain","pk"]:
+		if kind in ["player_damage", "npc_attack", "companion_attack"] and event.get("source", "") not in ["spike","drain","pk"]:
 			npc_attack_until[int(event.get("npc_index", -1))] = Time.get_ticks_msec() / 1000.0 + 0.36
 			for npc: Dictionary in npcs:
 				if int(npc.index) == int(event.get("npc_index", -1)): npc.direction = int(event.get("direction", 0))
-			if int(event.get("player_id", -1)) == int(player.get("player_id", -2)):
+			if kind != "companion_attack" and int(event.get("player_id", -1)) == int(player.get("player_id", -2)):
 				var index: int = int(event.get("npc_index", -1))
 				var health: Dictionary = npc_health.get(index, {"percent": 100}) as Dictionary
 				health["until"] = Time.get_ticks_msec() + 8000
@@ -1649,7 +1676,7 @@ func _action_sound(event: Dictionary, kind: String) -> void:
 			if int(peer.get("player_id", -2)) == int(event.get("player_id", -1)):
 				var graphics: Array = peer.get("equipment_graphics", []) as Array
 				game.sfx.weapon(int(graphics[8]) if graphics.size() > 8 else 0)
-	elif kind in ["player_damage", "npc_attack"]:
+	elif kind in ["player_damage", "npc_attack", "companion_attack"]:
 		game.sfx.play_named("Spikes" if event.get("source", "") == "spike" else "PunchAttack", "npc")
 		if bool(event.get("dead", false)): game.sfx.play_named("Dead", "death")
 	elif kind in ["equip", "unequip", "drop", "item_junk"]: game.sfx.play_named("InventoryPlace", "inventory")

@@ -1,0 +1,355 @@
+--- a/src/character.cpp
++++ b/src/character.cpp
+@@ -618,6 +618,7 @@
+ 
+ void Character::Attack(Direction direction)
+ {
++	if (!this->BalanceCanEquip(this->world->eif->Get(this->paperdoll[Weapon]))) return;
+ 	this->map->Attack(this, direction);
+ }
+ 
+@@ -949,7 +950,7 @@
+ {
+ 	const ESF_Data &spell = world->esf->Get(this->spell_id);
+ 
+-	if (spell.id == 0 || spell.type == ESF::Bard)
++	if (spell.id == 0 || spell.type == ESF::Bard || !this->BalanceCanCast(this->spell_id))
+ 	{
+ 		this->CancelSpell();
+ 		return;
+@@ -968,7 +969,7 @@
+ 	switch (spell_target)
+ 	{
+ 		case TargetSelf:
+-			if ((spell_id == 14 || spell_id == 21) && spell.type == ESF::Damage)
++			if (this->BalanceAreaRadius(spell_id) > 0 && spell.type == ESF::Damage)
+ 			{
+ 				this->map->SpellAreaAttack(this, spell_id);
+ 				break;
+@@ -1037,6 +1038,72 @@
+ 		cooldown = 0.0;
+ 
+ 	return cooldown;
++}
++
++bool Character::BalanceCanEquip(const EIF_Data& item) const
++{
++	if (!this->world->config["BalanceRevamp"] || item.id == 0) return true;
++	if (item.id == 491 && this->SourceDutyAccess() == 0) return false;
++	const ECF_Data& ecf = this->world->ecf->Get(this->clas);
++	return this->level >= item.levelreq
++	 && (!item.classreq || this->clas == item.classreq || ecf.base == item.classreq)
++	 && (item.type != EIF::Armor || item.gender == this->gender);
++}
++
++bool Character::BalanceCanCast(unsigned short id) const
++{
++	if (!this->world->config["BalanceRevamp"]) return true;
++	if (this->SourceDutyAccess() > 0) return true;
++	std::string prefix = "BalanceSpell." + util::to_string(id) + ".";
++	auto required = this->world->config.find(prefix + "level");
++	if (required == this->world->config.end() || this->level < int(required->second)) return false;
++	std::string allowed = this->world->config[prefix + "classes"];
++	if (allowed.empty()) return true;
++	const ECF_Data& ecf = this->world->ecf->Get(this->clas);
++	for (const auto& value : util::explode(',', allowed))
++	{
++		int clas = util::to_int(value);
++		if (clas > 0 && (this->clas == clas || ecf.base == clas)) return true;
++	}
++	return false;
++}
++
++int Character::BalanceAreaRadius(unsigned short id) const
++{
++	if (!this->world->config["BalanceRevamp"]) return (id == 14 || id == 21) ? 2 : 0;
++	return util::clamp<int>(this->world->config["BalanceSpell." + util::to_string(id) + ".radius"], 0, 2);
++}
++
++int Character::BalanceAreaTargets(unsigned short id) const
++{
++	if (!this->world->config["BalanceRevamp"]) return 5;
++	return util::clamp<int>(this->world->config["BalanceSpell." + util::to_string(id) + ".targets"], 1, 5);
++}
++
++int Character::SpellDamageAmount(unsigned short id, bool maximum)
++{
++	const ESF_Data& spell = this->world->esf->Get(id);
++	int attack = maximum ? this->maxdam : this->mindam;
++	int base = maximum ? spell.maxdam : spell.mindam;
++	if (!this->world->config["BalanceRevamp"]) return attack + base + this->SpellLevel(id);
++	int clas = this->clas == 0 ? 1 : this->clas;
++	double scale = this->world->config["Balance." + util::to_string(clas) + ".spell_scale"];
++	int amount = int(attack * std::max(1.0, scale)) + base + 2 * std::min<int>(10, this->SpellLevel(id));
++	int radius = this->BalanceAreaRadius(id);
++	if (radius > 0) amount = int(amount * (radius == 1 ? 0.8 : 0.6));
++	return util::clamp<int>(amount, 1, 32000);
++}
++
++int Character::SpellHealAmount(unsigned short id)
++{
++	const ESF_Data& spell = this->world->esf->Get(id);
++	if (!this->world->config["BalanceRevamp"]) return spell.hp + this->SpellLevel(id);
++	int clas = this->clas == 0 ? 1 : this->clas;
++	std::string prefix = "Balance." + util::to_string(clas) + ".heal_";
++	int bonus = int(this->adj_wis * double(this->world->config[prefix + "wis"])
++	 + this->adj_intl * double(this->world->config[prefix + "int"])
++	 + this->adj_cha * double(this->world->config[prefix + "cha"]));
++	return util::clamp<int>(spell.hp + bonus + 2 * std::min<int>(10, this->SpellLevel(id)), 0, 32000);
+ }
+ 
+ bool Character::Unequip(short item, unsigned char subloc)
+@@ -1114,6 +1181,7 @@
+ 	}
+ 
+ 	const EIF_Data &eif = this->world->eif->Get(item);
++	if (!this->BalanceCanEquip(eif)) return false;
+ 	const ECF_Data &ecf = this->world->ecf->Get(this->clas);
+ 
+ 	if (eif.type == EIF::Armor && eif.gender != this->gender)
+@@ -1538,6 +1606,7 @@
+ void Character::CalculateStats(bool trigger_quests)
+ {
+ 	const ECF_Data& ecf = world->ecf->Get(this->clas);
++	int family = (this->world->config["BalanceRevamp"] && this->clas == 0) ? 4 : ecf.type;
+ 
+ 	this->adj_str = this->str + ecf.str;
+ 	this->adj_intl = this->intl + ecf.intl;
+@@ -1573,6 +1642,7 @@
+ 		{
+ 			const EIF_Data& item = this->world->eif->Get(i);
+ 			this->weight += item.weight;
++			if (!this->BalanceCanEquip(item)) continue;
+ 			this->maxhp += item.hp;
+ 			this->maxtp += item.tp;
+ 			this->mindam += item.mindam;
+@@ -1597,7 +1667,9 @@
+ 	std::unordered_map<std::string, double> formula_vars;
+ 	this->FormulaVars(formula_vars);
+ 
+-	this->maxhp += static_cast<short>(rpn_eval(rpn_parse(this->world->formulas_config["hp"]), formula_vars));
++	std::string hp_formula = this->world->config["BalanceRevamp"] ? "class." + util::to_string(family) + ".hp" : "hp";
++	std::string tp_formula = this->world->config["BalanceRevamp"] ? "class." + util::to_string(family) + ".tp" : "tp";
++	this->maxhp += static_cast<short>(rpn_eval(rpn_parse(this->world->formulas_config[hp_formula]), formula_vars));
+     // Optional operator test-character HP floors; ordinary characters retain the
+     // original formula and equipment bonuses. Values never come from packets.
+     auto hp_floors = this->world->config.find("CharacterHPFloors");
+@@ -1610,7 +1682,7 @@
+                 this->maxhp = std::max<short>(this->maxhp, util::clamp<int>(util::to_int(parts[1]), 1, 32000));
+         }
+     }
+-	this->maxtp += static_cast<short>(rpn_eval(rpn_parse(this->world->formulas_config["tp"]), formula_vars));
++	this->maxtp += static_cast<short>(rpn_eval(rpn_parse(this->world->formulas_config[tp_formula]), formula_vars));
+ 	this->maxsp += static_cast<short>(rpn_eval(rpn_parse(this->world->formulas_config["sp"]), formula_vars));
+ 	this->maxweight = static_cast<short>(rpn_eval(rpn_parse(this->world->formulas_config["weight"]), formula_vars));
+ 
+@@ -1641,13 +1713,13 @@
+ 
+ 	if (this->world->config["UseClassFormulas"])
+ 	{
+-		auto dam = static_cast<short>(rpn_eval(rpn_parse(this->world->formulas_config["class." + util::to_string(ecf.type) + ".damage"]), formula_vars));
++		auto dam = static_cast<short>(rpn_eval(rpn_parse(this->world->formulas_config["class." + util::to_string(family) + ".damage"]), formula_vars));
+ 
+ 		this->mindam += dam;
+ 		this->maxdam += dam;
+-		this->armor += static_cast<short>(rpn_eval(rpn_parse(this->world->formulas_config["class." + util::to_string(ecf.type) + ".defence"]), formula_vars));
+-		this->accuracy += static_cast<short>(rpn_eval(rpn_parse(this->world->formulas_config["class." + util::to_string(ecf.type) + ".accuracy"]), formula_vars));
+-		this->evade += static_cast<short>(rpn_eval(rpn_parse(this->world->formulas_config["class." + util::to_string(ecf.type) + ".evade"]), formula_vars));
++		this->armor += static_cast<short>(rpn_eval(rpn_parse(this->world->formulas_config["class." + util::to_string(family) + ".defence"]), formula_vars));
++		this->accuracy += static_cast<short>(rpn_eval(rpn_parse(this->world->formulas_config["class." + util::to_string(family) + ".accuracy"]), formula_vars));
++		this->evade += static_cast<short>(rpn_eval(rpn_parse(this->world->formulas_config["class." + util::to_string(family) + ".evade"]), formula_vars));
+ 	}
+ 	else
+ 	{
+@@ -1829,6 +1901,17 @@
+ 
+ void Character::Reset()
+ {
++	if (this->world->config["BalanceRevamp"])
++	{
++		this->statpoints = util::clamp<int>(this->statpoints + this->str + this->intl + this->wis + this->agi + this->con + this->cha, 0, 32000);
++		this->str = this->intl = this->wis = this->agi = this->con = this->cha = 0;
++		int refunded = this->skillpoints;
++		UTIL_FOREACH_REF(this->spells, spell) { refunded += spell.level; spell.level = 0; }
++		this->skillpoints = util::clamp<int>(refunded, 0, 32000);
++		this->CancelSpell();
++		this->CalculateStats();
++		return;
++	}
+ 	this->str = 0;
+ 	this->intl = 0;
+ 	this->wis = 0;
+--- a/src/character.hpp
++++ b/src/character.hpp
+@@ -330,6 +330,12 @@
+ 		void CancelSpell();
+ 		void SpellAct();
+ 		double SpellCooldownTime() const;
++		bool BalanceCanEquip(const EIF_Data& item) const;
++		bool BalanceCanCast(unsigned short spell_id) const;
++		int BalanceAreaRadius(unsigned short spell_id) const;
++		int BalanceAreaTargets(unsigned short spell_id) const;
++		int SpellDamageAmount(unsigned short spell_id, bool maximum);
++		int SpellHealAmount(unsigned short spell_id);
+ 		bool Unequip(short item, unsigned char subloc);
+ 		bool Equip(short item, unsigned char subloc);
+ 		bool InRange(unsigned char x, unsigned char y) const;
+--- a/src/eoserv_config.cpp
++++ b/src/eoserv_config.cpp
+@@ -55,6 +55,7 @@
+ 	eoserv_config_default(config, "PingRate"           , 60.0);
+ 	eoserv_config_default(config, "EnforceSequence"    , true);
+ 	eoserv_config_default(config, "EnforceTimestamps"  , true);
++	eoserv_config_default(config, "BalanceRevamp"     , false);
+ 	eoserv_config_default(config, "AllowMovingSpells"   , false);
+ 	eoserv_config_default(config, "EnforceSessions"    , true);
+ 	eoserv_config_default(config, "PasswordSalt"       , "ChangeMe");
+--- a/src/handlers/Item.cpp
++++ b/src/handlers/Item.cpp
+@@ -513,7 +513,7 @@
+         {
+             packet.AddChar(character->weight);
+             packet.AddChar(character->maxweight);
+-            for (int id : {375, 1, 421})
++            for (int id : {375, 1, bool(character->world->config["BalanceRevamp"]) ? 21 : 421})
+             {
+                 packet.AddShort(id);
+                 packet.AddInt(character->HasItem(id));
+@@ -524,8 +524,9 @@
+     const std::string code = util::uppercase(util::trim(reader.GetBreakString()));
+     if (code != "KCPD108") { reply(1); return; }
+     if (character->trading || !character->CanInteractItems()) { reply(3); return; }
+-    const int ids[] = {375, 1, 421};
+-    const int amounts[] = {1000, 50000, 1};
++    const bool balanced = character->world->config["BalanceRevamp"];
++    const int ids[] = {375, 1, balanced ? 21 : 421};
++    const int amounts[] = {balanced ? 40 : 1000, balanced ? 1000 : 50000, 1};
+     const int maximum = character->world->config["MaxItem"];
+     for (int i = 0; i < 3; ++i)
+         if (ids[i] >= int(character->world->eif->data.size()) || amounts[i] > maximum - character->HasItem(ids[i]))
+--- a/src/handlers/Spell.cpp
++++ b/src/handlers/Spell.cpp
+@@ -33,7 +33,7 @@
+ 	character->CancelSpell();
+ 	character->spell_timestamp = timestamp;
+ 
+-	if (character->HasSpell(spell_id))
++	if (character->HasSpell(spell_id) && character->BalanceCanCast(spell_id))
+ 	{
+ 		const ESF_Data& spell = character->world->esf->Get(spell_id);
+ 
+--- a/src/handlers/StatSkill.cpp
++++ b/src/handlers/StatSkill.cpp
+@@ -76,7 +76,7 @@
+ 		{
+ 			if (spell->id == spell_id)
+ 			{
+-				if (character->level < spell->levelreq || character->HasItem(1) < spell->cost
++				if (!character->BalanceCanCast(spell_id) || character->level < spell->levelreq || character->HasItem(1) < spell->cost
+ 				 || character->display_str < spell->strreq || character->display_intl < spell->intreq
+ 				 || character->display_wis < spell->wisreq || character->display_agi < spell->agireq
+ 				 || character->display_con < spell->conreq || character->display_cha < spell->chareq)
+@@ -89,7 +89,8 @@
+ 					return;
+ 				}
+ 
+-				if (spell->classreq != 0 && character->clas != spell->classreq)
++				if (spell->classreq != 0 && character->clas != spell->classreq
++				 && (!character->world->config["BalanceRevamp"] || character->world->ecf->Get(character->clas).base != spell->classreq))
+ 				{
+ 					PacketBuilder reply(PACKET_STATSKILL, PACKET_REPLY, 4);
+ 					reply.AddShort(SKILLMASTER_WRONG_CLASS);
+--- a/src/map.cpp
++++ b/src/map.cpp
+@@ -1940,7 +1940,7 @@
+ 
+ 	from->tp -= spell.tp;
+ 
+-	int hpgain = (spell.hp + from->SpellLevel(spell_id));
++	int hpgain = from->SpellHealAmount(spell_id);
+ 
+ 	if (this->world->config["LimitDamage"])
+ 		hpgain = std::min(hpgain, from->maxhp - from->hp);
+@@ -1954,7 +1954,7 @@
+ 	PacketBuilder builder(PACKET_SPELL, PACKET_TARGET_SELF, 15);
+ 	builder.AddShort(from->PlayerID());
+ 	builder.AddShort(spell_id);
+-	builder.AddInt((spell.hp + from->SpellLevel(spell_id)));
++	builder.AddInt(from->SpellHealAmount(spell_id));
+ 	builder.AddChar(static_cast<unsigned char>(util::clamp<int>(static_cast<int>(double(from->hp) / double(from->maxhp) * 100.0), 0, 100)));
+ 
+ 	UTIL_FOREACH(this->characters, character)
+@@ -1973,7 +1973,7 @@
+ void Map::SpellAreaAttack(Character *from, unsigned short spell_id)
+ {
+ 	const ESF_Data& spell = from->world->esf->Get(spell_id);
+-	if ((spell_id != 14 && spell_id != 21) || !spell || spell.type != ESF::Damage
++	if (!from->BalanceCanCast(spell_id) || from->BalanceAreaRadius(spell_id) <= 0 || !spell || spell.type != ESF::Damage
+ 	 || !from->CanInteractCombat() || from->hp <= 0 || from->tp < spell.tp)
+ 		return;
+ 
+@@ -1984,11 +1984,11 @@
+ 	{
+ 		int dx = int(npc->x) - int(from->x), dy = int(npc->y) - int(from->y);
+ 		if (npc->alive && (npc->ENF().type == ENF::Passive || npc->ENF().type == ENF::Aggressive)
+-		 && std::abs(dx) <= 2 && std::abs(dy) <= 2)
++		 && std::abs(dx) <= from->BalanceAreaRadius(spell_id) && std::abs(dy) <= from->BalanceAreaRadius(spell_id))
+ 			candidates.push_back(std::make_pair(dx * dx + dy * dy, npc->index));
+ 	}
+ 	std::sort(candidates.begin(), candidates.end());
+-	if (candidates.size() > 5) candidates.resize(5);
++	if (candidates.size() > std::size_t(from->BalanceAreaTargets(spell_id))) candidates.resize(from->BalanceAreaTargets(spell_id));
+ 
+ 	from->tp -= spell.tp; // Exactly one native cost, including an empty area.
+ 	unsigned char hits = 0;
+@@ -2027,7 +2027,7 @@
+ 	{
+ 		if (consume_tp) from->tp -= spell.tp;
+ 
+-		int amount = util::rand(from->mindam + spell.mindam + from->SpellLevel(spell_id), from->maxdam + spell.maxdam + from->SpellLevel(spell_id));
++		int amount = util::rand(from->SpellDamageAmount(spell_id, false), from->SpellDamageAmount(spell_id, true));
+ 		double rand = util::rand(0.0, 1.0);
+ 
+ 		bool critical = rand < static_cast<double>(this->world->config["CriticalRate"]);
+@@ -2076,7 +2076,7 @@
+ 
+ 		from->tp -= spell.tp;
+ 
+-		int amount = util::rand(from->mindam + spell.mindam + from->SpellLevel(spell_id), from->maxdam + spell.maxdam + from->SpellLevel(spell_id));
++		int amount = util::rand(from->SpellDamageAmount(spell_id, false), from->SpellDamageAmount(spell_id, true));
+ 		double rand = util::rand(0.0, 1.0);
+ 
+ 		bool critical = rand < static_cast<double>(this->world->config["CriticalRate"]);
+@@ -2157,8 +2157,8 @@
+ 	{
+ 		from->tp -= spell.tp;
+ 
+-		int displayhp = (spell.hp + from->SpellLevel(spell_id));
+-		int hpgain = (spell.hp + from->SpellLevel(spell_id));
++		int displayhp = from->SpellHealAmount(spell_id);
++		int hpgain = from->SpellHealAmount(spell_id);
+ 
+ 		if (this->world->config["LimitDamage"])
+ 			hpgain = std::min(hpgain, victim->maxhp - victim->hp);
+@@ -2214,7 +2214,7 @@
+ 
+ 	from->tp -= spell.tp;
+ 
+-	int displayhp = (spell.hp + from->SpellLevel(spell_id));
++	int displayhp = from->SpellHealAmount(spell_id);
+ 
+ 	if (!from->CanInteractCombat() && !(from->CanInteractPKCombat() && (from->map->pk || (this->world->config["GlobalPK"] && !this->world->PKExcept(this->id)))))
+ 	{
+@@ -2231,10 +2231,10 @@
+ 
+ 	UTIL_FOREACH(from->party->members, member)
+ 	{
+-		if (member->map != from->map)
++		if (member->map != from->map || (this->world->config["BalanceRevamp"] && !from->InRange(member)))
+ 			continue;
+ 
+-		int hpgain = (spell.hp + from->SpellLevel(spell_id));
++		int hpgain = from->SpellHealAmount(spell_id);
+ 
+ 		if (this->world->config["LimitDamage"])
+ 			hpgain = std::min(hpgain, member->maxhp - member->hp);

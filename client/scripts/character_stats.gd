@@ -70,6 +70,8 @@ func build(owner_game: Node, parent: Control) -> void:
 		classic_fields[key] = label
 	points = game._label(card, "", Vector2(40, 380), 18, game.GOLD)
 	details = game._label(card, "Equipment bonuses are included. Use + to spend earned stat points.", Vector2(40, 420), 17, game.MUTED)
+	details.size = Vector2(970,72)
+	details.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	panel.visibility_changed.connect(func() -> void:
 		if not panel.visible: stop_repeat()
 	)
@@ -180,15 +182,16 @@ func refresh() -> void:
 			bonuses.append("%s +%d" % [key.substr(0, 3).to_upper(), int(item.get(key, 0))])
 			if int(item.get(key + "_requirement", 0)) > 0: requirements.append("%s %d" % [key.capitalize(), int(item[key + "_requirement"])])
 		if int(item.get("level_requirement", 0)) > 0: requirements.append("Level %d" % int(item.level_requirement))
-		if int(item.get("class_requirement", 0)) > 0:
-			var item_class: Dictionary = (game.online.catalog.get("classes", {}) as Dictionary).get(str(int(item.class_requirement)), {}) as Dictionary
-			requirements.append(str(item_class.get("name", "Class %d" % int(item.class_requirement))))
+		var professions: String = game.online.equipment_classes(item)
+		if not professions.is_empty(): requirements.append(professions)
 		var quantity: int = 0
 		for entry: Dictionary in game.online.inventory_items():
 			if int(entry.id) == game.online.item_id(item_kind): quantity = int(entry.amount)
 		item_heading.text += "  ·  Equipped" if item_is_equipped else "  ×%d" % quantity
 		if int(item.get("type", -1)) == 12: requirements.append("Female" if int(item.get("gender", 0)) == 0 else "Male")
 		item_body.text = "Damage  %d–%d\nArmor  +%d\n\nAccuracy  +%d\nEvade  +%d\n\nHP  +%d\nTP  +%d\n\n%s\n\nWeight  %d\n\nRequirements\n%s" % [int(item.get("min_damage", 0)), int(item.get("max_damage", 0)), int(item.get("armor", 0)), int(item.get("accuracy", 0)), int(item.get("evade", 0)), int(item.get("hp", 0)), int(item.get("tp", 0)), "\n".join(bonuses), int(item.get("weight", 0)), "\n".join(requirements) if not requirements.is_empty() else "None"]
+		if item.get("crafted", false): item_body.text += "\n\nCrafted definition · improved combat budget"
+		if str(item.get("archetype", "balanced")) != "balanced": item_body.text += "\nStyle: %s" % str(item.archetype).capitalize()
 	var p: Dictionary = game.online.player
 	var stats: Dictionary = p.get("stats", {}) as Dictionary
 	var hp: int = int(p.get("hp", 0))
@@ -199,6 +202,7 @@ func refresh() -> void:
 	vitals.update_experience(int(p.get("level", 0)), int(stats.get("experience", 0)))
 	var classes: Dictionary = game.online.catalog.get("classes", {}) as Dictionary
 	var profession: Dictionary = classes.get(str(int(stats.get("class_id", 0))), {}) as Dictionary
+	details.text = str(profession.get("build_hint", "Equipment bonuses are included. Use + to spend earned stat points."))
 	summary.text = "%s  ·  Level %d  ·  %s" % [str(p.get("name", "Player")), int(p.get("level", 0)), str(profession.get("name", "–"))]
 	points.text = "Stat points: %d     Skill points: %d     Max SP: %d" % [int(stats.get("stat_points", 0)), int(stats.get("skill_points", 0)), int(stats.get("max_sp", 0))]
 	for index: int in range(ATTRIBUTES.size()):

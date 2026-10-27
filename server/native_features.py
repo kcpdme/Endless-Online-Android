@@ -41,7 +41,8 @@ class NativeFeaturesMixin:
             self._near_service(context)
             if kind=='reset':
                 self.skillmaster_open(npc['index']);self.feature_context=context
-                return self._feature_reply(kind,notice='Reset all attributes and learned skills. Level-based points are refunded.')
+                from balance_rules import profile
+                return self._feature_reply(kind,notice='Rebuild attributes and skill training for free. Learned spells and all invested points are kept.' if profile() else 'Reset all attributes and learned skills. Level-based points are refunded.')
             family=47 if kind=='law' else 46
             self.send(family,13,number(npc['index'],2));r=Reader(self._wait_service(family,{13,3}))
             if len(r.rest())==2:raise EOError(self._priest_error(r.num(2)))
@@ -107,8 +108,10 @@ class NativeFeaturesMixin:
             values={k:r.num(2) for k in keys}
             if r.rest():raise EOError('Malformed reset acknowledgement')
             from eo_stats import update
-            update(self,values);self.spells=[];self.casting=None
-            return self._feature_reply(kind,notice='Attributes and skills reset. Your points are available again.',reset=True)
+            from balance_rules import profile
+            preserve=bool(profile())
+            update(self,values);self.spells=[dict(s,level=0) for s in self.spells] if preserve else [];self.casting=None
+            return self._feature_reply(kind,notice='Attributes and skill training refunded. Learned spells are kept.' if preserve else 'Attributes and skills reset. Your points are available again.',reset=True,preserved_spells=preserve)
         if kind=='law' and action in ('approve','divorce'):
             name=player_name(text)
             if name==self.state['self']['name'].lower():raise EOError('Choose another character')

@@ -1,0 +1,12 @@
+{
+  "checks": 21,
+  "class_build_guidance": true,
+  "level_45_equipment": true,
+  "live_native_catalog": true,
+  "result": "passed",
+  "scaled_spell_preview": true,
+  "json_class_membership_verified": true,
+  "own_class_staff_allowed": true,
+  "off_class_heal_locked": true,
+  "shared_clothing_requirements_visible": true
+}

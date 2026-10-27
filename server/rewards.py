@@ -27,7 +27,8 @@ class RewardsMixin:
         if status:
             raise EOError(ERRORS.get(status, 'The server could not redeem this code.'))
         result = self.snapshot()
-        result['reward_message'] = 'Rewards claimed! 1,000 Big Health Potions, 50,000 Gold and Lens of Truth are in your bag.'
+        from balance_rules import profile
+        result['reward_message'] = 'Rewards claimed! 40 Big Health Potions, 1,000 Gold and a starter Dagger are in your bag.' if profile() else 'Rewards claimed! 1,000 Big Health Potions, 50,000 Gold and Lens of Truth are in your bag.'
         return result
 
     def apply_reward_packet(self, family, action, payload):
@@ -40,7 +41,8 @@ class RewardsMixin:
             raise EOError('Invalid reward acknowledgement; reconnect to check your bag.')
         weight, maximum = r.num(), r.num()
         rewards = [(r.num(2), r.num(4)) for _ in range(3)]
-        if [item for item, amount in rewards] != [375, 1, 421]:
+        from balance_rules import profile
+        if [item for item, amount in rewards] != [375, 1, 21 if profile() else 421]:
             raise EOError('Unexpected reward acknowledgement; reconnect to check your bag.')
         for item, amount in rewards:
             self._set_amount(item, amount)

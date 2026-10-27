@@ -1,0 +1,12 @@
+{
+  "result": "passed",
+  "public_wss_to_native": true,
+  "fresh_dev_account_registration_login_character_creation": true,
+  "balance_catalog_version": 1,
+  "item_definitions": 532,
+  "spell_definitions": 32,
+  "specialist_outfit_values_match": true,
+  "all_class_build_guidance_present": true,
+  "native_level_zero_starter_equip": true,
+  "existing_accounts_modified": false
+}

@@ -50,7 +50,7 @@ func _actors() -> Array[Dictionary]:
 		if not online.npc_pose_visible(graphic, str(pose.state)): continue
 		var info: Dictionary = (online.catalog.get("npcs", {}) as Dictionary).get(str(int(record.id)), {})
 		var layout: Dictionary = online.npc_name_layout(graphic, str(pose.direction), false)
-		actors.append({"key":"npc:%d" % int(record.index), "id":-int(record.index), "text":str(info.get("name", "NPC")), "pose":pose, "graphic":graphic, "top":layout.classic_top, "font":maxi(1,roundi(10.5*game.camera.zoom.x)), "color":game.TEXT, "health":online.npc_health_fraction(int(record.index)), "sort":game.depth(Vector2i(int(record.x),int(record.y)))*100+70})
+		actors.append({"key":"npc:%d" % int(record.index), "id":-int(record.index), "text":str(info.get("name", "NPC")) + (" · Companion" if bool(info.get("is_companion", false)) else ""), "pose":pose, "graphic":graphic, "top":layout.classic_top, "font":maxi(1,roundi(10.5*game.camera.zoom.x)), "color":game.TEXT, "health":online.npc_health_fraction(int(record.index)), "sort":game.depth(Vector2i(int(record.x),int(record.y)))*100+70})
 	var own_id: int = int(online.player.get("player_id", -1))
 	for record: Dictionary in [online.player] + online.players:
 		var pid: int = int(record.get("player_id", -1))
