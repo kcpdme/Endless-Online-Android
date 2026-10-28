@@ -1,6 +1,7 @@
 # Class and equipment revamp for levels 1–50
 
-Profile 6 sets the requested sixteen pet appearances across five equal-within-tier combat budgets
+Profile 7 sets pet hatch/summon levels to 5 / 10 / 20 / 30 / 40 and retains
+the requested sixteen pet appearances across five equal-within-tier combat budgets
 and the Aeven Eggkeeper. See [Summoner pet tiers](SUMMONER_PET_TIERS.md) for
 current acquisition, balance and lifecycle rules.
 

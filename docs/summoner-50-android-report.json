@@ -1,0 +1,13 @@
+{
+  "result": "passed",
+  "version": "0.45.2",
+  "version_code": 82,
+  "apk_sha256": "163ba238e19b8cba5abf44d6ae3e00d4411b42e443129aae81e51ac60d4b65b4",
+  "signer_sha256": "fbf80de525cf74dbedbcb1ae73899c6fe9a55ea9661b31e93637f074d7e979ed",
+  "signature_verified": true,
+  "alignment_16kb_verified": true,
+  "embedded_catalog_matches": true,
+  "balance_version": 7,
+  "all_sixteen_hatch_and_summon_levels_match": true,
+  "aeven_map_matches": true
+}

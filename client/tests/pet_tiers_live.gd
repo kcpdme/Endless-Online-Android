@@ -28,7 +28,7 @@ func run() -> void:
 	if failed: game.queue_free(); await process_frame; quit(1); return
 	c.character_list.select(0); c._enter_selected()
 	check(await wait_for(func() -> bool: return c.active and c.streaming and c.session.is_idle()), "Regular Summoner enters native world")
-	check(int(c.player.stats.admin) == 0 and int(c.catalog.balance_version) == 6, "Tier catalog reaches a regular character")
+	check(int(c.player.stats.admin) == 0 and int(c.catalog.balance_version) == 7, "Tier catalog reaches a regular character")
 	var keeper: Dictionary = {}
 	for npc: Dictionary in c.npcs:
 		if int(npc.id) == 321: keeper = npc

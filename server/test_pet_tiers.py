@@ -4,7 +4,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 from pet_catalog import TIERS,ROSTER,EGGS,COMPANIONS,SUMMON_SPELLS,EGGKEEPER,egg_stock
-from balance_rules import check_egg_purchase
+from balance_rules import check_egg_purchase,check_hatch
 from eo_session import EOError
 from configure_pet_shop import repair
 ROOT=Path(__file__).resolve().parents[1]
@@ -12,6 +12,15 @@ sys.path.insert(0,str(ROOT/'tools'))
 from import_eo import parse_emf
 
 class PetTierTests(unittest.TestCase):
+    def test_requested_hatch_level_boundaries(self):
+        rules=dict(eggs={str(i):e for i,e in EGGS.items()},mortal_spirit_bonds=True)
+        s=SimpleNamespace(stats=dict(class_id=7,level=0),spells=[])
+        with patch('balance_rules.profile',return_value=rules):
+            for tier,t in TIERS.items():
+                ident=next(i for i,e in EGGS.items() if e['tier']==tier)
+                s.stats['level']=t['level']-1
+                with self.assertRaisesRegex(EOError,'Reach level'):check_hatch(s,ident)
+                s.stats['level']=t['level'];check_hatch(s,ident)
     def test_requested_roster_and_shop_order_match_exactly(self):
         expected={
             'normal':['Penguin','Fox','Goat'],
@@ -22,6 +31,7 @@ class PetTierTests(unittest.TestCase):
         }
         actual={tier:[EGGS[i]['species'] for i in egg_stock() if EGGS[i]['tier']==tier] for tier in TIERS}
         self.assertEqual(actual,expected)
+        self.assertEqual([t['level'] for t in TIERS.values()],[5,10,20,30,40])
         sources={'Carnivo':121,'Cursed Mask':134,'Headless Hunter':138,'Twin Demon':140,'Reaper':9,'Banshi':209,'Wraith':113,'Skeleton':17}
         for egg in EGGS.values():
             if egg['species'] in sources:self.assertEqual(egg['npc_id'],sources[egg['species']])
@@ -30,15 +40,15 @@ class PetTierTests(unittest.TestCase):
         old=json.loads((ROOT/'work/pet-tiers/runtime/data/balance-profile.json').read_text())
         for ident,before in old['eggs'].items():
             after=EGGS[int(ident)]
-            for key in ('tier','level','price','spell_id'):self.assertEqual(before[key],after[key],(ident,key))
+            for key in ('tier','price','spell_id'):self.assertEqual(before[key],after[key],(ident,key))
             pet=COMPANIONS[after['spell_id']];before_pet=old['companions'][str(after['spell_id'])]
             for key in ('npc_id','power','accuracy','hit_cap','upkeep'):self.assertEqual(before_pet[key],pet[key],(ident,key))
             before_spell=old['spells'][str(after['spell_id'])];after_spell=SUMMON_SPELLS[after['spell_id']]
             self.assertEqual((before_spell['tp'],before_spell['cast_time']),(after_spell[3],after_spell[4]))
-    @unittest.skipUnless((ROOT/'work/pet-roster/runtime/data/balance-profile.json').exists(),'rewritten profile unavailable')
+    @unittest.skipUnless((ROOT/'work/summoner-50/runtime/data/balance-profile.json').exists(),'rewritten profile unavailable')
     def test_non_pet_native_definitions_and_world_maps_are_preserved(self):
         from configure_balance import records
-        before=ROOT/'work/pet-tiers/runtime/data';after=ROOT/'work/pet-roster/runtime/data'
+        before=ROOT/'work/pet-tiers/runtime/data';after=ROOT/'work/summoner-50/runtime/data'
         for name in ('pub/dat001.ecf','formulas.ini','aster-vale-skills.ini'):
             self.assertEqual((before/name).read_bytes(),(after/name).read_bytes(),name)
         for name,magic,size,limit in [('dat001.eif',b'EIF',58,608),('dtn001.enf',b'ENF',39,305)]:
@@ -90,9 +100,9 @@ class PetTierTests(unittest.TestCase):
         self.assertEqual(repair(new),new)
         before,after=parse_emf(raw,5),parse_emf(new,5)
         npc=after['npcs'].pop();self.assertEqual(npc,dict(x=35,y=46,id=EGGKEEPER['id'],spawn_type=7,respawn=180,amount=1));self.assertEqual(before,after)
-    @unittest.skipUnless((ROOT/'work/pet-roster/runtime/data/balance-profile.json').exists(),'installed profile unavailable')
+    @unittest.skipUnless((ROOT/'work/summoner-50/runtime/data/balance-profile.json').exists(),'installed profile unavailable')
     def test_all_shop_eggs_have_same_tier_price_no_sell_and_no_skillmaster_bypass(self):
-        r=ROOT/'work/pet-roster/runtime';p=json.loads((r/'data/balance-profile.json').read_text());self.assertEqual(p['version'],6)
+        r=ROOT/'work/summoner-50/runtime';p=json.loads((r/'data/balance-profile.json').read_text());self.assertEqual(p['version'],7)
         import re
         text=(r/'data/aster-vale-shops.ini').read_text();trade=next(raw for key,raw in re.findall(r'^(\d+)\.trade\s*=\s*(.*)$',text,re.M) if int(key)==EGGKEEPER['id']);values=list(map(int,trade.split(',')))
         self.assertEqual(values,[n for ident in egg_stock() for n in (ident,EGGS[ident]['price'],0)])
@@ -101,13 +111,13 @@ class PetTierTests(unittest.TestCase):
             item=p['items'][str(ident)];self.assertEqual(item['special'],4);self.assertEqual(item['acquisition']['buy'],[EGGKEEPER['id']]);self.assertFalse(item['acquisition'].get('craft'))
             self.assertEqual(p['spells'][str(egg['spell_id'])]['max_level'],0)
             for raw in re.findall(r'^\d+\.learn\s*=\s*(.*)$',skilltext,re.M):self.assertNotIn(egg['spell_id'],list(map(int,raw.split(',')))[::14])
-    @unittest.skipUnless((ROOT/'work/pet-roster/runtime/data/balance-profile.json').exists(),'installed profile unavailable')
+    @unittest.skipUnless((ROOT/'work/summoner-50/runtime/data/balance-profile.json').exists(),'installed profile unavailable')
     def test_combined_summoner_budget_stays_within_the_class_cohort(self):
         from balance_model import benchmarks
-        p=json.loads((ROOT/'work/pet-roster/runtime/data/balance-profile.json').read_text());rows=benchmarks(p)
+        p=json.loads((ROOT/'work/summoner-50/runtime/data/balance-profile.json').read_text());rows=benchmarks(p)
         for level in (1,8,15,25,35,45):
             cohort=[r for r in rows if r['level']==level];summoner=next(r for r in cohort if r['class_id']==7);others=[r['burst_dps'] for r in cohort if r['class_id']!=7]
-            self.assertGreater(summoner['companion_dps'],0);self.assertLessEqual(summoner['burst_dps'],max(others)*1.10)
-            self.assertGreaterEqual(summoner['burst_dps'],max(others)*.70)
+            self.assertEqual(summoner['companion_dps']>0,level>=TIERS['normal']['level']);self.assertLessEqual(summoner['burst_dps'],max(others)*1.10)
+            if level>=TIERS['rare']['level']:self.assertGreaterEqual(summoner['burst_dps'],max(others)*.70)
 
 if __name__=='__main__':unittest.main()

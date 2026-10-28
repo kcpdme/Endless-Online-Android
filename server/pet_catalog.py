@@ -1,9 +1,9 @@
 """Pet appearances share a tier's combat budget, price and TP economy."""
 
 TIERS = {
-    'normal': dict(name='Normal',rank=0,level=1,price=100,tp=10,chant=1,upkeep=1,power=.65,accuracy=0,hit_cap=.82,color='b8c5c9'),
-    'rare': dict(name='Rare',rank=1,level=8,price=600,tp=18,chant=1,upkeep=2,power=1.05,accuracy=3,hit_cap=.86,color='78b9ee'),
-    'epic': dict(name='Epic',rank=2,level=25,price=2000,tp=30,chant=2,upkeep=3,power=1.20,accuracy=6,hit_cap=.90,color='bf94ef'),
+    'normal': dict(name='Normal',rank=0,level=5,price=100,tp=10,chant=1,upkeep=1,power=.65,accuracy=0,hit_cap=.82,color='b8c5c9'),
+    'rare': dict(name='Rare',rank=1,level=10,price=600,tp=18,chant=1,upkeep=2,power=1.05,accuracy=3,hit_cap=.86,color='78b9ee'),
+    'epic': dict(name='Epic',rank=2,level=20,price=2000,tp=30,chant=2,upkeep=3,power=1.20,accuracy=6,hit_cap=.90,color='bf94ef'),
     'legend': dict(name='Legend',rank=3,level=30,price=6000,tp=38,chant=2,upkeep=4,power=1.25,accuracy=9,hit_cap=.93,color='edb75b'),
     'mythic': dict(name='Mythic',rank=4,level=40,price=12000,tp=45,chant=2,upkeep=5,power=1.30,accuracy=12,hit_cap=.95,color='f08093'),
 }

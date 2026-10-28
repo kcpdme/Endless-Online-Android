@@ -1,0 +1,9 @@
+{
+  "result": "passed",
+  "isolated_database": true,
+  "live_player_database_opened": false,
+  "all_39_locker_slots_loaded": true,
+  "withdraw_and_deposit_of_spare_clothes_pass": true,
+  "original_bag_and_locker_preserved": true,
+  "weight_capacity_valid": true
+}

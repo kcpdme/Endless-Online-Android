@@ -1,5 +1,5 @@
 {
-  "version": 6,
+  "version": 7,
   "equipment": [
     {
       "id": 20,
@@ -21120,7 +21120,7 @@
       "min_damage": 0,
       "max_damage": 0,
       "hp": 0,
-      "level_requirement": 8,
+      "level_requirement": 10,
       "allowed_classes": [
         7
       ],
@@ -21250,7 +21250,7 @@
       "min_damage": 0,
       "max_damage": 0,
       "hp": 0,
-      "level_requirement": 25,
+      "level_requirement": 20,
       "allowed_classes": [
         7
       ],
@@ -21726,7 +21726,7 @@
       "min_damage": 0,
       "max_damage": 0,
       "hp": 0,
-      "level_requirement": 1,
+      "level_requirement": 5,
       "allowed_classes": [
         7
       ],
@@ -21766,7 +21766,7 @@
       "min_damage": 0,
       "max_damage": 0,
       "hp": 0,
-      "level_requirement": 1,
+      "level_requirement": 5,
       "allowed_classes": [
         7
       ],
@@ -21806,7 +21806,7 @@
       "min_damage": 0,
       "max_damage": 0,
       "hp": 0,
-      "level_requirement": 1,
+      "level_requirement": 5,
       "allowed_classes": [
         7
       ],
@@ -21846,7 +21846,7 @@
       "min_damage": 0,
       "max_damage": 0,
       "hp": 0,
-      "level_requirement": 8,
+      "level_requirement": 10,
       "allowed_classes": [
         7
       ],
@@ -21886,7 +21886,7 @@
       "min_damage": 0,
       "max_damage": 0,
       "hp": 0,
-      "level_requirement": 8,
+      "level_requirement": 10,
       "allowed_classes": [
         7
       ],
@@ -21926,7 +21926,7 @@
       "min_damage": 0,
       "max_damage": 0,
       "hp": 0,
-      "level_requirement": 25,
+      "level_requirement": 20,
       "allowed_classes": [
         7
       ],
@@ -21966,7 +21966,7 @@
       "min_damage": 0,
       "max_damage": 0,
       "hp": 0,
-      "level_requirement": 25,
+      "level_requirement": 20,
       "allowed_classes": [
         7
       ],
@@ -22240,7 +22240,7 @@
       "name": "Wolf Spirit Egg",
       "species": "Wolf",
       "spell_id": 28,
-      "level": 8,
+      "level": 10,
       "npc_id": 74,
       "chance": 3,
       "template_id": 11,
@@ -22254,7 +22254,7 @@
       "name": "Carnivo Spirit Egg",
       "species": "Carnivo",
       "spell_id": 33,
-      "level": 25,
+      "level": 20,
       "npc_id": 121,
       "chance": 1.5,
       "template_id": 11,
@@ -22282,7 +22282,7 @@
       "name": "Penguin Spirit Egg",
       "species": "Penguin",
       "spell_id": 51,
-      "level": 1,
+      "level": 5,
       "npc_id": 13,
       "chance": 2,
       "template_id": 11,
@@ -22296,7 +22296,7 @@
       "name": "Goat Spirit Egg",
       "species": "Goat",
       "spell_id": 52,
-      "level": 1,
+      "level": 5,
       "npc_id": 7,
       "chance": 2,
       "template_id": 11,
@@ -22310,7 +22310,7 @@
       "name": "Fox Spirit Egg",
       "species": "Fox",
       "spell_id": 53,
-      "level": 1,
+      "level": 5,
       "npc_id": 5,
       "chance": 2,
       "template_id": 11,
@@ -22324,7 +22324,7 @@
       "name": "Skeleton Spirit Egg",
       "species": "Skeleton",
       "spell_id": 54,
-      "level": 8,
+      "level": 10,
       "npc_id": 17,
       "chance": 2,
       "template_id": 11,
@@ -22338,7 +22338,7 @@
       "name": "Butterfly Spirit Egg",
       "species": "Butterfly",
       "spell_id": 55,
-      "level": 8,
+      "level": 10,
       "npc_id": 133,
       "chance": 2,
       "template_id": 11,
@@ -22352,7 +22352,7 @@
       "name": "Cursed Mask Spirit Egg",
       "species": "Cursed Mask",
       "spell_id": 56,
-      "level": 25,
+      "level": 20,
       "npc_id": 134,
       "chance": 1.5,
       "template_id": 11,
@@ -22366,7 +22366,7 @@
       "name": "Headless Hunter Spirit Egg",
       "species": "Headless Hunter",
       "spell_id": 57,
-      "level": 25,
+      "level": 20,
       "npc_id": 138,
       "chance": 1.5,
       "template_id": 11,
@@ -22465,7 +22465,7 @@
     "normal": {
       "name": "Normal",
       "rank": 0,
-      "level": 1,
+      "level": 5,
       "price": 100,
       "tp": 10,
       "chant": 1,
@@ -22478,7 +22478,7 @@
     "rare": {
       "name": "Rare",
       "rank": 1,
-      "level": 8,
+      "level": 10,
       "price": 600,
       "tp": 18,
       "chant": 1,
@@ -22491,7 +22491,7 @@
     "epic": {
       "name": "Epic",
       "rank": 2,
-      "level": 25,
+      "level": 20,
       "price": 2000,
       "tp": 30,
       "chant": 2,
@@ -24251,7 +24251,7 @@
           "dropped": 2
         }
       },
-      "skills": 5,
+      "skills": 2,
       "signature": {
         "name": "Spirit bond",
         "description": "Choose from 16 pets at the Aeven Eggkeeper or earn bound eggs from monsters. Five tiers share combat stats within each tier; stronger tiers improve damage and accuracy. One TP-funded living bond lasts until your death. Travel, logout and TP exhaustion keep it. PK areas use stronger spirit casting instead of pets."
@@ -24305,7 +24305,7 @@
           "dropped": 2
         }
       },
-      "skills": 8,
+      "skills": 5,
       "signature": {
         "name": "Spirit bond",
         "description": "Choose from 16 pets at the Aeven Eggkeeper or earn bound eggs from monsters. Five tiers share combat stats within each tier; stronger tiers improve damage and accuracy. One TP-funded living bond lasts until your death. Travel, logout and TP exhaustion keep it. PK areas use stronger spirit casting instead of pets."
@@ -24760,10 +24760,10 @@
       "max_tp": 81,
       "basic_dps": 6.23,
       "spell_dps": 12.52,
-      "burst_dps": 18.26,
+      "burst_dps": 12.52,
       "backstab_dps": 0,
       "passive_hp_per_second": 0,
-      "companion_dps": 5.74,
+      "companion_dps": 0,
       "spell_id": 23,
       "spell_tp": 5,
       "spell_casts_from_full": 16,
@@ -25001,10 +25001,10 @@
       "max_tp": 174,
       "basic_dps": 17.1,
       "spell_dps": 17.81,
-      "burst_dps": 38.45,
+      "burst_dps": 29.78,
       "backstab_dps": 0,
       "passive_hp_per_second": 0,
-      "companion_dps": 20.64,
+      "companion_dps": 11.97,
       "spell_id": 23,
       "spell_tp": 5,
       "spell_casts_from_full": 34,

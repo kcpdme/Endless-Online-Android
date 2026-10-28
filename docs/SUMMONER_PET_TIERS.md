@@ -1,4 +1,4 @@
-# Summoner pet choices — profile 6, Android 0.45.1
+# Summoner pet choices — profile 7, Android 0.45.2
 
 The Aeven Eggkeeper now sells **16 deterministic pet eggs**, beside the market
 at **map 5, tile 35,46**. Only Summoners can buy and hatch them. Every appearance
@@ -9,9 +9,9 @@ without a random rarity roll.
 
 | Tier | Hatch level | Choices | Gold per egg | Call TP | Upkeep / 2 seconds | Hit ceiling |
 | --- | ---: | --- | ---: | ---: | ---: | ---: |
-| Normal | 1 | Penguin, Fox, Goat | 100 | 10 | 1 | 82% |
-| Rare | 8 | Wolf, Butterfly, Skeleton | 600 | 18 | 2 | 86% |
-| Epic | 25 | Carnivo, Cursed Mask, Headless Hunter | 2,000 | 30 | 3 | 90% |
+| Normal | 5 | Penguin, Fox, Goat | 100 | 10 | 1 | 82% |
+| Rare | 10 | Wolf, Butterfly, Skeleton | 600 | 18 | 2 | 86% |
+| Epic | 20 | Carnivo, Cursed Mask, Headless Hunter | 2,000 | 30 | 3 | 90% |
 | Legend | 30 | Twin Demon, Dark Magician, Reaper | 6,000 | 38 | 4 | 93% |
 | Mythic | 40 | Banshi, Drake, King Wurm, Wraith | 12,000 | 45 | 5 | 95% |
 
@@ -21,7 +21,7 @@ Previously Summoners had three appearances, no pet until level 8, and no
 reliable egg replacement after death. Their personal attack budget already
 assumes substantial pet damage, so an unavailable pet makes the class feel weak.
 An affordable first pet and a predictable replacement shop make that identity
-available throughout the main level 1–50 journey. Later tiers provide visible
+available from level 5 in the main level 1–50 journey. Later tiers provide visible
 goals inside the player's expected level range.
 
 Within each tier, appearances have identical attack power, accuracy, hit ceiling,
@@ -58,8 +58,8 @@ and TP exhaustion preserve the bond and allow another TP-funded call.
 To change appearance, forget the old summon at a skill master and hatch another
 egg. Forgetting now immediately dismisses the active pet and cancels its pending
 summon. The old egg is not returned. Pet bonds cannot spend permanent training
-points. Existing egg and bond slots keep their tier, price, level requirement,
-TP costs and combat budget. The revised appearances replace old ones within
+points. Existing egg and bond slots keep their tier, price, TP costs and combat budget.
+Profile 7 changes the hatch and summon levels to 5 / 10 / 20 / 30 / 40. The revised appearances replace old ones within
 those slots; no account migration or reset is required.
 
 | Previous appearance | Revised appearance | Preserved tier |
@@ -74,7 +74,8 @@ those slots; no account migration or reset is required.
 
 Other existing slots retain their appearances. The new sixteenth egg adds Mythic
 Wraith. Owned inventory eggs, private storage and learned living bonds retain
-their IDs and quantities, so replacement value and level access are preserved.
+their IDs and quantities, so replacement value is preserved. Level access now
+follows the profile-7 gates above.
 Monster drop sources now follow the revised appearances.
 
 Pets assist the monster their owner actively attacks and stop after five seconds
@@ -91,8 +92,8 @@ pet tier at each milestone. It counts caster and pet together:
 
 | Level | Summoner combined DPS | Pet contribution | Magician DPS | Warrior DPS |
 | --- | ---: | ---: | ---: | ---: |
-| 1 | 18.26 | 5.74 | 18.08 | 19.42 |
-| 8 | 38.45 | 20.64 | 43.71 | 50.08 |
+| 1 | 12.52 | 0.00 | 18.08 | 19.42 |
+| 8 | 29.78 | 11.97 | 43.71 | 50.08 |
 | 15 | 77.56 | 34.23 | 78.62 | 72.38 |
 | 25 | 113.33 | 54.36 | 107.61 | 105.57 |
 | 35 | 141.45 | 76.63 | 142.93 | 141.64 |
@@ -110,39 +111,39 @@ four directions. Eggkeeper stock follows the requested tier and creature order.
 
 ## Validation and rollout
 
-This is a definition-only revision. Tier curves, the native executable and all
-36 modeled class/level budgets are identical to profile 5. Original equipment,
-non-pet spells, classes, skillmaster offers, original monster definitions, the
-Eggkeeper NPC and every world map are unchanged.
+Profile 7 changes pet hatch and summon levels to **5 / 10 / 20 / 30 / 40**.
+Tier prices, accuracy, damage and TP costs retain their profile-6 values. Native
+executable, original equipment, non-pet spells, classes, skillmaster offers,
+Eggkeeper and maps retain their installed definitions. Level 1 has no pet, and
+level 8 now uses Normal; those early model budgets are consequently lower.
 
-- 12 balance/content tests and 10 roster/tier/preservation tests passed.
-- Native pet acceptance passed **130 checks**, buying and hatching every egg,
-  summoning all sixteen appearances, checking the five upkeep/damage tiers,
-  duplicate protection, purchase/hatch rejection, bond death/reconnect and
-  skill-master release/replacement.
-- The real Godot client passed **111 checks** across sixteen previews and two
-  phone viewports, including native purchase, hatching and summoning.
-- The previous profile-5 native regression passed 515 checks on the same native
-  executable. The roster update does not change the class or tier combat rules.
-- Installation is repeatable; exact roster order and existing slot value/access
-  preservation are verified. Real-renderer shop previews were inspected.
+- 12 balance/content tests, 11 tier tests and 3 provisioning tests passed.
+- Native pet acceptance passed **135 checks**, including rejection one level
+  below each tier and successful hatching at its exact required level.
+- The real Godot client passed **111 checks**, including sixteen previews,
+  two phone viewports, native purchase, hatching and summoning.
+- A native level-50 kit test confirmed 1,108 TP, 579 HP and weight 60/70.
+  During 96 seconds it observed 42 Mythic upkeep deductions and one 110-TP
+  standing recovery pulse. Full depletion was not observed.
+- The exact 39-slot locker collection loaded in native Aeven Bank; spare
+  clothes could be withdrawn and deposited within the weight limit.
+- Public TLS/WebSocket acceptance passed with a fresh regular developer fixture.
 
-Profile 6 is live. The stopped-world backup is
-`/opt/aster-vale/backups/pet-roster-v6-20261028T063417Z`. Installation preserved
-account database bytes, every existing egg slot's tier/value/level access, the
-native executable, world maps, admin teleport and unrelated configuration.
-No character migration was run. Public TLS/WebSocket acceptance used a fresh
-regular developer account to verify exact stock order, buy all five tiers,
-hatch/summon the new Mythic Wraith, check TP costs, retain spares and reconnect.
-Existing player accounts were not used as fixtures.
+Profile 7 is live. The stopped-world backup is
+`/opt/aster-vale/backups/summoner-50-v7-20261028T071540Z`. The balance installer
+preserved database bytes. A separate transaction then added the requested
+**summontest** character beside Skylar on the same account, preserving every
+existing character, every account and all other database tables. Existing player
+characters were not used as test fixtures.
 
-Android **0.45.1 / code 81** is installed on the Galaxy S23 Ultra as a full signed
-update, preserving app data and original install identity. Installed APK bytes
-match the release. Signature, 16 KB alignment and embedded catalog/map checks
-passed. Sanitized `pet-roster-*` reports record verification and startup scope.
-Physical handset pet gameplay was not repeated.
+Android **0.45.2 / code 82** is installed on the Galaxy S23 Ultra as a full signed
+update with app data and original install identity preserved. Signature, 16 KB
+alignment, embedded catalog/map and installed byte checks passed. The app process
+started; the screen was dozing, so physical handset gameplay was not verified.
+Sanitized `summoner-50-*` reports record the scope of verification.
 
-APK SHA-256: `d15bfb266b4c9ebc61b5a59c6821f63121b147027f6e9163b967575dbdff69dc`.
+APK SHA-256: `163ba238e19b8cba5abf44d6ae3e00d4411b42e443129aae81e51ac60d4b65b4`.
 
-The complete equipment, spell, egg and model guide is regenerated at
-`outputs/balance-revamp/balance-guide.html`; this file can be read without Canvas.
+See [Level-50 Summoner test](SUMMONER_LEVEL_50_TEST.md) for the prepared character,
+locker contents, and TP-duration estimates. The complete equipment, spell, egg
+and model guide is regenerated at `outputs/balance-revamp/balance-guide.html`.

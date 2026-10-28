@@ -10,7 +10,7 @@ from pet_catalog import EGGS,COMPANIONS,TIERS,EGGKEEPER
 ROOT=Path(__file__).resolve().parents[1]
 
 def main():
-    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--runtime',type=Path,default=ROOT/'work/pet-roster/runtime');p.add_argument('--godot',type=Path);a=p.parse_args()
+    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--runtime',type=Path,default=ROOT/'work/summoner-50/runtime');p.add_argument('--godot',type=Path);a=p.parse_args()
     checks=[];pets=[];processes=[];streams=[]
     def check(ok,why):
         if not ok:raise AssertionError(why)
@@ -68,6 +68,13 @@ def main():
                 check(s.item_amount(612)==0 and s.item_amount(1)==gold,'Native non-Summoner purchase refusal preserves Gold and inventory')
             finally:s.close()
             seen=set()
+            for tier,t in TIERS.items():
+                ident,egg=next((i,e) for i,e in EGGS.items() if e['tier']==tier)
+                stage(f,level=t['level']-1,inventory=f'1,100000;{ident},1;');s=login(f)
+                try:
+                    s.send(14,10,number(ident,2));s.wait(14,3)
+                    check(s.item_amount(ident)==1 and not any(x['id']==egg['spell_id'] for x in s.spells),'Raw native hatching rejects '+tier+' one level below its new threshold')
+                finally:s.close()
             for ident,egg in EGGS.items():
                 stage(f,level=egg['level']);s=login(f)
                 try:
@@ -117,11 +124,11 @@ def main():
                 stage(f,level=40);fixture=b/'fixture.json';fixture.write_text(json.dumps(f));fixture.chmod(0o600)
                 start('gateway',[sys.executable,ROOT/'server/gateway.py','--port',18931,'--eo-port',18930],18931)
                 start('websocket',[sys.executable,ROOT/'server/ws_gateway.py','--port',18932,'--tcp-port',18931,'--deps-dir',ROOT/'work/server-build/python'],18932)
-                env=dict(os.environ,ASTER_VALE_PET_FIXTURE=str(fixture),ASTER_VALE_TEST_HOST='ws://127.0.0.1:18932/ws',ASTER_VALE_TEST_REPORT=str(ROOT/'work/pet-roster/client-report.json'),XDG_DATA_HOME=str(b/'godot-data'),XDG_CONFIG_HOME=str(b/'godot-config'))
+                env=dict(os.environ,ASTER_VALE_PET_FIXTURE=str(fixture),ASTER_VALE_TEST_HOST='ws://127.0.0.1:18932/ws',ASTER_VALE_TEST_REPORT=str(ROOT/'work/summoner-50/client-report.json'),XDG_DATA_HOME=str(b/'godot-data'),XDG_CONFIG_HOME=str(b/'godot-config'))
                 result=subprocess.run([str(a.godot.resolve()),'--headless','--path',str(ROOT/'client'),'--script','res://tests/pet_tiers_live.gd'],env=env,capture_output=True,text=True,timeout=120)
-                (ROOT/'work/pet-roster/client-live.log').write_text(result.stdout+result.stderr);check(result.returncode==0 and 'SCRIPT ERROR' not in result.stderr,'Real Godot Eggkeeper UI and live hatching/summoning pass')
+                (ROOT/'work/summoner-50/client-live.log').write_text(result.stdout+result.stderr);check(result.returncode==0 and 'SCRIPT ERROR' not in result.stderr,'Real Godot Eggkeeper UI and live hatching/summoning pass')
             report=dict(result='passed',checks=len(checks),native_pet_choices=pets,tiers=len(seen),native_purchase_hatch_summon_upkeep_dismiss_death=True,isolated_database=True,production_database_opened=False)
-            (ROOT/'work/pet-roster/native-report.json').write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report,indent=2))
+            (ROOT/'work/summoner-50/native-report.json').write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report,indent=2))
         finally:
             for proc in reversed(processes):
                 proc.terminate()
@@ -129,6 +136,6 @@ def main():
                 except subprocess.TimeoutExpired:proc.kill();proc.wait()
             for stream in streams:stream.close()
             for name in ('native','gateway','websocket'):
-                if (b/(name+'.log')).exists():shutil.copy2(b/(name+'.log'),ROOT/'work/pet-roster'/(name+'.log'))
+                if (b/(name+'.log')).exists():shutil.copy2(b/(name+'.log'),ROOT/'work/summoner-50'/(name+'.log'))
 
 if __name__=='__main__':main()

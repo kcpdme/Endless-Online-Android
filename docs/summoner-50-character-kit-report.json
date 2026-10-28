@@ -1,0 +1,457 @@
+{
+  "result": "passed",
+  "character_name": "summontest",
+  "same_account_as": "skylar",
+  "existing_characters_and_accounts_unchanged": true,
+  "level": 50,
+  "class_name": "Summoner",
+  "gold": 1000000,
+  "allocated_attributes": {
+    "strength": 0,
+    "intelligence": 23,
+    "wisdom": 0,
+    "agility": 0,
+    "constitution": 37,
+    "charisma": 90
+  },
+  "skill_points_unspent": 150,
+  "max_hp": 579,
+  "max_tp": 1108,
+  "weight": 60,
+  "max_weight": 70,
+  "locker_capacity": 60,
+  "locker_slots_used": 39,
+  "equipped": [
+    {
+      "slot": "boots",
+      "id": 606,
+      "name": "Spirit Master Boots"
+    },
+    {
+      "slot": "accessory",
+      "id": 71,
+      "name": "Water Crystal"
+    },
+    {
+      "slot": "gloves",
+      "id": 607,
+      "name": "Spirit Master Gloves"
+    },
+    {
+      "slot": "belt",
+      "id": 43,
+      "name": "Leather Belt"
+    },
+    {
+      "slot": "armor",
+      "id": 503,
+      "name": "Spirit Vestments"
+    },
+    {
+      "slot": "necklace",
+      "id": 50,
+      "name": "Emerald Necklace"
+    },
+    {
+      "slot": "head",
+      "id": 605,
+      "name": "Spirit Master Hood"
+    },
+    {
+      "slot": "offhand",
+      "id": 416,
+      "name": "Royal Protector"
+    },
+    {
+      "slot": "weapon",
+      "id": 494,
+      "name": "Spirit Sceptre"
+    },
+    {
+      "slot": "ring1",
+      "id": 608,
+      "name": "Spirit Master Ring"
+    },
+    {
+      "slot": "ring2",
+      "id": 608,
+      "name": "Spirit Master Ring"
+    },
+    {
+      "slot": "armlet1",
+      "id": 39,
+      "name": "Silver Elf Braclet"
+    },
+    {
+      "slot": "armlet2",
+      "id": 39,
+      "name": "Silver Elf Braclet"
+    },
+    {
+      "slot": "bracer1",
+      "id": 54,
+      "name": "Leather Bracer"
+    },
+    {
+      "slot": "bracer2",
+      "id": 54,
+      "name": "Leather Bracer"
+    }
+  ],
+  "bag": [
+    {
+      "id": 1,
+      "name": "Gold",
+      "amount": 1000000
+    },
+    {
+      "id": 20,
+      "name": "Broom",
+      "amount": 1
+    },
+    {
+      "id": 21,
+      "name": "Dagger",
+      "amount": 1
+    },
+    {
+      "id": 29,
+      "name": "Staff",
+      "amount": 1
+    },
+    {
+      "id": 35,
+      "name": "Spirit Star",
+      "amount": 1
+    },
+    {
+      "id": 329,
+      "name": "Cava Staff",
+      "amount": 1
+    },
+    {
+      "id": 349,
+      "name": "Harp",
+      "amount": 1
+    },
+    {
+      "id": 350,
+      "name": "Guitar",
+      "amount": 1
+    },
+    {
+      "id": 375,
+      "name": "Big Health Potion",
+      "amount": 5
+    },
+    {
+      "id": 376,
+      "name": "Big Mana Potion",
+      "amount": 5
+    },
+    {
+      "id": 513,
+      "name": "Spirit Wand",
+      "amount": 1
+    },
+    {
+      "id": 514,
+      "name": "Spirit Staff",
+      "amount": 1
+    },
+    {
+      "id": 515,
+      "name": "Spirit Robes",
+      "amount": 1
+    },
+    {
+      "id": 517,
+      "name": "Elder Spirit Robes",
+      "amount": 1
+    },
+    {
+      "id": 537,
+      "name": "Spirit Adept Robes",
+      "amount": 1
+    },
+    {
+      "id": 609,
+      "name": "Wolf Spirit Egg",
+      "amount": 1
+    },
+    {
+      "id": 610,
+      "name": "Carnivo Spirit Egg",
+      "amount": 1
+    },
+    {
+      "id": 611,
+      "name": "Drake Spirit Egg",
+      "amount": 1
+    },
+    {
+      "id": 612,
+      "name": "Penguin Spirit Egg",
+      "amount": 1
+    },
+    {
+      "id": 613,
+      "name": "Goat Spirit Egg",
+      "amount": 1
+    },
+    {
+      "id": 614,
+      "name": "Fox Spirit Egg",
+      "amount": 1
+    },
+    {
+      "id": 615,
+      "name": "Skeleton Spirit Egg",
+      "amount": 1
+    },
+    {
+      "id": 616,
+      "name": "Butterfly Spirit Egg",
+      "amount": 1
+    },
+    {
+      "id": 617,
+      "name": "Cursed Mask Spirit Egg",
+      "amount": 1
+    },
+    {
+      "id": 618,
+      "name": "Headless Hunter Spirit Egg",
+      "amount": 1
+    },
+    {
+      "id": 619,
+      "name": "Reaper Spirit Egg",
+      "amount": 1
+    },
+    {
+      "id": 620,
+      "name": "Twin Demon Spirit Egg",
+      "amount": 1
+    },
+    {
+      "id": 621,
+      "name": "Dark Magician Spirit Egg",
+      "amount": 1
+    },
+    {
+      "id": 622,
+      "name": "Banshi Spirit Egg",
+      "amount": 1
+    },
+    {
+      "id": 623,
+      "name": "King Wurm Spirit Egg",
+      "amount": 1
+    },
+    {
+      "id": 624,
+      "name": "Wraith Spirit Egg",
+      "amount": 1
+    }
+  ],
+  "locker": [
+    {
+      "id": 40,
+      "name": "Golden Elf Braclet",
+      "amount": 2
+    },
+    {
+      "id": 41,
+      "name": "Silver Ring",
+      "amount": 2
+    },
+    {
+      "id": 42,
+      "name": "Golden Ring",
+      "amount": 2
+    },
+    {
+      "id": 44,
+      "name": "Skull Belt",
+      "amount": 1
+    },
+    {
+      "id": 51,
+      "name": "Necro Necklace",
+      "amount": 1
+    },
+    {
+      "id": 72,
+      "name": "Earth Crystal",
+      "amount": 1
+    },
+    {
+      "id": 73,
+      "name": "Dark Crystal",
+      "amount": 1
+    },
+    {
+      "id": 74,
+      "name": "Forest Crystal",
+      "amount": 1
+    },
+    {
+      "id": 75,
+      "name": "Element Crystal",
+      "amount": 1
+    },
+    {
+      "id": 76,
+      "name": "Eternal Crystal",
+      "amount": 1
+    },
+    {
+      "id": 77,
+      "name": "Air Crystal",
+      "amount": 1
+    },
+    {
+      "id": 78,
+      "name": "Fire Crystal",
+      "amount": 1
+    },
+    {
+      "id": 79,
+      "name": "Light Crystal",
+      "amount": 1
+    },
+    {
+      "id": 131,
+      "name": "Cave Robes",
+      "amount": 1
+    },
+    {
+      "id": 132,
+      "name": "Forrest Robes",
+      "amount": 1
+    },
+    {
+      "id": 181,
+      "name": "Fairy Hat",
+      "amount": 1
+    },
+    {
+      "id": 187,
+      "name": "Mystic Hat",
+      "amount": 1
+    },
+    {
+      "id": 226,
+      "name": "Yellow Gem",
+      "amount": 1
+    },
+    {
+      "id": 227,
+      "name": "Blue Gem",
+      "amount": 1
+    },
+    {
+      "id": 228,
+      "name": "Purple Gem",
+      "amount": 1
+    },
+    {
+      "id": 229,
+      "name": "Pink Gem",
+      "amount": 1
+    },
+    {
+      "id": 230,
+      "name": "Red Gem",
+      "amount": 1
+    },
+    {
+      "id": 231,
+      "name": "Orange Gem",
+      "amount": 1
+    },
+    {
+      "id": 232,
+      "name": "Luna Gem",
+      "amount": 1
+    },
+    {
+      "id": 233,
+      "name": "Green Gem",
+      "amount": 1
+    },
+    {
+      "id": 234,
+      "name": "Dark Gem",
+      "amount": 1
+    },
+    {
+      "id": 235,
+      "name": "Magic Charm",
+      "amount": 1
+    },
+    {
+      "id": 236,
+      "name": "Guardian Charm",
+      "amount": 1
+    },
+    {
+      "id": 237,
+      "name": "War Charm",
+      "amount": 1
+    },
+    {
+      "id": 374,
+      "name": "Love Ring",
+      "amount": 2
+    },
+    {
+      "id": 375,
+      "name": "Big Health Potion",
+      "amount": 45
+    },
+    {
+      "id": 376,
+      "name": "Big Mana Potion",
+      "amount": 45
+    },
+    {
+      "id": 535,
+      "name": "Spirit Apprentice Robes",
+      "amount": 1
+    },
+    {
+      "id": 559,
+      "name": "Initiate Spirit Robes",
+      "amount": 1
+    },
+    {
+      "id": 601,
+      "name": "Spirit Adept Hood",
+      "amount": 1
+    },
+    {
+      "id": 602,
+      "name": "Spirit Adept Boots",
+      "amount": 1
+    },
+    {
+      "id": 603,
+      "name": "Spirit Adept Gloves",
+      "amount": 1
+    },
+    {
+      "id": 604,
+      "name": "Spirit Adept Ring",
+      "amount": 2
+    },
+    {
+      "id": 624,
+      "name": "Wraith Spirit Egg",
+      "amount": 5
+    }
+  ],
+  "pet_bond_initially_empty": true,
+  "all_sixteen_eggs_available": true
+}

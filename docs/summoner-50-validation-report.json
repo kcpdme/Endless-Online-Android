@@ -1,0 +1,29 @@
+{
+  "result": "passed",
+  "balance_version": 7,
+  "android_version": "0.45.2",
+  "unit_tests": {
+    "balance_content": 12,
+    "pet_tiers": 11,
+    "character_provision": 3
+  },
+  "native_checks": 135,
+  "godot_checks": 111,
+  "live_character_verified": true,
+  "public_wss_acceptance": true,
+  "tp_observation_seconds": 96,
+  "full_tp_depletion_measured": false,
+  "physical_handset_gameplay_verified": false,
+  "reports": {
+    "summoner-50-android-report.json": "c01a850ce4998d49af06829a280ce5e70ff555bd7b4fa42999a1a556d5eb38fa",
+    "summoner-50-character-kit-report.json": "8e0bc011246d644cadcb6f2e99757620d850ba54052f08bd57931b8008db0719",
+    "summoner-50-character-verification.json": "0bf17633a948cc51b8822595e9d8db742c08e8fa887e1d07871f34726125b6f4",
+    "summoner-50-client-report.json": "ba38df8619049c8ca6d378ae3606b3787983e15b965bd84003360a932bf61c1a",
+    "summoner-50-deployment-report.json": "3a48ec78c509d77ff9b6109a91ba397db270c4a8ba3190a97548f9e1b689485a",
+    "summoner-50-locker-report.json": "9592420c51c69ef60f351b71ee356a701c10f20eee732649eaaba4157c16eb40",
+    "summoner-50-native-report.json": "c90daedb200609bc84701e6b9722e052d91bab6abf30662692ea80fcde195421",
+    "summoner-50-phone-report.json": "5f2f90f637a98ca65d49f52f0572331a74669116eee7b68caa84334f2a29a983",
+    "summoner-50-public-report.json": "d3c2aab375a5db1db79c5c6519a8e9dcfb275a20ec7fa5b17425f2f12934abb6",
+    "summoner-50-tp-report.json": "df7c9588f57ef1989877d53c32e03ab990b69798e16924d36497d322119660c2"
+  }
+}
