@@ -1,15 +1,48 @@
 extends RefCounted
 ## Original drunk emote and confirmed soda timer; original chat slur lives in gateway.
-const SOCIAL_SIZE: float = 40.0
+const SOCIAL_SIZE: float = 50.0
 const SOCIAL_BOTTOM: float = -96.0
+const FRAME_MSEC: int = 240
+const ENHANCED_PATH: String = "res://content/gfx/emotes_enhanced.png"
+const ORIGINAL_PATH: String = "res://content/gfx/002_00038.png"
 const SOCIAL_SETS: Dictionary = {1:0, 2:1, 3:1, 4:4, 5:3, 6:2, 7:6, 8:7, 9:9, 10:5, 14:13}
-static func social_texture(ident: int) -> Texture2D:
-	if ident not in SOCIAL_SETS: return null
-	return load("res://assets/emotes/%d.svg" % ident) as Texture2D
+static var animation_atlas: Texture2D
+static var enhanced: bool = false
+static var frame_textures: Dictionary = {}
 
-static func social_rect(at: Vector2, elapsed: int) -> Rect2:
-	var pop: float = sin(clampf(float(elapsed) / 960.0, 0.0, 1.0) * PI) * 3.0
-	return Rect2(at + Vector2(-SOCIAL_SIZE / 2.0, SOCIAL_BOTTOM - SOCIAL_SIZE - pop), Vector2.ONE * SOCIAL_SIZE)
+static func frame_index(elapsed: int) -> int:
+	return clampi(elapsed / FRAME_MSEC, 0, 3)
+
+static func frame_texture(set_index: int, frame: int) -> Texture2D:
+	if set_index < 0 or set_index >= 15: return null
+	if animation_atlas == null:
+		enhanced = ResourceLoader.exists(ENHANCED_PATH)
+		var path: String = ENHANCED_PATH if enhanced else ORIGINAL_PATH
+		if not ResourceLoader.exists(path): return null
+		var filtered: CanvasTexture = CanvasTexture.new()
+		filtered.diffuse_texture = load(path) as Texture2D
+		filtered.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+		animation_atlas = filtered
+	var key: int = set_index * 4 + clampi(frame, 0, 3)
+	if not frame_textures.has(key):
+		var texture: AtlasTexture = AtlasTexture.new()
+		texture.atlas = animation_atlas
+		if enhanced:
+			var cell: float = animation_atlas.get_width() / 4.0
+			texture.region = Rect2((key % 4) * cell, set_index * cell, cell, cell)
+		else:
+			var cell: float = animation_atlas.get_width() / 60.0
+			texture.region = Rect2(key * cell, 0, cell, animation_atlas.get_height())
+		texture.filter_clip = true
+		frame_textures[key] = texture
+	return frame_textures[key] as Texture2D
+
+static func social_texture(ident: int, frame: int = 0) -> Texture2D:
+	if ident not in SOCIAL_SETS: return null
+	return frame_texture(social_set(ident), frame)
+
+static func social_rect(at: Vector2, _elapsed: int = 0) -> Rect2:
+	return Rect2(at + Vector2(-SOCIAL_SIZE / 2.0, SOCIAL_BOTTOM - SOCIAL_SIZE), Vector2.ONE * SOCIAL_SIZE)
 
 static func social_set(ident: int) -> int:
 	return int(SOCIAL_SETS.get(ident, ident - 1))
@@ -53,23 +86,19 @@ func draw() -> void:
 		if Time.get_ticks_msec() - int(row.at) >= 960: social_emotes.erase(key); continue
 		var at: Vector2 = game.online.player_visual_position(int(key))
 		if at.is_finite():
-			var texture: Texture2D = social_texture(int(row.id))
+			var texture: Texture2D = social_texture(int(row.id), frame_index(Time.get_ticks_msec() - int(row.at)))
 			if texture != null: game.draw_texture_rect(texture, social_rect(at, Time.get_ticks_msec() - int(row.at)), false)
 	_draw_emotes(emotes,int((game.manifest.get("drinks",{}) as Dictionary).get("drunk_set",10)),0.0)
 	_draw_emotes(music_emotes,14,24.0)
 
 func _draw_emotes(entries: Dictionary, set_index: int, horizontal: float) -> void:
 	var now: int = Time.get_ticks_msec()
-	var texture: Texture2D = game._graphic(2,38)
-	if texture == null: return
-	var frame_width: float = float(texture.get_width())/60.0
 	for key: Variant in entries.keys():
-		var elapsed: int = now-int(entries[key])
+		var elapsed: int = now - int(entries[key])
 		if elapsed >= 960:
 			entries.erase(key)
 			continue
 		var at: Vector2 = game.online.player_visual_position(int(key))
 		if not at.is_finite(): continue
-		var frame: int = mini(3,elapsed/240)
-		var region: Rect2 = Rect2((set_index*4+frame)*frame_width,0,frame_width,texture.get_height())
-		game.draw_texture_rect_region(texture,Rect2(at+Vector2(horizontal-frame_width/2.0,-124),region.size),region)
+		var texture: Texture2D = frame_texture(set_index, frame_index(elapsed))
+		if texture != null: game.draw_texture_rect(texture, social_rect(at + Vector2(horizontal, 0)), false)

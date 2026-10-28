@@ -8,8 +8,8 @@ This public repository contains source code, content import tools, build scripts
 
 After importing content and building, install `builds/aster-vale-debug.apk` on an Android device (Android 7 / API 24 or later). This development build includes ARM64 and x86_64. Open **Aster Vale**, log in, select your character and join the persistent shared world. The build is signed with a development key, not configured for Google Play release.
 
-The current Android package is **`com.cloudgameboy.astervale`**, version 0.48.1
-(code 86). It installs separately from the earlier `io.astervale.prototype` app;
+The current Android package is **`com.cloudgameboy.astervale`**, version 0.48.2
+(code 87). It installs separately from the earlier `io.astervale.prototype` app;
 online accounts remain on the same server. Release APK and AAB exports use the
 same private release signing key.
 
@@ -52,6 +52,11 @@ APK update (`--no-incremental -r`), verifies installed bytes and version, and
 checks that Android kept the app's original installation timestamp.
 
 ## Play online
+
+Version **0.48.2** restores the original animated EO emotes with AI-enhanced
+sprite frames, smooth filtering and the higher face-safe placement. The four
+original animation phases still play at 240 ms each. The picker shows clear
+first-frame previews. See [emote restoration](docs/EMOTE_RESTORE.md).
 
 Version **0.48.1** adds exact carrying-capacity checks on walking and player trades,
 Magician single-target ×1.5 hits, normal area mastery, and Priest HP renewal every
