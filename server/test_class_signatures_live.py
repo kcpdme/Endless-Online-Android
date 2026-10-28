@@ -144,7 +144,8 @@ def main():
    target=next(n for n in mortal.state['npcs'] if n['id']==1);mortal.cast_spell(23,'npc',target['index'])
    pump_until(mortal,lambda:any(e.get('kind')=='companion_attack' and e.get('damage',0)>0 for e in mortal.events))
    damage=next(e['damage'] for e in mortal.events if e.get('kind')=='companion_attack' and e.get('damage',0)>0)
-   pet_base=int(10+25*.5+mortal.stats['charisma']*.55+mortal.stats['intelligence']*.2)
+   from pet_catalog import COMPANIONS
+   pet_base=int((10+25*.5+mortal.stats['charisma']*.55+mortal.stats['intelligence']*.2)*COMPANIONS[28]['power'])
    check(pet_base-2<=damage<=pet_base+2,'Pet attack uses the stronger native level/CHA/INT formula')
    mortal.walk(0);pump_until(mortal,lambda:mortal.state['map_id']!=21)
    check(not getattr(mortal,'companion',None) and not any(x['id']==28 for x in mortal.spells),'Real lethal spike removes the pet and its living bond')

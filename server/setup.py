@@ -75,7 +75,7 @@ def main():
     deps = state / 'deps'; deps.mkdir(exist_ok=True)
     source = state / 'source'; build = state / 'build'; build.mkdir(exist_ok=True)
     checkout('etheos', source)
-    patches = [ROOT / 'patches' / name for name in ('etheos-password-v3.patch', 'etheos-redeem.patch', 'etheos-character-hp.patch', 'etheos-spikes.patch', 'etheos-mobile-spells.patch', 'etheos-mobile-feedback.patch', 'etheos-skill-training.patch', 'etheos-drop-rate.patch', 'etheos-protect-service-npcs.patch', 'etheos-starter-kit.patch', 'etheos-ice-blast-area.patch', 'etheos-npc-chat.patch', 'etheos-pk-feedback.patch', 'etheos-classic-gold.patch', 'etheos-balance-v1.patch', 'etheos-class-identity.patch', 'etheos-class-signatures.patch', 'etheos-mortal-spirit-eggs.patch')]
+    patches = [ROOT / 'patches' / name for name in ('etheos-password-v3.patch', 'etheos-redeem.patch', 'etheos-character-hp.patch', 'etheos-spikes.patch', 'etheos-mobile-spells.patch', 'etheos-mobile-feedback.patch', 'etheos-skill-training.patch', 'etheos-drop-rate.patch', 'etheos-protect-service-npcs.patch', 'etheos-starter-kit.patch', 'etheos-ice-blast-area.patch', 'etheos-npc-chat.patch', 'etheos-pk-feedback.patch', 'etheos-classic-gold.patch', 'etheos-balance-v1.patch', 'etheos-class-identity.patch', 'etheos-class-signatures.patch', 'etheos-mortal-spirit-eggs.patch', 'etheos-pet-tiers.patch')]
     apply_patches(source, patches)
     (source / 'json').mkdir(exist_ok=True)
     shutil.copy2(download(*JSON, deps / 'json.hpp'), source / 'json/json.hpp')
@@ -191,6 +191,8 @@ WorldDumpFile = ./world.bak.json
     travel = configure_travel(runtime)
     from configure_sky_wonder import configure as configure_sky_wonder
     sky_wonder = configure_sky_wonder(runtime)
+    from configure_pet_shop import configure as configure_pet_shop
+    pet_shop = configure_pet_shop(runtime)
     # Avoid loading SQL Server defaults at all (SQLite-only build).
     (runtime / 'config/database.ini').write_text('INCLUDE = ./config/database/sqlite.ini\nInstallSQL = ./install.sql\nAutoCreateDatabase = no\nDBPassFile =\nDBAuthType = sql\n')
     shutil.copy2(build / 'etheos', runtime / 'etheos')
@@ -202,7 +204,7 @@ WorldDumpFile = ./world.bak.json
               'sample':{'url':SAMPLE[0],'sha256':SAMPLE[1]}, 'sqlite':{'url':SQLITE[0],'sha256':SQLITE[1]}, 'nlohmann_json':{'url':JSON[0],'sha256':JSON[1]},
               'numbered_maps':len(maps),'highest_map_id':max(int(x.stem) for x in maps),
               'quest_conversion':'Generated .eqf copies with logged conservative legacy-syntax fixes. Original .txt bytes preserved. Real parser validation recorded separately.',
-              'quests':quests,'feature_content':feature_content,'classic_economy':classic_economy,'travel':travel,'sky_wonder':sky_wonder,'runtime':str(runtime),'binding':'127.0.0.1:8078','database':'SQLite',
+              'quests':quests,'feature_content':feature_content,'classic_economy':classic_economy,'travel':travel,'sky_wonder':sky_wonder,'pet_shop':pet_shop,'runtime':str(runtime),'binding':'127.0.0.1:8078','database':'SQLite',
               'original_npc_combat':npc_combat,'balance':balance,
               'rights':'Reference content only; redistribution/publication permissions unresolved.'}
     (state / 'content-report.json').write_text(json.dumps(report, indent=2)+'\n')

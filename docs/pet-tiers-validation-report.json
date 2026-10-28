@@ -1,0 +1,60 @@
+{
+  "result": "passed",
+  "native_checks": 515,
+  "native_class_level_builds": 36,
+  "balance_content_tests": 12,
+  "tier_tests": 7,
+  "mortal_bond_contract_tests": 3,
+  "adapter_state_tests": 137,
+  "pet_native_checks": 123,
+  "godot_pet_checks": 105,
+  "native_patch_stack_applies_identically_twice": true,
+  "profile_install_repeat_identical": true,
+  "pet_shop_map_repeat_identical": true,
+  "all_15_pets_have_visible_idle_and_walk_frames_in_four_directions": true,
+  "shop_render_visually_checked_at_1280x720": true,
+  "embedded_catalog_manifest_aeven_map_match_acceptance": true,
+  "apk_signature_and_16kb_alignment_verified": true,
+  "native_sha256": "3a7927fa757cd788bfe85d971f7ebec4e2c17131a6ad336b24dc1b2489ebad0e",
+  "profile_sha256": "c7e16e12d52ecb117485d2441d4118efb826cdb98f7f91426f2ce710e0ca30ff",
+  "apk_sha256": "348ce7b245816dee5aba4adecc63943e4ec8c14300d371d06762ff77cbf54fdd",
+  "summoner_benchmarks": [
+    {
+      "level": 1,
+      "burst_dps": 18.26,
+      "companion_dps": 5.74,
+      "max_tp": 81
+    },
+    {
+      "level": 8,
+      "burst_dps": 38.45,
+      "companion_dps": 20.64,
+      "max_tp": 174
+    },
+    {
+      "level": 15,
+      "burst_dps": 77.56,
+      "companion_dps": 34.23,
+      "max_tp": 387
+    },
+    {
+      "level": 25,
+      "burst_dps": 113.33,
+      "companion_dps": 54.36,
+      "max_tp": 536
+    },
+    {
+      "level": 35,
+      "burst_dps": 141.45,
+      "companion_dps": 76.63,
+      "max_tp": 821
+    },
+    {
+      "level": 45,
+      "burst_dps": 182.4,
+      "companion_dps": 95.95,
+      "max_tp": 1032
+    }
+  ],
+  "native_signature_checks": 39
+}

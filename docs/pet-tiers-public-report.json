@@ -1,0 +1,17 @@
+{
+  "result": "passed",
+  "public_https_health": true,
+  "public_wss_to_native": true,
+  "fresh_regular_character_only": true,
+  "profile_matches_accepted_native_content": true,
+  "pet_choices": 15,
+  "tiers": 5,
+  "all_tiers_purchased_at_native_price": true,
+  "no_resale": true,
+  "duplicate_preserves_spare_egg": true,
+  "normal_penguin_hatches_and_summons": true,
+  "initial_and_upkeep_tp_exact": true,
+  "dismissal_bond_and_spare_survive_reconnect": true,
+  "gold_and_inventory_persist": true,
+  "existing_player_accounts_modified": false
+}

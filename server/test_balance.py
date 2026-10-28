@@ -11,7 +11,7 @@ BASE=Path(__file__).resolve().parents[1]/'work/server-build/runtime'
 @unittest.skipUnless((BASE/'data/pub/dat001.eif').exists(),'native resources unavailable')
 class BalanceTests(unittest.TestCase):
     def setUp(self):
-        self.temp=tempfile.TemporaryDirectory();self.addCleanup(self.temp.cleanup);self.runtime=Path(self.temp.name)/'runtime';shutil.copytree(BASE/'data',self.runtime/'data');(self.runtime/'config.local.ini').write_text('PasswordSalt = do-not-change\nExpRate = 500%\n');(self.runtime/'etheos').write_bytes(b'isolated fixture BalanceRevamp ClassIdentityRules ClassSignatureRules MortalSpiritBonds')
+        self.temp=tempfile.TemporaryDirectory();self.addCleanup(self.temp.cleanup);self.runtime=Path(self.temp.name)/'runtime';shutil.copytree(BASE/'data',self.runtime/'data');(self.runtime/'config.local.ini').write_text('PasswordSalt = do-not-change\nExpRate = 500%\n');(self.runtime/'etheos').write_bytes(b'isolated fixture BalanceRevamp ClassIdentityRules ClassSignatureRules MortalSpiritBonds PetEggTiers')
         from configure_feature_content import configure as features
         features(self.runtime)
 
@@ -19,7 +19,7 @@ class BalanceTests(unittest.TestCase):
         report=configure(self.runtime);return report,json.loads((self.runtime/'data/balance-profile.json').read_text())
 
     def test_repeated_install_is_identical_and_preserves_private_config_and_operator_item(self):
-        original=(self.runtime/'data/pub/dat001.eif').read_bytes();a,p=self.install();first={str(f.relative_to(self.runtime)):f.read_bytes() for f in self.runtime.rglob('*') if f.is_file()};b,_=self.install();self.assertEqual(a,b);self.assertEqual(first,{str(f.relative_to(self.runtime)):f.read_bytes() for f in self.runtime.rglob('*') if f.is_file()});self.assertIn('PasswordSalt = do-not-change\nExpRate = 500%',(self.runtime/'config.local.ini').read_text());new=(self.runtime/'data/pub/dat001.eif').read_bytes();self.assertEqual(records(original,b'EIF',58)[490],records(new,b'EIF',58)[490]);self.assertEqual(len(p['items']),611)
+        original=(self.runtime/'data/pub/dat001.eif').read_bytes();a,p=self.install();first={str(f.relative_to(self.runtime)):f.read_bytes() for f in self.runtime.rglob('*') if f.is_file()};b,_=self.install();self.assertEqual(a,b);self.assertEqual(first,{str(f.relative_to(self.runtime)):f.read_bytes() for f in self.runtime.rglob('*') if f.is_file()});self.assertIn('PasswordSalt = do-not-change\nExpRate = 500%',(self.runtime/'config.local.ini').read_text());new=(self.runtime/'data/pub/dat001.eif').read_bytes();self.assertEqual(records(original,b'EIF',58)[490],records(new,b'EIF',58)[490]);self.assertEqual(len(p['items']),623)
         from admin_weapon import patch_weapon
         self.assertEqual(patch_weapon(new),(new,False));self.assertEqual(p['items']['21']['level_requirement'],0)
 
@@ -47,7 +47,7 @@ class BalanceTests(unittest.TestCase):
             self.assertEqual(spells[str(ident)]['allowed_classes'],[7]);self.assertEqual(spells[str(ident)]['effect_kind'],'companion')
             self.assertEqual(spells[str(ident)]['companion']['npc_id'],npc)
             self.assertEqual(p['npcs'][str(npc)]['type'],0)
-        self.assertEqual(len(p['npcs']),3)
+        self.assertEqual(len(p['npcs']),16)
 
     def test_crafting_edge_and_archetypes_are_bounded_and_obtainable(self):
         _,p=self.install();items=p['items']
@@ -81,9 +81,8 @@ class BalanceTests(unittest.TestCase):
         def entries(text):return {key:raw.strip() for key,raw in re.findall(r'^(\d+)[ \t]*=[ \t]*(.*)$',text,re.M)}
         before,after=entries(old),entries(new)
         for key,value in before.items():
-            if int(key) not in (74,82,225):self.assertEqual(after[key],value)
+            if int(key) not in {egg['npc_id'] for egg in EGGS.values()}:self.assertEqual(after[key],value)
             else:self.assertTrue(after[key].startswith(value))
-        from class_signatures import EGGS
         for ident,egg in EGGS.items():
             item=p['items'][str(ident)];self.assertEqual(item['hatch_spell'],egg['spell_id']);self.assertEqual(item['type'],23)
             self.assertIn(f"BalanceEgg.{ident}.spell = {egg['spell_id']}",(self.runtime/'config.local.ini').read_text())

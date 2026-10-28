@@ -86,6 +86,8 @@ class EconomyMixin:
             if not offer or offer[operation] <= 0:raise EOError('This item is not traded here')
             if amount <= 0:raise EOError('Choose a positive quantity')
             if operation=='buy':
+                from balance_rules import check_egg_purchase
+                check_egg_purchase(self,item_id)
                 if amount > offer['max_buy']:raise EOError('This shop allows at most %d at a time' % offer['max_buy'])
                 if self.item_amount(1) < offer['buy']*amount:raise EOError('You need more gold')
                 if self.stats.get('weight',0) >= self.stats.get('max_weight',250):raise EOError('Your bag is too heavy')

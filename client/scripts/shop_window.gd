@@ -1,4 +1,5 @@
 extends RefCounted
+const PET_DETAILS = preload("res://scripts/pet_details.gd")
 ## Original native shop data, with independent catalog and selected-item detail panes.
 var game: Node
 var panel: Control
@@ -142,6 +143,8 @@ func item_name(id: int) -> String:
 
 func display_name(id: int) -> String:
 	var info: Dictionary = game.online.item_info("item:%d" % id)
+	if info.has("pet_tier"):
+		return "%s · %s" % [str(info.tier_name), item_name(id).replace(" Spirit Egg", " Egg")]
 	if int(info.get("type", -1)) == 12:
 		return item_name(id) + (" (M)" if int(info.get("gender", 1)) == 1 else " (F)")
 	return item_name(id)
@@ -172,6 +175,7 @@ func refresh() -> void:
 			var info: Dictionary = game.online.item_info("item:%d" % id)
 			var caption: String = display_name(id) if mode == "craft" else "%s  ·  %d" % [display_name(id), int(offer.get(mode, 0))]
 			var row: int = list.add_item(caption, game.online._catalog_texture(str(info.get("icon", ""))))
+			if info.has("tier_color"): list.set_item_custom_fg_color(row, Color(str(info.tier_color)))
 			list.set_item_tooltip(row, item_name(id))
 		if not offers.is_empty():
 			var index: int = 0
@@ -252,6 +256,11 @@ func _render_details(offer: Dictionary, id: int, reset: bool) -> void:
 			row.add_child(amounts)
 	_detail_label("In bag: %d" % held(id), 18, game.MUTED)
 	var parts: Array[String] = []
+	if int(info.get("hatch_spell", 0)) > 0:
+		item_icon.texture = PET_DETAILS.texture(game, info)
+		description = _detail_label(PET_DETAILS.description(game, info))
+		details_scroll.set_deferred("scroll_vertical", previous_scroll)
+		return
 	if int(info.get("max_damage", 0)) > 0: parts.append("Damage %d–%d" % [int(info.get("min_damage", 0)), int(info.get("max_damage", 0))])
 	for key: String in ["armor", "accuracy", "evade", "hp", "tp", "strength", "intelligence", "wisdom", "agility", "constitution", "charisma"]:
 		var value: int = int(info.get(key, 0))
@@ -306,6 +315,11 @@ func _selected(reset: bool = true) -> void:
 	status.text = ("All materials ready" if missing == 0 else "Missing %d %s" % [missing, "material" if missing == 1 else "materials"]) if mode == "craft" else "Not enough Gold" if mode == "buy" and cost > held(1) else ""
 	status.add_theme_color_override("font_color", Color("ffb1a0") if missing > 0 or (mode == "buy" and cost > held(1)) else Color("b9dd8b"))
 	action.disabled = not game.online._action_ready() or missing > 0 or (mode == "buy" and cost > held(1))
+	var info: Dictionary = game.online.item_info("item:%d" % id)
+	if mode == "buy" and int(info.get("hatch_spell", 0)) > 0 and int(game.online.player.get("stats", {}).get("class_id", 0)) != 7:
+		action.disabled = true
+		status.text = "Only Summoners can buy bound spirit eggs."
+		status.add_theme_color_override("font_color", Color("ffb1a0"))
 
 func transact() -> void:
 	var selection: PackedInt32Array = list.get_selected_items()

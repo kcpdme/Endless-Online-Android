@@ -12,6 +12,7 @@ from eo_session import Reader, number
 from balance_profile import VERSION, LEVELS, ATTRIBUTES, CLASSES, SPELLS, WEAPON_TIERS, BODY_TIERS, NEW_ITEMS, NEW_ITEM_TIERS, ENCOUNTERS, COMPANIONS
 from class_identity import allowed_classes, role_for, vary_stats, recipe_sources
 from class_signatures import SIGNATURES, SUPPORT, EGGS
+from pet_catalog import TIERS, EGGKEEPER, egg_stock
 
 STAT_FIELDS = {'hp':(5,2),'tp':(7,2),'min_damage':(9,2),'max_damage':(11,2),'accuracy':(13,2),'evade':(15,2),'armor':(17,2),**{k:(20+i,1) for i,k in enumerate(ATTRIBUTES)}}
 INPUTS = ('data/pub/dat001.eif','data/pub/dat001.ecf','data/pub/dsl001.esf','data/pub/dtn001.enf','data/aster-vale-shops.ini','data/quests/00004.eqf','data/aster-vale-drops.ini')
@@ -142,7 +143,7 @@ def build_items(original, shops=""):
         for key,(offset,size) in STAT_FIELDS.items():put(f,offset,0,size)
         put(f,2,23);put(f,3,0);put(f,4,4);put(f,5,0,2);put(f,37,egg['level'],2);put(f,39,7,2);put(f,55,1)
         rows.insert(-1,dict(id=ident,names=[egg['name']],fields=f))
-        metadata[str(ident)]=dict(template_id=egg['template_id'],hatch_spell=egg['spell_id'],allowed_classes=[7],bound=True,drop_class=7,bond_lost_on_death=True,icon=egg['icon'],ground=egg['icon'],acquisition=sources.get(ident,{}))
+        metadata[str(ident)]=dict(template_id=egg['template_id'],hatch_spell=egg['spell_id'],allowed_classes=[7],bound=True,drop_class=7,bond_lost_on_death=True,pet_tier=egg['tier'],tier_name=egg['tier_name'],tier_color=egg['tier_color'],icon=egg['icon'],ground=egg['icon'],acquisition=sources.get(ident,{}))
     # Recovery quantities fit the new 1–50 HP/TP pools; retain native item types.
     for ident,hp,tp in [(2,35,0),(3,0,45),(4,85,0),(5,0,110),(375,170,0),(376,0,220),(377,120,140)]:
         f=rows[ident-1]['fields']
@@ -180,7 +181,7 @@ def build_spells(original):
         result[str(ident)]=dict(id=ident,name=name,shout=name.lower(),tp=tp,cast_time=chant,type=num(f,11),restrict=restrict,target=target,min_damage=low,max_damage=high,hp=hp,level_requirement=level,allowed_classes=list(classes),area_radius=radius,area_targets=cap,area_scale=.8 if radius==1 else .6 if radius else 1,max_level=10,training_bonus=2)
         if classes in ((4,),(6,)) and not radius:result[str(ident)]['range']=1
         if classes==(5,):result[str(ident)].update(requires_bow=True,range=5)
-        if ident in (28,33,34):result[str(ident)].update(learn_source='Hatch a bound monster egg; your death breaks the pet bond',max_level=0,bond_lost_on_death=True)
+        if ident in {e['spell_id'] for e in EGGS.values()}:result[str(ident)].update(learn_source='Hatch a bound egg from Aeven Eggkeeper or its monster; your death breaks the pet bond',max_level=0,bond_lost_on_death=True)
         if ident>=32:result[str(ident)]['template_id']=16
         if ident in COMPANIONS:result[str(ident)].update(effect_kind='companion',companion=COMPANIONS[ident],duration=0,upkeep_seconds=2)
     return encode_pub(original,rows),result
@@ -197,8 +198,15 @@ def build_npcs(original):
         if p['npc_id']<0:continue
         f=bytearray(rows[p['template_id']-1]['fields'])
         for offset,value,size in [(3,0,2),(5,0,2),(7,0,2),(9,0,2),(11,1,3),(16,0,2),(18,0,2),(20,0,2),(22,0,2),(24,0,2),(36,0,3)]:put(f,offset,value,size)
-        ident=p['npc_id'];rows.insert(-1,dict(id=ident,names=[p['name']],fields=f))
+        ident=p['npc_id']
+        if ident!=len(rows):raise ValueError('Pet NPC definition ID collision')
+        rows.insert(-1,dict(id=ident,names=[p['name']],fields=f))
         definitions[str(ident)]=dict(id=ident,name=p['name'],graphic=num(f,0,2),type=0,hp=1,boss=0,child=0,vendor_id=0,min_damage=0,max_damage=0,accuracy=0,evade=0,armor=0,exp=0,template_id=p['template_id'],is_companion=True)
+    ident=EGGKEEPER['id'];f=bytearray(rows[EGGKEEPER['template_id']-1]['fields'])
+    if ident!=len(rows):raise ValueError('Eggkeeper NPC definition ID collision')
+    put(f,9,ident,2)
+    rows.insert(-1,dict(id=ident,names=[EGGKEEPER['name']],fields=f))
+    definitions[str(ident)]=dict(id=ident,name=EGGKEEPER['name'],graphic=num(f,0,2),type=6,vendor_id=ident,template_id=EGGKEEPER['template_id'])
     return encode_pub(original,rows),definitions
 
 def formulas(original):
@@ -219,7 +227,7 @@ def build_skills():
     offers=[]
     for ident,p in SPELLS.items():
         name,level,classes,*_=p
-        if classes==(-1,) or ident in (17,28,33,34):continue
+        if classes==(-1,) or ident==17 or ident in {e['spell_id'] for e in EGGS.values()}:continue
         for cls in classes if len(classes)==1 else (0,):
             cost=0 if level==1 else {8:200,15:600,25:1600,30:2200,35:3000,40:4000,45:5000}.get(level,120)
             offers.extend([ident,cost,level,cls,0,0,0,0,0,0,0,0,0,0])
@@ -265,7 +273,9 @@ def build_shops(original):
     for vendor,recipe in [(87,'533,38,1,253,10,278,4,1,150,436,533,1,278,10,1,200,0,0'),(15,'543,511,1,299,8,308,3,1,100')]:
         match=re.search(r'^'+str(vendor)+r'\.craft[ \t]*=[ \t]*(.*)$',text,re.M);existing=match[1].strip() if match else ''
         replace(f'{vendor}.craft',existing+(',' if existing else '')+recipe)
-    # Eggs are earned by their Summoner loot winner, exclusively from monsters.
+    replace(f"{EGGKEEPER['id']}.name",'Aeven Eggkeeper - bound spirit eggs')
+    replace(f"{EGGKEEPER['id']}.trade",','.join(str(n) for ident in egg_stock() for n in (ident,EGGS[ident]['price'],0)))
+    # Buying provides reliable death replacement; earned monster eggs remain bound.
     # Native recipe amounts are unsigned bytes and use EO char encoding.
     for value in re.findall(r'^\d+\.craft[ \t]*=[ \t]*(.*)$',text,re.M):
         if not value.strip():continue
@@ -307,7 +317,7 @@ def build_quest(original):
 def configure(runtime):
     runtime=Path(runtime)
     if any((runtime/r).is_symlink() for r in ('data','data/pub')):raise ValueError('Materialize runtime data directories first')
-    if b'MortalSpiritBonds' not in (runtime/'etheos').read_bytes():raise ValueError('Install the mortal-bond-capable native binary first')
+    if b'PetEggTiers' not in (runtime/'etheos').read_bytes():raise ValueError('Install the tiered-pet-capable native binary first')
     baseline=runtime/'data/balance-v1-baseline';manifest_path=runtime/'data/balance-v1-manifest.json'
     old_manifest=json.loads(manifest_path.read_text()) if manifest_path.exists() else None
     if old_manifest:
@@ -324,10 +334,10 @@ def configure(runtime):
     class_bytes,classes=build_classes(originals['data/pub/dat001.ecf'])
     spell_bytes,spells=build_spells(originals['data/pub/dsl001.esf'])
     proposed={'data/aster-vale-drops.ini':drops,'data/pub/dat001.eif':item_bytes,'data/pub/dat001.ecf':class_bytes,'data/pub/dsl001.esf':spell_bytes,'data/pub/dtn001.enf':npc_bytes,'data/formulas.ini':formulas(originals['data/formulas.ini']),'data/aster-vale-skills.ini':build_skills(),'data/aster-vale-shops.ini':shops,'data/quests/00004.eqf':build_quest(originals['data/quests/00004.eqf'])}
-    profile=dict(version=VERSION,levels=LEVELS,max_skill_level=10,classes=classes,spells=spells,items=items,npcs=npcs,class_identity=True,class_signatures=True,mortal_spirit_bonds=True,companions=COMPANIONS,eggs=EGGS)
+    profile=dict(version=VERSION,levels=LEVELS,max_skill_level=10,classes=classes,spells=spells,items=items,npcs=npcs,class_identity=True,class_signatures=True,mortal_spirit_bonds=True,companions=COMPANIONS,eggs=EGGS,pet_tiers=TIERS,eggkeeper=EGGKEEPER)
     proposed['data/balance-profile.json']=(json.dumps(profile,indent=2)+'\n').encode()
     cfg=(runtime/'config.local.ini').read_text()
-    values={'MortalSpiritBonds':'yes','ClassSignatureRules':'yes','PriestRegenRate':'0.02','PriestSittingRegenRate':'0.04','CompanionLifetimeSeconds':'0','ClassIdentityRules':'yes','BalanceRevamp':'yes','UseClassFormulas':'yes','MaxSkillLevel':'10','SkillsFile':'./data/aster-vale-skills.ini'}
+    values={'PetEggTiers':'yes','MortalSpiritBonds':'yes','ClassSignatureRules':'yes','PriestRegenRate':'0.02','PriestSittingRegenRate':'0.04','CompanionLifetimeSeconds':'0','ClassIdentityRules':'yes','BalanceRevamp':'yes','UseClassFormulas':'yes','MaxSkillLevel':'10','SkillsFile':'./data/aster-vale-skills.ini'}
     for ident,p in CLASSES.items():
         for key in ('spell_scale','heal_wis','heal_int','heal_cha'):values[f'Balance.{ident}.{key}']=str(p[key])
     values['Balance.7.pk_spell_scale']=str(CLASSES[7]['pk_spell_scale'])
@@ -338,7 +348,7 @@ def configure(runtime):
         values[f'BalanceItem.{ident}.backstab']='yes' if item.get('backstab') else 'no'
         values[f'BalanceItem.{ident}.classes']=','.join(map(str,item.get('allowed_classes',[])))
     for ident,pet in COMPANIONS.items():
-        for key in ('npc_id','upkeep','power'):values[f'BalancePetSpell.{ident}.{key}']=str(pet[key])
+        for key in ('npc_id','upkeep','power','accuracy','hit_cap'):values[f'BalancePetSpell.{ident}.{key}']=str(pet[key])
     for ident,egg in EGGS.items():
         values[f'BalanceEgg.{ident}.spell']=str(egg['spell_id'])
         values[f'BalanceEgg.{ident}.npc']=str(egg['npc_id'])

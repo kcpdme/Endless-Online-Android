@@ -1,0 +1,47 @@
+--- a/src/npc.cpp
++++ b/src/npc.cpp
+@@ -1239,7 +1239,15 @@
+         vars["damage"] = util::rand(std::max(1,base-2),base+2); vars["critical"] = 0;
+         vars["modifier"] = this->map->world->config["MobRate"];
+         int amount = std::max(1,int(rpn_eval(rpn_parse(this->map->world->formulas_config["damage"]),vars)));
+-        if (util::rand(0.0,1.0) > rpn_eval(rpn_parse(this->map->world->formulas_config["hit_rate"]),vars)) amount = 0;
++        double hit_cap = 0.95;
++        if (this->map->world->config["PetEggTiers"])
++        {
++            std::string prefix = "BalancePetSpell." + util::to_string(this->companion_spell) + ".";
++            vars["accuracy"] += std::max(0.0,double(this->map->world->config[prefix + "accuracy"]));
++            hit_cap = util::clamp<double>(this->map->world->config[prefix + "hit_cap"],0.35,0.95);
++        }
++        double hit = std::min(hit_cap,rpn_eval(rpn_parse(this->map->world->formulas_config["hit_rate"]),vars));
++        if (util::rand(0.0,1.0) > hit) amount = 0;
+         amount = std::min(amount,target->hp);
+         owner->CompanionStatus(this,0,target->index,amount);
+         // Normal damage owns aggro, loot, quests and party EXP. No fake rewards.
+--- a/src/handlers/Shop.cpp
++++ b/src/handlers/Shop.cpp
+@@ -74,6 +74,10 @@
+ 
+ 	short item = reader.GetShort();
+ 	int amount = reader.GetInt();
++    // Repeat the adapter rule for original clients and forged raw packets.
++    if (character->world->config["PetEggTiers"] && character->clas != 7
++      && int(character->world->config["BalanceEgg." + util::to_string(item) + ".spell"]) > 0)
++    { character->StatusMsg("Only Summoners can buy bound spirit eggs."); return; }
+ 	/*int shopid = reader.GetInt();*/
+ 
+ 	if (amount <= 0 || amount > static_cast<int>(character->world->config["MaxShopBuy"])) return;
+--- a/src/character.cpp
++++ b/src/character.cpp
+@@ -927,6 +927,12 @@
+ 	auto remove_it = std::remove_if(UTIL_RANGE(this->spells), [&](Character_Spell cs) { return cs.id == spell; });
+ 	bool removed = (remove_it != this->spells.end());
+ 	this->spells.erase(remove_it, this->spells.end());
++    if (removed && this->world->config["MortalSpiritBonds"]
++      && int(this->world->config["BalancePetSpell." + util::to_string(spell) + ".egg"]) > 0)
++    {
++        this->DismissCompanion();
++        if (this->spell_id == spell) this->CancelSpell();
++    }
+ 
+ 	this->CheckQuestRules();
+ 

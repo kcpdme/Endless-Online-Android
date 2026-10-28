@@ -1,0 +1,15 @@
+{
+  "result": "installation_and_startup_passed",
+  "version_name": "0.45.0",
+  "version_code": 80,
+  "device": "Samsung Galaxy S23 Ultra (SM-S918B)",
+  "apk_sha256": "348ce7b245816dee5aba4adecc63943e4ec8c14300d371d06762ff77cbf54fdd",
+  "installed_apk_bytes_match": true,
+  "original_first_install_time_preserved": true,
+  "app_data_not_cleared": true,
+  "signature_and_16k_alignment_verified": true,
+  "app_process_started": true,
+  "startup_script_or_fatal_errors": 0,
+  "physical_pet_gameplay_retested": false,
+  "verification_scope": "Physical phone update and launch; pet gameplay exercised independently through native, public WebSocket and real Godot client tests."
+}

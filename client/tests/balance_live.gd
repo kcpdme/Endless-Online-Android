@@ -24,7 +24,7 @@ func run() -> void:
 	if failed: game.queue_free(); await process_frame; quit(1); return
 	c.character_list.select(0); c._enter_selected()
 	check(await wait_for(func() -> bool: return c.active and c.streaming and c.session.is_idle()), "Balance fixture enters the native world")
-	check(int(c.catalog.get("balance_version",0)) == 4, "Client receives current balance version")
+	check(int(c.catalog.get("balance_version",0)) == 5, "Client receives current balance version")
 	check((c.catalog.get("items",{}) as Dictionary).has("543"), "New equipment arrives through live catalog synchronization")
 	check(str((c.catalog.classes as Dictionary).get("3",{}).get("build_hint", "")).contains("INT"), "Class build guidance is available")
 	check(str((c.catalog.items as Dictionary).get("493",{}).get("name", "")) == "Tempest Staff", "New weapon name is visible")

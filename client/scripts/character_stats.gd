@@ -1,4 +1,5 @@
 extends RefCounted
+const PET_DETAILS = preload("res://scripts/pet_details.gd")
 ## Classic EO attributes and server-calculated totals, alongside the original paperdoll.
 const ATTRIBUTES: Array[String] = ["strength", "intelligence", "wisdom", "agility", "constitution", "charisma"]
 var game: Node
@@ -199,7 +200,8 @@ func refresh() -> void:
 		if int(item.get("hatch_spell", 0)) > 0:
 			var summon: Dictionary = (game.online.catalog.get("spells", {}) as Dictionary).get(str(int(item.hatch_spell)), {}) as Dictionary
 			if bool(item.get("bond_lost_on_death", false)):
-				item_body.text = "Hatch this egg to bond %s.\n\nSummoner level %d required. One living pet bond at a time. Your death kills the pet and breaks its bond; hatch another egg afterward.\n\nBound to you: cannot trade, drop or store in a shared chest. Travel, logout and TP exhaustion keep the bond. Calling and upkeep still cost TP." % [str(summon.get("name", "a spirit")), int(item.get("level_requirement", 1))]
+				item_body.text = PET_DETAILS.description(game, item)
+				item_art.texture = PET_DETAILS.texture(game, item)
 			else:
 				item_body.text = "Hatch this egg to learn %s. Summoner level %d required. Calling and upkeep cost TP." % [str(summon.get("name", "a spirit summon")), int(item.get("level_requirement", 1))]
 		if item.get("crafted", false): item_body.text += "\n\nCrafted definition · improved combat budget"

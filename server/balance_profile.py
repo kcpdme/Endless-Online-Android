@@ -1,6 +1,6 @@
 """Versioned, shared design inputs for the native level 1–50 balance profile."""
 
-VERSION = 4
+VERSION = 5
 LEVELS = (1, 8, 15, 25, 35, 45)
 ATTRIBUTES = ('strength', 'intelligence', 'wisdom', 'agility', 'constitution', 'charisma')
 CLASSES = {
@@ -10,7 +10,7 @@ CLASSES = {
     4: dict(name='Rogue', family=1, damage='agi 0.45 * str 0.2 * +', accuracy='12 level 0.5 * + agi 0.9 * +', evade='8 agi 0.75 * +', defence='con 0.35 *', hp='35 level 3 * + con 4 * +', tp='25 level 1.5 * + int 1.5 * + wis 1.5 * +', spell_scale=1.6, heal_wis=.2, heal_int=.1, heal_cha=0, hint='AGI first, then CON and STR. Evasion and blade backstabs: strike directly from behind for 1.5x or 2x.'),
     5: dict(name='Archer', family=3, damage='agi 0.5 * str 0.15 * +', accuracy='14 level 0.5 * + agi 0.9 * +', evade='6 agi 0.5 * +', defence='con 0.35 *', hp='35 level 3 * + con 4 * +', tp='25 level 1.5 * + wis 2 * +', spell_scale=1.6, heal_wis=.2, heal_int=.1, heal_cha=0, hint='AGI first, then CON and some STR. Equip a bow and arrows; use range and Aimed Shot.'),
     6: dict(name='Warrior', family=0, damage='str 0.65 * agi 0.1 * +', accuracy='10 level 0.5 * + agi 0.75 * + str 0.15 * +', evade='5 agi 0.35 * +', defence='con 0.6 *', hp='45 level 3.5 * + con 5 * +', tp='20 level 1.5 * + int 1.5 * + wis 1.5 * +', spell_scale=1.4, heal_wis=.2, heal_int=.1, heal_cha=0, hint='STR and CON, with some AGI. Highest STR attack scaling and durability; melee and Whirlwind.'),
-    7: dict(name='Summoner', family=6, damage='cha 0.2 * int 0.1 * +', accuracy='12 level 0.5 * + cha 0.7 * + int 0.2 * +', evade='6 agi 0.35 * + cha 0.15 * +', defence='con 0.4 *', hp='35 level 3 * + con 4 * +', tp='40 level 3 * + cha 3 * + int 2 * + wis 1.5 * +', spell_scale=1.0, pk_spell_scale=2.8, heal_wis=0, heal_int=0, heal_cha=0, hint='CHA first, then CON and INT. Earn bound eggs from specific monsters. One strong pet bond lasts until your death; upkeep spends TP.'),
+    7: dict(name='Summoner', family=6, damage='cha 0.2 * int 0.1 * +', accuracy='12 level 0.5 * + cha 0.7 * + int 0.2 * +', evade='6 agi 0.35 * + cha 0.15 * +', defence='con 0.4 *', hp='35 level 3 * + con 4 * +', tp='40 level 3 * + cha 3 * + int 2 * + wis 1.5 * +', spell_scale=1.0, pk_spell_scale=2.8, heal_wis=0, heal_int=0, heal_cha=0, hint='CHA first, then CON and INT. Choose bound eggs at Aeven Eggkeeper or hunt their monsters. Pets start at level 1; tier upgrades at 8, 25, 30 and 40. One living bond; upkeep spends TP and your death breaks it.'),
 }
 CLASSES[8] = dict(CLASSES[2], name='High Priest')
 
@@ -126,14 +126,10 @@ ENCOUNTERS = {
 
 # Summoned creatures use already-exported original art, neutral ENF types and
 # native ownership. They never have loot/EXP or autonomous target selection.
-COMPANIONS = {
-    28: dict(npc_id=306,name='Spirit Wolf',template_id=74,upkeep=2,power=1.0),
-    33: dict(npc_id=307,name='Spirit Wurm',template_id=82,upkeep=3,power=1.15),
-    34: dict(npc_id=308,name='Spirit Drake',template_id=225,upkeep=4,power=1.3),
-    35: dict(npc_id=-1,name='Dismiss Companion',template_id=74,upkeep=0,power=0),
-}
+from pet_catalog import COMPANIONS, SUMMON_SPELLS
 
 from class_signatures import ITEMS as SIGNATURE_ITEMS, SPELLS as SIGNATURE_SPELLS
 NEW_ITEMS.extend((ident,name,template,clas,role) for ident,name,template,clas,role,tier in SIGNATURE_ITEMS)
 NEW_ITEM_TIERS.update({ident:tier for ident,name,template,clas,role,tier in SIGNATURE_ITEMS})
 SPELLS.update(SIGNATURE_SPELLS)
+SPELLS.update(SUMMON_SPELLS)

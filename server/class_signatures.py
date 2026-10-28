@@ -5,7 +5,7 @@ SIGNATURES = {
     4: dict(name='Backstab',description='A successful adjacent attack directly behind a target deals randomly 1.5x or 2x damage with a Rogue blade. Does not stack with critical hits.',backstab_multipliers=[1.5,2.0]),
     5: dict(name='Marksmanship',description='Sustained ranged attacks and shots with a bow and arrows; AGI drives damage and accuracy.'),
     6: dict(name='Might',description='Each STR gives 0.65 base attack power, versus 0.20 for Rogue and 0.15 for Archer.',strength_damage=.65),
-    7: dict(name='Spirit bond',description='Summoners earn untradeable eggs from specific monsters. Hatch one living pet bond; your death breaks it and requires another egg. Travel, logout and TP exhaustion keep the bond. Strong pet attacks and TP upkeep define the class; PK areas use stronger spirit casting instead of pet AI.'),
+    7: dict(name='Spirit bond',description='Choose from 15 pets at the Aeven Eggkeeper or earn bound eggs from monsters. Five tiers share combat stats within each tier; stronger tiers improve damage and accuracy. One TP-funded living bond lasts until your death. Travel, logout and TP exhaustion keep it. PK areas use stronger spirit casting instead of pets.'),
 }
 ITEMS=[
  (544,'Stormcaller Staff',389,3,'intelligence',4),
@@ -27,11 +27,7 @@ for clas,prefix,role,hat,boots,gloves in [
   for slot,template in [('Hood',hat),('Boots',boots),('Gloves',gloves),('Ring',41)]:
    ident=561+len(SUPPORT);SUPPORT[ident]=dict(clas=clas,tier=tier,slot=slot)
    ITEMS.append((ident,f'{prefix} {label} {slot}',template,clas,role,tier))
-EGGS={
- 609:dict(name='Wolf Spirit Egg',spell_id=28,level=8,npc_id=74,chance=3,template_id=11,icon='res://icons/wolf_egg.svg'),
- 610:dict(name='Wurm Spirit Egg',spell_id=33,level=25,npc_id=82,chance=1.5,template_id=11,icon='res://icons/wurm_egg.svg'),
- 611:dict(name='Drake Spirit Egg',spell_id=34,level=40,npc_id=225,chance=8,template_id=11,icon='res://icons/drake_egg.svg'),
-}
+from pet_catalog import EGGS
 # Each physical class now has an ability at all six main milestones.
 SPELLS={
  40:('Shieldbreaker',1,(6,),5,1,8,12,0,0,2,0,0),

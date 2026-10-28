@@ -1,5 +1,5 @@
 {
-  "version": 4,
+  "version": 5,
   "equipment": [
     {
       "id": 20,
@@ -21129,15 +21129,20 @@
       "area_scale": 1,
       "max_level": 0,
       "training_bonus": 2,
-      "learn_source": "Hatch a bound monster egg; your death breaks the pet bond",
+      "learn_source": "Hatch a bound egg from Aeven Eggkeeper or its monster; your death breaks the pet bond",
       "bond_lost_on_death": true,
       "effect_kind": "companion",
       "companion": {
         "npc_id": 306,
         "name": "Spirit Wolf",
         "template_id": 74,
+        "tier": "rare",
+        "tier_name": "Rare",
+        "tier_color": "78b9ee",
         "upkeep": 2,
-        "power": 1.0
+        "power": 1.05,
+        "accuracy": 3,
+        "hit_cap": 0.86
       },
       "duration": 0,
       "upkeep_seconds": 2
@@ -21254,7 +21259,7 @@
       "area_scale": 1,
       "max_level": 0,
       "training_bonus": 2,
-      "learn_source": "Hatch a bound monster egg; your death breaks the pet bond",
+      "learn_source": "Hatch a bound egg from Aeven Eggkeeper or its monster; your death breaks the pet bond",
       "bond_lost_on_death": true,
       "template_id": 16,
       "effect_kind": "companion",
@@ -21262,8 +21267,13 @@
         "npc_id": 307,
         "name": "Spirit Wurm",
         "template_id": 82,
+        "tier": "epic",
+        "tier_name": "Epic",
+        "tier_color": "bf94ef",
         "upkeep": 3,
-        "power": 1.15
+        "power": 1.2,
+        "accuracy": 6,
+        "hit_cap": 0.9
       },
       "duration": 0,
       "upkeep_seconds": 2
@@ -21289,7 +21299,7 @@
       "area_scale": 1,
       "max_level": 0,
       "training_bonus": 2,
-      "learn_source": "Hatch a bound monster egg; your death breaks the pet bond",
+      "learn_source": "Hatch a bound egg from Aeven Eggkeeper or its monster; your death breaks the pet bond",
       "bond_lost_on_death": true,
       "template_id": 16,
       "effect_kind": "companion",
@@ -21297,8 +21307,13 @@
         "npc_id": 308,
         "name": "Spirit Drake",
         "template_id": 225,
-        "upkeep": 4,
-        "power": 1.3
+        "tier": "mythic",
+        "tier_name": "Mythic",
+        "tier_color": "f08093",
+        "upkeep": 5,
+        "power": 1.3,
+        "accuracy": 12,
+        "hit_cap": 0.95
       },
       "duration": 0,
       "upkeep_seconds": 2
@@ -21331,7 +21346,9 @@
         "name": "Dismiss Companion",
         "template_id": 74,
         "upkeep": 0,
-        "power": 0
+        "power": 0,
+        "accuracy": 0,
+        "hit_cap": 0.95
       },
       "duration": 0,
       "upkeep_seconds": 2
@@ -21696,6 +21713,486 @@
       "max_level": 10,
       "training_bonus": 2,
       "template_id": 16
+    },
+    "51": {
+      "id": 51,
+      "name": "Summon Spirit Penguin",
+      "shout": "summon spirit penguin",
+      "tp": 10,
+      "cast_time": 1,
+      "type": 1,
+      "restrict": 1,
+      "target": 1,
+      "min_damage": 0,
+      "max_damage": 0,
+      "hp": 0,
+      "level_requirement": 1,
+      "allowed_classes": [
+        7
+      ],
+      "area_radius": 0,
+      "area_targets": 0,
+      "area_scale": 1,
+      "max_level": 0,
+      "training_bonus": 2,
+      "learn_source": "Hatch a bound egg from Aeven Eggkeeper or its monster; your death breaks the pet bond",
+      "bond_lost_on_death": true,
+      "template_id": 16,
+      "effect_kind": "companion",
+      "companion": {
+        "npc_id": 309,
+        "name": "Spirit Penguin",
+        "template_id": 13,
+        "tier": "normal",
+        "tier_name": "Normal",
+        "tier_color": "b8c5c9",
+        "upkeep": 1,
+        "power": 0.65,
+        "accuracy": 0,
+        "hit_cap": 0.82
+      },
+      "duration": 0,
+      "upkeep_seconds": 2
+    },
+    "52": {
+      "id": 52,
+      "name": "Summon Spirit Goat",
+      "shout": "summon spirit goat",
+      "tp": 10,
+      "cast_time": 1,
+      "type": 1,
+      "restrict": 1,
+      "target": 1,
+      "min_damage": 0,
+      "max_damage": 0,
+      "hp": 0,
+      "level_requirement": 1,
+      "allowed_classes": [
+        7
+      ],
+      "area_radius": 0,
+      "area_targets": 0,
+      "area_scale": 1,
+      "max_level": 0,
+      "training_bonus": 2,
+      "learn_source": "Hatch a bound egg from Aeven Eggkeeper or its monster; your death breaks the pet bond",
+      "bond_lost_on_death": true,
+      "template_id": 16,
+      "effect_kind": "companion",
+      "companion": {
+        "npc_id": 310,
+        "name": "Spirit Goat",
+        "template_id": 7,
+        "tier": "normal",
+        "tier_name": "Normal",
+        "tier_color": "b8c5c9",
+        "upkeep": 1,
+        "power": 0.65,
+        "accuracy": 0,
+        "hit_cap": 0.82
+      },
+      "duration": 0,
+      "upkeep_seconds": 2
+    },
+    "53": {
+      "id": 53,
+      "name": "Summon Spirit Fox",
+      "shout": "summon spirit fox",
+      "tp": 10,
+      "cast_time": 1,
+      "type": 1,
+      "restrict": 1,
+      "target": 1,
+      "min_damage": 0,
+      "max_damage": 0,
+      "hp": 0,
+      "level_requirement": 1,
+      "allowed_classes": [
+        7
+      ],
+      "area_radius": 0,
+      "area_targets": 0,
+      "area_scale": 1,
+      "max_level": 0,
+      "training_bonus": 2,
+      "learn_source": "Hatch a bound egg from Aeven Eggkeeper or its monster; your death breaks the pet bond",
+      "bond_lost_on_death": true,
+      "template_id": 16,
+      "effect_kind": "companion",
+      "companion": {
+        "npc_id": 311,
+        "name": "Spirit Fox",
+        "template_id": 5,
+        "tier": "normal",
+        "tier_name": "Normal",
+        "tier_color": "b8c5c9",
+        "upkeep": 1,
+        "power": 0.65,
+        "accuracy": 0,
+        "hit_cap": 0.82
+      },
+      "duration": 0,
+      "upkeep_seconds": 2
+    },
+    "54": {
+      "id": 54,
+      "name": "Summon Spirit Bat",
+      "shout": "summon spirit bat",
+      "tp": 18,
+      "cast_time": 1,
+      "type": 1,
+      "restrict": 1,
+      "target": 1,
+      "min_damage": 0,
+      "max_damage": 0,
+      "hp": 0,
+      "level_requirement": 8,
+      "allowed_classes": [
+        7
+      ],
+      "area_radius": 0,
+      "area_targets": 0,
+      "area_scale": 1,
+      "max_level": 0,
+      "training_bonus": 2,
+      "learn_source": "Hatch a bound egg from Aeven Eggkeeper or its monster; your death breaks the pet bond",
+      "bond_lost_on_death": true,
+      "template_id": 16,
+      "effect_kind": "companion",
+      "companion": {
+        "npc_id": 312,
+        "name": "Spirit Bat",
+        "template_id": 81,
+        "tier": "rare",
+        "tier_name": "Rare",
+        "tier_color": "78b9ee",
+        "upkeep": 2,
+        "power": 1.05,
+        "accuracy": 3,
+        "hit_cap": 0.86
+      },
+      "duration": 0,
+      "upkeep_seconds": 2
+    },
+    "55": {
+      "id": 55,
+      "name": "Summon Spirit Butterfly",
+      "shout": "summon spirit butterfly",
+      "tp": 18,
+      "cast_time": 1,
+      "type": 1,
+      "restrict": 1,
+      "target": 1,
+      "min_damage": 0,
+      "max_damage": 0,
+      "hp": 0,
+      "level_requirement": 8,
+      "allowed_classes": [
+        7
+      ],
+      "area_radius": 0,
+      "area_targets": 0,
+      "area_scale": 1,
+      "max_level": 0,
+      "training_bonus": 2,
+      "learn_source": "Hatch a bound egg from Aeven Eggkeeper or its monster; your death breaks the pet bond",
+      "bond_lost_on_death": true,
+      "template_id": 16,
+      "effect_kind": "companion",
+      "companion": {
+        "npc_id": 313,
+        "name": "Spirit Butterfly",
+        "template_id": 133,
+        "tier": "rare",
+        "tier_name": "Rare",
+        "tier_color": "78b9ee",
+        "upkeep": 2,
+        "power": 1.05,
+        "accuracy": 3,
+        "hit_cap": 0.86
+      },
+      "duration": 0,
+      "upkeep_seconds": 2
+    },
+    "56": {
+      "id": 56,
+      "name": "Summon Spirit Baby Turtle",
+      "shout": "summon spirit baby turtle",
+      "tp": 30,
+      "cast_time": 2,
+      "type": 1,
+      "restrict": 1,
+      "target": 1,
+      "min_damage": 0,
+      "max_damage": 0,
+      "hp": 0,
+      "level_requirement": 25,
+      "allowed_classes": [
+        7
+      ],
+      "area_radius": 0,
+      "area_targets": 0,
+      "area_scale": 1,
+      "max_level": 0,
+      "training_bonus": 2,
+      "learn_source": "Hatch a bound egg from Aeven Eggkeeper or its monster; your death breaks the pet bond",
+      "bond_lost_on_death": true,
+      "template_id": 16,
+      "effect_kind": "companion",
+      "companion": {
+        "npc_id": 314,
+        "name": "Spirit Baby Turtle",
+        "template_id": 205,
+        "tier": "epic",
+        "tier_name": "Epic",
+        "tier_color": "bf94ef",
+        "upkeep": 3,
+        "power": 1.2,
+        "accuracy": 6,
+        "hit_cap": 0.9
+      },
+      "duration": 0,
+      "upkeep_seconds": 2
+    },
+    "57": {
+      "id": 57,
+      "name": "Summon Spirit Skeleton",
+      "shout": "summon spirit skeleton",
+      "tp": 30,
+      "cast_time": 2,
+      "type": 1,
+      "restrict": 1,
+      "target": 1,
+      "min_damage": 0,
+      "max_damage": 0,
+      "hp": 0,
+      "level_requirement": 25,
+      "allowed_classes": [
+        7
+      ],
+      "area_radius": 0,
+      "area_targets": 0,
+      "area_scale": 1,
+      "max_level": 0,
+      "training_bonus": 2,
+      "learn_source": "Hatch a bound egg from Aeven Eggkeeper or its monster; your death breaks the pet bond",
+      "bond_lost_on_death": true,
+      "template_id": 16,
+      "effect_kind": "companion",
+      "companion": {
+        "npc_id": 315,
+        "name": "Spirit Skeleton",
+        "template_id": 17,
+        "tier": "epic",
+        "tier_name": "Epic",
+        "tier_color": "bf94ef",
+        "upkeep": 3,
+        "power": 1.2,
+        "accuracy": 6,
+        "hit_cap": 0.9
+      },
+      "duration": 0,
+      "upkeep_seconds": 2
+    },
+    "58": {
+      "id": 58,
+      "name": "Summon Spirit Banshi",
+      "shout": "summon spirit banshi",
+      "tp": 38,
+      "cast_time": 2,
+      "type": 1,
+      "restrict": 1,
+      "target": 1,
+      "min_damage": 0,
+      "max_damage": 0,
+      "hp": 0,
+      "level_requirement": 30,
+      "allowed_classes": [
+        7
+      ],
+      "area_radius": 0,
+      "area_targets": 0,
+      "area_scale": 1,
+      "max_level": 0,
+      "training_bonus": 2,
+      "learn_source": "Hatch a bound egg from Aeven Eggkeeper or its monster; your death breaks the pet bond",
+      "bond_lost_on_death": true,
+      "template_id": 16,
+      "effect_kind": "companion",
+      "companion": {
+        "npc_id": 316,
+        "name": "Spirit Banshi",
+        "template_id": 209,
+        "tier": "legend",
+        "tier_name": "Legend",
+        "tier_color": "edb75b",
+        "upkeep": 4,
+        "power": 1.25,
+        "accuracy": 9,
+        "hit_cap": 0.93
+      },
+      "duration": 0,
+      "upkeep_seconds": 2
+    },
+    "59": {
+      "id": 59,
+      "name": "Summon Spirit Wraith",
+      "shout": "summon spirit wraith",
+      "tp": 38,
+      "cast_time": 2,
+      "type": 1,
+      "restrict": 1,
+      "target": 1,
+      "min_damage": 0,
+      "max_damage": 0,
+      "hp": 0,
+      "level_requirement": 30,
+      "allowed_classes": [
+        7
+      ],
+      "area_radius": 0,
+      "area_targets": 0,
+      "area_scale": 1,
+      "max_level": 0,
+      "training_bonus": 2,
+      "learn_source": "Hatch a bound egg from Aeven Eggkeeper or its monster; your death breaks the pet bond",
+      "bond_lost_on_death": true,
+      "template_id": 16,
+      "effect_kind": "companion",
+      "companion": {
+        "npc_id": 317,
+        "name": "Spirit Wraith",
+        "template_id": 113,
+        "tier": "legend",
+        "tier_name": "Legend",
+        "tier_color": "edb75b",
+        "upkeep": 4,
+        "power": 1.25,
+        "accuracy": 9,
+        "hit_cap": 0.93
+      },
+      "duration": 0,
+      "upkeep_seconds": 2
+    },
+    "60": {
+      "id": 60,
+      "name": "Summon Spirit Dark Magician",
+      "shout": "summon spirit dark magician",
+      "tp": 38,
+      "cast_time": 2,
+      "type": 1,
+      "restrict": 1,
+      "target": 1,
+      "min_damage": 0,
+      "max_damage": 0,
+      "hp": 0,
+      "level_requirement": 30,
+      "allowed_classes": [
+        7
+      ],
+      "area_radius": 0,
+      "area_targets": 0,
+      "area_scale": 1,
+      "max_level": 0,
+      "training_bonus": 2,
+      "learn_source": "Hatch a bound egg from Aeven Eggkeeper or its monster; your death breaks the pet bond",
+      "bond_lost_on_death": true,
+      "template_id": 16,
+      "effect_kind": "companion",
+      "companion": {
+        "npc_id": 318,
+        "name": "Spirit Dark Magician",
+        "template_id": 207,
+        "tier": "legend",
+        "tier_name": "Legend",
+        "tier_color": "edb75b",
+        "upkeep": 4,
+        "power": 1.25,
+        "accuracy": 9,
+        "hit_cap": 0.93
+      },
+      "duration": 0,
+      "upkeep_seconds": 2
+    },
+    "61": {
+      "id": 61,
+      "name": "Summon Spirit Phoenix",
+      "shout": "summon spirit phoenix",
+      "tp": 45,
+      "cast_time": 2,
+      "type": 1,
+      "restrict": 1,
+      "target": 1,
+      "min_damage": 0,
+      "max_damage": 0,
+      "hp": 0,
+      "level_requirement": 40,
+      "allowed_classes": [
+        7
+      ],
+      "area_radius": 0,
+      "area_targets": 0,
+      "area_scale": 1,
+      "max_level": 0,
+      "training_bonus": 2,
+      "learn_source": "Hatch a bound egg from Aeven Eggkeeper or its monster; your death breaks the pet bond",
+      "bond_lost_on_death": true,
+      "template_id": 16,
+      "effect_kind": "companion",
+      "companion": {
+        "npc_id": 319,
+        "name": "Spirit Phoenix",
+        "template_id": 216,
+        "tier": "mythic",
+        "tier_name": "Mythic",
+        "tier_color": "f08093",
+        "upkeep": 5,
+        "power": 1.3,
+        "accuracy": 12,
+        "hit_cap": 0.95
+      },
+      "duration": 0,
+      "upkeep_seconds": 2
+    },
+    "62": {
+      "id": 62,
+      "name": "Summon Spirit King Wurm",
+      "shout": "summon spirit king wurm",
+      "tp": 45,
+      "cast_time": 2,
+      "type": 1,
+      "restrict": 1,
+      "target": 1,
+      "min_damage": 0,
+      "max_damage": 0,
+      "hp": 0,
+      "level_requirement": 40,
+      "allowed_classes": [
+        7
+      ],
+      "area_radius": 0,
+      "area_targets": 0,
+      "area_scale": 1,
+      "max_level": 0,
+      "training_bonus": 2,
+      "learn_source": "Hatch a bound egg from Aeven Eggkeeper or its monster; your death breaks the pet bond",
+      "bond_lost_on_death": true,
+      "template_id": 16,
+      "effect_kind": "companion",
+      "companion": {
+        "npc_id": 320,
+        "name": "Spirit King Wurm",
+        "template_id": 174,
+        "tier": "mythic",
+        "tier_name": "Mythic",
+        "tier_color": "f08093",
+        "upkeep": 5,
+        "power": 1.3,
+        "accuracy": 12,
+        "hit_cap": 0.95
+      },
+      "duration": 0,
+      "upkeep_seconds": 2
     }
   },
   "eggs": {
@@ -21706,7 +22203,11 @@
       "npc_id": 74,
       "chance": 3,
       "template_id": 11,
-      "icon": "res://icons/wolf_egg.svg"
+      "icon": "res://icons/rare_egg.svg",
+      "tier": "rare",
+      "tier_name": "Rare",
+      "tier_color": "78b9ee",
+      "price": 600
     },
     "610": {
       "name": "Wurm Spirit Egg",
@@ -21715,7 +22216,11 @@
       "npc_id": 82,
       "chance": 1.5,
       "template_id": 11,
-      "icon": "res://icons/wurm_egg.svg"
+      "icon": "res://icons/epic_egg.svg",
+      "tier": "epic",
+      "tier_name": "Epic",
+      "tier_color": "bf94ef",
+      "price": 2000
     },
     "611": {
       "name": "Drake Spirit Egg",
@@ -21724,7 +22229,234 @@
       "npc_id": 225,
       "chance": 8,
       "template_id": 11,
-      "icon": "res://icons/drake_egg.svg"
+      "icon": "res://icons/mythic_egg.svg",
+      "tier": "mythic",
+      "tier_name": "Mythic",
+      "tier_color": "f08093",
+      "price": 12000
+    },
+    "612": {
+      "name": "Penguin Spirit Egg",
+      "spell_id": 51,
+      "level": 1,
+      "npc_id": 13,
+      "chance": 2,
+      "template_id": 11,
+      "icon": "res://icons/normal_egg.svg",
+      "tier": "normal",
+      "tier_name": "Normal",
+      "tier_color": "b8c5c9",
+      "price": 100
+    },
+    "613": {
+      "name": "Goat Spirit Egg",
+      "spell_id": 52,
+      "level": 1,
+      "npc_id": 7,
+      "chance": 2,
+      "template_id": 11,
+      "icon": "res://icons/normal_egg.svg",
+      "tier": "normal",
+      "tier_name": "Normal",
+      "tier_color": "b8c5c9",
+      "price": 100
+    },
+    "614": {
+      "name": "Fox Spirit Egg",
+      "spell_id": 53,
+      "level": 1,
+      "npc_id": 5,
+      "chance": 2,
+      "template_id": 11,
+      "icon": "res://icons/normal_egg.svg",
+      "tier": "normal",
+      "tier_name": "Normal",
+      "tier_color": "b8c5c9",
+      "price": 100
+    },
+    "615": {
+      "name": "Bat Spirit Egg",
+      "spell_id": 54,
+      "level": 8,
+      "npc_id": 81,
+      "chance": 2,
+      "template_id": 11,
+      "icon": "res://icons/rare_egg.svg",
+      "tier": "rare",
+      "tier_name": "Rare",
+      "tier_color": "78b9ee",
+      "price": 600
+    },
+    "616": {
+      "name": "Butterfly Spirit Egg",
+      "spell_id": 55,
+      "level": 8,
+      "npc_id": 133,
+      "chance": 2,
+      "template_id": 11,
+      "icon": "res://icons/rare_egg.svg",
+      "tier": "rare",
+      "tier_name": "Rare",
+      "tier_color": "78b9ee",
+      "price": 600
+    },
+    "617": {
+      "name": "Baby Turtle Spirit Egg",
+      "spell_id": 56,
+      "level": 25,
+      "npc_id": 205,
+      "chance": 1.5,
+      "template_id": 11,
+      "icon": "res://icons/epic_egg.svg",
+      "tier": "epic",
+      "tier_name": "Epic",
+      "tier_color": "bf94ef",
+      "price": 2000
+    },
+    "618": {
+      "name": "Skeleton Spirit Egg",
+      "spell_id": 57,
+      "level": 25,
+      "npc_id": 17,
+      "chance": 1.5,
+      "template_id": 11,
+      "icon": "res://icons/epic_egg.svg",
+      "tier": "epic",
+      "tier_name": "Epic",
+      "tier_color": "bf94ef",
+      "price": 2000
+    },
+    "619": {
+      "name": "Banshi Spirit Egg",
+      "spell_id": 58,
+      "level": 30,
+      "npc_id": 209,
+      "chance": 1,
+      "template_id": 11,
+      "icon": "res://icons/legend_egg.svg",
+      "tier": "legend",
+      "tier_name": "Legend",
+      "tier_color": "edb75b",
+      "price": 6000
+    },
+    "620": {
+      "name": "Wraith Spirit Egg",
+      "spell_id": 59,
+      "level": 30,
+      "npc_id": 113,
+      "chance": 1,
+      "template_id": 11,
+      "icon": "res://icons/legend_egg.svg",
+      "tier": "legend",
+      "tier_name": "Legend",
+      "tier_color": "edb75b",
+      "price": 6000
+    },
+    "621": {
+      "name": "Dark Magician Spirit Egg",
+      "spell_id": 60,
+      "level": 30,
+      "npc_id": 207,
+      "chance": 1,
+      "template_id": 11,
+      "icon": "res://icons/legend_egg.svg",
+      "tier": "legend",
+      "tier_name": "Legend",
+      "tier_color": "edb75b",
+      "price": 6000
+    },
+    "622": {
+      "name": "Phoenix Spirit Egg",
+      "spell_id": 61,
+      "level": 40,
+      "npc_id": 216,
+      "chance": 2,
+      "template_id": 11,
+      "icon": "res://icons/mythic_egg.svg",
+      "tier": "mythic",
+      "tier_name": "Mythic",
+      "tier_color": "f08093",
+      "price": 12000
+    },
+    "623": {
+      "name": "King Wurm Spirit Egg",
+      "spell_id": 62,
+      "level": 40,
+      "npc_id": 174,
+      "chance": 1,
+      "template_id": 11,
+      "icon": "res://icons/mythic_egg.svg",
+      "tier": "mythic",
+      "tier_name": "Mythic",
+      "tier_color": "f08093",
+      "price": 12000
+    }
+  },
+  "pet_tiers": {
+    "normal": {
+      "name": "Normal",
+      "rank": 0,
+      "level": 1,
+      "price": 100,
+      "tp": 10,
+      "chant": 1,
+      "upkeep": 1,
+      "power": 0.65,
+      "accuracy": 0,
+      "hit_cap": 0.82,
+      "color": "b8c5c9"
+    },
+    "rare": {
+      "name": "Rare",
+      "rank": 1,
+      "level": 8,
+      "price": 600,
+      "tp": 18,
+      "chant": 1,
+      "upkeep": 2,
+      "power": 1.05,
+      "accuracy": 3,
+      "hit_cap": 0.86,
+      "color": "78b9ee"
+    },
+    "epic": {
+      "name": "Epic",
+      "rank": 2,
+      "level": 25,
+      "price": 2000,
+      "tp": 30,
+      "chant": 2,
+      "upkeep": 3,
+      "power": 1.2,
+      "accuracy": 6,
+      "hit_cap": 0.9,
+      "color": "bf94ef"
+    },
+    "legend": {
+      "name": "Legend",
+      "rank": 3,
+      "level": 30,
+      "price": 6000,
+      "tp": 38,
+      "chant": 2,
+      "upkeep": 4,
+      "power": 1.25,
+      "accuracy": 9,
+      "hit_cap": 0.93,
+      "color": "edb75b"
+    },
+    "mythic": {
+      "name": "Mythic",
+      "rank": 4,
+      "level": 40,
+      "price": 12000,
+      "tp": 45,
+      "chant": 2,
+      "upkeep": 5,
+      "power": 1.3,
+      "accuracy": 12,
+      "hit_cap": 0.95,
+      "color": "f08093"
     }
   },
   "coverage": [
@@ -23450,10 +24182,10 @@
           "dropped": 2
         }
       },
-      "skills": 2,
+      "skills": 5,
       "signature": {
         "name": "Spirit bond",
-        "description": "Summoners earn untradeable eggs from specific monsters. Hatch one living pet bond; your death breaks it and requires another egg. Travel, logout and TP exhaustion keep the bond. Strong pet attacks and TP upkeep define the class; PK areas use stronger spirit casting instead of pet AI."
+        "description": "Choose from 15 pets at the Aeven Eggkeeper or earn bound eggs from monsters. Five tiers share combat stats within each tier; stronger tiers improve damage and accuracy. One TP-funded living bond lasts until your death. Travel, logout and TP exhaustion keep it. PK areas use stronger spirit casting instead of pets."
       }
     },
     {
@@ -23504,10 +24236,10 @@
           "dropped": 2
         }
       },
-      "skills": 3,
+      "skills": 8,
       "signature": {
         "name": "Spirit bond",
-        "description": "Summoners earn untradeable eggs from specific monsters. Hatch one living pet bond; your death breaks it and requires another egg. Travel, logout and TP exhaustion keep the bond. Strong pet attacks and TP upkeep define the class; PK areas use stronger spirit casting instead of pet AI."
+        "description": "Choose from 15 pets at the Aeven Eggkeeper or earn bound eggs from monsters. Five tiers share combat stats within each tier; stronger tiers improve damage and accuracy. One TP-funded living bond lasts until your death. Travel, logout and TP exhaustion keep it. PK areas use stronger spirit casting instead of pets."
       }
     },
     {
@@ -23558,10 +24290,10 @@
           "dropped": 2
         }
       },
-      "skills": 4,
+      "skills": 9,
       "signature": {
         "name": "Spirit bond",
-        "description": "Summoners earn untradeable eggs from specific monsters. Hatch one living pet bond; your death breaks it and requires another egg. Travel, logout and TP exhaustion keep the bond. Strong pet attacks and TP upkeep define the class; PK areas use stronger spirit casting instead of pet AI."
+        "description": "Choose from 15 pets at the Aeven Eggkeeper or earn bound eggs from monsters. Five tiers share combat stats within each tier; stronger tiers improve damage and accuracy. One TP-funded living bond lasts until your death. Travel, logout and TP exhaustion keep it. PK areas use stronger spirit casting instead of pets."
       }
     },
     {
@@ -23612,10 +24344,10 @@
           "dropped": 2
         }
       },
-      "skills": 6,
+      "skills": 13,
       "signature": {
         "name": "Spirit bond",
-        "description": "Summoners earn untradeable eggs from specific monsters. Hatch one living pet bond; your death breaks it and requires another egg. Travel, logout and TP exhaustion keep the bond. Strong pet attacks and TP upkeep define the class; PK areas use stronger spirit casting instead of pet AI."
+        "description": "Choose from 15 pets at the Aeven Eggkeeper or earn bound eggs from monsters. Five tiers share combat stats within each tier; stronger tiers improve damage and accuracy. One TP-funded living bond lasts until your death. Travel, logout and TP exhaustion keep it. PK areas use stronger spirit casting instead of pets."
       }
     },
     {
@@ -23666,10 +24398,10 @@
           "dropped": 2
         }
       },
-      "skills": 7,
+      "skills": 17,
       "signature": {
         "name": "Spirit bond",
-        "description": "Summoners earn untradeable eggs from specific monsters. Hatch one living pet bond; your death breaks it and requires another egg. Travel, logout and TP exhaustion keep the bond. Strong pet attacks and TP upkeep define the class; PK areas use stronger spirit casting instead of pet AI."
+        "description": "Choose from 15 pets at the Aeven Eggkeeper or earn bound eggs from monsters. Five tiers share combat stats within each tier; stronger tiers improve damage and accuracy. One TP-funded living bond lasts until your death. Travel, logout and TP exhaustion keep it. PK areas use stronger spirit casting instead of pets."
       }
     },
     {
@@ -23720,10 +24452,10 @@
           "dropped": 2
         }
       },
-      "skills": 9,
+      "skills": 21,
       "signature": {
         "name": "Spirit bond",
-        "description": "Summoners earn untradeable eggs from specific monsters. Hatch one living pet bond; your death breaks it and requires another egg. Travel, logout and TP exhaustion keep the bond. Strong pet attacks and TP upkeep define the class; PK areas use stronger spirit casting instead of pet AI."
+        "description": "Choose from 15 pets at the Aeven Eggkeeper or earn bound eggs from monsters. Five tiers share combat stats within each tier; stronger tiers improve damage and accuracy. One TP-funded living bond lasts until your death. Travel, logout and TP exhaustion keep it. PK areas use stronger spirit casting instead of pets."
       }
     }
   ],
@@ -23959,10 +24691,10 @@
       "max_tp": 81,
       "basic_dps": 6.23,
       "spell_dps": 12.52,
-      "burst_dps": 12.52,
+      "burst_dps": 18.26,
       "backstab_dps": 0,
       "passive_hp_per_second": 0,
-      "companion_dps": 0,
+      "companion_dps": 5.74,
       "spell_id": 23,
       "spell_tp": 5,
       "spell_casts_from_full": 16,
@@ -24200,10 +24932,10 @@
       "max_tp": 174,
       "basic_dps": 17.1,
       "spell_dps": 17.81,
-      "burst_dps": 39.66,
+      "burst_dps": 38.45,
       "backstab_dps": 0,
       "passive_hp_per_second": 0,
-      "companion_dps": 21.85,
+      "companion_dps": 20.64,
       "spell_id": 23,
       "spell_tp": 5,
       "spell_casts_from_full": 34,
@@ -24441,10 +25173,10 @@
       "max_tp": 387,
       "basic_dps": 30.4,
       "spell_dps": 43.33,
-      "burst_dps": 79.43,
+      "burst_dps": 77.56,
       "backstab_dps": 0,
       "passive_hp_per_second": 0,
-      "companion_dps": 36.1,
+      "companion_dps": 34.23,
       "spell_id": 24,
       "spell_tp": 14,
       "spell_casts_from_full": 27,
@@ -24682,10 +25414,10 @@
       "max_tp": 536,
       "basic_dps": 43.7,
       "spell_dps": 58.97,
-      "burst_dps": 114.07,
+      "burst_dps": 113.33,
       "backstab_dps": 0,
       "passive_hp_per_second": 0,
-      "companion_dps": 55.1,
+      "companion_dps": 54.36,
       "spell_id": 26,
       "spell_tp": 22,
       "spell_casts_from_full": 24,
@@ -24923,10 +25655,10 @@
       "max_tp": 821,
       "basic_dps": 59.14,
       "spell_dps": 64.82,
-      "burst_dps": 136.45,
+      "burst_dps": 141.45,
       "backstab_dps": 0,
       "passive_hp_per_second": 0,
-      "companion_dps": 71.63,
+      "companion_dps": 76.63,
       "spell_id": 26,
       "spell_tp": 22,
       "spell_casts_from_full": 37,

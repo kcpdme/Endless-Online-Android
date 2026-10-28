@@ -1,7 +1,11 @@
 # Class and equipment revamp for levels 1–50
 
+Profile 5 adds fifteen pet appearances, five equal-within-tier combat budgets
+and the Aeven Eggkeeper. See [Summoner pet tiers](SUMMONER_PET_TIERS.md) for
+current acquisition, balance and lifecycle rules.
+
 Profile 4 replaces permanent summon unlocks with bound eggs and death-limited
-pet bonds. See [Mortal spirit eggs](MORTAL_SPIRIT_EGGS.md) for current rules.
+pet bonds. See [Mortal spirit eggs](MORTAL_SPIRIT_EGGS.md) for that release.
 
 Profile 3 extends this release with class signatures, permanent egg unlocks and
 complete gear coverage. See [Class signatures and eggs](CLASS_SIGNATURES_AND_EGGS.md).

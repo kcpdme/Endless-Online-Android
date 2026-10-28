@@ -51,6 +51,10 @@ def check_hatch(session, ident):
         if any(s['id'] in bonds for s in session.spells):raise EOError('You already have a living pet bond. Keep the egg for after death, or release your bond at a skill master.')
     elif any(s['id']==egg['spell_id'] for s in session.spells):raise EOError('You already know this spirit summon. The egg is kept.')
 
+def check_egg_purchase(session, ident):
+    if str(ident) in profile().get('eggs',{}) and int(session.stats.get('class_id',0))!=7:
+        raise EOError('Only Summoners can buy bound spirit eggs. Choose Summoner at the Wise Man first.')
+
 def check_spell_loadout(session, ident):
     spell=profile().get('spells',{}).get(str(ident),{})
     if not spell.get('requires_bow') or int(session.stats.get('admin',0))>0:return

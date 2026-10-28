@@ -1,0 +1,100 @@
+{
+  "result": "passed",
+  "checks": 123,
+  "native_pet_choices": [
+    {
+      "egg_id": 609,
+      "spell_id": 28,
+      "npc_id": 306,
+      "tier": "rare"
+    },
+    {
+      "egg_id": 610,
+      "spell_id": 33,
+      "npc_id": 307,
+      "tier": "epic"
+    },
+    {
+      "egg_id": 611,
+      "spell_id": 34,
+      "npc_id": 308,
+      "tier": "mythic"
+    },
+    {
+      "egg_id": 612,
+      "spell_id": 51,
+      "npc_id": 309,
+      "tier": "normal"
+    },
+    {
+      "egg_id": 613,
+      "spell_id": 52,
+      "npc_id": 310,
+      "tier": "normal"
+    },
+    {
+      "egg_id": 614,
+      "spell_id": 53,
+      "npc_id": 311,
+      "tier": "normal"
+    },
+    {
+      "egg_id": 615,
+      "spell_id": 54,
+      "npc_id": 312,
+      "tier": "rare"
+    },
+    {
+      "egg_id": 616,
+      "spell_id": 55,
+      "npc_id": 313,
+      "tier": "rare"
+    },
+    {
+      "egg_id": 617,
+      "spell_id": 56,
+      "npc_id": 314,
+      "tier": "epic"
+    },
+    {
+      "egg_id": 618,
+      "spell_id": 57,
+      "npc_id": 315,
+      "tier": "epic"
+    },
+    {
+      "egg_id": 619,
+      "spell_id": 58,
+      "npc_id": 316,
+      "tier": "legend"
+    },
+    {
+      "egg_id": 620,
+      "spell_id": 59,
+      "npc_id": 317,
+      "tier": "legend"
+    },
+    {
+      "egg_id": 621,
+      "spell_id": 60,
+      "npc_id": 318,
+      "tier": "legend"
+    },
+    {
+      "egg_id": 622,
+      "spell_id": 61,
+      "npc_id": 319,
+      "tier": "mythic"
+    },
+    {
+      "egg_id": 623,
+      "spell_id": 62,
+      "npc_id": 320,
+      "tier": "mythic"
+    }
+  ],
+  "tiers": 5,
+  "native_purchase_hatch_summon_upkeep_dismiss_death": true,
+  "isolated_database": true,
+  "production_database_opened": false
+}

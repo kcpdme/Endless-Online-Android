@@ -1,0 +1,17 @@
+{
+  "result": "passed",
+  "backup": "/opt/aster-vale/backups/pet-tiers-v5-20261028T060725Z",
+  "services_healthy": true,
+  "balance_profile_version": 5,
+  "native_sha256": "3a7927fa757cd788bfe85d971f7ebec4e2c17131a6ad336b24dc1b2489ebad0e",
+  "profile_sha256": "c7e16e12d52ecb117485d2441d4118efb826cdb98f7f91426f2ce710e0ca30ff",
+  "aeven_map_sha256": "c880b13d526ca99a6e38c0ce4f038a3712e818e298b5dfeedcdc22ef73081e18",
+  "pet_choices": 15,
+  "tiers": 5,
+  "account_database_bytes_unchanged_during_install": true,
+  "no_character_migration_required": true,
+  "unrelated_runtime_content_preserved": true,
+  "sky_walking_maps_and_admin_teleport_preserved": true,
+  "unrelated_configuration_preserved": true,
+  "installer_repeat_identical": true
+}

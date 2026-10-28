@@ -32,7 +32,7 @@ maps, their catalog hashes and manifest identity with the repaired native maps.
 To regenerate client content after preparing a runtime:
 
 ```bash
-python3 tools/export_sky_wonder.py --runtime .local/runtime
+python3 tools/export_sky_wonder.py --runtime server/.local/runtime
 ```
 
 Use the actual prepared runtime path if it differs. Native map changes must be

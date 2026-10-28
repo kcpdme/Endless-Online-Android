@@ -1,5 +1,10 @@
 # Summoner eggs and living pet bonds — profile 4
 
+Profile 5 retains mortal bonds and adds a shop plus fifteen pet choices across
+five tiers. Its current acquisition and combat values are documented in
+[Summoner pet tiers](SUMMONER_PET_TIERS.md). The drop-only rules and three-pet
+values below describe the historical profile-4 release.
+
 This replaces profile 3's permanent summon unlocks. Eggs are consumable pet
 bonds, exclusive to Summoners. The Android client is 0.44.0 / code 78.
 
