@@ -86,3 +86,11 @@ was preserved, and launch had no script or fatal errors.
 APK SHA-256: `3bc447f5f9a619833ba935753f8ab2cc750e410a0ab48128eadc8e4f132c5621`.
 
 Deployment and sanitized validation reports accompany this document.
+
+## Sky Haven walking access — v0.44.1
+
+The walking route now connects Aeven's west road through West Woodlands and
+Halowdal Avenue to the cloud bridge and Sky Wonder. The Avenue entrance has a
+Sky Haven sign and stone gateway at 13–14,2. The return uses the same bridge;
+Admin → Teleport → Sky Haven retains its original destination. See
+[walking directions and validation](SKY_WONDER_WALKING.md).

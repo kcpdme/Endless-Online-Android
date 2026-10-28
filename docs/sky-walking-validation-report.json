@@ -1,0 +1,20 @@
+{
+  "result": "passed",
+  "android_version": "0.44.1",
+  "android_code": 79,
+  "apk_sha256": "7efce010d4c3287cadd56fb7f8e44f28bc3d48a728c800446bac4b3df31956b7",
+  "apk_signature_verified": true,
+  "apk_16kb_alignment_verified": true,
+  "embedded_catalog_manifest_maps_match_accepted_content": true,
+  "unit_tests": 4,
+  "admin_regression_tests": 4,
+  "existing_travel_tests": 1,
+  "native_checks": 178,
+  "native_walk_steps": 147,
+  "client_checks": 69,
+  "walking_map_hashes": {
+    "23": "a0bac9b2291d5bcc80ae186b74db6628a29d9e5d9fae3a7b4fbc965f94e63758",
+    "71": "c94b26e9065b59cbae8bebef22bdf9b592937b0d08bb3ee87d1dfc8feacf0145",
+    "73": "9fb540af3eda9410ebbf00b3166dd618abc23e08f54677f09cfb602ac12c00ee"
+  }
+}

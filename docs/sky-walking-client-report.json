@@ -1,0 +1,8 @@
+{
+  "bridge_both_directions": true,
+  "checks": 69,
+  "entrance_sign": true,
+  "real_native_portals": true,
+  "regular_player": true,
+  "result": "passed"
+}

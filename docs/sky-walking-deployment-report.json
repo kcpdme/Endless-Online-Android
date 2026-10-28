@@ -1,0 +1,17 @@
+{
+  "result": "passed",
+  "backup": "/opt/aster-vale/backups/sky-walking-20261028T054356Z",
+  "services_healthy": true,
+  "local_health": true,
+  "walking_maps": {
+    "23": "a0bac9b2291d5bcc80ae186b74db6628a29d9e5d9fae3a7b4fbc965f94e63758",
+    "71": "c94b26e9065b59cbae8bebef22bdf9b592937b0d08bb3ee87d1dfc8feacf0145",
+    "73": "9fb540af3eda9410ebbf00b3166dd618abc23e08f54677f09cfb602ac12c00ee"
+  },
+  "admin_teleport_code_unchanged": true,
+  "native_binary_unchanged": true,
+  "balance_profile_and_rules_unchanged": true,
+  "all_other_runtime_content_preserved": true,
+  "account_database_bytes_unchanged_during_install": true,
+  "installer_retry_identical": true
+}

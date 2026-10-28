@@ -1,0 +1,162 @@
+{
+  "result": "passed",
+  "checks": 178,
+  "native_walk_steps": 147,
+  "cases": [
+    {
+      "name": "Complete Aeven to Sky Wonder walking route",
+      "actual": [
+        71,
+        26,
+        55
+      ]
+    },
+    {
+      "name": "Second entrance lane",
+      "start": [
+        23,
+        14,
+        3
+      ],
+      "actual": [
+        73,
+        19,
+        12
+      ],
+      "expected": [
+        73,
+        19,
+        12
+      ]
+    },
+    {
+      "name": "Sky return uses the cloud bridge",
+      "start": [
+        71,
+        27,
+        63
+      ],
+      "actual": [
+        73,
+        11,
+        11
+      ],
+      "expected": [
+        73,
+        11,
+        11
+      ]
+    },
+    {
+      "name": "Bridge returns safely to Avenue",
+      "start": [
+        73,
+        19,
+        11
+      ],
+      "actual": [
+        23,
+        14,
+        5
+      ],
+      "expected": [
+        23,
+        14,
+        5
+      ]
+    },
+    {
+      "name": "Second bridge return lane",
+      "start": [
+        73,
+        19,
+        12
+      ],
+      "actual": [
+        23,
+        14,
+        5
+      ],
+      "expected": [
+        23,
+        14,
+        5
+      ]
+    },
+    {
+      "name": "Phoenix Field entrance remains usable",
+      "start": [
+        71,
+        34,
+        12
+      ],
+      "actual": [
+        252,
+        18,
+        41
+      ],
+      "expected": [
+        252,
+        18,
+        41
+      ]
+    },
+    {
+      "name": "Phoenix Field return remains usable",
+      "start": [
+        252,
+        18,
+        45
+      ],
+      "actual": [
+        71,
+        34,
+        14
+      ],
+      "expected": [
+        71,
+        34,
+        14
+      ]
+    },
+    {
+      "name": "Halowdale exit is preserved",
+      "start": [
+        23,
+        1,
+        14
+      ],
+      "actual": [
+        151,
+        79,
+        31
+      ],
+      "expected": [
+        151,
+        79,
+        31
+      ]
+    },
+    {
+      "name": "Beach exit is preserved",
+      "start": [
+        23,
+        14,
+        39
+      ],
+      "actual": [
+        13,
+        33,
+        1
+      ],
+      "expected": [
+        13,
+        33,
+        1
+      ]
+    }
+  ],
+  "admin_preset_and_permissions_unchanged": true,
+  "isolated_database": true,
+  "production_database_opened": false
+}

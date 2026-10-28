@@ -1,0 +1,15 @@
+{
+  "result": "passed",
+  "public_https_health": true,
+  "public_wss_to_native": true,
+  "fresh_dev_account_registration_login_character_creation": true,
+  "regular_player_admin_zero": true,
+  "real_walk_steps": 31,
+  "walking_crossings": [
+    "Avenue gateway to cloud bridge",
+    "Cloud bridge to Sky Wonder",
+    "Sky Wonder to cloud bridge",
+    "Cloud bridge to Avenue safe landing"
+  ],
+  "existing_player_accounts_modified": false
+}
