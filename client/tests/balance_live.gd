@@ -24,7 +24,7 @@ func run() -> void:
 	if failed: game.queue_free(); await process_frame; quit(1); return
 	c.character_list.select(0); c._enter_selected()
 	check(await wait_for(func() -> bool: return c.active and c.streaming and c.session.is_idle()), "Balance fixture enters the native world")
-	check(int(c.catalog.get("balance_version",0)) == 9, "Client receives current balance version")
+	check(int(c.catalog.get("balance_version",0)) == 10, "Client receives current balance version")
 	check((c.catalog.get("items",{}) as Dictionary).has("543"), "New equipment arrives through live catalog synchronization")
 	check(str((c.catalog.classes as Dictionary).get("3",{}).get("build_hint", "")).contains("INT"), "Class build guidance is available")
 	check(str((c.catalog.items as Dictionary).get("493",{}).get("name", "")) == "Tempest Staff", "New weapon name is visible")
@@ -48,6 +48,9 @@ func run() -> void:
 	ui.press(2); ui.selected = 9; ui.refresh_detail()
 	check(ui.detail.text.contains("/ 10"), "Spell training shows its actual cap")
 	check(ui.detail.text.contains("Attack power") and ui.detail.text.contains("TP 38"), "Skill detail shows scaled power and current TP cost")
+	var stats: Dictionary=c.player.stats
+	var expected_low: int=int((int(float(stats.min_damage)*2.4)+64)*1.5)
+	check(ui.detail.text.contains("%d–" % expected_low), "Magician single-target preview includes the exact x1.5 hit multiplier")
 	ui.selected = 14; ui.refresh_detail()
 	check(ui.detail.text.contains("Up to 5 monsters within 2 tiles"), "Area targeting description matches native radius and target cap")
 	ui.panel.hide(); game.stats_ui.refresh()

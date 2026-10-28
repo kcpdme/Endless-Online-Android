@@ -1,6 +1,16 @@
 extends RefCounted
 ## Original drunk emote and confirmed soda timer; original chat slur lives in gateway.
+const SOCIAL_SIZE: float = 40.0
+const SOCIAL_BOTTOM: float = -96.0
 const SOCIAL_SETS: Dictionary = {1:0, 2:1, 3:1, 4:4, 5:3, 6:2, 7:6, 8:7, 9:9, 10:5, 14:13}
+static func social_texture(ident: int) -> Texture2D:
+	if ident not in SOCIAL_SETS: return null
+	return load("res://assets/emotes/%d.svg" % ident) as Texture2D
+
+static func social_rect(at: Vector2, elapsed: int) -> Rect2:
+	var pop: float = sin(clampf(float(elapsed) / 960.0, 0.0, 1.0) * PI) * 3.0
+	return Rect2(at + Vector2(-SOCIAL_SIZE / 2.0, SOCIAL_BOTTOM - SOCIAL_SIZE - pop), Vector2.ONE * SOCIAL_SIZE)
+
 static func social_set(ident: int) -> int:
 	return int(SOCIAL_SETS.get(ident, ident - 1))
 
@@ -41,7 +51,10 @@ func draw() -> void:
 	for key: Variant in social_emotes.keys():
 		var row: Dictionary = social_emotes[key]
 		if Time.get_ticks_msec() - int(row.at) >= 960: social_emotes.erase(key); continue
-		_draw_emotes({key:int(row.at)}, social_set(int(row.id)), 0)
+		var at: Vector2 = game.online.player_visual_position(int(key))
+		if at.is_finite():
+			var texture: Texture2D = social_texture(int(row.id))
+			if texture != null: game.draw_texture_rect(texture, social_rect(at, Time.get_ticks_msec() - int(row.at)), false)
 	_draw_emotes(emotes,int((game.manifest.get("drinks",{}) as Dictionary).get("drunk_set",10)),0.0)
 	_draw_emotes(music_emotes,14,24.0)
 
@@ -59,4 +72,4 @@ func _draw_emotes(entries: Dictionary, set_index: int, horizontal: float) -> voi
 		if not at.is_finite(): continue
 		var frame: int = mini(3,elapsed/240)
 		var region: Rect2 = Rect2((set_index*4+frame)*frame_width,0,frame_width,texture.get_height())
-		game.draw_texture_rect_region(texture,Rect2(at+Vector2(horizontal-frame_width/2.0,-86),region.size),region)
+		game.draw_texture_rect_region(texture,Rect2(at+Vector2(horizontal-frame_width/2.0,-124),region.size),region)

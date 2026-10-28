@@ -45,5 +45,13 @@ func run() -> void:
  var sample: Dictionary=c._remote_sample("player:2",Vector2.ZERO,float(step.start)+.105)
  check(is_equal_approx(float(sample.step_progress),.5),"Remote fast walk interpolates halfway at half its duration")
  check(is_equal_approx(float(sample.phase),.21),"Remote Rogue animation scales to its fast duration")
+ c.player.stats={"weight":71,"max_weight":70,"overweight":true}
+ var tile_before: Vector2i=game.player_tile
+ game.route.append(Vector2i(38,45));c.request_step(Vector2i.RIGHT)
+ check(game.player_tile==tile_before and c.pending_inputs.is_empty() and game.route.is_empty(),"Overweight input cancels path without predicting or sending a step")
+ c.refresh_game_ui()
+ check(game.inventory_summary.text.contains("Overweight"),"Overweight inventory shows an explicit reason")
+ c.player.stats={"weight":70,"max_weight":70,"overweight":false};c.refresh_game_ui()
+ check(not game.inventory_summary.text.contains("Overweight"),"Exactly-at-capacity inventory is not labelled overweight")
  print(JSON.stringify({"result":"failed" if failed else "passed","checks":checks}))
  game.online.active=false;game.online_mode=false;game.queue_free();await process_frame;await process_frame;quit(1 if failed else 0)

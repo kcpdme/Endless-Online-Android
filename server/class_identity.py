@@ -30,6 +30,21 @@ OWNERS.update({267:(4,),187:(2,3,7),181:(7,)})
 from class_signatures import ITEMS as SIGNATURE_ITEMS
 OWNERS.update({ident:(clas,) for ident,name,template,clas,role,tier in SIGNATURE_ITEMS})
 
+
+# Obtainable shared jewellery has small, distinct choices for physical, caster
+# and defensive builds. Class rings still have the stronger milestone budget.
+ACCESSORY_STATS = {
+    39: dict(constitution=1,hp=10,tp=8),
+    40: dict(intelligence=1,agility=1,hp=4,tp=6),
+    41: dict(strength=1,agility=1,hp=6),
+    42: dict(intelligence=1,wisdom=1,charisma=1,tp=9),
+    43: dict(strength=1,constitution=1,hp=8),
+    44: dict(charisma=1,wisdom=1,tp=10),
+    50: dict(intelligence=1,wisdom=1,hp=4,tp=8),
+    51: dict(charisma=2,hp=8,tp=4),
+    54: dict(agility=1,constitution=1,hp=5),
+}
+
 ROLES={2:'wisdom',3:'intelligence',4:'agility',5:'agility',6:'strength',7:'charisma'}
 
 def allowed_classes(item):

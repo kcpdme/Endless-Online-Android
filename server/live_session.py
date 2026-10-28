@@ -44,6 +44,8 @@ class LiveSession(NativeFeaturesMixin, WorldFeedbackMixin, AdminMixin, BarberMix
         if direction not in range(4) or not self.state or not self.state.get('self'):raise EOError('Enter the world before moving')
         if self.warp:raise EOError('Wait for the map transition')
         if self.trade:raise EOError('Close the trade before moving')
+        from carry_rules import check as check_weight
+        check_weight(self)
         if self.state['self'].get('sitting',0):raise EOError('Stand up before moving')
         if self.stats.get('dead'):return {'sent':False,'input_seq':seq,'dead':True}
         if seq<=self.last_input_seq:raise EOError('Movement sequence is stale')
@@ -337,6 +339,8 @@ class LiveSession(NativeFeaturesMixin, WorldFeedbackMixin, AdminMixin, BarberMix
     def snapshot(self):
         data=super().snapshot()
         data['world_rules']=world_rules(data['map_id'])
+        from carry_rules import state as carry_state
+        data['player']['stats'].update(carry_state(self))
         data['companion']=getattr(self,'companion',None)
         from combat_progression import equipped_combat
         data['player']['combat']=equipped_combat(self)

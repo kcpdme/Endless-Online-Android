@@ -1,0 +1,93 @@
+{
+  "result": "passed",
+  "isolated_database": true,
+  "live_player_database_opened": false,
+  "character_level": 50,
+  "exact_kit_native_stats_match": true,
+  "max_tp": 1105,
+  "max_hp": 611,
+  "weight": 60,
+  "max_weight": 70,
+  "mythic_initial_tp": 45,
+  "mythic_upkeep_tp": 12,
+  "observed_upkeep_ticks": 5,
+  "mean_observed_upkeep_seconds": 2.151,
+  "observed_standing_recovery_tp": 4,
+  "recovery_interval_seconds": 2,
+  "observation_seconds": 12,
+  "tp_changes": [
+    {
+      "seconds": 1.029,
+      "before": 1105,
+      "after": 1060,
+      "delta": -45
+    },
+    {
+      "seconds": 1.404,
+      "before": 1060,
+      "after": 1064,
+      "delta": 4
+    },
+    {
+      "seconds": 3.252,
+      "before": 1064,
+      "after": 1052,
+      "delta": -12
+    },
+    {
+      "seconds": 3.401,
+      "before": 1052,
+      "after": 1056,
+      "delta": 4
+    },
+    {
+      "seconds": 5.4,
+      "before": 1056,
+      "after": 1060,
+      "delta": 4
+    },
+    {
+      "seconds": 5.45,
+      "before": 1060,
+      "after": 1048,
+      "delta": -12
+    },
+    {
+      "seconds": 7.402,
+      "before": 1048,
+      "after": 1052,
+      "delta": 4
+    },
+    {
+      "seconds": 7.453,
+      "before": 1052,
+      "after": 1040,
+      "delta": -12
+    },
+    {
+      "seconds": 9.402,
+      "before": 1040,
+      "after": 1044,
+      "delta": 4
+    },
+    {
+      "seconds": 9.852,
+      "before": 1044,
+      "after": 1032,
+      "delta": -12
+    },
+    {
+      "seconds": 11.403,
+      "before": 1032,
+      "after": 1036,
+      "delta": 4
+    },
+    {
+      "seconds": 11.857,
+      "before": 1036,
+      "after": 1024,
+      "delta": -12
+    }
+  ],
+  "full_depletion_observed": false
+}

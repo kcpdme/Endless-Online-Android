@@ -374,6 +374,7 @@ func refresh_detail() -> void:
 					if balanced:
 						var scale: float = maxf(1.0, float(profession.get("pk_spell_scale", profession.get("spell_scale", 1.0)) if bool(game.online.world_rules.get("pk", false)) else profession.get("spell_scale", 1.0)))
 						var area_scale: float = float(spell.get("area_scale", 1.0))
+						if int(spell.get("area_radius", 0)) == 0: area_scale *= float(profession.get("single_target_multiplier", 1.0))
 						low = int((int(float(stats.get("min_damage", 0)) * scale) + int(spell.get("min_damage", 0)) + mini(level, cap) * 2) * area_scale)
 						high = int((int(float(stats.get("max_damage", 0)) * scale) + int(spell.get("max_damage", 0)) + mini(level, cap) * 2) * area_scale)
 						lines.append("Attack power %d–%d before defence and hit chance." % [low, high])

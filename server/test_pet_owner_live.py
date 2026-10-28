@@ -12,7 +12,7 @@ from pet_catalog import TIERS,EGGS
 ROOT=Path(__file__).resolve().parents[1]
 
 def main():
- out=ROOT/'work/pet-owner-scale';checks=[];sessions=[];observed={}
+ out=ROOT/'work/class-balance-v10';checks=[];sessions=[];observed={}
  def check(ok,why):
   if not ok:raise AssertionError(why)
   checks.append(why)

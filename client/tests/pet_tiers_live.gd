@@ -28,7 +28,7 @@ func run() -> void:
 	if failed: game.queue_free(); await process_frame; quit(1); return
 	c.character_list.select(0); c._enter_selected()
 	check(await wait_for(func() -> bool: return c.active and c.streaming and c.session.is_idle()), "Regular Summoner enters native world")
-	check(int(c.player.stats.admin) == 0 and int(c.catalog.balance_version) == 9, "Tier catalog reaches a regular character")
+	check(int(c.player.stats.admin) == 0 and int(c.catalog.balance_version) == 10, "Tier catalog reaches a regular character")
 	game.pet_ui.tick()
 	check(game.pet_ui.button.visible, "Summoner has a dedicated pet control")
 	check(game.bag_button.get_global_rect().position.y > 500, "Inventory restored to the bottom-right row")
@@ -38,7 +38,7 @@ func run() -> void:
 	game.emote_ui.tick()
 	check(game.emote_ui.button.visible and game.emote_ui.button.get_global_rect().position.x > game.chat_ui.quick_bar.get_global_rect().end.x, "Emote button is right of Send")
 	for row: Control in game.emote_ui.rows:
-		check((row.get_child(0) as TextureRect).texture != null, "Quick emote uses original EO artwork")
+		check((row.get_child(0) as TextureRect).texture != null, "Quick emote has high-resolution artwork")
 	var touch: InputEventScreenTouch = InputEventScreenTouch.new()
 	touch.index = 77; touch.pressed = true; touch.position = game.emote_ui.button.get_global_rect().get_center(); game._input(touch)
 	await create_timer(0.25).timeout

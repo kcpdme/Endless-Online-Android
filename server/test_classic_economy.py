@@ -31,6 +31,8 @@ class ClassicFactsTests(unittest.TestCase):
             for name in ['npc.cpp','eoserv_config.cpp']:
                 (source/'src'/name).write_bytes(subprocess.check_output(['git','-C',str(ROOT/'work/etheos'),'show','HEAD:src/'+name]))
             subprocess.run(['git','init','--quiet',str(source)],check=True)
+            subprocess.run(['git','-C',str(source),'add','src'],check=True)
+            subprocess.run(['git','-C',str(source),'-c','user.name=Native fixture','-c','user.email=fixture@example.invalid','commit','--quiet','-m','Pinned fixture source'],check=True)
             patches=[ROOT/'server/patches'/name for name in ['etheos-drop-rate.patch','etheos-classic-gold.patch']]
             # Fresh install, then a repeat run on the already upgraded source.
             setup.apply_patches(source,patches)

@@ -149,6 +149,9 @@ class ServicesMixin:
         return peer
 
     def trade_action(self,action,player_id=0,item_id=0,amount=0,agree=True):
+        from carry_rules import check as check_weight, trade_fits
+        if action in ('request','accept','add') or (action=='agree' and agree):check_weight(self)
+        if action=='agree' and agree:trade_fits(self)
         if action in ('request','accept'):
             self._standing();self._peer(player_id);item_definitions()
             if action=='accept' and (not self.trade_request or self.trade_request['player_id']!=player_id or self.trade_request['expires']<time.monotonic()): raise EOError('This invitation has expired; ask for another')

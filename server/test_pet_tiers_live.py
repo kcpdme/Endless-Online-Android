@@ -10,7 +10,7 @@ from pet_catalog import EGGS,COMPANIONS,TIERS,EGGKEEPER
 ROOT=Path(__file__).resolve().parents[1]
 
 def main():
-    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--runtime',type=Path,default=ROOT/'work/pet-owner-scale/runtime');p.add_argument('--godot',type=Path);a=p.parse_args()
+    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--runtime',type=Path,default=ROOT/'work/class-balance-v10/runtime');p.add_argument('--godot',type=Path);a=p.parse_args()
     checks=[];pets=[];processes=[];streams=[]
     def check(ok,why):
         if not ok:raise AssertionError(why)
@@ -129,11 +129,11 @@ def main():
                 stage(f,level=40);fixture=b/'fixture.json';fixture.write_text(json.dumps(f));fixture.chmod(0o600)
                 start('gateway',[sys.executable,ROOT/'server/gateway.py','--port',18931,'--eo-port',18930],18931)
                 start('websocket',[sys.executable,ROOT/'server/ws_gateway.py','--port',18932,'--tcp-port',18931,'--deps-dir',ROOT/'work/server-build/python'],18932)
-                env=dict(os.environ,ASTER_VALE_PET_FIXTURE=str(fixture),ASTER_VALE_TEST_HOST='ws://127.0.0.1:18932/ws',ASTER_VALE_TEST_REPORT=str(ROOT/'work/pet-owner-scale/client-report.json'),XDG_DATA_HOME=str(b/'godot-data'),XDG_CONFIG_HOME=str(b/'godot-config'))
+                env=dict(os.environ,ASTER_VALE_PET_FIXTURE=str(fixture),ASTER_VALE_TEST_HOST='ws://127.0.0.1:18932/ws',ASTER_VALE_TEST_REPORT=str(ROOT/'work/class-balance-v10/client-report.json'),XDG_DATA_HOME=str(b/'godot-data'),XDG_CONFIG_HOME=str(b/'godot-config'))
                 result=subprocess.run([str(a.godot.resolve()),'--headless','--path',str(ROOT/'client'),'--script','res://tests/pet_tiers_live.gd'],env=env,capture_output=True,text=True,timeout=120)
-                (ROOT/'work/pet-owner-scale/client-live.log').write_text(result.stdout+result.stderr);check(result.returncode==0 and 'SCRIPT ERROR' not in result.stderr,'Real Godot Eggkeeper UI and live hatching/summoning pass')
+                (ROOT/'work/class-balance-v10/client-live.log').write_text(result.stdout+result.stderr);check(result.returncode==0 and 'SCRIPT ERROR' not in result.stderr,'Real Godot Eggkeeper UI and live hatching/summoning pass')
             report=dict(result='passed',checks=len(checks),native_pet_choices=pets,tiers=len(seen),native_purchase_hatch_summon_upkeep_dismiss_death=True,isolated_database=True,production_database_opened=False)
-            (ROOT/'work/pet-owner-scale/native-report.json').write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report,indent=2))
+            (ROOT/'work/class-balance-v10/native-report.json').write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report,indent=2))
         finally:
             for proc in reversed(processes):
                 proc.terminate()
@@ -141,6 +141,6 @@ def main():
                 except subprocess.TimeoutExpired:proc.kill();proc.wait()
             for stream in streams:stream.close()
             for name in ('native','gateway','websocket'):
-                if (b/(name+'.log')).exists():shutil.copy2(b/(name+'.log'),ROOT/'work/pet-owner-scale'/(name+'.log'))
+                if (b/(name+'.log')).exists():shutil.copy2(b/(name+'.log'),ROOT/'work/class-balance-v10'/(name+'.log'))
 
 if __name__=='__main__':main()

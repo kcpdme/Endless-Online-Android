@@ -1,7 +1,7 @@
 """Profile-three professions: explicit additions, hatch rewards and coverage inputs."""
 SIGNATURES = {
-    2: dict(name='Renewal',description='Regenerate 2% maximum HP every 2 seconds; 4% while sitting. Half strength in PK areas. Recover 0.3% max TP every 2 seconds; double while sitting, half in PK.',regen_rate=.02,sitting_regen_rate=.04,regen_seconds=2),
-    3: dict(name='Arcane mastery',description='Highest spell multiplier and 25% stronger area magic. Recover 0.8% max TP every 2 seconds; double while sitting, half in PK.',spell_multiplier=2.4,area_multiplier=1.25),
+    2: dict(name='Renewal',description='Regenerate 2% maximum HP every second; 4% while sitting. Half strength in PK areas. Recover 0.3% max TP every 2 seconds; double while sitting, half in PK.',regen_rate=.02,sitting_regen_rate=.04,regen_seconds=1),
+    3: dict(name='Arcane mastery',description='Single-target spell hits gain x1.5; area magic uses normal mastery. Recover 0.8% max TP every 2 seconds; double while sitting, half in PK.',spell_multiplier=2.4,area_multiplier=1.0,single_target_multiplier=1.5),
     4: dict(name='Backstab',description='Move twice as fast. A successful adjacent attack directly behind a target deals randomly 1.5x or 2x damage with a Rogue blade. Does not stack with critical hits.',backstab_multipliers=[1.5,2.0],walking_multiplier=2),
     5: dict(name='Marksmanship',description='Red Bow fires at x1, Crossbow x1.2, Scav/Dawn x1.5 or x2 with a target within 2 tiles ahead. Fire/Frost arrows add 2 tiles. Rapid bows trade per-shot impact for cadence; AGI drives damage and accuracy.'),
     6: dict(name='Might',description='Each STR gives 0.65 base attack power, versus 0.20 for Rogue and 0.15 for Archer. Real shields grant double their armour value to Warriors.',strength_damage=.65),

@@ -1,0 +1,22 @@
+{
+  "result": "passed",
+  "public_overweight_move_refused": true,
+  "public_priest_one_second_hp_pulses": true,
+  "public_mage_multiplier_metadata": true,
+  "public_https_health": true,
+  "public_wss_to_native": true,
+  "fresh_regular_character_only": true,
+  "profile_matches_accepted_native_content": true,
+  "pet_choices": 16,
+  "tiers": 5,
+  "all_tiers_purchased_at_native_price": true,
+  "no_resale": true,
+  "duplicate_preserves_spare_egg": true,
+  "new_mythic_wraith_hatches_and_summons": true,
+  "quick_emote_operation_confirmed": true,
+  "class_tp_recovery_observed": true,
+  "pet_call_and_upkeep_observed": true,
+  "dismissal_bond_and_spare_survive_reconnect": true,
+  "gold_and_inventory_persist": true,
+  "existing_player_accounts_modified": false
+}

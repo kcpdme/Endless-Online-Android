@@ -41,12 +41,8 @@ func build(owner_game: Node, parent: Control) -> void:
 		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		var atlas: Texture2D = game._graphic(2, 38)
-		if atlas != null:
-			var texture: AtlasTexture = AtlasTexture.new()
-			texture.atlas = atlas
-			texture.region = Rect2(preload("res://scripts/drink_effects.gd").social_set(IDS[index]) * 4 * atlas.get_width() / 60.0, 0, atlas.get_width() / 60.0, atlas.get_height())
-			icon.texture = texture
+		icon.texture = preload("res://scripts/drink_effects.gd").social_texture(IDS[index])
+		icon.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 		row.add_child(icon)
 		var label: Label = game._label(row, NAMES[index], Vector2(0, 33), 11, game.TEXT)
 		label.size = Vector2(64, 16)

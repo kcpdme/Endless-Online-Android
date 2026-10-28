@@ -38,6 +38,7 @@ var character_box: Control
 var selected_characters: Array[Dictionary] = []
 var active: bool = false
 var waiting_for_walk: bool = false
+var carry_notice_at: int = 0
 const NPC_SERVICE_DISTANCE: int = 11
 # Native Walk is 400 ms plus a 20 ms auto-queue dispatch stage.
 const MOVE_SECONDS: float = 0.42
@@ -607,6 +608,12 @@ func toggle_sit(tile: Vector2i = Vector2i(-1, -1)) -> void:
 	session.request("sit", fields)
 
 func request_step(direction: Vector2i) -> void:
+	if bool((player.get("stats", {}) as Dictionary).get("overweight", false)):
+		game.route.clear()
+		if Time.get_ticks_msec() >= carry_notice_at:
+			carry_notice_at = Time.get_ticks_msec() + 2500
+			game._toast("Overweight: drop items or deposit them in a locker before walking or trading.")
+		return
 	if seated():
 		toggle_sit()
 		return
@@ -1451,8 +1458,8 @@ func refresh_game_ui() -> void:
 	var stats: Dictionary = player.get("stats", {}) as Dictionary
 	var weight: int = int(stats.get("weight", 0))
 	var capacity: int = int(stats.get("max_weight", 0))
-	game.inventory_summary.text = "%d belongings   ·   Weight %d / %d%s" % [items.size(), weight, capacity, "  ·  Overweight" if capacity > 0 and weight >= capacity else ""]
-	game.inventory_summary.modulate = Color("f29b81") if capacity > 0 and weight >= capacity else Color.WHITE
+	game.inventory_summary.text = "%d belongings   ·   Weight %d / %d%s" % [items.size(), weight, capacity, "  ·  Overweight" if capacity > 0 and weight > capacity else ""]
+	game.inventory_summary.modulate = Color("f29b81") if capacity > 0 and weight > capacity else Color.WHITE
 	game.offline_bag_panel.hide()
 	game.bag_scroll.show()
 	game.bag_grid.refresh()

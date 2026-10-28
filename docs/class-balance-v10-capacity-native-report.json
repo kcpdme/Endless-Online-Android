@@ -1,0 +1,36 @@
+{
+  "result": "passed",
+  "checks": 34,
+  "raw_walk_and_trade_enforced": true,
+  "equal_capacity_allowed": true,
+  "large_stacks_and_equipment_counted": true,
+  "admin_uses_real_capacity": true,
+  "drop_and_locker_escape": true,
+  "trade_net_capacity_atomic": true,
+  "spell_samples": {
+    "4": 50,
+    "14": 32
+  },
+  "priest_clocks": {
+    "2-False-False": {
+      "hp_per_tick": 4,
+      "mean_hp_seconds": 1.0,
+      "hp_ticks": 4,
+      "tp_ticks": 2
+    },
+    "2-False-True": {
+      "hp_per_tick": 8,
+      "mean_hp_seconds": 0.992,
+      "hp_ticks": 5,
+      "tp_ticks": 3
+    },
+    "8-True-False": {
+      "hp_per_tick": 2,
+      "mean_hp_seconds": 1.0,
+      "hp_ticks": 4,
+      "tp_ticks": 2
+    }
+  },
+  "isolated_database": true,
+  "production_database_opened": false
+}

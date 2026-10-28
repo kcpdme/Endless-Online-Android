@@ -1,0 +1,13 @@
+{
+  "result": "passed",
+  "version": "0.48.1",
+  "version_code": 86,
+  "apk_sha256": "a76ae14393cbc83c0e96c91823e78a940415a837fab88bbd8a96fcad56e8fd5b",
+  "signature_verified": true,
+  "signer_sha256": "fbf80de525cf74dbedbcb1ae73899c6fe9a55ea9661b31e93637f074d7e979ed",
+  "alignment_16kb_verified": true,
+  "embedded_catalog_and_manifest_match": true,
+  "aeven_map_matches": true,
+  "emote_artwork": "11 original SVG icons, 192px native textures, 40-world-pixel display",
+  "emote_bottom_offset": -96
+}

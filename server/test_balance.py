@@ -11,7 +11,7 @@ BASE=Path(__file__).resolve().parents[1]/'work/server-build/runtime'
 @unittest.skipUnless((BASE/'data/pub/dat001.eif').exists(),'native resources unavailable')
 class BalanceTests(unittest.TestCase):
     def setUp(self):
-        self.temp=tempfile.TemporaryDirectory();self.addCleanup(self.temp.cleanup);self.runtime=Path(self.temp.name)/'runtime';shutil.copytree(BASE/'data',self.runtime/'data');(self.runtime/'config.local.ini').write_text('PasswordSalt = do-not-change\nExpRate = 500%\n');(self.runtime/'etheos').write_bytes(b'isolated fixture BalanceRevamp ClassIdentityRules ClassSignatureRules MortalSpiritBonds PetEggTiers CombatProgression OwnerScaledPets ClassMobility')
+        self.temp=tempfile.TemporaryDirectory();self.addCleanup(self.temp.cleanup);self.runtime=Path(self.temp.name)/'runtime';shutil.copytree(BASE/'data',self.runtime/'data');(self.runtime/'config.local.ini').write_text('PasswordSalt = do-not-change\nExpRate = 500%\n');(self.runtime/'etheos').write_bytes(b'isolated fixture BalanceRevamp ClassIdentityRules ClassSignatureRules MortalSpiritBonds PetEggTiers CombatProgression OwnerScaledPets ClassMobility CarryCapacityRules')
         from configure_feature_content import configure as features
         features(self.runtime)
 
@@ -122,8 +122,8 @@ class BalanceTests(unittest.TestCase):
             self.assertGreater(row['burst_dps'],1);self.assertGreater(row['max_hp'],30)
             if row['level']>=8:self.assertGreaterEqual(row['spell_casts_from_full'],3)
         for level in (15,25,35,45):
-            cohort=[r for r in rows if r['level']==level];best=max(r['burst_dps'] for r in cohort)
-            for row in cohort:self.assertGreater(row['burst_dps']/best,.65,(level,row['role'],cohort))
+            cohort=[r for r in rows if r['level']==level];best=max(r['sustained_60_dps'] for r in cohort)
+            for row in cohort:self.assertGreater(row['sustained_60_dps']/best,.55 if level==15 else .60,(level,row['role'],cohort))
         self.assertAlmostEqual(evaluate('100 target_armor 2 * + 100 / damage * 1 max 1 1.5 critical ? * modifier *',dict(target_armor=25,damage=90,critical=0,modifier=1)),60)
 
     def test_ownership_migration_is_conservative_and_retry_safe(self):

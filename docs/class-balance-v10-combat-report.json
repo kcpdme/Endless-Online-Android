@@ -1,0 +1,64 @@
+{
+  "result": "passed",
+  "checks": 60,
+  "range_boundaries": true,
+  "elemental_arrows_and_walls": true,
+  "forged_cadence_limited": true,
+  "observed_hits_in_1_55_seconds": {
+    "297": 3,
+    "316": 4,
+    "457": 6
+  },
+  "scav_distance_cadence": {
+    "4": {
+      "hits": 7,
+      "intervals": [
+        0.373,
+        0.406,
+        0.34,
+        0.376,
+        0.369,
+        0.335
+      ]
+    },
+    "2": {
+      "hits": 8,
+      "intervals": [
+        0.377,
+        0.292,
+        0.333,
+        0.331,
+        0.262,
+        0.25,
+        0.343
+      ]
+    },
+    "1": {
+      "hits": 8,
+      "intervals": [
+        0.373,
+        0.291,
+        0.331,
+        0.338,
+        0.26,
+        0.252,
+        0.326
+      ]
+    }
+  },
+  "native_class_walking": {
+    "4": {
+      "acknowledgements": 4,
+      "mean_step_seconds": 0.216
+    },
+    "6": {
+      "acknowledgements": 4,
+      "mean_step_seconds": 0.426
+    }
+  },
+  "standing_sitting_pk_recovery": true,
+  "warrior_shield_double": true,
+  "pk_range": true,
+  "isolated_database": true,
+  "production_database_opened": false
+}

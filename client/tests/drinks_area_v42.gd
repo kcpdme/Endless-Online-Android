@@ -22,7 +22,7 @@ func run() -> void:
 	var c: Node = game.online; c.set_process(false); c.session.queue_free()
 	var wire: Capture = Capture.new(); c.add_child(wire); wire.set_process(false); c.session = wire
 	c.active = true; c.streaming = true
-	c.player = {"name":"devfixture","player_id":100,"character_id":1,"map_id":5,"x":40,"y":40,"hp":100,"max_hp":100,"tp":100,"max_tp":100,"level":120,"gender":1,"inventory":[{"id":210,"amount":2}],"equipment":{},"spells":[{"id":14,"level":7},{"id":21,"level":7}],"stats":{}}
+	c.player = {"name":"devfixture","player_id":100,"character_id":1,"map_id":5,"x":40,"y":40,"hp":100,"max_hp":100,"tp":100,"max_tp":100,"level":120,"gender":1,"inventory":[{"id":210,"amount":2}],"equipment":{},"spells":[{"id":14,"level":7},{"id":21,"level":7}],"stats":{"class_id":3,"level":120}}
 	game.skills_ui.slots.assign([14,21]); game.skills_ui.shortcut_identity = c.profile_identity(); game.skills_ui.refresh()
 	for slot: int in range(2):
 		game.skills_ui.ready_at = 0; game.skills_ui.casting.clear(); wire.calls.clear()

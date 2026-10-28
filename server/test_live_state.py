@@ -13,7 +13,7 @@ def fixture():
     s.metrics=dict(moves=0,walk_acks=0,refreshes=0,corrections=0,collects=0,pickups=0)
     s.dirty=False;s.position_update=False;s.correction=False;s.expect_walk_refresh=False;s.sent_state=None
     s.state={'map_id':5,'self':{'player_id':100,'map_id':5,'x':40,'y':40,'direction':0},'characters':[],'npcs':[],'items':[]}
-    s.stats={};s.inventory=[];s.events=[];s.timestamp=1000;s.last_walk=0;s.warp=None;s.player_id=100;s.weight=0;s.max_weight=70
+    s.stats={};s.equipment={};s.inventory=[];s.events=[];s.timestamp=1000;s.last_walk=0;s.warp=None;s.player_id=100;s.weight=0;s.max_weight=70
     s.sent=[];s.send=lambda f,a,p=b'':s.sent.append((f,a,p))
     return s
 

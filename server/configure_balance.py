@@ -11,7 +11,7 @@ from contextlib import closing
 from eo_session import Reader, number
 from combat_progression import TP_RECOVERY, BOWS, ARROWS, SHIELDS, item_traits
 from balance_profile import VERSION, LEVELS, ATTRIBUTES, CLASSES, SPELLS, WEAPON_TIERS, BODY_TIERS, NEW_ITEMS, NEW_ITEM_TIERS, ENCOUNTERS, COMPANIONS
-from class_identity import allowed_classes, role_for, vary_stats, recipe_sources
+from class_identity import allowed_classes, role_for, vary_stats, recipe_sources, ACCESSORY_STATS
 from class_signatures import SIGNATURES, SUPPORT, EGGS
 from pet_catalog import TIERS, ROSTER, EGGKEEPER, egg_stock
 
@@ -106,7 +106,12 @@ def build_items(original, shops=""):
         crafted=bool(sources.get(ident,{}).get('craft')) and not sources.get(ident,{}).get('buy')
         if ident in SHIELDS:stats["armor"]=SHIELDS[ident]
         stats,style=vary_stats(i,stats,tier,crafted)
+        if ident in ACCESSORY_STATS:
+            stats={key:0 for key in STAT_FIELDS};stats.update(ACCESSORY_STATS[ident])
+            style='focus' if ident in (40,42,44,50,51) else 'balanced'
         allowed=allowed_classes(i)
+        if t==10 and allowed==(7,) and tier in (1,2):
+            stats['min_damage']+=1;stats['max_damage']+=2
         for key,(start,size) in STAT_FIELDS.items():put(f,start,stats[key],size)
         put(f,37,LEVELS[tier] if tier else 0,2);put(f,39,allowed[0] if len(allowed)==1 else 0,2)
         for a in range(6):put(f,41+a*2,0,2)
@@ -132,6 +137,11 @@ def build_items(original, shops=""):
             elif clas==5:stats['accuracy']+=2 if tier==2 else 4
             else:stats['hp']+=6 if tier==2 else 14;stats['armor']+=1 if tier==2 else 2
         crafted=bool(sources.get(ident,{}).get('craft')) and not sources.get(ident,{}).get('buy')
+        if i['type']==12 and clas in (4,5) and tier>=3:
+            stats['agility']={3:8,4:11,5:15}[tier]
+            stats['min_damage']=stats['max_damage']=1 if tier<5 else 2
+        if i['type']==10 and clas==7 and tier in (1,2):
+            stats['min_damage']+=1;stats['max_damage']+=2
         stats,style=vary_stats(i,stats,tier,crafted)
         for key,(start,size) in STAT_FIELDS.items():put(f,start,stats[key],size)
         put(f,37,LEVELS[tier],2);put(f,39,clas,2);put(f,4,3)
@@ -167,6 +177,7 @@ def build_classes(original):
         for a,key in enumerate(ATTRIBUTES):put(row['fields'],2+a*2,p['base_attributes'][key],2)
         result[str(ident)]=dict(id=ident,name=p['name'],base=num(row['fields'],0),type=p['family'],build_hint=p['hint'],spell_scale=p['spell_scale'],heal_wis=p['heal_wis'],heal_int=p['heal_int'],heal_cha=p['heal_cha'],base_attributes=p['base_attributes'])
     result['3']['area_multiplier']=CLASSES[3]['area_multiplier']
+    result['3']['single_target_multiplier']=CLASSES[3]['single_target_multiplier']
     result['7']['pk_spell_scale']=CLASSES[7]['pk_spell_scale']
     for ident,signature in SIGNATURES.items():result[str(ident)]['signature']=signature
     result['8']['signature']=SIGNATURES[2]
@@ -323,7 +334,7 @@ def build_quest(original):
 def configure(runtime):
     runtime=Path(runtime)
     if any((runtime/r).is_symlink() for r in ('data','data/pub')):raise ValueError('Materialize runtime data directories first')
-    if any(marker not in (runtime/'etheos').read_bytes() for marker in (b'PetEggTiers',b'CombatProgression',b'OwnerScaledPets',b'ClassMobility')):raise ValueError('Install the combat-progression-capable native binary first')
+    if any(marker not in (runtime/'etheos').read_bytes() for marker in (b'PetEggTiers',b'CombatProgression',b'OwnerScaledPets',b'ClassMobility',b'CarryCapacityRules')):raise ValueError('Install the combat-progression-capable native binary first')
     baseline=runtime/'data/balance-v1-baseline';manifest_path=runtime/'data/balance-v1-manifest.json'
     old_manifest=json.loads(manifest_path.read_text()) if manifest_path.exists() else None
     if old_manifest:
@@ -340,10 +351,10 @@ def configure(runtime):
     class_bytes,classes=build_classes(originals['data/pub/dat001.ecf'])
     spell_bytes,spells=build_spells(originals['data/pub/dsl001.esf'])
     proposed={'data/aster-vale-drops.ini':drops,'data/pub/dat001.eif':item_bytes,'data/pub/dat001.ecf':class_bytes,'data/pub/dsl001.esf':spell_bytes,'data/pub/dtn001.enf':npc_bytes,'data/formulas.ini':formulas(originals['data/formulas.ini']),'data/aster-vale-skills.ini':build_skills(),'data/aster-vale-shops.ini':shops,'data/quests/00004.eqf':build_quest(originals['data/quests/00004.eqf'])}
-    profile=dict(version=VERSION,levels=LEVELS,max_skill_level=10,classes=classes,spells=spells,items=items,npcs=npcs,class_identity=True,class_signatures=True,mortal_spirit_bonds=True,companions=COMPANIONS,eggs=EGGS,pet_tiers=TIERS,pet_roster=ROSTER,eggkeeper=EGGKEEPER)
+    profile=dict(version=VERSION,levels=LEVELS,max_skill_level=10,classes=classes,spells=spells,items=items,npcs=npcs,class_identity=True,class_signatures=True,carry_capacity_rules=True,mortal_spirit_bonds=True,companions=COMPANIONS,eggs=EGGS,pet_tiers=TIERS,pet_roster=ROSTER,eggkeeper=EGGKEEPER)
     proposed['data/balance-profile.json']=(json.dumps(profile,indent=2)+'\n').encode()
     cfg=(runtime/'config.local.ini').read_text()
-    values={'ClassMobility':'yes','OwnerScaledPets':'yes','CombatProgression':'yes','PetEggTiers':'yes','MortalSpiritBonds':'yes','ClassSignatureRules':'yes','PriestRegenRate':'0.02','PriestSittingRegenRate':'0.04','CompanionLifetimeSeconds':'0','ClassIdentityRules':'yes','BalanceRevamp':'yes','UseClassFormulas':'yes','MaxSkillLevel':'10','SkillsFile':'./data/aster-vale-skills.ini'}
+    values={'CarryCapacityRules':'yes','ClassMobility':'yes','OwnerScaledPets':'yes','CombatProgression':'yes','PetEggTiers':'yes','MortalSpiritBonds':'yes','ClassSignatureRules':'yes','PriestRegenRate':'0.02','PriestSittingRegenRate':'0.04','CompanionLifetimeSeconds':'0','ClassIdentityRules':'yes','BalanceRevamp':'yes','UseClassFormulas':'yes','MaxSkillLevel':'10','SkillsFile':'./data/aster-vale-skills.ini'}
     for ident,rate in TP_RECOVERY.items():
         values[f'Balance.{ident}.tp_regen']=str(rate)
     for ident,traits in BOWS.items():
@@ -352,6 +363,8 @@ def configure(runtime):
     for ident in SHIELDS:values[f'BalanceItem.{ident}.warrior_shield']='yes'
     for ident,p in CLASSES.items():
         for key in ('spell_scale','heal_wis','heal_int','heal_cha'):values[f'Balance.{ident}.{key}']=str(p[key])
+    values['PriestRegenSeconds']='1'
+    values['Balance.3.single_target_multiplier']=str(CLASSES[3]['single_target_multiplier'])
     values['Balance.3.area_multiplier']=str(CLASSES[3]['area_multiplier'])
     values['Balance.7.pk_spell_scale']=str(CLASSES[7]['pk_spell_scale'])
     for ident,p in SPELLS.items():

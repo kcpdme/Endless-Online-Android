@@ -1,7 +1,7 @@
 """Range, cadence, recovery and shields through real native packets in an isolated world."""
 from pathlib import Path
 from contextlib import closing
-import json,os,secrets,select,shutil,socket,sqlite3,subprocess,tempfile,time,math
+import json,os,secrets,select,shutil,socket,sqlite3,subprocess,tempfile,time,math,statistics
 from eo_session import Session,number
 from live_session import LiveSession
 from test_online import dev_name
@@ -12,7 +12,7 @@ from combat_progression import TP_RECOVERY,SHIELDS
 ROOT=Path(__file__).resolve().parents[1]
 
 def main():
- out=ROOT/'work/pet-owner-scale';checks=[];sessions=[];observed={}
+ out=ROOT/'work/class-balance-v10';checks=[];sessions=[];observed={}
  def check(ok,why):
   if not ok:raise AssertionError(why)
   checks.append(why)
@@ -82,7 +82,8 @@ def main():
     floor=.32 if x==7 else .23
     check(len(times)>=5 and all(b-a>=floor for a,b in zip(times,times[1:])),'Scav near/far cadence is bounded by actual target distance')
     close(s)
-   check(distances['1']['hits']>distances['4']['hits'] and distances['2']['hits']>distances['4']['hits'],'Scav x2 only within two tiles; x1.5 outside')
+   print('Scav distance timings',distances,flush=True)
+   check(all(statistics.median(distances[d]['intervals'])<statistics.median(distances['4']['intervals'])*.9 for d in ('1','2')),'Scav x2 only within two tiles; x1.5 outside')
    walking={}
    for clas in (4,6):
     stage(f,clas=clas,bow=0,offhand=0,x=2);s=login(f)

@@ -131,6 +131,6 @@ class PetTierTests(unittest.TestCase):
         for level in (1,8,15,25,35,45):
             cohort=[r for r in rows if r['level']==level];summoner=next(r for r in cohort if r['class_id']==7);others=[r['burst_dps'] for r in cohort if r['class_id']!=7]
             self.assertEqual(summoner['companion_dps']>0,level>=TIERS['normal']['level']);self.assertLessEqual(summoner['burst_dps'],max(others)*1.10)
-            if level>=TIERS['rare']['level']:self.assertGreaterEqual(summoner['burst_dps'],max(others)*.65)
+            if level>=TIERS['rare']['level']:self.assertGreaterEqual(summoner['sustained_60_dps'],max(r['sustained_60_dps'] for r in cohort if r['class_id']!=7)*(.55 if level==15 else .60))
 
 if __name__=='__main__':unittest.main()

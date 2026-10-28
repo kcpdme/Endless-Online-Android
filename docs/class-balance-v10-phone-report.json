@@ -1,0 +1,15 @@
+{
+  "result": "installed",
+  "version": "0.48.1",
+  "version_code": 86,
+  "installed_apk_sha256": "a76ae14393cbc83c0e96c91823e78a940415a837fab88bbd8a96fcad56e8fd5b",
+  "full_update": true,
+  "data_preserved": true,
+  "first_install_time_preserved": true,
+  "visual_fixture_passed": true,
+  "face_and_nameplate_clearance_verified_in_rendered_fixture": true,
+  "phone_emote_gesture_verified": false,
+  "limitation": "Installed and hash-verified on connected Samsung SM-S918B. Phone was already in a hostile room on Skylar; Skylar died during UI checking. No successful on-device emote screenshot was captured. Final artwork/clearance was verified in an isolated rendered Godot scene. No account reset, stat/position edit or inventory migration was performed.",
+  "android_runtime_crash_observed": false,
+  "scoped_log_note": "One Godot mbedTLS get_partial_data ERR_UNCONFIGURED message was observed after a disconnected transport; no emote script error or AndroidRuntime crash was observed. This is not a clean end-to-end phone gameplay acceptance."
+}
