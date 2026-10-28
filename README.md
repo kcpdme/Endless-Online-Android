@@ -8,13 +8,13 @@ This public repository contains source code, content import tools, build scripts
 
 After importing content and building, install `builds/aster-vale-debug.apk` on an Android device (Android 7 / API 24 or later). This development build includes ARM64 and x86_64. Open **Aster Vale**, log in, select your character and join the persistent shared world. The build is signed with a development key, not configured for Google Play release.
 
-The current Android package is **`com.cloudgameboy.astervale`**, version 0.48.2
-(code 87). It installs separately from the earlier `io.astervale.prototype` app;
+The current Android package is **`com.cloudgameboy.astervale`**, version 0.49.0
+(code 89). It installs separately from the earlier `io.astervale.prototype` app;
 online accounts remain on the same server. Release APK and AAB exports use the
 same private release signing key.
 
 The app starts directly on a full-screen account login/create screen with
-original EO title artwork. On Android, **Remember login on this device** saves
+a large Aster Vale title, original forest scenery and equipped class sprites. On Android, **Remember login on this device** saves
 a successfully verified login in an Android Keystore-encrypted, backup-excluded
 vault. **Forget saved login** removes it. Changing the account/server clears the
 prefilled password. Saving is optional and off by default.
@@ -52,6 +52,15 @@ APK update (`--no-incremental -r`), verifies installed bytes and version, and
 checks that Android kept the app's original installation timestamp.
 
 ## Play online
+
+Version **0.49.0** refreshes the login screen with a large centered gold Aster Vale
+title, native class sprites and a framed sign-in panel. Saved-login controls remain
+visible at phone sizes. It also brings emotes 16 world pixels closer to the head.
+See [login design and validation](docs/LOGIN_REFRESH.md).
+
+Balance profile **11** sets egg prices to Rare 6k, Epic 20k and Legend 60k,
+adds 40% Eggkeeper buyback, and sets drops to 5% / 2% / 1% / 0.5% / 0.1%
+from Normal through Mythic. See [egg economy and live checks](docs/EGG_ECONOMY_V11.md).
 
 Version **0.48.2** restores the original animated EO emotes with AI-enhanced
 sprite frames, smooth filtering and the higher face-safe placement. The four

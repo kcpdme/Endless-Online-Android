@@ -28,7 +28,7 @@ func run() -> void:
 	if failed: game.queue_free(); await process_frame; quit(1); return
 	c.character_list.select(0); c._enter_selected()
 	check(await wait_for(func() -> bool: return c.active and c.streaming and c.session.is_idle()), "Regular Summoner enters native world")
-	check(int(c.player.stats.admin) == 0 and int(c.catalog.balance_version) == 10, "Tier catalog reaches a regular character")
+	check(int(c.player.stats.admin) == 0 and int(c.catalog.balance_version) == 11, "Tier catalog reaches a regular character")
 	game.pet_ui.tick()
 	check(game.pet_ui.button.visible, "Summoner has a dedicated pet control")
 	check(game.bag_button.get_global_rect().position.y > 500, "Inventory restored to the bottom-right row")
@@ -77,8 +77,14 @@ func run() -> void:
 			check(not ui.action.disabled, "Summoner can buy each offered egg")
 	choose(612); c.player.stats.class_id = 6; ui.refresh()
 	check(ui.action.disabled and ui.status.text.contains("Only Summoners"), "Shop disables egg purchases for another class")
-	c.player.stats.class_id = 7; ui.refresh(); ui.quantity.value = 1; ui.transact()
-	check(await wait_for(func() -> bool: return ui.held(612) == 1 and c.session.is_idle()), "Shop Buy uses real native purchase and inventory acknowledgement")
+	c.player.stats.class_id = 7; ui.refresh(); ui.quantity.value = 2; ui.transact()
+	check(await wait_for(func() -> bool: return ui.held(612) == 2 and c.session.is_idle()), "Shop Buy uses real native purchase and inventory acknowledgement")
+	var gold_before_sale: int = c.bag_amount(1)
+	ui.tabs[1].pressed.emit(); choose(612); ui.quantity.value = 1
+	check(not ui.action.disabled and ui.description.text.contains("40%") and ui.description.text.contains("40 Gold"), "Egg Sell tab exposes exact 40 percent buyback and its explanation")
+	ui.transact()
+	check(await wait_for(func() -> bool: return ui.held(612) == 1 and c.session.is_idle()), "Egg Sell uses a real native inventory acknowledgement")
+	check(c.bag_amount(1)==gold_before_sale+40, "Native sale pays exactly 40 Gold per Normal egg")
 	ui.close(); c.session.request("item_use", {"item_id":612})
 	check(await wait_for(func() -> bool:
 		for skill: Dictionary in c.player.get("spells", []):

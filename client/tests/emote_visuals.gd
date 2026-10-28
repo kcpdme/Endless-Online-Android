@@ -18,7 +18,7 @@ func run() -> void:
    var tex: AtlasTexture=visuals.social_texture(ident,frame) as AtlasTexture
    assert(tex.region.position.y==visuals.social_set(ident)*200 and tex.region.position.x==frame*200)
  var rect: Rect2=visuals.social_rect(Vector2.ZERO,480)
- assert(rect.end.y<=-96 and rect.size==Vector2(50,50))
+ assert(rect.end.y<=-80 and rect.size==Vector2(50,50))
  game.drink_effects.event({"kind":"player_emote","player_id":100,"emote":1})
  game.emote_ui.popup.show()
  for _frame: int in range(3):await process_frame

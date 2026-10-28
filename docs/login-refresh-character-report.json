@@ -1,0 +1,9 @@
+{
+  "checks": 153,
+  "four_landscape_sizes": true,
+  "fourth_creation_and_double_submit_prevented": true,
+  "native_body_skin_hair_and_color": true,
+  "result": "passed",
+  "third_native_character_selection": true,
+  "zero_through_three_characters": true
+}

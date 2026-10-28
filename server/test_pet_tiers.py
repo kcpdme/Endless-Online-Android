@@ -17,7 +17,9 @@ class PetTierTests(unittest.TestCase):
         self.assertEqual([t['power'] for t in TIERS.values()],[.45,.7,1,1.2,1.5])
         self.assertEqual([t['upkeep'] for t in TIERS.values()],[2,5,7,9,12])
         self.assertEqual(TIERS['mythic']['price'],100000)
-        self.assertTrue(all(e['chance']==dict(normal=2,rare=2,epic=2,legend=1,mythic=.5)[e['tier']] for e in EGGS.values()))
+        self.assertEqual([t['price'] for t in TIERS.values()],[100,6000,20000,60000,100000])
+        self.assertEqual([t['sell_price'] for t in TIERS.values()],[40,2400,8000,24000,40000])
+        self.assertTrue(all(e['chance']==dict(normal=5,rare=2,epic=1,legend=.5,mythic=.1)[e['tier']] for e in EGGS.values()))
         self.assertAlmostEqual(pet_expected_damage(10,10,.45,0),4.5)
         self.assertAlmostEqual(pet_expected_damage(10,10,1.5,0),15)
     def test_requested_hatch_level_boundaries(self):
@@ -118,7 +120,7 @@ class PetTierTests(unittest.TestCase):
         r=ROOT/'work/pet-owner-scale/runtime';p=json.loads((r/'data/balance-profile.json').read_text());self.assertEqual(p['version'],9)
         import re
         text=(r/'data/aster-vale-shops.ini').read_text();trade=next(raw for key,raw in re.findall(r'^(\d+)\.trade\s*=\s*(.*)$',text,re.M) if int(key)==EGGKEEPER['id']);values=list(map(int,trade.split(',')))
-        self.assertEqual(values,[n for ident in egg_stock() for n in (ident,EGGS[ident]['price'],0)])
+        self.assertEqual(values,[n for ident in egg_stock() for n in (ident,p['eggs'][str(ident)]['price'],0)])
         skilltext=(r/'data/aster-vale-skills.ini').read_text()
         for ident,egg in EGGS.items():
             item=p['items'][str(ident)];self.assertEqual(item['special'],4);self.assertEqual(item['acquisition']['buy'],[EGGKEEPER['id']]);self.assertFalse(item['acquisition'].get('craft'))

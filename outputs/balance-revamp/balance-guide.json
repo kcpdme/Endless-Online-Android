@@ -1,5 +1,5 @@
 {
-  "version": 10,
+  "version": 11,
   "equipment": [
     {
       "id": 20,
@@ -22327,7 +22327,8 @@
       "tier": "rare",
       "tier_name": "Rare",
       "tier_color": "78b9ee",
-      "price": 600
+      "price": 6000,
+      "sell_price": 2400
     },
     "610": {
       "name": "Carnivo Spirit Egg",
@@ -22335,13 +22336,14 @@
       "spell_id": 33,
       "level": 20,
       "npc_id": 121,
-      "chance": 2.0,
+      "chance": 1.0,
       "template_id": 11,
       "icon": "res://icons/epic_egg.svg",
       "tier": "epic",
       "tier_name": "Epic",
       "tier_color": "bf94ef",
-      "price": 2000
+      "price": 20000,
+      "sell_price": 8000
     },
     "611": {
       "name": "Drake Spirit Egg",
@@ -22349,13 +22351,14 @@
       "spell_id": 34,
       "level": 40,
       "npc_id": 225,
-      "chance": 0.5,
+      "chance": 0.1,
       "template_id": 11,
       "icon": "res://icons/mythic_egg.svg",
       "tier": "mythic",
       "tier_name": "Mythic",
       "tier_color": "f08093",
-      "price": 100000
+      "price": 100000,
+      "sell_price": 40000
     },
     "612": {
       "name": "Penguin Spirit Egg",
@@ -22363,13 +22366,14 @@
       "spell_id": 51,
       "level": 5,
       "npc_id": 13,
-      "chance": 2.0,
+      "chance": 5.0,
       "template_id": 11,
       "icon": "res://icons/normal_egg.svg",
       "tier": "normal",
       "tier_name": "Normal",
       "tier_color": "b8c5c9",
-      "price": 100
+      "price": 100,
+      "sell_price": 40
     },
     "613": {
       "name": "Goat Spirit Egg",
@@ -22377,13 +22381,14 @@
       "spell_id": 52,
       "level": 5,
       "npc_id": 7,
-      "chance": 2.0,
+      "chance": 5.0,
       "template_id": 11,
       "icon": "res://icons/normal_egg.svg",
       "tier": "normal",
       "tier_name": "Normal",
       "tier_color": "b8c5c9",
-      "price": 100
+      "price": 100,
+      "sell_price": 40
     },
     "614": {
       "name": "Fox Spirit Egg",
@@ -22391,13 +22396,14 @@
       "spell_id": 53,
       "level": 5,
       "npc_id": 5,
-      "chance": 2.0,
+      "chance": 5.0,
       "template_id": 11,
       "icon": "res://icons/normal_egg.svg",
       "tier": "normal",
       "tier_name": "Normal",
       "tier_color": "b8c5c9",
-      "price": 100
+      "price": 100,
+      "sell_price": 40
     },
     "615": {
       "name": "Skeleton Spirit Egg",
@@ -22411,7 +22417,8 @@
       "tier": "rare",
       "tier_name": "Rare",
       "tier_color": "78b9ee",
-      "price": 600
+      "price": 6000,
+      "sell_price": 2400
     },
     "616": {
       "name": "Butterfly Spirit Egg",
@@ -22425,7 +22432,8 @@
       "tier": "rare",
       "tier_name": "Rare",
       "tier_color": "78b9ee",
-      "price": 600
+      "price": 6000,
+      "sell_price": 2400
     },
     "617": {
       "name": "Cursed Mask Spirit Egg",
@@ -22433,13 +22441,14 @@
       "spell_id": 56,
       "level": 20,
       "npc_id": 134,
-      "chance": 2.0,
+      "chance": 1.0,
       "template_id": 11,
       "icon": "res://icons/epic_egg.svg",
       "tier": "epic",
       "tier_name": "Epic",
       "tier_color": "bf94ef",
-      "price": 2000
+      "price": 20000,
+      "sell_price": 8000
     },
     "618": {
       "name": "Headless Hunter Spirit Egg",
@@ -22447,13 +22456,14 @@
       "spell_id": 57,
       "level": 20,
       "npc_id": 138,
-      "chance": 2.0,
+      "chance": 1.0,
       "template_id": 11,
       "icon": "res://icons/epic_egg.svg",
       "tier": "epic",
       "tier_name": "Epic",
       "tier_color": "bf94ef",
-      "price": 2000
+      "price": 20000,
+      "sell_price": 8000
     },
     "619": {
       "name": "Reaper Spirit Egg",
@@ -22461,13 +22471,14 @@
       "spell_id": 58,
       "level": 30,
       "npc_id": 9,
-      "chance": 1.0,
+      "chance": 0.5,
       "template_id": 11,
       "icon": "res://icons/legend_egg.svg",
       "tier": "legend",
       "tier_name": "Legend",
       "tier_color": "edb75b",
-      "price": 6000
+      "price": 60000,
+      "sell_price": 24000
     },
     "620": {
       "name": "Twin Demon Spirit Egg",
@@ -22475,13 +22486,14 @@
       "spell_id": 59,
       "level": 30,
       "npc_id": 140,
-      "chance": 1.0,
+      "chance": 0.5,
       "template_id": 11,
       "icon": "res://icons/legend_egg.svg",
       "tier": "legend",
       "tier_name": "Legend",
       "tier_color": "edb75b",
-      "price": 6000
+      "price": 60000,
+      "sell_price": 24000
     },
     "621": {
       "name": "Dark Magician Spirit Egg",
@@ -22489,13 +22501,14 @@
       "spell_id": 60,
       "level": 30,
       "npc_id": 207,
-      "chance": 1.0,
+      "chance": 0.5,
       "template_id": 11,
       "icon": "res://icons/legend_egg.svg",
       "tier": "legend",
       "tier_name": "Legend",
       "tier_color": "edb75b",
-      "price": 6000
+      "price": 60000,
+      "sell_price": 24000
     },
     "622": {
       "name": "Banshi Spirit Egg",
@@ -22503,13 +22516,14 @@
       "spell_id": 61,
       "level": 40,
       "npc_id": 209,
-      "chance": 0.5,
+      "chance": 0.1,
       "template_id": 11,
       "icon": "res://icons/mythic_egg.svg",
       "tier": "mythic",
       "tier_name": "Mythic",
       "tier_color": "f08093",
-      "price": 100000
+      "price": 100000,
+      "sell_price": 40000
     },
     "623": {
       "name": "King Wurm Spirit Egg",
@@ -22517,13 +22531,14 @@
       "spell_id": 62,
       "level": 40,
       "npc_id": 174,
-      "chance": 0.5,
+      "chance": 0.1,
       "template_id": 11,
       "icon": "res://icons/mythic_egg.svg",
       "tier": "mythic",
       "tier_name": "Mythic",
       "tier_color": "f08093",
-      "price": 100000
+      "price": 100000,
+      "sell_price": 40000
     },
     "624": {
       "name": "Wraith Spirit Egg",
@@ -22531,13 +22546,14 @@
       "spell_id": 63,
       "level": 40,
       "npc_id": 113,
-      "chance": 0.5,
+      "chance": 0.1,
       "template_id": 11,
       "icon": "res://icons/mythic_egg.svg",
       "tier": "mythic",
       "tier_name": "Mythic",
       "tier_color": "f08093",
-      "price": 100000
+      "price": 100000,
+      "sell_price": 40000
     }
   },
   "pet_tiers": {
@@ -22552,46 +22568,54 @@
       "power": 0.45,
       "accuracy": 0,
       "hit_cap": 0.82,
-      "color": "b8c5c9"
+      "color": "b8c5c9",
+      "sell_price": 40,
+      "drop_chance": 5.0
     },
     "rare": {
       "name": "Rare",
       "rank": 1,
       "level": 10,
-      "price": 600,
+      "price": 6000,
       "tp": 18,
       "chant": 1,
       "upkeep": 5,
       "power": 0.7,
       "accuracy": 3,
       "hit_cap": 0.86,
-      "color": "78b9ee"
+      "color": "78b9ee",
+      "sell_price": 2400,
+      "drop_chance": 2.0
     },
     "epic": {
       "name": "Epic",
       "rank": 2,
       "level": 20,
-      "price": 2000,
+      "price": 20000,
       "tp": 30,
       "chant": 2,
       "upkeep": 7,
       "power": 1.0,
       "accuracy": 6,
       "hit_cap": 0.9,
-      "color": "bf94ef"
+      "color": "bf94ef",
+      "sell_price": 8000,
+      "drop_chance": 1.0
     },
     "legend": {
       "name": "Legend",
       "rank": 3,
       "level": 30,
-      "price": 6000,
+      "price": 60000,
       "tp": 38,
       "chant": 2,
       "upkeep": 9,
       "power": 1.2,
       "accuracy": 9,
       "hit_cap": 0.93,
-      "color": "edb75b"
+      "color": "edb75b",
+      "sell_price": 24000,
+      "drop_chance": 0.5
     },
     "mythic": {
       "name": "Mythic",
@@ -22604,7 +22628,9 @@
       "power": 1.5,
       "accuracy": 12,
       "hit_cap": 0.95,
-      "color": "f08093"
+      "color": "f08093",
+      "sell_price": 40000,
+      "drop_chance": 0.1
     }
   },
   "coverage": [
@@ -26578,7 +26604,7 @@
     }
   ],
   "full_kit_audit": {
-    "version": 10,
+    "version": 11,
     "result": "passed",
     "issues": [],
     "builds": [

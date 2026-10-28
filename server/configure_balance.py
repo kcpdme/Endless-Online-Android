@@ -155,7 +155,7 @@ def build_items(original, shops=""):
         for key,(offset,size) in STAT_FIELDS.items():put(f,offset,0,size)
         put(f,2,23);put(f,3,0);put(f,4,4);put(f,5,0,2);put(f,37,egg['level'],2);put(f,39,7,2);put(f,55,1)
         rows.insert(-1,dict(id=ident,names=[egg['name']],fields=f))
-        metadata[str(ident)]=dict(template_id=egg['template_id'],hatch_spell=egg['spell_id'],allowed_classes=[7],bound=True,drop_class=7,bond_lost_on_death=True,pet_tier=egg['tier'],tier_name=egg['tier_name'],tier_color=egg['tier_color'],icon=egg['icon'],ground=egg['icon'],acquisition=sources.get(ident,{}))
+        metadata[str(ident)]=dict(template_id=egg['template_id'],hatch_spell=egg['spell_id'],allowed_classes=[7],bound=True,egg_sell_value=egg['sell_price'],drop_class=7,bond_lost_on_death=True,pet_tier=egg['tier'],tier_name=egg['tier_name'],tier_color=egg['tier_color'],icon=egg['icon'],ground=egg['icon'],acquisition=sources.get(ident,{}))
     # Recovery quantities fit the new 1–50 HP/TP pools; retain native item types.
     for ident,hp,tp in [(2,35,0),(3,0,45),(4,85,0),(5,0,110),(375,170,0),(376,0,220),(377,120,140)]:
         f=rows[ident-1]['fields']
@@ -291,7 +291,7 @@ def build_shops(original):
         match=re.search(r'^'+str(vendor)+r'\.craft[ \t]*=[ \t]*(.*)$',text,re.M);existing=match[1].strip() if match else ''
         replace(f'{vendor}.craft',existing+(',' if existing else '')+recipe)
     replace(f"{EGGKEEPER['id']}.name",'Aeven Eggkeeper - bound spirit eggs')
-    replace(f"{EGGKEEPER['id']}.trade",','.join(str(n) for ident in egg_stock() for n in (ident,EGGS[ident]['price'],0)))
+    replace(f"{EGGKEEPER['id']}.trade",','.join(str(n) for ident in egg_stock() for n in (ident,EGGS[ident]['price'],EGGS[ident]['sell_price'])))
     # Buying provides reliable death replacement; earned monster eggs remain bound.
     # Native recipe amounts are unsigned bytes and use EO char encoding.
     for value in re.findall(r'^\d+\.craft[ \t]*=[ \t]*(.*)$',text,re.M):

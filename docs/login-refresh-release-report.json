@@ -1,0 +1,41 @@
+{
+  "result": "passed",
+  "date": "2026-10-29",
+  "version": "0.49.0",
+  "version_code": 89,
+  "balance_profile": 11,
+  "large_centered_title": true,
+  "original_scenery_and_native_class_sprites": true,
+  "rendered_viewports": [
+    [
+      960,
+      540
+    ],
+    [
+      1280,
+      720
+    ],
+    [
+      1544,
+      720
+    ]
+  ],
+  "all_saved_login_controls_visible": true,
+  "account_and_services_checks": 151,
+  "automatic_login_checks": 16,
+  "character_flow_checks": 153,
+  "font_and_license_embedded": true,
+  "login_hero_embedded": true,
+  "enhanced_emotes_embedded": true,
+  "world_emote_bottom_offset": -80,
+  "signature_verified": true,
+  "alignment_16kb_verified": true,
+  "apk_sha256": "19662cd6568d32458bd33e91bac0f066dde2a76cdaf65c5654b6d0c139fcee6e",
+  "installed_version": "0.49.0",
+  "installed_version_code": 89,
+  "installed_bytes_verified": true,
+  "app_data_preserved": true,
+  "phone_character_opened": false,
+  "phone_gameplay_tested": false,
+  "visual_checks": "Isolated real-renderer fixtures; phone installation byte-verified"
+}

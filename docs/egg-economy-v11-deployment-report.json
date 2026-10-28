@@ -1,0 +1,16 @@
+{
+  "result": "passed",
+  "profile": 11,
+  "backup": "/opt/aster-vale/backups/egg-economy-v11-20261028T212837Z",
+  "database_bytes_unchanged": true,
+  "characters_and_bonds_unchanged": true,
+  "native_binary_and_combat_unchanged": true,
+  "all_unrelated_content_preserved": true,
+  "repeat_identical": true,
+  "services_healthy": true,
+  "profile_sha256": "9549ce9d98a8981c5bbf8ebb129f35c051a92f3e9acfffa8c2cb89617784874a",
+  "runtime_private_configuration_owner": "astervale",
+  "configuration_readable_by_services": true,
+  "public_login_entry_shop_and_reconnect_verified": true,
+  "initial_configuration_ownership_corrected": true
+}

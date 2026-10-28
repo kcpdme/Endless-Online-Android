@@ -11,6 +11,8 @@ The game is a development prototype. Imported Endless Online assets are referenc
 
 ## Software
 
+- DejaVu Serif Bold: bundled in `client/fonts/DejaVuSerif-Bold.ttf`, from the system `fonts-dejavu-core` package. Bitstream Vera license; DejaVu changes are public domain. Full notices accompany the font in `client/fonts/DejaVu-LICENSE.txt` and are included in exports. https://dejavu-fonts.github.io/ .
+
 - Godot Engine 4.7.2: MIT, https://godotengine.org/license/ . The executable includes Godot's notices; source and third-party notices: https://github.com/godotengine/godot/blob/4.7.2-stable/COPYRIGHT.txt .
 - etheos: zlib license, pinned upstream source and license retained by the server bootstrap. https://github.com/ethanmoffat/etheos .
 - EndlessClient: current code MIT. Used as a technical reference for projection, resource formats and character composition. https://github.com/ethanmoffat/EndlessClient .

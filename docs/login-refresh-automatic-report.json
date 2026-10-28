@@ -1,0 +1,10 @@
+{
+  "checks": 16,
+  "endpoint_bound": true,
+  "forget_and_disable": true,
+  "manual_logout_stays_out": true,
+  "no_plaintext_password_settings": true,
+  "opt_in_verified_login_only": true,
+  "result": "passed",
+  "startup_once": true
+}

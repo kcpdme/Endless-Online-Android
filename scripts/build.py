@@ -12,8 +12,8 @@ from bootstrap_godot import bootstrap
 
 ROOT = Path(__file__).resolve().parents[1]
 ANDROID_PACKAGE = 'com.cloudgameboy.astervale'
-ANDROID_VERSION_CODE = 87
-ANDROID_VERSION_NAME = '0.48.2'
+ANDROID_VERSION_CODE = 89
+ANDROID_VERSION_NAME = '0.49.0'
 
 def run_checked(command, env, name):
     """Godot can return zero for script errors, so inspect diagnostics as well."""
@@ -81,7 +81,7 @@ name="Android"
 platform="Android"
 runnable=true
 export_filter="all_resources"
-include_filter="*.json"
+include_filter="*.json,fonts/*.txt"
 exclude_filter="art_packs/*"
 export_path="../builds/aster-vale-debug.apk"
 
@@ -108,7 +108,7 @@ name="Web"
 platform="Web"
 runnable=true
 export_filter="all_resources"
-include_filter="*.json"
+include_filter="*.json,fonts/*.txt"
 exclude_filter="art_packs/*"
 export_path="../builds/web/index.html"
 
@@ -125,7 +125,7 @@ name="Linux"
 platform="Linux"
 runnable=true
 export_filter="all_resources"
-include_filter="*.json"
+include_filter="*.json,fonts/*.txt"
 exclude_filter="art_packs/*"
 export_path="../builds/linux/aster-vale.x86_64"
 
@@ -144,7 +144,7 @@ name="Android Bundle"
 platform="Android"
 runnable=false
 export_filter="all_resources"
-include_filter="*.json"
+include_filter="*.json,fonts/*.txt"
 exclude_filter="art_packs/*"
 export_path="../builds/aster-vale-release.aab"
 

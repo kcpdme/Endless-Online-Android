@@ -10,7 +10,7 @@ from pet_catalog import EGGS,COMPANIONS,TIERS,EGGKEEPER
 ROOT=Path(__file__).resolve().parents[1]
 
 def main():
-    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--runtime',type=Path,default=ROOT/'work/class-balance-v10/runtime');p.add_argument('--godot',type=Path);a=p.parse_args()
+    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--runtime',type=Path,default=ROOT/'work/egg-economy-v11/runtime');p.add_argument('--godot',type=Path);a=p.parse_args()
     checks=[];pets=[];processes=[];streams=[]
     def check(ok,why):
         if not ok:raise AssertionError(why)
@@ -78,7 +78,7 @@ def main():
             for ident,egg in EGGS.items():
                 stage(f,level=egg['level']);s=login(f)
                 try:
-                    stock=shop(s);offer=next(o for o in stock['trade'] if o['id']==ident);check((offer['buy'],offer['sell'])==(egg['price'],0),'Tier price and no resale are native shop values')
+                    stock=shop(s);offer=next(o for o in stock['trade'] if o['id']==ident);check((offer['buy'],offer['sell'])==(egg['price'],egg['sell_price']),'Tier price and 40 percent buyback are native shop values')
                     gold=s.item_amount(1);s.shop_trade('buy',ident,2)
                     check(s.item_amount(ident)==2 and s.item_amount(1)==gold-2*egg['price'],'Buying two eggs charges exactly the displayed Gold')
                     s.use_item(ident);spell=egg['spell_id'];pet=COMPANIONS[spell];tier=TIERS[egg['tier']]
@@ -100,10 +100,18 @@ def main():
                         check(any(e.get('kind')=='companion_attack' and e.get('damage',0)>0 for e in s.events),'Actively commanded '+egg['tier']+' pet reaches and damages the target')
                         damage=next(e['damage'] for e in s.events if e.get('kind')=='companion_attack' and e.get('damage',0)>0);low=int(s.stats['min_damage']*tier['power']);high=__import__('math').ceil(s.stats['max_damage']*tier['power'])
                         check(max(1,low)<=damage<=max(1,high),'Native pet damage scales from the current owner attack roll');seen.add(egg['tier'])
-                    s.cast_spell(35,'self');until(s,lambda:not getattr(s,'companion',None))
+                    s.cast_spell(35,'self');until(s,lambda:not getattr(s,'companion',None) and not s.casting)
                     check(any(x['id']==spell for x in s.spells) and s.item_amount(ident)==1,'Dismissal preserves the living bond and spare egg')
+                    shop(s);gold=s.item_amount(1);s.shop_trade('sell',ident,1)
+                    check(s.item_amount(ident)==0 and s.item_amount(1)==gold+egg['sell_price'],'Selling the spare bound egg pays exactly 40 percent without removing its living bond')
+                    check(any(x['id']==spell for x in s.spells),'Egg buyback cannot release or sell a hatched living bond')
                     pets.append(dict(egg_id=ident,spell_id=spell,npc_id=pet['npc_id'],tier=egg['tier']))
                 finally:s.close()
+            stage(f,clas=6,level=45,inventory='1,100000;623,1;');s=login(f)
+            try:
+                shop(s);s.shop_trade('sell',623,1)
+                check(s.item_amount(623)==0 and s.item_amount(1)==140000,'A former Summoner can sell an existing bound egg after changing class')
+            finally:s.close()
             stage(f,level=1,inventory='1,100000;623,1;');s=login(f)
             try:
                 s.send(14,10,number(623,2));time.sleep(.2);s.refresh();check(s.item_amount(623)==1 and not any(x['id']==62 for x in s.spells),'Raw under-level hatching preserves a Mythic egg')
@@ -129,11 +137,11 @@ def main():
                 stage(f,level=40);fixture=b/'fixture.json';fixture.write_text(json.dumps(f));fixture.chmod(0o600)
                 start('gateway',[sys.executable,ROOT/'server/gateway.py','--port',18931,'--eo-port',18930],18931)
                 start('websocket',[sys.executable,ROOT/'server/ws_gateway.py','--port',18932,'--tcp-port',18931,'--deps-dir',ROOT/'work/server-build/python'],18932)
-                env=dict(os.environ,ASTER_VALE_PET_FIXTURE=str(fixture),ASTER_VALE_TEST_HOST='ws://127.0.0.1:18932/ws',ASTER_VALE_TEST_REPORT=str(ROOT/'work/class-balance-v10/client-report.json'),XDG_DATA_HOME=str(b/'godot-data'),XDG_CONFIG_HOME=str(b/'godot-config'))
+                env=dict(os.environ,ASTER_VALE_PET_FIXTURE=str(fixture),ASTER_VALE_TEST_HOST='ws://127.0.0.1:18932/ws',ASTER_VALE_TEST_REPORT=str(ROOT/'work/egg-economy-v11/client-report.json'),XDG_DATA_HOME=str(b/'godot-data'),XDG_CONFIG_HOME=str(b/'godot-config'))
                 result=subprocess.run([str(a.godot.resolve()),'--headless','--path',str(ROOT/'client'),'--script','res://tests/pet_tiers_live.gd'],env=env,capture_output=True,text=True,timeout=120)
-                (ROOT/'work/class-balance-v10/client-live.log').write_text(result.stdout+result.stderr);check(result.returncode==0 and 'SCRIPT ERROR' not in result.stderr,'Real Godot Eggkeeper UI and live hatching/summoning pass')
+                (ROOT/'work/egg-economy-v11/client-live.log').write_text(result.stdout+result.stderr);check(result.returncode==0 and 'SCRIPT ERROR' not in result.stderr,'Real Godot Eggkeeper UI and live hatching/summoning pass')
             report=dict(result='passed',checks=len(checks),native_pet_choices=pets,tiers=len(seen),native_purchase_hatch_summon_upkeep_dismiss_death=True,isolated_database=True,production_database_opened=False)
-            (ROOT/'work/class-balance-v10/native-report.json').write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report,indent=2))
+            (ROOT/'work/egg-economy-v11/native-report.json').write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report,indent=2))
         finally:
             for proc in reversed(processes):
                 proc.terminate()
@@ -141,6 +149,6 @@ def main():
                 except subprocess.TimeoutExpired:proc.kill();proc.wait()
             for stream in streams:stream.close()
             for name in ('native','gateway','websocket'):
-                if (b/(name+'.log')).exists():shutil.copy2(b/(name+'.log'),ROOT/'work/class-balance-v10'/(name+'.log'))
+                if (b/(name+'.log')).exists():shutil.copy2(b/(name+'.log'),ROOT/'work/egg-economy-v11'/(name+'.log'))
 
 if __name__=='__main__':main()

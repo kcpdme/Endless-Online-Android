@@ -1,7 +1,7 @@
 extends RefCounted
 ## Original drunk emote and confirmed soda timer; original chat slur lives in gateway.
 const SOCIAL_SIZE: float = 50.0
-const SOCIAL_BOTTOM: float = -96.0
+const SOCIAL_BOTTOM: float = -80.0
 const FRAME_MSEC: int = 240
 const ENHANCED_PATH: String = "res://content/gfx/emotes_enhanced.png"
 const ORIGINAL_PATH: String = "res://content/gfx/002_00038.png"

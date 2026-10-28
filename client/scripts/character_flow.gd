@@ -20,6 +20,7 @@ var automatic: CheckBox
 var options_path: String = "user://login_options.cfg"
 var startup_login_checked: bool = false
 var forget_button: Button
+var login_hero: Control
 var creation_hint: Label
 
 func page(parent: Control) -> Array:
@@ -61,32 +62,36 @@ func build(owner: Node, parent: Control) -> void:
 	subtitle = text(body,"Log in or create an account to begin your adventure.",19,game.MUTED)
 	var scroll: ScrollContainer = ScrollContainer.new(); scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL; scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED; body.add_child(scroll)
 	c.auth_box = VBoxContainer.new(); c.auth_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL; c.auth_box.add_theme_constant_override("separation",14); scroll.add_child(c.auth_box)
-	var auth: HBoxContainer = HBoxContainer.new(); auth.add_theme_constant_override("separation",48); c.auth_box.add_child(auth)
-	var form: VBoxContainer = VBoxContainer.new(); form.size_flags_horizontal = Control.SIZE_EXPAND_FILL; form.add_theme_constant_override("separation",12); auth.add_child(form)
+	var auth: HBoxContainer = HBoxContainer.new(); auth.add_theme_constant_override("separation",28); c.auth_box.add_child(auth)
+	var form_card: PanelContainer=PanelContainer.new();form_card.size_flags_horizontal=Control.SIZE_EXPAND_FILL;form_card.size_flags_stretch_ratio=.9;auth.add_child(form_card)
+	var skin: StyleBoxFlat=game._style(Color("122327"),Color("71613d"),14)
+	for edge: String in ["left","right","top","bottom"]:skin.set("content_margin_"+edge,18)
+	form_card.add_theme_stylebox_override("panel",skin)
+	var form: VBoxContainer = VBoxContainer.new(); form.size_flags_horizontal = Control.SIZE_EXPAND_FILL; form.add_theme_constant_override("separation",8); form_card.add_child(form)
+	text(form,"WELCOME, ADVENTURER",20,game.GOLD)
+	text(form,"Sign in to continue your journey.",16,game.MUTED)
 	text(form,"Account",19,game.MUTED); c.username_field = field(form,"Account name"); c.username_field.max_length = 16
 	text(form,"Password",19,game.MUTED); c.password_field = field(form,"Password"); c.password_field.secret = true; c.password_field.max_length = 64
-	remember=CheckBox.new();remember.text="Remember login on this device";remember.custom_minimum_size.y=48;remember.add_theme_font_size_override("font_size",19);remember.visible=c.login_store.available();form.add_child(remember)
+	remember=CheckBox.new();remember.text="Remember login on this device";remember.custom_minimum_size.y=44;remember.add_theme_font_size_override("font_size",19);remember.visible=c.login_store.available();form.add_child(remember)
 	remember.toggled.connect(func(enabled: bool) -> void:
 		if not enabled:
 			c.login_store.forget(); automatic.set_pressed_no_signal(false); save_automatic_choice(false)
 	)
-	automatic = CheckBox.new(); automatic.text = "Sign in automatically next time"; automatic.custom_minimum_size.y = 48; automatic.add_theme_font_size_override("font_size",19); automatic.visible = c.login_store.available(); form.add_child(automatic)
+	automatic = CheckBox.new(); automatic.text = "Sign in automatically next time"; automatic.custom_minimum_size.y = 44; automatic.add_theme_font_size_override("font_size",19); automatic.visible = c.login_store.available(); form.add_child(automatic)
 	automatic.toggled.connect(func(enabled: bool) -> void:
 		if enabled: remember.set_pressed_no_signal(true)
 		else: save_automatic_choice(false)
 	)
 	forget_button=button(form,"Forget saved login",func() -> void:
-		c.login_store.forget();remember.set_pressed_no_signal(false);automatic.set_pressed_no_signal(false);save_automatic_choice(false);c.password_field.text="";c.auth_credentials.clear();c.reconnection.forget();restored_login.clear();forget_button.hide()
-	);forget_button.hide()
+		c.login_store.forget();remember.set_pressed_no_signal(false);automatic.set_pressed_no_signal(false);save_automatic_choice(false);c.password_field.text="";c.auth_credentials.clear();c.reconnection.forget();restored_login.clear();forget_button.custom_minimum_size.y=44;forget_button.hide()
+	);forget_button.custom_minimum_size.y=44;forget_button.hide()
 	var actions: HBoxContainer = HBoxContainer.new(); actions.add_theme_constant_override("separation",14); form.add_child(actions)
 	button(actions,"Log in",func() -> void: c._authenticate("login"),true)
 	button(actions,"Create account",func() -> void: c._authenticate("register"))
 	var note: VBoxContainer = VBoxContainer.new(); note.size_flags_horizontal = Control.SIZE_EXPAND_FILL; note.add_theme_constant_override("separation",14); auth.add_child(note)
 	auth.move_child(note,0)
-	var art: TextureRect=TextureRect.new();var art_path: String=str((game.manifest.get("login_art",{}) as Dictionary).get("path",""))
-	if not art_path.is_empty() and ResourceLoader.exists(art_path):art.texture=load(art_path)
-	art.expand_mode=TextureRect.EXPAND_IGNORE_SIZE;art.stretch_mode=TextureRect.STRETCH_KEEP_ASPECT_CENTERED;art.custom_minimum_size=Vector2(280,300);art.size_flags_vertical=Control.SIZE_EXPAND_FILL;art.size_flags_horizontal=Control.SIZE_EXPAND_FILL;note.add_child(art)
-	text(note,"Aster Vale",30,game.GOLD).horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
+	login_hero=preload("res://scripts/login_hero.gd").new();login_hero.game=game
+	login_hero.custom_minimum_size=Vector2(280,420);login_hero.size_flags_horizontal=Control.SIZE_EXPAND_FILL;login_hero.size_flags_vertical=Control.SIZE_EXPAND_FILL;note.add_child(login_hero)
 	server_toggle = button(c.auth_box,"Server settings",func() -> void: server_options.visible = not server_options.visible)
 	server_options = HBoxContainer.new(); server_options.add_theme_constant_override("separation",14); c.auth_box.add_child(server_options)
 	c.host_field = field(server_options,"Server hostname or wss://…/ws"); c.host_field.text = "wss://eo.kcpd.top/ws"
@@ -211,6 +216,8 @@ func show_characters() -> void:
 func refresh() -> void:
 	if heading == null or capacity == null: return
 	var count: int = c.selected_characters.size()
+	heading.get_parent().visible=c.character_box.visible
+	subtitle.visible=c.character_box.visible
 	heading.text = "Choose your character" if c.character_box.visible else "Aster Vale"
 	(heading.get_parent().get_child(1) as Button).visible=c.character_box.visible
 	subtitle.text = "Tap a character to see their look, then enter the world." if c.character_box.visible else "Log in or create an account to begin your adventure."
