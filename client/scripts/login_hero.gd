@@ -2,6 +2,8 @@ extends Control
 ## Login-only composition of existing EO scenery and native character layers.
 var game: Node
 var artwork: Texture2D
+var portraits: Texture2D
+const PORTRAITS_PATH: String = "res://content/ui/login-class-portraits-v1.png"
 var shade: GradientTexture2D
 var brand: Label
 var eyebrow: Label
@@ -17,6 +19,7 @@ func _ready() -> void:
  texture_filter=CanvasItem.TEXTURE_FILTER_LINEAR
  var path: String=str((game.manifest.get("login_art",{}) as Dictionary).get("path",""))
  if not path.is_empty():artwork=game._texture(path)
+ if ResourceLoader.exists(PORTRAITS_PATH):portraits=game._texture(PORTRAITS_PATH)
  var gradient: Gradient=Gradient.new()
  gradient.offsets=PackedFloat32Array([0,.42,1])
  gradient.colors=PackedColorArray([Color(.025,.06,.07,.08),Color(.025,.06,.07,.06),Color(.025,.06,.07,.78)])
@@ -39,9 +42,20 @@ func _ready() -> void:
   {"role":"SUMMONER","gender":1,"hairstyle":14,"haircolor":6,"body":503,"boots":606,"head":0,"offhand":0,"weapon":494}
  ]:
   var slot: Control=Control.new();slot.size_flags_horizontal=Control.SIZE_EXPAND_FILL;slot.mouse_filter=Control.MOUSE_FILTER_IGNORE;party.add_child(slot)
-  var preview: Control=preload("res://scripts/character_preview.gd").new();preview.game=game
-  preview.appearance={"gender":spec.gender,"race":0,"hairstyle":spec.hairstyle,"haircolor":spec.haircolor,"equipment_graphics":[graphic(spec.boots),0,0,0,graphic(spec.body),0,graphic(spec.head),graphic(spec.offhand),graphic(spec.weapon)]}
-  preview.fit_to_rect=true;preview.zoom=2.5;preview.bottom_margin=6;preview.texture_filter=CanvasItem.TEXTURE_FILTER_NEAREST
+  var preview: Control
+  if portraits!=null:
+   var picture: TextureRect=TextureRect.new()
+   var cell: AtlasTexture=AtlasTexture.new();cell.atlas=portraits;cell.filter_clip=true
+   var column: int=party.get_child_count()-1
+   var cell_size: Vector2=Vector2(portraits.get_width()/3.0,portraits.get_height()/2.0)
+   var inset: float=cell_size.x*.0625
+   cell.region=Rect2(Vector2(column%3,floori(column/3.0))*cell_size+Vector2(inset,0),cell_size-Vector2(inset*2,0))
+   picture.texture=cell;picture.expand_mode=TextureRect.EXPAND_IGNORE_SIZE;picture.stretch_mode=TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+   picture.texture_filter=CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS;preview=picture
+  else:
+   preview=preload("res://scripts/character_preview.gd").new();preview.game=game
+   preview.appearance={"gender":spec.gender,"race":0,"hairstyle":spec.hairstyle,"haircolor":spec.haircolor,"equipment_graphics":[graphic(spec.boots),0,0,0,graphic(spec.body),0,graphic(spec.head),graphic(spec.offhand),graphic(spec.weapon)]}
+   preview.fit_to_rect=true;preview.zoom=2.5;preview.bottom_margin=6;preview.texture_filter=CanvasItem.TEXTURE_FILTER_NEAREST
   slot.add_child(preview);preview.mouse_filter=Control.MOUSE_FILTER_IGNORE;preview.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT);preview.offset_bottom=-25;previews.append(preview)
   var caption: Label=label(str(spec.role),12,Color("cdbb91"));remove_child(caption);slot.add_child(caption)
   caption.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE);caption.offset_top=-23;caption.offset_bottom=-3;captions.append(caption)
@@ -63,7 +77,8 @@ func layout() -> void:
  brand.add_theme_font_size_override("font_size",clampi(int(size.x*.115),34,68))
  eyebrow.position=Vector2(12,maxf(12,title_y-83));eyebrow.size=Vector2(size.x-24,25)
  tagline.position=Vector2(12,title_y+49);tagline.size=Vector2(size.x-24,26)
- party.position=Vector2(14,size.y-160);party.size=Vector2(size.x-28,146)
+ var party_height: float=clampf(size.y-314,146,170)
+ party.position=Vector2(14,size.y-party_height-14);party.size=Vector2(size.x-28,party_height)
  for preview: Control in previews:preview.queue_redraw()
  queue_redraw()
 

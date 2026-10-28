@@ -91,7 +91,7 @@ func build(owner: Node, parent: Control) -> void:
 	var note: VBoxContainer = VBoxContainer.new(); note.size_flags_horizontal = Control.SIZE_EXPAND_FILL; note.add_theme_constant_override("separation",14); auth.add_child(note)
 	auth.move_child(note,0)
 	login_hero=preload("res://scripts/login_hero.gd").new();login_hero.game=game
-	login_hero.custom_minimum_size=Vector2(280,420);login_hero.size_flags_horizontal=Control.SIZE_EXPAND_FILL;login_hero.size_flags_vertical=Control.SIZE_EXPAND_FILL;note.add_child(login_hero)
+	login_hero.custom_minimum_size=Vector2(280,460);login_hero.size_flags_horizontal=Control.SIZE_EXPAND_FILL;login_hero.size_flags_vertical=Control.SIZE_EXPAND_FILL;note.add_child(login_hero)
 	server_toggle = button(c.auth_box,"Server settings",func() -> void: server_options.visible = not server_options.visible)
 	server_options = HBoxContainer.new(); server_options.add_theme_constant_override("separation",14); c.auth_box.add_child(server_options)
 	c.host_field = field(server_options,"Server hostname or wss://…/ws"); c.host_field.text = "wss://eo.kcpd.top/ws"

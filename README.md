@@ -8,13 +8,13 @@ This public repository contains source code, content import tools, build scripts
 
 After importing content and building, install `builds/aster-vale-debug.apk` on an Android device (Android 7 / API 24 or later). This development build includes ARM64 and x86_64. Open **Aster Vale**, log in, select your character and join the persistent shared world. The build is signed with a development key, not configured for Google Play release.
 
-The current Android package is **`com.cloudgameboy.astervale`**, version 0.49.1
-(code 90). It installs separately from the earlier `io.astervale.prototype` app;
+The current Android package is **`com.cloudgameboy.astervale`**, version 0.49.2
+(code 91). It installs separately from the earlier `io.astervale.prototype` app;
 online accounts remain on the same server. Release APK and AAB exports use the
 same private release signing key.
 
 The app starts directly on a full-screen account login/create screen with
-a large Aster Vale title, original forest scenery and equipped class sprites. On Android, **Remember login on this device** saves
+a large Aster Vale title, the original picture and illustrated class portraits. On Android, **Remember login on this device** saves
 a successfully verified login in an Android Keystore-encrypted, backup-excluded
 vault. **Forget saved login** removes it. Changing the account/server clears the
 prefilled password. Saving is optional and off by default.
@@ -52,6 +52,10 @@ APK update (`--no-incremental -r`), verifies installed bytes and version, and
 checks that Android kept the app's original installation timestamp.
 
 ## Play online
+
+Version **0.49.2** adds smooth illustrated versions of all six classes to the
+login artwork. The original background, title and world sprites remain intact.
+See [the login artwork workflow](docs/LOGIN_REFRESH.md).
 
 Version **0.49.1** restores the complete original login picture beneath the
 Aster Vale title and class lineup.
