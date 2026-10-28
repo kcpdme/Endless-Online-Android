@@ -10,7 +10,7 @@ from pet_catalog import EGGS,COMPANIONS,TIERS,EGGKEEPER
 ROOT=Path(__file__).resolve().parents[1]
 
 def main():
-    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--runtime',type=Path,default=ROOT/'work/pet-tiers/runtime');p.add_argument('--godot',type=Path);a=p.parse_args()
+    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--runtime',type=Path,default=ROOT/'work/pet-roster/runtime');p.add_argument('--godot',type=Path);a=p.parse_args()
     checks=[];pets=[];processes=[];streams=[]
     def check(ok,why):
         if not ok:raise AssertionError(why)
@@ -63,7 +63,7 @@ def main():
             # A raw original-client packet cannot buy eggs after a class switch.
             stage(f,clas=6);s=login(f)
             try:
-                stock=shop(s);check(len(stock['trade'])==15,'Native Eggkeeper exposes all 15 choices');gold=s.item_amount(1)
+                stock=shop(s);check(len(stock['trade'])==16,'Native Eggkeeper exposes all 16 choices');gold=s.item_amount(1)
                 s.send(13,11,number(612,2)+number(1,4));time.sleep(.2);s.refresh()
                 check(s.item_amount(612)==0 and s.item_amount(1)==gold,'Native non-Summoner purchase refusal preserves Gold and inventory')
             finally:s.close()
@@ -100,7 +100,7 @@ def main():
             stage(f,spells='23,0;61,0;35,0;',inventory='1,123;622,2;',location=(21,11,8),hp=1);s=login(f)
             try:
                 s.walk(0);until(s,lambda:s.state['map_id']!=21)
-                check(not any(x['id']==61 for x in s.spells) and s.item_amount(622)==2,'Death removes a new Phoenix bond and preserves spare eggs')
+                check(not any(x['id']==61 for x in s.spells) and s.item_amount(622)==2,'Death removes a new Banshi bond and preserves spare eggs')
             finally:s.close()
             s=login(f)
             try:check(not any(x['id']==61 for x in s.spells),'New-bond death loss persists across reconnect')
@@ -117,11 +117,11 @@ def main():
                 stage(f,level=40);fixture=b/'fixture.json';fixture.write_text(json.dumps(f));fixture.chmod(0o600)
                 start('gateway',[sys.executable,ROOT/'server/gateway.py','--port',18931,'--eo-port',18930],18931)
                 start('websocket',[sys.executable,ROOT/'server/ws_gateway.py','--port',18932,'--tcp-port',18931,'--deps-dir',ROOT/'work/server-build/python'],18932)
-                env=dict(os.environ,ASTER_VALE_PET_FIXTURE=str(fixture),ASTER_VALE_TEST_HOST='ws://127.0.0.1:18932/ws',ASTER_VALE_TEST_REPORT=str(ROOT/'work/pet-tiers/client-report.json'),XDG_DATA_HOME=str(b/'godot-data'),XDG_CONFIG_HOME=str(b/'godot-config'))
+                env=dict(os.environ,ASTER_VALE_PET_FIXTURE=str(fixture),ASTER_VALE_TEST_HOST='ws://127.0.0.1:18932/ws',ASTER_VALE_TEST_REPORT=str(ROOT/'work/pet-roster/client-report.json'),XDG_DATA_HOME=str(b/'godot-data'),XDG_CONFIG_HOME=str(b/'godot-config'))
                 result=subprocess.run([str(a.godot.resolve()),'--headless','--path',str(ROOT/'client'),'--script','res://tests/pet_tiers_live.gd'],env=env,capture_output=True,text=True,timeout=120)
-                (ROOT/'work/pet-tiers/client-live.log').write_text(result.stdout+result.stderr);check(result.returncode==0 and 'SCRIPT ERROR' not in result.stderr,'Real Godot Eggkeeper UI and live hatching/summoning pass')
+                (ROOT/'work/pet-roster/client-live.log').write_text(result.stdout+result.stderr);check(result.returncode==0 and 'SCRIPT ERROR' not in result.stderr,'Real Godot Eggkeeper UI and live hatching/summoning pass')
             report=dict(result='passed',checks=len(checks),native_pet_choices=pets,tiers=len(seen),native_purchase_hatch_summon_upkeep_dismiss_death=True,isolated_database=True,production_database_opened=False)
-            (ROOT/'work/pet-tiers/native-report.json').write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report,indent=2))
+            (ROOT/'work/pet-roster/native-report.json').write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report,indent=2))
         finally:
             for proc in reversed(processes):
                 proc.terminate()
@@ -129,6 +129,6 @@ def main():
                 except subprocess.TimeoutExpired:proc.kill();proc.wait()
             for stream in streams:stream.close()
             for name in ('native','gateway','websocket'):
-                if (b/(name+'.log')).exists():shutil.copy2(b/(name+'.log'),ROOT/'work/pet-tiers'/(name+'.log'))
+                if (b/(name+'.log')).exists():shutil.copy2(b/(name+'.log'),ROOT/'work/pet-roster'/(name+'.log'))
 
 if __name__=='__main__':main()

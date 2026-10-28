@@ -1,6 +1,6 @@
 # Class and equipment revamp for levels 1–50
 
-Profile 5 adds fifteen pet appearances, five equal-within-tier combat budgets
+Profile 6 sets the requested sixteen pet appearances across five equal-within-tier combat budgets
 and the Aeven Eggkeeper. See [Summoner pet tiers](SUMMONER_PET_TIERS.md) for
 current acquisition, balance and lifecycle rules.
 

@@ -1,0 +1,48 @@
+{
+  "result": "passed",
+  "balance_profile_version": 6,
+  "requested_roster": {
+    "normal": [
+      "Penguin",
+      "Fox",
+      "Goat"
+    ],
+    "rare": [
+      "Wolf",
+      "Butterfly",
+      "Skeleton"
+    ],
+    "epic": [
+      "Carnivo",
+      "Cursed Mask",
+      "Headless Hunter"
+    ],
+    "legend": [
+      "Twin Demon",
+      "Dark Magician",
+      "Reaper"
+    ],
+    "mythic": [
+      "Banshi",
+      "Drake",
+      "King Wurm",
+      "Wraith"
+    ]
+  },
+  "pet_choices": 16,
+  "balance_content_tests": 12,
+  "roster_tier_preservation_tests": 10,
+  "native_pet_checks": 130,
+  "godot_pet_checks": 111,
+  "native_binary_unchanged_from_profile_5": true,
+  "native_sha256": "3a7927fa757cd788bfe85d971f7ebec4e2c17131a6ad336b24dc1b2489ebad0e",
+  "profile_sha256": "67083f0ab19787f3d73a6a3d85f0791714f71cd4814d193260080f813f55bf00",
+  "all_36_modeled_class_level_budgets_identical": true,
+  "existing_egg_bond_tiers_levels_prices_tp_and_combat_budgets_preserved": true,
+  "non_pet_native_definitions_and_all_world_maps_preserved": true,
+  "all_pet_art_visible_in_four_directions": true,
+  "public_stock_order_and_new_mythic_wraith_verified": true,
+  "apk_embedded_catalog_manifest_map_match": true,
+  "apk_sha256": "d15bfb266b4c9ebc61b5a59c6821f63121b147027f6e9163b967575dbdff69dc",
+  "installer_retry_identical": true
+}

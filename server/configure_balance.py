@@ -12,7 +12,7 @@ from eo_session import Reader, number
 from balance_profile import VERSION, LEVELS, ATTRIBUTES, CLASSES, SPELLS, WEAPON_TIERS, BODY_TIERS, NEW_ITEMS, NEW_ITEM_TIERS, ENCOUNTERS, COMPANIONS
 from class_identity import allowed_classes, role_for, vary_stats, recipe_sources
 from class_signatures import SIGNATURES, SUPPORT, EGGS
-from pet_catalog import TIERS, EGGKEEPER, egg_stock
+from pet_catalog import TIERS, ROSTER, EGGKEEPER, egg_stock
 
 STAT_FIELDS = {'hp':(5,2),'tp':(7,2),'min_damage':(9,2),'max_damage':(11,2),'accuracy':(13,2),'evade':(15,2),'armor':(17,2),**{k:(20+i,1) for i,k in enumerate(ATTRIBUTES)}}
 INPUTS = ('data/pub/dat001.eif','data/pub/dat001.ecf','data/pub/dsl001.esf','data/pub/dtn001.enf','data/aster-vale-shops.ini','data/quests/00004.eqf','data/aster-vale-drops.ini')
@@ -194,19 +194,21 @@ def build_npcs(original):
         for start,value,size in [(11,hp,3),(16,lo,2),(18,hi,2),(20,accuracy,2),(22,evade,2),(24,armor,2),(36,exp,3)]:put(f,start,value,size)
     definitions={}
     if len(rows)!=306:raise ValueError('Expected 305 existing NPC definitions')
-    for p in COMPANIONS.values():
-        if p['npc_id']<0:continue
+    additions={p['npc_id']:p for p in COMPANIONS.values() if p['npc_id']>0}
+    additions[EGGKEEPER['id']]=dict(EGGKEEPER,npc_id=EGGKEEPER['id'])
+    for ident,p in sorted(additions.items()):
         f=bytearray(rows[p['template_id']-1]['fields'])
+        if ident==EGGKEEPER['id']:
+            if ident!=len(rows):raise ValueError('Eggkeeper NPC definition ID collision')
+            put(f,9,ident,2)
+            rows.insert(-1,dict(id=ident,names=[p['name']],fields=f))
+            definitions[str(ident)]=dict(id=ident,name=p['name'],graphic=num(f,0,2),type=6,vendor_id=ident,template_id=p['template_id'])
+            continue
         for offset,value,size in [(3,0,2),(5,0,2),(7,0,2),(9,0,2),(11,1,3),(16,0,2),(18,0,2),(20,0,2),(22,0,2),(24,0,2),(36,0,3)]:put(f,offset,value,size)
         ident=p['npc_id']
         if ident!=len(rows):raise ValueError('Pet NPC definition ID collision')
         rows.insert(-1,dict(id=ident,names=[p['name']],fields=f))
         definitions[str(ident)]=dict(id=ident,name=p['name'],graphic=num(f,0,2),type=0,hp=1,boss=0,child=0,vendor_id=0,min_damage=0,max_damage=0,accuracy=0,evade=0,armor=0,exp=0,template_id=p['template_id'],is_companion=True)
-    ident=EGGKEEPER['id'];f=bytearray(rows[EGGKEEPER['template_id']-1]['fields'])
-    if ident!=len(rows):raise ValueError('Eggkeeper NPC definition ID collision')
-    put(f,9,ident,2)
-    rows.insert(-1,dict(id=ident,names=[EGGKEEPER['name']],fields=f))
-    definitions[str(ident)]=dict(id=ident,name=EGGKEEPER['name'],graphic=num(f,0,2),type=6,vendor_id=ident,template_id=EGGKEEPER['template_id'])
     return encode_pub(original,rows),definitions
 
 def formulas(original):
@@ -334,7 +336,7 @@ def configure(runtime):
     class_bytes,classes=build_classes(originals['data/pub/dat001.ecf'])
     spell_bytes,spells=build_spells(originals['data/pub/dsl001.esf'])
     proposed={'data/aster-vale-drops.ini':drops,'data/pub/dat001.eif':item_bytes,'data/pub/dat001.ecf':class_bytes,'data/pub/dsl001.esf':spell_bytes,'data/pub/dtn001.enf':npc_bytes,'data/formulas.ini':formulas(originals['data/formulas.ini']),'data/aster-vale-skills.ini':build_skills(),'data/aster-vale-shops.ini':shops,'data/quests/00004.eqf':build_quest(originals['data/quests/00004.eqf'])}
-    profile=dict(version=VERSION,levels=LEVELS,max_skill_level=10,classes=classes,spells=spells,items=items,npcs=npcs,class_identity=True,class_signatures=True,mortal_spirit_bonds=True,companions=COMPANIONS,eggs=EGGS,pet_tiers=TIERS,eggkeeper=EGGKEEPER)
+    profile=dict(version=VERSION,levels=LEVELS,max_skill_level=10,classes=classes,spells=spells,items=items,npcs=npcs,class_identity=True,class_signatures=True,mortal_spirit_bonds=True,companions=COMPANIONS,eggs=EGGS,pet_tiers=TIERS,pet_roster=ROSTER,eggkeeper=EGGKEEPER)
     proposed['data/balance-profile.json']=(json.dumps(profile,indent=2)+'\n').encode()
     cfg=(runtime/'config.local.ini').read_text()
     values={'PetEggTiers':'yes','MortalSpiritBonds':'yes','ClassSignatureRules':'yes','PriestRegenRate':'0.02','PriestSittingRegenRate':'0.04','CompanionLifetimeSeconds':'0','ClassIdentityRules':'yes','BalanceRevamp':'yes','UseClassFormulas':'yes','MaxSkillLevel':'10','SkillsFile':'./data/aster-vale-skills.ini'}

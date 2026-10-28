@@ -1,6 +1,6 @@
 # Summoner eggs and living pet bonds — profile 4
 
-Profile 5 retains mortal bonds and adds a shop plus fifteen pet choices across
+Profile 6 retains mortal bonds and offers a shop with sixteen pet choices across
 five tiers. Its current acquisition and combat values are documented in
 [Summoner pet tiers](SUMMONER_PET_TIERS.md). The drop-only rules and three-pet
 values below describe the historical profile-4 release.

@@ -1,6 +1,6 @@
-# Summoner pet choices — profile 5, Android 0.45.0
+# Summoner pet choices — profile 6, Android 0.45.1
 
-The Aeven Eggkeeper now sells **15 deterministic pet eggs**, beside the market
+The Aeven Eggkeeper now sells **16 deterministic pet eggs**, beside the market
 at **map 5, tile 35,46**. Only Summoners can buy and hatch them. Every appearance
 also has its own monster drop source, eligible only when the normal loot winner
 is a Summoner. Buying removes the dependence on a lucky drop after death;
@@ -9,11 +9,11 @@ without a random rarity roll.
 
 | Tier | Hatch level | Choices | Gold per egg | Call TP | Upkeep / 2 seconds | Hit ceiling |
 | --- | ---: | --- | ---: | ---: | ---: | ---: |
-| Normal | 1 | Penguin, Goat, Fox | 100 | 10 | 1 | 82% |
-| Rare | 8 | Wolf, Bat, Butterfly | 600 | 18 | 2 | 86% |
-| Epic | 25 | Wurm, Baby Turtle, Skeleton | 2,000 | 30 | 3 | 90% |
-| Legend | 30 | Banshi, Wraith, Dark Magician | 6,000 | 38 | 4 | 93% |
-| Mythic | 40 | Drake, Phoenix, King Wurm | 12,000 | 45 | 5 | 95% |
+| Normal | 1 | Penguin, Fox, Goat | 100 | 10 | 1 | 82% |
+| Rare | 8 | Wolf, Butterfly, Skeleton | 600 | 18 | 2 | 86% |
+| Epic | 25 | Carnivo, Cursed Mask, Headless Hunter | 2,000 | 30 | 3 | 90% |
+| Legend | 30 | Twin Demon, Dark Magician, Reaper | 6,000 | 38 | 4 | 93% |
+| Mythic | 40 | Banshi, Drake, King Wurm, Wraith | 12,000 | 45 | 5 | 95% |
 
 ## Why this improves the class
 
@@ -58,8 +58,24 @@ and TP exhaustion preserve the bond and allow another TP-funded call.
 To change appearance, forget the old summon at a skill master and hatch another
 egg. Forgetting now immediately dismisses the active pet and cancels its pending
 summon. The old egg is not returned. Pet bonds cannot spend permanent training
-points. Existing Wolf, Wurm and Drake egg/spell/NPC identities are preserved;
-existing characters need no migration or reset.
+points. Existing egg and bond slots keep their tier, price, level requirement,
+TP costs and combat budget. The revised appearances replace old ones within
+those slots; no account migration or reset is required.
+
+| Previous appearance | Revised appearance | Preserved tier |
+| --- | --- | --- |
+| Wurm | Carnivo | Epic |
+| Bat | Skeleton | Rare |
+| Baby Turtle | Cursed Mask | Epic |
+| Skeleton | Headless Hunter | Epic |
+| Banshi | Reaper | Legend |
+| Wraith | Twin Demon | Legend |
+| Phoenix | Banshi | Mythic |
+
+Other existing slots retain their appearances. The new sixteenth egg adds Mythic
+Wraith. Owned inventory eggs, private storage and learned living bonds retain
+their IDs and quantities, so replacement value and level access are preserved.
+Monster drop sources now follow the revised appearances.
 
 Pets assist the monster their owner actively attacks and stop after five seconds
 without a command. They cannot farm unattended, tank, earn independent rewards or
@@ -89,42 +105,44 @@ the combined budget, not a claim of identical farming or PvP performance. The
 main endgame budget stays close to profile 4; variety and reliable access make
 the class more attractive without adding another full damage dealer for free.
 
-Ancient Wraith's supplied idle and walking frames are transparent, so it was
-excluded. King Wurm provides the third Mythic appearance with complete original
-art. All fifteen pets have visible idle and movement frames in all directions.
+All sixteen pets use complete original idle, movement and attack art in all
+four directions. Eggkeeper stock follows the requested tier and creature order.
 
 ## Validation and rollout
 
-- 12 balance/content tests, 7 tier tests, 3 bond migration/contract tests and
-  137 adapter state tests passed.
-- The final native regression passed **515 checks** across 36 class/level builds.
-- Native class signatures and mortal-bond regressions passed **39 checks**.
-- The pet acceptance passed **123 checks**, buying and hatching every egg,
-  summoning every appearance, checking all five upkeep/damage tiers, duplicate
-  protection, raw purchase/hatch rejection, new-bond death/reconnect and actual
+This is a definition-only revision. Tier curves, the native executable and all
+36 modeled class/level budgets are identical to profile 5. Original equipment,
+non-pet spells, classes, skillmaster offers, original monster definitions, the
+Eggkeeper NPC and every world map are unchanged.
+
+- 12 balance/content tests and 10 roster/tier/preservation tests passed.
+- Native pet acceptance passed **130 checks**, buying and hatching every egg,
+  summoning all sixteen appearances, checking the five upkeep/damage tiers,
+  duplicate protection, purchase/hatch rejection, bond death/reconnect and
   skill-master release/replacement.
-- The real Godot client passed **105 checks** across 15 previews and two phone
-  viewports, including native shop purchase, hatching and visible summoning.
-- The full native patch stack applies identically twice. Runtime configuration
-  and the single merchant-map edit are also repeatable. Visual shop captures
-  were inspected with the real renderer at 1280×720.
+- The real Godot client passed **111 checks** across sixteen previews and two
+  phone viewports, including native purchase, hatching and summoning.
+- The previous profile-5 native regression passed 515 checks on the same native
+  executable. The roster update does not change the class or tier combat rules.
+- Installation is repeatable; exact roster order and existing slot value/access
+  preservation are verified. Real-renderer shop previews were inspected.
 
-Profile 5 is live. The stopped-world backup is
-`/opt/aster-vale/backups/pet-tiers-v5-20261028T060725Z`. Installation preserved
-account database bytes and all runtime content outside the reviewed balance
-definitions/configuration, native executable and Aeven merchant spawn. Sky Haven's
-walking maps and the admin teleport source are preserved. No character migration
-was run. Public TLS/WebSocket acceptance used a fresh regular developer account
-to buy all five tiers, hatch/summon Penguin, verify exact TP charges, retain
-spares, dismiss and reconnect. Existing player accounts were not used as fixtures.
+Profile 6 is live. The stopped-world backup is
+`/opt/aster-vale/backups/pet-roster-v6-20261028T063417Z`. Installation preserved
+account database bytes, every existing egg slot's tier/value/level access, the
+native executable, world maps, admin teleport and unrelated configuration.
+No character migration was run. Public TLS/WebSocket acceptance used a fresh
+regular developer account to verify exact stock order, buy all five tiers,
+hatch/summon the new Mythic Wraith, check TP costs, retain spares and reconnect.
+Existing player accounts were not used as fixtures.
 
-Android **0.45.0 / code 80** is installed on the Galaxy S23 Ultra as a full signed
+Android **0.45.1 / code 81** is installed on the Galaxy S23 Ultra as a full signed
 update, preserving app data and original install identity. Installed APK bytes
-match the accepted release. Signature, 16 KB alignment and embedded catalog/map
-checks passed. See the accompanying sanitized reports for exact verification
-scope and startup results. Physical handset walking/pet gameplay was not repeated.
+match the release. Signature, 16 KB alignment and embedded catalog/map checks
+passed. Sanitized `pet-roster-*` reports record verification and startup scope.
+Physical handset pet gameplay was not repeated.
 
-APK SHA-256: `348ce7b245816dee5aba4adecc63943e4ec8c14300d371d06762ff77cbf54fdd`.
+APK SHA-256: `d15bfb266b4c9ebc61b5a59c6821f63121b147027f6e9163b967575dbdff69dc`.
 
 The complete equipment, spell, egg and model guide is regenerated at
 `outputs/balance-revamp/balance-guide.html`; this file can be read without Canvas.

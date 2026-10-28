@@ -1,5 +1,5 @@
 {
-  "version": 5,
+  "version": 6,
   "equipment": [
     {
       "id": 20,
@@ -21240,8 +21240,8 @@
     },
     "33": {
       "id": 33,
-      "name": "Summon Spirit Wurm",
-      "shout": "summon spirit wurm",
+      "name": "Summon Spirit Carnivo",
+      "shout": "summon spirit carnivo",
       "tp": 30,
       "cast_time": 2,
       "type": 1,
@@ -21265,8 +21265,8 @@
       "effect_kind": "companion",
       "companion": {
         "npc_id": 307,
-        "name": "Spirit Wurm",
-        "template_id": 82,
+        "name": "Spirit Carnivo",
+        "template_id": 121,
         "tier": "epic",
         "tier_name": "Epic",
         "tier_color": "bf94ef",
@@ -21836,8 +21836,8 @@
     },
     "54": {
       "id": 54,
-      "name": "Summon Spirit Bat",
-      "shout": "summon spirit bat",
+      "name": "Summon Spirit Skeleton",
+      "shout": "summon spirit skeleton",
       "tp": 18,
       "cast_time": 1,
       "type": 1,
@@ -21861,8 +21861,8 @@
       "effect_kind": "companion",
       "companion": {
         "npc_id": 312,
-        "name": "Spirit Bat",
-        "template_id": 81,
+        "name": "Spirit Skeleton",
+        "template_id": 17,
         "tier": "rare",
         "tier_name": "Rare",
         "tier_color": "78b9ee",
@@ -21916,8 +21916,8 @@
     },
     "56": {
       "id": 56,
-      "name": "Summon Spirit Baby Turtle",
-      "shout": "summon spirit baby turtle",
+      "name": "Summon Spirit Cursed Mask",
+      "shout": "summon spirit cursed mask",
       "tp": 30,
       "cast_time": 2,
       "type": 1,
@@ -21941,8 +21941,8 @@
       "effect_kind": "companion",
       "companion": {
         "npc_id": 314,
-        "name": "Spirit Baby Turtle",
-        "template_id": 205,
+        "name": "Spirit Cursed Mask",
+        "template_id": 134,
         "tier": "epic",
         "tier_name": "Epic",
         "tier_color": "bf94ef",
@@ -21956,8 +21956,8 @@
     },
     "57": {
       "id": 57,
-      "name": "Summon Spirit Skeleton",
-      "shout": "summon spirit skeleton",
+      "name": "Summon Spirit Headless Hunter",
+      "shout": "summon spirit headless hunter",
       "tp": 30,
       "cast_time": 2,
       "type": 1,
@@ -21981,8 +21981,8 @@
       "effect_kind": "companion",
       "companion": {
         "npc_id": 315,
-        "name": "Spirit Skeleton",
-        "template_id": 17,
+        "name": "Spirit Headless Hunter",
+        "template_id": 138,
         "tier": "epic",
         "tier_name": "Epic",
         "tier_color": "bf94ef",
@@ -21996,8 +21996,8 @@
     },
     "58": {
       "id": 58,
-      "name": "Summon Spirit Banshi",
-      "shout": "summon spirit banshi",
+      "name": "Summon Spirit Reaper",
+      "shout": "summon spirit reaper",
       "tp": 38,
       "cast_time": 2,
       "type": 1,
@@ -22021,8 +22021,8 @@
       "effect_kind": "companion",
       "companion": {
         "npc_id": 316,
-        "name": "Spirit Banshi",
-        "template_id": 209,
+        "name": "Spirit Reaper",
+        "template_id": 9,
         "tier": "legend",
         "tier_name": "Legend",
         "tier_color": "edb75b",
@@ -22036,8 +22036,8 @@
     },
     "59": {
       "id": 59,
-      "name": "Summon Spirit Wraith",
-      "shout": "summon spirit wraith",
+      "name": "Summon Spirit Twin Demon",
+      "shout": "summon spirit twin demon",
       "tp": 38,
       "cast_time": 2,
       "type": 1,
@@ -22061,8 +22061,8 @@
       "effect_kind": "companion",
       "companion": {
         "npc_id": 317,
-        "name": "Spirit Wraith",
-        "template_id": 113,
+        "name": "Spirit Twin Demon",
+        "template_id": 140,
         "tier": "legend",
         "tier_name": "Legend",
         "tier_color": "edb75b",
@@ -22116,8 +22116,8 @@
     },
     "61": {
       "id": 61,
-      "name": "Summon Spirit Phoenix",
-      "shout": "summon spirit phoenix",
+      "name": "Summon Spirit Banshi",
+      "shout": "summon spirit banshi",
       "tp": 45,
       "cast_time": 2,
       "type": 1,
@@ -22141,8 +22141,8 @@
       "effect_kind": "companion",
       "companion": {
         "npc_id": 319,
-        "name": "Spirit Phoenix",
-        "template_id": 216,
+        "name": "Spirit Banshi",
+        "template_id": 209,
         "tier": "mythic",
         "tier_name": "Mythic",
         "tier_color": "f08093",
@@ -22193,11 +22193,52 @@
       },
       "duration": 0,
       "upkeep_seconds": 2
+    },
+    "63": {
+      "id": 63,
+      "name": "Summon Spirit Wraith",
+      "shout": "summon spirit wraith",
+      "tp": 45,
+      "cast_time": 2,
+      "type": 1,
+      "restrict": 1,
+      "target": 1,
+      "min_damage": 0,
+      "max_damage": 0,
+      "hp": 0,
+      "level_requirement": 40,
+      "allowed_classes": [
+        7
+      ],
+      "area_radius": 0,
+      "area_targets": 0,
+      "area_scale": 1,
+      "max_level": 0,
+      "training_bonus": 2,
+      "learn_source": "Hatch a bound egg from Aeven Eggkeeper or its monster; your death breaks the pet bond",
+      "bond_lost_on_death": true,
+      "template_id": 16,
+      "effect_kind": "companion",
+      "companion": {
+        "npc_id": 322,
+        "name": "Spirit Wraith",
+        "template_id": 113,
+        "tier": "mythic",
+        "tier_name": "Mythic",
+        "tier_color": "f08093",
+        "upkeep": 5,
+        "power": 1.3,
+        "accuracy": 12,
+        "hit_cap": 0.95
+      },
+      "duration": 0,
+      "upkeep_seconds": 2
     }
   },
   "eggs": {
     "609": {
       "name": "Wolf Spirit Egg",
+      "species": "Wolf",
       "spell_id": 28,
       "level": 8,
       "npc_id": 74,
@@ -22210,10 +22251,11 @@
       "price": 600
     },
     "610": {
-      "name": "Wurm Spirit Egg",
+      "name": "Carnivo Spirit Egg",
+      "species": "Carnivo",
       "spell_id": 33,
       "level": 25,
-      "npc_id": 82,
+      "npc_id": 121,
       "chance": 1.5,
       "template_id": 11,
       "icon": "res://icons/epic_egg.svg",
@@ -22224,6 +22266,7 @@
     },
     "611": {
       "name": "Drake Spirit Egg",
+      "species": "Drake",
       "spell_id": 34,
       "level": 40,
       "npc_id": 225,
@@ -22237,6 +22280,7 @@
     },
     "612": {
       "name": "Penguin Spirit Egg",
+      "species": "Penguin",
       "spell_id": 51,
       "level": 1,
       "npc_id": 13,
@@ -22250,6 +22294,7 @@
     },
     "613": {
       "name": "Goat Spirit Egg",
+      "species": "Goat",
       "spell_id": 52,
       "level": 1,
       "npc_id": 7,
@@ -22263,6 +22308,7 @@
     },
     "614": {
       "name": "Fox Spirit Egg",
+      "species": "Fox",
       "spell_id": 53,
       "level": 1,
       "npc_id": 5,
@@ -22275,10 +22321,11 @@
       "price": 100
     },
     "615": {
-      "name": "Bat Spirit Egg",
+      "name": "Skeleton Spirit Egg",
+      "species": "Skeleton",
       "spell_id": 54,
       "level": 8,
-      "npc_id": 81,
+      "npc_id": 17,
       "chance": 2,
       "template_id": 11,
       "icon": "res://icons/rare_egg.svg",
@@ -22289,6 +22336,7 @@
     },
     "616": {
       "name": "Butterfly Spirit Egg",
+      "species": "Butterfly",
       "spell_id": 55,
       "level": 8,
       "npc_id": 133,
@@ -22301,10 +22349,11 @@
       "price": 600
     },
     "617": {
-      "name": "Baby Turtle Spirit Egg",
+      "name": "Cursed Mask Spirit Egg",
+      "species": "Cursed Mask",
       "spell_id": 56,
       "level": 25,
-      "npc_id": 205,
+      "npc_id": 134,
       "chance": 1.5,
       "template_id": 11,
       "icon": "res://icons/epic_egg.svg",
@@ -22314,10 +22363,11 @@
       "price": 2000
     },
     "618": {
-      "name": "Skeleton Spirit Egg",
+      "name": "Headless Hunter Spirit Egg",
+      "species": "Headless Hunter",
       "spell_id": 57,
       "level": 25,
-      "npc_id": 17,
+      "npc_id": 138,
       "chance": 1.5,
       "template_id": 11,
       "icon": "res://icons/epic_egg.svg",
@@ -22327,10 +22377,11 @@
       "price": 2000
     },
     "619": {
-      "name": "Banshi Spirit Egg",
+      "name": "Reaper Spirit Egg",
+      "species": "Reaper",
       "spell_id": 58,
       "level": 30,
-      "npc_id": 209,
+      "npc_id": 9,
       "chance": 1,
       "template_id": 11,
       "icon": "res://icons/legend_egg.svg",
@@ -22340,10 +22391,11 @@
       "price": 6000
     },
     "620": {
-      "name": "Wraith Spirit Egg",
+      "name": "Twin Demon Spirit Egg",
+      "species": "Twin Demon",
       "spell_id": 59,
       "level": 30,
-      "npc_id": 113,
+      "npc_id": 140,
       "chance": 1,
       "template_id": 11,
       "icon": "res://icons/legend_egg.svg",
@@ -22354,6 +22406,7 @@
     },
     "621": {
       "name": "Dark Magician Spirit Egg",
+      "species": "Dark Magician",
       "spell_id": 60,
       "level": 30,
       "npc_id": 207,
@@ -22366,10 +22419,11 @@
       "price": 6000
     },
     "622": {
-      "name": "Phoenix Spirit Egg",
+      "name": "Banshi Spirit Egg",
+      "species": "Banshi",
       "spell_id": 61,
       "level": 40,
-      "npc_id": 216,
+      "npc_id": 209,
       "chance": 2,
       "template_id": 11,
       "icon": "res://icons/mythic_egg.svg",
@@ -22380,9 +22434,24 @@
     },
     "623": {
       "name": "King Wurm Spirit Egg",
+      "species": "King Wurm",
       "spell_id": 62,
       "level": 40,
       "npc_id": 174,
+      "chance": 1,
+      "template_id": 11,
+      "icon": "res://icons/mythic_egg.svg",
+      "tier": "mythic",
+      "tier_name": "Mythic",
+      "tier_color": "f08093",
+      "price": 12000
+    },
+    "624": {
+      "name": "Wraith Spirit Egg",
+      "species": "Wraith",
+      "spell_id": 63,
+      "level": 40,
+      "npc_id": 113,
       "chance": 1,
       "template_id": 11,
       "icon": "res://icons/mythic_egg.svg",
@@ -24185,7 +24254,7 @@
       "skills": 5,
       "signature": {
         "name": "Spirit bond",
-        "description": "Choose from 15 pets at the Aeven Eggkeeper or earn bound eggs from monsters. Five tiers share combat stats within each tier; stronger tiers improve damage and accuracy. One TP-funded living bond lasts until your death. Travel, logout and TP exhaustion keep it. PK areas use stronger spirit casting instead of pets."
+        "description": "Choose from 16 pets at the Aeven Eggkeeper or earn bound eggs from monsters. Five tiers share combat stats within each tier; stronger tiers improve damage and accuracy. One TP-funded living bond lasts until your death. Travel, logout and TP exhaustion keep it. PK areas use stronger spirit casting instead of pets."
       }
     },
     {
@@ -24239,7 +24308,7 @@
       "skills": 8,
       "signature": {
         "name": "Spirit bond",
-        "description": "Choose from 15 pets at the Aeven Eggkeeper or earn bound eggs from monsters. Five tiers share combat stats within each tier; stronger tiers improve damage and accuracy. One TP-funded living bond lasts until your death. Travel, logout and TP exhaustion keep it. PK areas use stronger spirit casting instead of pets."
+        "description": "Choose from 16 pets at the Aeven Eggkeeper or earn bound eggs from monsters. Five tiers share combat stats within each tier; stronger tiers improve damage and accuracy. One TP-funded living bond lasts until your death. Travel, logout and TP exhaustion keep it. PK areas use stronger spirit casting instead of pets."
       }
     },
     {
@@ -24293,7 +24362,7 @@
       "skills": 9,
       "signature": {
         "name": "Spirit bond",
-        "description": "Choose from 15 pets at the Aeven Eggkeeper or earn bound eggs from monsters. Five tiers share combat stats within each tier; stronger tiers improve damage and accuracy. One TP-funded living bond lasts until your death. Travel, logout and TP exhaustion keep it. PK areas use stronger spirit casting instead of pets."
+        "description": "Choose from 16 pets at the Aeven Eggkeeper or earn bound eggs from monsters. Five tiers share combat stats within each tier; stronger tiers improve damage and accuracy. One TP-funded living bond lasts until your death. Travel, logout and TP exhaustion keep it. PK areas use stronger spirit casting instead of pets."
       }
     },
     {
@@ -24347,7 +24416,7 @@
       "skills": 13,
       "signature": {
         "name": "Spirit bond",
-        "description": "Choose from 15 pets at the Aeven Eggkeeper or earn bound eggs from monsters. Five tiers share combat stats within each tier; stronger tiers improve damage and accuracy. One TP-funded living bond lasts until your death. Travel, logout and TP exhaustion keep it. PK areas use stronger spirit casting instead of pets."
+        "description": "Choose from 16 pets at the Aeven Eggkeeper or earn bound eggs from monsters. Five tiers share combat stats within each tier; stronger tiers improve damage and accuracy. One TP-funded living bond lasts until your death. Travel, logout and TP exhaustion keep it. PK areas use stronger spirit casting instead of pets."
       }
     },
     {
@@ -24401,7 +24470,7 @@
       "skills": 17,
       "signature": {
         "name": "Spirit bond",
-        "description": "Choose from 15 pets at the Aeven Eggkeeper or earn bound eggs from monsters. Five tiers share combat stats within each tier; stronger tiers improve damage and accuracy. One TP-funded living bond lasts until your death. Travel, logout and TP exhaustion keep it. PK areas use stronger spirit casting instead of pets."
+        "description": "Choose from 16 pets at the Aeven Eggkeeper or earn bound eggs from monsters. Five tiers share combat stats within each tier; stronger tiers improve damage and accuracy. One TP-funded living bond lasts until your death. Travel, logout and TP exhaustion keep it. PK areas use stronger spirit casting instead of pets."
       }
     },
     {
@@ -24452,10 +24521,10 @@
           "dropped": 2
         }
       },
-      "skills": 21,
+      "skills": 22,
       "signature": {
         "name": "Spirit bond",
-        "description": "Choose from 15 pets at the Aeven Eggkeeper or earn bound eggs from monsters. Five tiers share combat stats within each tier; stronger tiers improve damage and accuracy. One TP-funded living bond lasts until your death. Travel, logout and TP exhaustion keep it. PK areas use stronger spirit casting instead of pets."
+        "description": "Choose from 16 pets at the Aeven Eggkeeper or earn bound eggs from monsters. Five tiers share combat stats within each tier; stronger tiers improve damage and accuracy. One TP-funded living bond lasts until your death. Travel, logout and TP exhaustion keep it. PK areas use stronger spirit casting instead of pets."
       }
     }
   ],

@@ -1,0 +1,19 @@
+{
+  "result": "passed",
+  "backup": "/opt/aster-vale/backups/pet-roster-v6-20261028T063417Z",
+  "services_healthy": true,
+  "balance_profile_version": 6,
+  "native_sha256": "3a7927fa757cd788bfe85d971f7ebec4e2c17131a6ad336b24dc1b2489ebad0e",
+  "profile_sha256": "67083f0ab19787f3d73a6a3d85f0791714f71cd4814d193260080f813f55bf00",
+  "aeven_map_sha256": "c880b13d526ca99a6e38c0ce4f038a3712e818e298b5dfeedcdc22ef73081e18",
+  "pet_choices": 16,
+  "tiers": 5,
+  "account_database_bytes_unchanged_during_install": true,
+  "no_character_migration_required": true,
+  "native_binary_unchanged": true,
+  "existing_egg_tiers_level_access_and_value_preserved": true,
+  "unrelated_runtime_content_preserved": true,
+  "sky_walking_maps_and_admin_teleport_preserved": true,
+  "unrelated_configuration_preserved": true,
+  "installer_repeat_identical": true
+}

@@ -19,7 +19,7 @@ class BalanceTests(unittest.TestCase):
         report=configure(self.runtime);return report,json.loads((self.runtime/'data/balance-profile.json').read_text())
 
     def test_repeated_install_is_identical_and_preserves_private_config_and_operator_item(self):
-        original=(self.runtime/'data/pub/dat001.eif').read_bytes();a,p=self.install();first={str(f.relative_to(self.runtime)):f.read_bytes() for f in self.runtime.rglob('*') if f.is_file()};b,_=self.install();self.assertEqual(a,b);self.assertEqual(first,{str(f.relative_to(self.runtime)):f.read_bytes() for f in self.runtime.rglob('*') if f.is_file()});self.assertIn('PasswordSalt = do-not-change\nExpRate = 500%',(self.runtime/'config.local.ini').read_text());new=(self.runtime/'data/pub/dat001.eif').read_bytes();self.assertEqual(records(original,b'EIF',58)[490],records(new,b'EIF',58)[490]);self.assertEqual(len(p['items']),623)
+        original=(self.runtime/'data/pub/dat001.eif').read_bytes();a,p=self.install();first={str(f.relative_to(self.runtime)):f.read_bytes() for f in self.runtime.rglob('*') if f.is_file()};b,_=self.install();self.assertEqual(a,b);self.assertEqual(first,{str(f.relative_to(self.runtime)):f.read_bytes() for f in self.runtime.rglob('*') if f.is_file()});self.assertIn('PasswordSalt = do-not-change\nExpRate = 500%',(self.runtime/'config.local.ini').read_text());new=(self.runtime/'data/pub/dat001.eif').read_bytes();self.assertEqual(records(original,b'EIF',58)[490],records(new,b'EIF',58)[490]);self.assertEqual(len(p['items']),624)
         from admin_weapon import patch_weapon
         self.assertEqual(patch_weapon(new),(new,False));self.assertEqual(p['items']['21']['level_requirement'],0)
 
@@ -47,7 +47,7 @@ class BalanceTests(unittest.TestCase):
             self.assertEqual(spells[str(ident)]['allowed_classes'],[7]);self.assertEqual(spells[str(ident)]['effect_kind'],'companion')
             self.assertEqual(spells[str(ident)]['companion']['npc_id'],npc)
             self.assertEqual(p['npcs'][str(npc)]['type'],0)
-        self.assertEqual(len(p['npcs']),16)
+        self.assertEqual(len(p['npcs']),17)
 
     def test_crafting_edge_and_archetypes_are_bounded_and_obtainable(self):
         _,p=self.install();items=p['items']

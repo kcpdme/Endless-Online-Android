@@ -28,7 +28,7 @@ func run() -> void:
 	if failed: game.queue_free(); await process_frame; quit(1); return
 	c.character_list.select(0); c._enter_selected()
 	check(await wait_for(func() -> bool: return c.active and c.streaming and c.session.is_idle()), "Regular Summoner enters native world")
-	check(int(c.player.stats.admin) == 0 and int(c.catalog.balance_version) == 5, "Tier catalog reaches a regular character")
+	check(int(c.player.stats.admin) == 0 and int(c.catalog.balance_version) == 6, "Tier catalog reaches a regular character")
 	var keeper: Dictionary = {}
 	for npc: Dictionary in c.npcs:
 		if int(npc.id) == 321: keeper = npc
@@ -36,7 +36,7 @@ func run() -> void:
 	c.session.request("shop_open", {"npc_index":int(keeper.get("index", 0))})
 	check(await wait_for(func() -> bool: return game.shop_ui.panel.visible and c.session.is_idle()), "Real native Eggkeeper shop opens")
 	var ui: RefCounted = game.shop_ui
-	check(ui.offers.size() == 15, "All 15 native offers are visible")
+	check(ui.offers.size() == 16, "All 16 native offers are visible")
 	for dimensions: Vector2i in [Vector2i(1280,720), Vector2i(1544,720)]:
 		root.size = dimensions; await process_frame
 		check(Rect2(Vector2.ZERO, Vector2(dimensions)).encloses(ui.panel.get_child(0).get_global_rect()), "Egg shop fits supported phone viewport")
@@ -64,6 +64,6 @@ func run() -> void:
 			if int(npc.id) == 309: return true
 		return false), "New pet appears through the actual native summon")
 	check(not c.npc_graphic({"id":309}).is_empty(), "Penguin uses original rendered creature art")
-	var report: Dictionary = {"result":"failed" if failed else "passed", "checks":checks, "pet_previews":15, "phone_viewports":2, "native_shop_purchase_hatch_summon":true}
+	var report: Dictionary = {"result":"failed" if failed else "passed", "checks":checks, "pet_previews":16, "phone_viewports":2, "native_shop_purchase_hatch_summon":true}
 	FileAccess.open(OS.get_environment("ASTER_VALE_TEST_REPORT"), FileAccess.WRITE).store_string(JSON.stringify(report, "  ") + "\n")
 	print("PET TIERS LIVE: ", JSON.stringify(report)); c.log_out(); game.queue_free(); await process_frame; await process_frame; quit(1 if failed else 0)

@@ -1,0 +1,14 @@
+{
+  "result": "installation_and_startup_passed",
+  "version_name": "0.45.1",
+  "version_code": 81,
+  "device": "Samsung Galaxy S23 Ultra (SM-S918B)",
+  "apk_sha256": "d15bfb266b4c9ebc61b5a59c6821f63121b147027f6e9163b967575dbdff69dc",
+  "installed_apk_bytes_match": true,
+  "original_first_install_time_preserved": true,
+  "app_data_not_cleared": true,
+  "signature_and_16k_alignment_verified": true,
+  "app_process_started": true,
+  "startup_script_or_fatal_errors": 0,
+  "physical_pet_gameplay_retested": false
+}
