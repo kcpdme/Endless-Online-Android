@@ -1,0 +1,23 @@
+{
+  "result": "passed",
+  "balance_version": 4,
+  "android_version": "0.44.0",
+  "android_version_code": 78,
+  "apk_sha256": "b8923b9bc97e671235c8f4f7c33ceb55db33ffe6957d03f007a0a6da7e922b54",
+  "native_sha256": "f3adf29bfd3135a08071f53076422d3bd9987286c9c3b037779d382ab430c012",
+  "profile_sha256": "a41e657ea8dddb10b6d4fba6e2f6bb210b30c0638f75915023057c11a343a85d",
+  "content_and_balance_tests": 12,
+  "transactional_migration_and_hatch_tests": 3,
+  "adapter_state_tests": 137,
+  "native_signature_and_mortal_egg_checks": 37,
+  "native_regression_checks": 514,
+  "native_class_level_builds": 36,
+  "godot_live_client_checks": 30,
+  "class_guidance_layout_checks": 60,
+  "complete_patch_stack_applies_identically_twice": true,
+  "signed_apk_verified": true,
+  "zipalign_16k_verified": true,
+  "embedded_catalog_matches_accepted_catalog": true,
+  "isolated_native_fixture_databases": true,
+  "production_drop_chances_not_modified_by_tests": true
+}

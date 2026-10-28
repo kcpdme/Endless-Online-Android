@@ -5,7 +5,7 @@ SIGNATURES = {
     4: dict(name='Backstab',description='A successful adjacent attack directly behind a target deals randomly 1.5x or 2x damage with a Rogue blade. Does not stack with critical hits.',backstab_multipliers=[1.5,2.0]),
     5: dict(name='Marksmanship',description='Sustained ranged attacks and shots with a bow and arrows; AGI drives damage and accuracy.'),
     6: dict(name='Might',description='Each STR gives 0.65 base attack power, versus 0.20 for Rogue and 0.15 for Archer.',strength_damage=.65),
-    7: dict(name='Spirit bond',description='Hatch monster eggs to permanently learn a spirit summon. One active pet; initial and upkeep TP limit its assistance. In PK areas, stronger spirit casting compensates for disabled pet AI.'),
+    7: dict(name='Spirit bond',description='Summoners earn untradeable eggs from specific monsters. Hatch one living pet bond; your death breaks it and requires another egg. Travel, logout and TP exhaustion keep the bond. Strong pet attacks and TP upkeep define the class; PK areas use stronger spirit casting instead of pet AI.'),
 }
 ITEMS=[
  (544,'Stormcaller Staff',389,3,'intelligence',4),

@@ -1,5 +1,8 @@
 # Class signatures, egg hatching and complete progression
 
+Profile 4 replaces permanent summon unlocks with bound eggs and death-limited
+pet bonds. See [Mortal spirit eggs](MORTAL_SPIRIT_EGGS.md) for current rules.
+
 Profile 3 expands the class restrictions and native companions in profile 2.
 The main journey remains levels 1–50, with milestones at 1, 8, 15, 25, 35 and 45.
 Accounts, levels, EXP, existing item ownership and learned skills are retained.

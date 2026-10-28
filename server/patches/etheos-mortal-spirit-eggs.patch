@@ -1,0 +1,365 @@
+--- a/src/character.hpp
++++ b/src/character.hpp
+@@ -336,6 +336,7 @@
+         double BackstabMultiplier(int target_x, int target_y, Direction facing) const;
+         bool SignatureCanCast(unsigned short id, int target_x, int target_y, bool targeted = true) const;
+         bool HatchCompanionEgg(unsigned short id);
++        void LoseCompanionBond();
+         bool CompanionSpell(unsigned short id);
+         void DismissCompanion();
+         void CommandCompanion(NPC *target);
+--- a/src/character.cpp
++++ b/src/character.cpp
+@@ -2053,6 +2053,7 @@
+ 
+ void Character::DeathRespawn()
+ {
++    this->LoseCompanionBond();
+ 	this->hp = int(this->maxhp * static_cast<double>(this->world->config["DeathRecover"]) / 100.0);
+ 
+ 	if (this->world->config["Deadly"])
+@@ -2074,6 +2075,8 @@
+ 	this->player->client->queue.AddAction(PacketReader(std::array<char, 2>{
+ 		{char(PACKET_INTERNAL_WARP), char(PACKET_INTERNAL)}
+ 	}.data()), 0.0);
++    // Persist the lost bond with the normal respawn state before reconnect.
++    if (this->world->config["MortalSpiritBonds"]) this->Save();
+ }
+ 
+ void Character::Mute(const Command_Source *by)
+@@ -2595,13 +2598,20 @@
+     if (!this->world->config["ClassSignatureRules"] || !spell) this->StatusMsg("Spirit hatching is unavailable. The egg is kept.");
+     else if (this->clas != 7) this->StatusMsg("Only Summoners can hatch spirit eggs. The egg is kept.");
+     else if (!this->BalanceCanCast(spell)) this->StatusMsg("Reach the required level before hatching this egg. The egg is kept.");
++    else if (this->hp <= 0 || this->nowhere) this->StatusMsg("Recover before bonding a spirit. The egg is kept.");
++    else if (this->world->config["MortalSpiritBonds"] && std::any_of(this->spells.begin(),this->spells.end(),[this](const Character_Spell& s) {
++        return int(this->world->config["BalancePetSpell." + util::to_string(s.id) + ".egg"]) > 0;
++    })) this->StatusMsg("You already have a living spirit bond. Keep the spare egg for after death, or release your bond at a skill master.");
+     else if (this->HasSpell(spell)) this->StatusMsg("You already know this spirit summon. The egg is kept.");
+     else if (this->HasItem(id) && this->AddSpell(spell))
+     {
+         this->DelItem(id,1);
+         PacketBuilder learned(PACKET_STATSKILL, PACKET_TAKE, 6);
+         learned.AddShort(spell); learned.AddInt(this->HasItem(1)); this->Send(learned);
+-        this->StatusMsg("Spirit bonded! Its summon skill is yours permanently. Cast it to call your companion.");
++        if (this->world->config["MortalSpiritBonds"]) this->Save();
++        this->StatusMsg(this->world->config["MortalSpiritBonds"]
++          ? "Spirit bonded! Cast its summon to call it. Your death breaks this bond; another egg is then required."
++          : "Spirit bonded! Its summon skill is yours permanently. Cast it to call your companion.");
+     }
+     // A real item acknowledgement also completes native refusals without loss.
+     PacketBuilder reply(PACKET_ITEM, PACKET_REPLY, 11);
+@@ -2609,3 +2619,25 @@
+     reply.AddChar(this->weight); reply.AddChar(this->maxweight); reply.AddShort(0); this->Send(reply);
+     return true;
+ }
++
++
++// Learned summon ownership is the persisted living bond, not an unlimited unlock.
++// Clearing every legacy summon also closes dismiss/TP/class-switch death bypasses.
++void Character::LoseCompanionBond()
++{
++    if (!this->world->config["MortalSpiritBonds"]) return;
++    this->DismissCompanion();
++    std::vector<std::pair<int,int>> lost;
++    for (const auto& spell : this->spells)
++        if (int(this->world->config["BalancePetSpell." + util::to_string(spell.id) + ".egg"]) > 0)
++            lost.emplace_back(spell.id,spell.level);
++    for (const auto& spell : lost)
++    {
++        this->skillpoints = std::min<int>(64000,this->skillpoints + spell.second);
++        this->DelSpell(spell.first);
++        if (this->spell_id == spell.first) this->CancelSpell();
++        PacketBuilder reply(PACKET_STATSKILL,PACKET_REMOVE,4);
++        reply.AddShort(spell.first); reply.AddShort(this->skillpoints); this->Send(reply);
++    }
++    if (!lost.empty()) this->StatusMsg("Your spirit died with you. Hatch a new egg to bond another pet. Spare eggs are kept.");
++}
+--- a/src/handlers/StatSkill.cpp
++++ b/src/handlers/StatSkill.cpp
+@@ -198,6 +198,8 @@
+ 			break;
+ 
+ 		case TRAIN_SKILL:
++            // Mortal bonds are not trained with permanent character skill points.
++            if (character->world->config["MortalSpiritBonds"] && int(character->world->config["BalancePetSpell." + util::to_string(stat_id) + ".egg"]) > 0) return;
+ 			if (character->skillpoints <= 0 || !character->BalanceCanCast(stat_id) || !character->HasSpell(stat_id)
+ 			 || character->SpellLevel(stat_id) >= int(character->world->config["MaxSkillLevel"]))
+ 			{
+--- a/src/eoserv_config.cpp
++++ b/src/eoserv_config.cpp
+@@ -58,6 +58,7 @@
+ 	eoserv_config_default(config, "CompanionLifetimeSeconds", 90.0);
+ 	eoserv_config_default(config, "ClassIdentityRules", false);
+     eoserv_config_default(config, "ClassSignatureRules", false);
++    eoserv_config_default(config, "MortalSpiritBonds", false);
+     eoserv_config_default(config, "PriestRegenRate", 0.02);
+     eoserv_config_default(config, "PriestSittingRegenRate", 0.04);
+ 	eoserv_config_default(config, "BalanceRevamp"     , false);
+--- a/src/npc.cpp
++++ b/src/npc.cpp
+@@ -569,84 +569,6 @@
+ 
+ 	this->dead_since = int(Timer::GetTime());
+ 
+-	if (dropratemode == 1)
+-	{
+-		std::vector<NPC_Drop *> drops;
+-
+-		UTIL_FOREACH_CREF(this->Data().drops, checkdrop)
+-		{
+-			if (util::rand(0.0, 100.0) <= checkdrop->chance * droprate)
+-			{
+-				drops.push_back(checkdrop.get());
+-			}
+-		}
+-
+-		if (drops.size() > 0)
+-		{
+-			drop = drops[util::rand(0, drops.size()-1)];
+-		}
+-	}
+-	else if (dropratemode == 2)
+-	{
+-		UTIL_FOREACH_CREF(this->Data().drops, checkdrop)
+-		{
+-			if (util::rand(0.0, 100.0) <= checkdrop->chance * droprate)
+-			{
+-				drop = checkdrop.get();
+-				break;
+-			}
+-		}
+-	}
+-	else if (dropratemode == 3)
+-	{
+-		// Gold has its own classic probability; item boosts consume only the
+-		// remaining probability. At most one pile/item is dropped per kill.
+-		double goldrate = this->map->world->config["GoldDropRate"];
+-		if (goldrate < 0.0)
+-		{
+-			// Mode3 used to ignore DropRate. Scale the whole weighted table, keeping
+-			// relative item chances and the original100% total-probability ceiling.
+-			double rate = std::max(0.0, droprate);
+-			double total = 0.0;
+-			UTIL_FOREACH_CREF(this->Data().drops, checkdrop)
+-				total += checkdrop->chance * rate;
+-			double roll = util::rand(0.0, std::max(100.0, total));
+-
+-			UTIL_FOREACH_CREF(this->Data().drops, checkdrop)
+-			{
+-				if (roll >= checkdrop->chance_offset * rate && roll < (checkdrop->chance_offset+checkdrop->chance) * rate)
+-				{
+-					drop = checkdrop.get();
+-					break;
+-				}
+-			}
+-		}
+-		else
+-		{
+-			double gold_total = 0.0, item_total = 0.0;
+-			UTIL_FOREACH_CREF(this->Data().drops, candidate)
+-			{
+-				if (candidate->id == 1) gold_total += candidate->chance * goldrate;
+-				else item_total += candidate->chance * std::max(0.0, droprate);
+-			}
+-			double gold_scale = gold_total > 100.0 ? 100.0 / gold_total : 1.0;
+-			double remaining = std::max(0.0, 100.0 - gold_total * gold_scale);
+-			double item_scale = item_total > remaining ? remaining / item_total : 1.0;
+-			double roll = util::rand(0.0, 100.0), offset = 0.0;
+-			UTIL_FOREACH_CREF(this->Data().drops, candidate)
+-			{
+-				double chance = candidate->chance * (candidate->id == 1
+-					? goldrate * gold_scale : std::max(0.0, droprate) * item_scale);
+-				if (roll >= offset && roll < offset + chance)
+-				{
+-					drop = candidate.get();
+-					break;
+-				}
+-				offset += chance;
+-			}
+-		}
+-	}
+-
+ 	if (sharemode == 1)
+ 	{
+ 		UTIL_FOREACH_CREF(this->damagelist, opponent)
+@@ -659,24 +581,7 @@
+ 		}
+ 	}
+ 
+-	int dropuid = 0;
+-	int dropid = 0;
+-	int dropamount = 0;
+-	Character* drop_winner = nullptr;
+-
+-	if (drop)
+-	{
+-		dropid = drop->id;
+-		dropamount = std::min<int>(util::rand(drop->min, drop->max), this->map->world->config["MaxItem"]);
+-
+-		if (dropid <= 0 || static_cast<std::size_t>(dropid) >= this->map->world->eif->data.size() || dropamount <= 0)
+-			goto abort_drop;
+-
+-		dropuid = this->map->GenerateItemID();
+-
+-		std::shared_ptr<Map_Item> newitem(std::make_shared<Map_Item>(dropuid, dropid, dropamount, this->x, this->y, from->PlayerID(), Timer::GetTime() + static_cast<int>(this->map->world->config["ProtectNPCDrop"])));
+-		this->map->items.push_back(newitem);
+-
++    Character* drop_winner = nullptr;
+ 		// Selects a random number between 0 and maxhp, and decides the winner based on that
+ 		switch (sharemode)
+ 		{
+@@ -726,10 +631,122 @@
+ 			}
+ 				break;
+ 		}
++    // Class-bound eggs only enter their source monster's table for a Summoner
++    // who actually wins this kill's ordinary loot rights. Other loot is unchanged.
++    std::vector<NPC_Drop*> eligible_drops;
++    for (const auto& candidate : this->Data().drops)
++    {
++        auto egg = this->map->world->config.find("BalanceEgg." + util::to_string(candidate->id) + ".npc");
++        if (this->map->world->config["MortalSpiritBonds"] && egg != this->map->world->config.end()
++          && (!drop_winner || drop_winner->clas != 7 || int(egg->second) != this->id)) continue;
++        eligible_drops.push_back(candidate.get());
++    }
++
++	if (dropratemode == 1)
++	{
++		std::vector<NPC_Drop *> drops;
++
++		UTIL_FOREACH_CREF(eligible_drops, checkdrop)
++		{
++			if (util::rand(0.0, 100.0) <= checkdrop->chance * droprate)
++			{
++				drops.push_back(checkdrop);
++			}
++		}
++
++		if (drops.size() > 0)
++		{
++			drop = drops[util::rand(0, drops.size()-1)];
++		}
++	}
++	else if (dropratemode == 2)
++	{
++		UTIL_FOREACH_CREF(eligible_drops, checkdrop)
++		{
++			if (util::rand(0.0, 100.0) <= checkdrop->chance * droprate)
++			{
++				drop = checkdrop;
++				break;
++			}
++		}
++	}
++	else if (dropratemode == 3)
++	{
++		// Gold has its own classic probability; item boosts consume only the
++		// remaining probability. At most one pile/item is dropped per kill.
++		double goldrate = this->map->world->config["GoldDropRate"];
++		if (goldrate < 0.0)
++		{
++			// Mode3 used to ignore DropRate. Scale the whole weighted table, keeping
++			// relative item chances and the original100% total-probability ceiling.
++			double rate = std::max(0.0, droprate);
++			double total = 0.0;
++			UTIL_FOREACH_CREF(eligible_drops, checkdrop)
++				total += checkdrop->chance * rate;
++			double roll = util::rand(0.0, std::max(100.0, total)), offset = 0.0;
++
++			UTIL_FOREACH_CREF(eligible_drops, checkdrop)
++			{
++				if (roll >= offset && roll < offset + checkdrop->chance * rate)
++				{
++					drop = checkdrop;
++					break;
++				}
++                offset += checkdrop->chance * rate;
++			}
++		}
++		else
++		{
++			double gold_total = 0.0, item_total = 0.0;
++			UTIL_FOREACH_CREF(eligible_drops, candidate)
++			{
++				if (candidate->id == 1) gold_total += candidate->chance * goldrate;
++				else item_total += candidate->chance * std::max(0.0, droprate);
++			}
++			double gold_scale = gold_total > 100.0 ? 100.0 / gold_total : 1.0;
++			double remaining = std::max(0.0, 100.0 - gold_total * gold_scale);
++			double item_scale = item_total > remaining ? remaining / item_total : 1.0;
++			double roll = util::rand(0.0, 100.0), offset = 0.0;
++			UTIL_FOREACH_CREF(eligible_drops, candidate)
++			{
++				double chance = candidate->chance * (candidate->id == 1
++					? goldrate * gold_scale : std::max(0.0, droprate) * item_scale);
++				if (roll >= offset && roll < offset + chance)
++				{
++					drop = candidate;
++					break;
++				}
++				offset += chance;
++			}
++		}
++	}
++
++
++	int dropuid = 0;
++	int dropid = 0;
++	int dropamount = 0;
++
++	if (drop)
++	{
++		dropid = drop->id;
++		dropamount = std::min<int>(util::rand(drop->min, drop->max), this->map->world->config["MaxItem"]);
++
++		if (dropid <= 0 || static_cast<std::size_t>(dropid) >= this->map->world->eif->data.size() || dropamount <= 0)
++			goto abort_drop;
++
++		dropuid = this->map->GenerateItemID();
++
++		std::shared_ptr<Map_Item> newitem(std::make_shared<Map_Item>(dropuid, dropid, dropamount, this->x, this->y, from->PlayerID(), Timer::GetTime() + static_cast<int>(this->map->world->config["ProtectNPCDrop"])));
++        if (this->map->world->config["MortalSpiritBonds"] && drop_winner
++          && int(this->map->world->config["BalanceEgg." + util::to_string(dropid) + ".npc"]) > 0)
++            newitem->companion_egg_owner = drop_winner->real_name;
++		this->map->items.push_back(newitem);
++
++
+ 	}
+ 	abort_drop:
+ 
+-	if (drop_winner)
++	if (dropuid && drop_winner)
+ 		this->map->items.back()->owner = drop_winner->PlayerID();
+ 
+ 	UTIL_FOREACH(this->map->characters, character)
+@@ -1216,7 +1233,7 @@
+     if (target && distance <= 1 && now - this->companion_last_attack >= 1.0)
+     {
+         this->companion_last_attack = now;
+-        int base = int((5.0 + owner->level * 0.3 + owner->adj_cha * 0.22 + owner->adj_intl * 0.12) * this->companion_power);
++        int base = int((10.0 + owner->level * 0.5 + owner->adj_cha * 0.55 + owner->adj_intl * 0.2) * this->companion_power);
+         std::unordered_map<std::string,double> vars;
+         owner->FormulaVars(vars); target->FormulaVars(vars,"target_");
+         vars["damage"] = util::rand(std::max(1,base-2),base+2); vars["critical"] = 0;
+--- a/src/map.hpp
++++ b/src/map.hpp
+@@ -25,6 +25,7 @@
+  */
+ struct Map_Item
+ {
++    std::string companion_egg_owner;
+ 	short uid;
+ 	short id;
+ 	int amount;
+--- a/src/handlers/Item.cpp
++++ b/src/handlers/Item.cpp
+@@ -473,6 +473,8 @@
+ 
+ 	if (item)
+ 	{
++        if (character->world->config["MortalSpiritBonds"] && int(character->world->config["BalanceEgg." + util::to_string(item->id) + ".npc"]) > 0
++          && (character->clas != 7 || item->companion_egg_owner != character->real_name)) return;
+ 		int distance = util::path_length(item->x, item->y, character->x, character->y);
+ 
+ 		if (distance > static_cast<int>(character->world->config["DropDistance"]))

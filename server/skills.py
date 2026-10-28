@@ -136,7 +136,7 @@ class SkillsMixin:
     def skill_change(self,action,spell_id):
         self._standing();spell_id=int(spell_id)
         from balance_rules import profile, check_spell
-        cap=profile().get('max_skill_level',100)
+        rules=profile();cap=rules.get('spells',{}).get(str(spell_id),{}).get('max_level',rules.get('max_skill_level',100))
         known=any(s['id']==spell_id for s in getattr(self,'spells',[]))
         if action=='level':
             check_spell(self,spell_id)
@@ -230,7 +230,9 @@ class SkillsMixin:
             old_level=next((s['level'] for s in self.spells if s['id']==Reader(p[2:4]).num(2)),0) if a==2 else 0
             if a==2:
                 values['skill_points']=r.num(2);ident=r.num(2);level=r.num(2)
-            else:ident=r.num(2);level=0
+            else:
+                ident=r.num(2);level=0
+                if a==4 and len(r.rest())==2:values['skill_points']=r.num(2)
             self.spells=[s for s in self.spells if s['id']!=ident]
             if a!=4:self.spells.append(dict(id=ident,level=level))
             if a==9:self._set_amount(1,r.num(4))

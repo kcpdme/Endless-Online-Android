@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 4,
   "equipment": [
     {
       "id": 20,
@@ -21127,9 +21127,10 @@
       "area_radius": 0,
       "area_targets": 0,
       "area_scale": 1,
-      "max_level": 10,
+      "max_level": 0,
       "training_bonus": 2,
-      "learn_source": "Hatch a monster egg; keep the learned summon permanently",
+      "learn_source": "Hatch a bound monster egg; your death breaks the pet bond",
+      "bond_lost_on_death": true,
       "effect_kind": "companion",
       "companion": {
         "npc_id": 306,
@@ -21251,9 +21252,10 @@
       "area_radius": 0,
       "area_targets": 0,
       "area_scale": 1,
-      "max_level": 10,
+      "max_level": 0,
       "training_bonus": 2,
-      "learn_source": "Hatch a monster egg; keep the learned summon permanently",
+      "learn_source": "Hatch a bound monster egg; your death breaks the pet bond",
+      "bond_lost_on_death": true,
       "template_id": 16,
       "effect_kind": "companion",
       "companion": {
@@ -21285,9 +21287,10 @@
       "area_radius": 0,
       "area_targets": 0,
       "area_scale": 1,
-      "max_level": 10,
+      "max_level": 0,
       "training_bonus": 2,
-      "learn_source": "Hatch a monster egg; keep the learned summon permanently",
+      "learn_source": "Hatch a bound monster egg; your death breaks the pet bond",
+      "bond_lost_on_death": true,
       "template_id": 16,
       "effect_kind": "companion",
       "companion": {
@@ -23450,7 +23453,7 @@
       "skills": 2,
       "signature": {
         "name": "Spirit bond",
-        "description": "Hatch monster eggs to permanently learn a spirit summon. One active pet; initial and upkeep TP limit its assistance. In PK areas, stronger spirit casting compensates for disabled pet AI."
+        "description": "Summoners earn untradeable eggs from specific monsters. Hatch one living pet bond; your death breaks it and requires another egg. Travel, logout and TP exhaustion keep the bond. Strong pet attacks and TP upkeep define the class; PK areas use stronger spirit casting instead of pet AI."
       }
     },
     {
@@ -23504,7 +23507,7 @@
       "skills": 3,
       "signature": {
         "name": "Spirit bond",
-        "description": "Hatch monster eggs to permanently learn a spirit summon. One active pet; initial and upkeep TP limit its assistance. In PK areas, stronger spirit casting compensates for disabled pet AI."
+        "description": "Summoners earn untradeable eggs from specific monsters. Hatch one living pet bond; your death breaks it and requires another egg. Travel, logout and TP exhaustion keep the bond. Strong pet attacks and TP upkeep define the class; PK areas use stronger spirit casting instead of pet AI."
       }
     },
     {
@@ -23558,7 +23561,7 @@
       "skills": 4,
       "signature": {
         "name": "Spirit bond",
-        "description": "Hatch monster eggs to permanently learn a spirit summon. One active pet; initial and upkeep TP limit its assistance. In PK areas, stronger spirit casting compensates for disabled pet AI."
+        "description": "Summoners earn untradeable eggs from specific monsters. Hatch one living pet bond; your death breaks it and requires another egg. Travel, logout and TP exhaustion keep the bond. Strong pet attacks and TP upkeep define the class; PK areas use stronger spirit casting instead of pet AI."
       }
     },
     {
@@ -23612,7 +23615,7 @@
       "skills": 6,
       "signature": {
         "name": "Spirit bond",
-        "description": "Hatch monster eggs to permanently learn a spirit summon. One active pet; initial and upkeep TP limit its assistance. In PK areas, stronger spirit casting compensates for disabled pet AI."
+        "description": "Summoners earn untradeable eggs from specific monsters. Hatch one living pet bond; your death breaks it and requires another egg. Travel, logout and TP exhaustion keep the bond. Strong pet attacks and TP upkeep define the class; PK areas use stronger spirit casting instead of pet AI."
       }
     },
     {
@@ -23666,7 +23669,7 @@
       "skills": 7,
       "signature": {
         "name": "Spirit bond",
-        "description": "Hatch monster eggs to permanently learn a spirit summon. One active pet; initial and upkeep TP limit its assistance. In PK areas, stronger spirit casting compensates for disabled pet AI."
+        "description": "Summoners earn untradeable eggs from specific monsters. Hatch one living pet bond; your death breaks it and requires another egg. Travel, logout and TP exhaustion keep the bond. Strong pet attacks and TP upkeep define the class; PK areas use stronger spirit casting instead of pet AI."
       }
     },
     {
@@ -23720,7 +23723,7 @@
       "skills": 9,
       "signature": {
         "name": "Spirit bond",
-        "description": "Hatch monster eggs to permanently learn a spirit summon. One active pet; initial and upkeep TP limit its assistance. In PK areas, stronger spirit casting compensates for disabled pet AI."
+        "description": "Summoners earn untradeable eggs from specific monsters. Hatch one living pet bond; your death breaks it and requires another egg. Travel, logout and TP exhaustion keep the bond. Strong pet attacks and TP upkeep define the class; PK areas use stronger spirit casting instead of pet AI."
       }
     }
   ],
@@ -23947,16 +23950,16 @@
       "agility": 0,
       "constitution": 2,
       "charisma": 4,
-      "min_damage": 5,
-      "max_damage": 6,
+      "min_damage": 4,
+      "max_damage": 5,
       "accuracy": 17,
       "evade": 8,
       "armor": 3,
       "max_hp": 59,
       "max_tp": 81,
-      "basic_dps": 8.01,
-      "spell_dps": 14.37,
-      "burst_dps": 14.37,
+      "basic_dps": 6.23,
+      "spell_dps": 12.52,
+      "burst_dps": 12.52,
       "backstab_dps": 0,
       "passive_hp_per_second": 0,
       "companion_dps": 0,
@@ -24188,19 +24191,19 @@
       "agility": 0,
       "constitution": 8,
       "charisma": 19,
-      "min_damage": 12,
-      "max_damage": 14,
+      "min_damage": 9,
+      "max_damage": 11,
       "accuracy": 34,
       "evade": 11,
       "armor": 7,
       "max_hp": 116,
       "max_tp": 174,
-      "basic_dps": 22.8,
-      "spell_dps": 22.76,
-      "burst_dps": 33.25,
+      "basic_dps": 17.1,
+      "spell_dps": 17.81,
+      "burst_dps": 39.66,
       "backstab_dps": 0,
       "passive_hp_per_second": 0,
-      "companion_dps": 10.45,
+      "companion_dps": 21.85,
       "spell_id": 23,
       "spell_tp": 5,
       "spell_casts_from_full": 34,
@@ -24429,19 +24432,19 @@
       "agility": 0,
       "constitution": 13,
       "charisma": 44,
-      "min_damage": 25,
-      "max_damage": 28,
+      "min_damage": 17,
+      "max_damage": 20,
       "accuracy": 59,
       "evade": 18,
       "armor": 14,
       "max_hp": 199,
       "max_tp": 387,
-      "basic_dps": 44.65,
-      "spell_dps": 54.71,
-      "burst_dps": 71.05,
+      "basic_dps": 30.4,
+      "spell_dps": 43.33,
+      "burst_dps": 79.43,
       "backstab_dps": 0,
       "passive_hp_per_second": 0,
-      "companion_dps": 16.34,
+      "companion_dps": 36.1,
       "spell_id": 24,
       "spell_tp": 14,
       "spell_casts_from_full": 27,
@@ -24670,19 +24673,19 @@
       "agility": 0,
       "constitution": 20,
       "charisma": 66,
-      "min_damage": 37,
-      "max_damage": 41,
+      "min_damage": 26,
+      "max_damage": 30,
       "accuracy": 84,
       "evade": 23,
       "armor": 19,
       "max_hp": 273,
       "max_tp": 536,
-      "basic_dps": 60.8,
-      "spell_dps": 74.22,
-      "burst_dps": 99.11,
+      "basic_dps": 43.7,
+      "spell_dps": 58.97,
+      "burst_dps": 114.07,
       "backstab_dps": 0,
       "passive_hp_per_second": 0,
-      "companion_dps": 24.89,
+      "companion_dps": 55.1,
       "spell_id": 26,
       "spell_tp": 22,
       "spell_casts_from_full": 24,
@@ -24911,19 +24914,19 @@
       "agility": 0,
       "constitution": 28,
       "charisma": 98,
-      "min_damage": 53,
-      "max_damage": 60,
+      "min_damage": 37,
+      "max_damage": 44,
       "accuracy": 117,
       "evade": 32,
       "armor": 29,
       "max_hp": 390,
       "max_tp": 821,
-      "basic_dps": 82.89,
-      "spell_dps": 85.69,
-      "burst_dps": 117.8,
+      "basic_dps": 59.14,
+      "spell_dps": 64.82,
+      "burst_dps": 136.45,
       "backstab_dps": 0,
       "passive_hp_per_second": 0,
-      "companion_dps": 32.11,
+      "companion_dps": 71.63,
       "spell_id": 26,
       "spell_tp": 22,
       "spell_casts_from_full": 37,
@@ -25152,19 +25155,19 @@
       "agility": 0,
       "constitution": 35,
       "charisma": 126,
-      "min_damage": 71,
-      "max_damage": 80,
+      "min_damage": 50,
+      "max_damage": 59,
       "accuracy": 146,
       "evade": 39,
       "armor": 37,
       "max_hp": 486,
       "max_tp": 1032,
-      "basic_dps": 104.5,
-      "spell_dps": 112.68,
-      "burst_dps": 156.19,
+      "basic_dps": 75.05,
+      "spell_dps": 86.45,
+      "burst_dps": 182.4,
       "backstab_dps": 0,
       "passive_hp_per_second": 0,
-      "companion_dps": 43.51,
+      "companion_dps": 95.95,
       "spell_id": 29,
       "spell_tp": 38,
       "spell_casts_from_full": 27,

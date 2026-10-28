@@ -352,7 +352,7 @@ func refresh_detail() -> void:
 			if int(spell.get("range", 0)) > 0: lines.append("Range: %d tiles." % int(spell.range))
 		if spell.get("effect_kind", "") == "companion":
 			var pet: Dictionary = spell.get("companion", {}) as Dictionary
-			lines.append("Dismiss your companion." if int(pet.get("npc_id", 0)) < 0 else "One spirit companion while upkeep TP lasts. Assists your active fights; no idle hunting.")
+			lines.append("Dismiss your companion; the living bond is kept." if int(pet.get("npc_id", 0)) < 0 else "One strong spirit while upkeep TP lasts. Your death breaks its bond: hatch another egg afterward. Travel and logout keep the bond. Assists active fights; no idle hunting." if bool(spell.get("bond_lost_on_death", false)) else "One spirit companion while upkeep TP lasts. Assists your active fights; no idle hunting.")
 			if int(pet.get("npc_id", 0)) > 0: lines.append("Upkeep: %d TP every 2 seconds. CHA and INT increase its damage." % int(pet.get("upkeep", 0)))
 		for learned: Dictionary in game.online.player.get("spells", []):
 			if int(learned.id) == selected:

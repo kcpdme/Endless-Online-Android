@@ -1,0 +1,21 @@
+{
+  "result": "passed",
+  "public_https_health": true,
+  "public_wss_to_native": true,
+  "fresh_dev_account_registration_login_character_creation": true,
+  "balance_catalog_version": 4,
+  "item_definitions": 611,
+  "spell_definitions": 50,
+  "full_catalog_matches_accepted_profile": true,
+  "native_starter_equip": true,
+  "real_native_egg_hatch_and_living_bond": true,
+  "bound_egg_metadata": true,
+  "duplicate_preserves_spare_egg": true,
+  "bond_and_spare_egg_survive_reconnect": true,
+  "hatching_preserves_currency": true,
+  "real_native_summon_visible": true,
+  "native_summon_tp_and_upkeep_correct": true,
+  "summoner_cannot_use_retained_priest_heal": true,
+  "native_dismissal_removes_pet": true,
+  "existing_player_accounts_modified": false
+}

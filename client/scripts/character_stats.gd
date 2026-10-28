@@ -198,7 +198,10 @@ func refresh() -> void:
 		if item.get("backstab", false): item_body.text += "\n\nRogue rear strikes: 1.5x or 2x damage, without critical stacking."
 		if int(item.get("hatch_spell", 0)) > 0:
 			var summon: Dictionary = (game.online.catalog.get("spells", {}) as Dictionary).get(str(int(item.hatch_spell)), {}) as Dictionary
-			item_body.text = "Hatch this egg to permanently learn %s.\n\nOnly Summoners at level %d or higher can hatch it. Already learned? Keep or trade the spare egg.\n\nCast the learned skill to call one spirit. Initial and upkeep TP are still required." % [str(summon.get("name", "a spirit summon")), int(item.get("level_requirement", 1))]
+			if bool(item.get("bond_lost_on_death", false)):
+				item_body.text = "Hatch this egg to bond %s.\n\nSummoner level %d required. One living pet bond at a time. Your death kills the pet and breaks its bond; hatch another egg afterward.\n\nBound to you: cannot trade, drop or store in a shared chest. Travel, logout and TP exhaustion keep the bond. Calling and upkeep still cost TP." % [str(summon.get("name", "a spirit")), int(item.get("level_requirement", 1))]
+			else:
+				item_body.text = "Hatch this egg to learn %s. Summoner level %d required. Calling and upkeep cost TP." % [str(summon.get("name", "a spirit summon")), int(item.get("level_requirement", 1))]
 		if item.get("crafted", false): item_body.text += "\n\nCrafted definition · improved combat budget"
 		if str(item.get("archetype", "balanced")) != "balanced": item_body.text += "\nStyle: %s" % str(item.archetype).capitalize()
 	var p: Dictionary = game.online.player

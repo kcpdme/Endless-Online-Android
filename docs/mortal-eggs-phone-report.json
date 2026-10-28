@@ -1,0 +1,15 @@
+{
+  "result": "installation_passed_gameplay_not_repeated",
+  "version_name": "0.44.0",
+  "version_code": 78,
+  "device": "Samsung Galaxy S23 Ultra (SM-S918B)",
+  "apk_sha256": "b8923b9bc97e671235c8f4f7c33ceb55db33ffe6957d03f007a0a6da7e922b54",
+  "installed_apk_bytes_match": true,
+  "original_first_install_time_preserved": true,
+  "app_data_not_cleared": true,
+  "signature_and_16k_alignment_verified": true,
+  "app_process_started": true,
+  "startup_script_or_fatal_errors": 0,
+  "physical_gameplay_retested": false,
+  "limitation": "The phone is at its lock screen. Gameplay, hatching, death and reconnect were verified through isolated native sessions and public WebSocket/Godot client tests; those are not physical handset interaction checks."
+}

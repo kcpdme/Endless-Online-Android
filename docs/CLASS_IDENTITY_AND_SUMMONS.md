@@ -1,5 +1,8 @@
 # Class identity, companions and equipment choices
 
+Profile 4 replaces permanent summon unlocks with bound eggs and death-limited
+pet bonds. See [Mortal spirit eggs](MORTAL_SPIRIT_EGGS.md) for current rules.
+
 Profile 3 extends this release with class signatures, permanent egg unlocks and
 complete gear coverage. See [Class signatures and eggs](CLASS_SIGNATURES_AND_EGGS.md).
 

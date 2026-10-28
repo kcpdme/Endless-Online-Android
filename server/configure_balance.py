@@ -140,9 +140,9 @@ def build_items(original, shops=""):
         if ident!=len(rows):raise ValueError('Egg definition ID collision')
         f=bytearray(rows[egg['template_id']-1]['fields'])
         for key,(offset,size) in STAT_FIELDS.items():put(f,offset,0,size)
-        put(f,2,23);put(f,3,0);put(f,4,3);put(f,5,0,2);put(f,37,egg['level'],2);put(f,39,7,2);put(f,55,1)
+        put(f,2,23);put(f,3,0);put(f,4,4);put(f,5,0,2);put(f,37,egg['level'],2);put(f,39,7,2);put(f,55,1)
         rows.insert(-1,dict(id=ident,names=[egg['name']],fields=f))
-        metadata[str(ident)]=dict(template_id=egg['template_id'],hatch_spell=egg['spell_id'],allowed_classes=[7],icon=egg['icon'],ground=egg['icon'],acquisition=sources.get(ident,{}))
+        metadata[str(ident)]=dict(template_id=egg['template_id'],hatch_spell=egg['spell_id'],allowed_classes=[7],bound=True,drop_class=7,bond_lost_on_death=True,icon=egg['icon'],ground=egg['icon'],acquisition=sources.get(ident,{}))
     # Recovery quantities fit the new 1–50 HP/TP pools; retain native item types.
     for ident,hp,tp in [(2,35,0),(3,0,45),(4,85,0),(5,0,110),(375,170,0),(376,0,220),(377,120,140)]:
         f=rows[ident-1]['fields']
@@ -180,7 +180,7 @@ def build_spells(original):
         result[str(ident)]=dict(id=ident,name=name,shout=name.lower(),tp=tp,cast_time=chant,type=num(f,11),restrict=restrict,target=target,min_damage=low,max_damage=high,hp=hp,level_requirement=level,allowed_classes=list(classes),area_radius=radius,area_targets=cap,area_scale=.8 if radius==1 else .6 if radius else 1,max_level=10,training_bonus=2)
         if classes in ((4,),(6,)) and not radius:result[str(ident)]['range']=1
         if classes==(5,):result[str(ident)].update(requires_bow=True,range=5)
-        if ident in (28,33,34):result[str(ident)]['learn_source']='Hatch a monster egg; keep the learned summon permanently'
+        if ident in (28,33,34):result[str(ident)].update(learn_source='Hatch a bound monster egg; your death breaks the pet bond',max_level=0,bond_lost_on_death=True)
         if ident>=32:result[str(ident)]['template_id']=16
         if ident in COMPANIONS:result[str(ident)].update(effect_kind='companion',companion=COMPANIONS[ident],duration=0,upkeep_seconds=2)
     return encode_pub(original,rows),result
@@ -265,9 +265,7 @@ def build_shops(original):
     for vendor,recipe in [(87,'533,38,1,253,10,278,4,1,150,436,533,1,278,10,1,200,0,0'),(15,'543,511,1,299,8,308,3,1,100')]:
         match=re.search(r'^'+str(vendor)+r'\.craft[ \t]*=[ \t]*(.*)$',text,re.M);existing=match[1].strip() if match else ''
         replace(f'{vendor}.craft',existing+(',' if existing else '')+recipe)
-    match=re.search(r'^33\.craft[ \t]*=[ \t]*(.*)$',text,re.M);existing=match[1].strip() if match else ''
-    egg_recipes='609,308,5,253,5,1,100,0,0,610,321,6,320,3,1,200,0,0,611,469,2,470,2,1,200,0,0'
-    replace('33.craft',existing+(',' if existing else '')+egg_recipes)
+    # Eggs are earned by their Summoner loot winner, exclusively from monsters.
     # Native recipe amounts are unsigned bytes and use EO char encoding.
     for value in re.findall(r'^\d+\.craft[ \t]*=[ \t]*(.*)$',text,re.M):
         if not value.strip():continue
@@ -309,7 +307,7 @@ def build_quest(original):
 def configure(runtime):
     runtime=Path(runtime)
     if any((runtime/r).is_symlink() for r in ('data','data/pub')):raise ValueError('Materialize runtime data directories first')
-    if b'ClassSignatureRules' not in (runtime/'etheos').read_bytes():raise ValueError('Install the balance-capable native binary first')
+    if b'MortalSpiritBonds' not in (runtime/'etheos').read_bytes():raise ValueError('Install the mortal-bond-capable native binary first')
     baseline=runtime/'data/balance-v1-baseline';manifest_path=runtime/'data/balance-v1-manifest.json'
     old_manifest=json.loads(manifest_path.read_text()) if manifest_path.exists() else None
     if old_manifest:
@@ -326,10 +324,10 @@ def configure(runtime):
     class_bytes,classes=build_classes(originals['data/pub/dat001.ecf'])
     spell_bytes,spells=build_spells(originals['data/pub/dsl001.esf'])
     proposed={'data/aster-vale-drops.ini':drops,'data/pub/dat001.eif':item_bytes,'data/pub/dat001.ecf':class_bytes,'data/pub/dsl001.esf':spell_bytes,'data/pub/dtn001.enf':npc_bytes,'data/formulas.ini':formulas(originals['data/formulas.ini']),'data/aster-vale-skills.ini':build_skills(),'data/aster-vale-shops.ini':shops,'data/quests/00004.eqf':build_quest(originals['data/quests/00004.eqf'])}
-    profile=dict(version=VERSION,levels=LEVELS,max_skill_level=10,classes=classes,spells=spells,items=items,npcs=npcs,class_identity=True,class_signatures=True,companions=COMPANIONS,eggs=EGGS)
+    profile=dict(version=VERSION,levels=LEVELS,max_skill_level=10,classes=classes,spells=spells,items=items,npcs=npcs,class_identity=True,class_signatures=True,mortal_spirit_bonds=True,companions=COMPANIONS,eggs=EGGS)
     proposed['data/balance-profile.json']=(json.dumps(profile,indent=2)+'\n').encode()
     cfg=(runtime/'config.local.ini').read_text()
-    values={'ClassSignatureRules':'yes','PriestRegenRate':'0.02','PriestSittingRegenRate':'0.04','CompanionLifetimeSeconds':'0','ClassIdentityRules':'yes','BalanceRevamp':'yes','UseClassFormulas':'yes','MaxSkillLevel':'10','SkillsFile':'./data/aster-vale-skills.ini'}
+    values={'MortalSpiritBonds':'yes','ClassSignatureRules':'yes','PriestRegenRate':'0.02','PriestSittingRegenRate':'0.04','CompanionLifetimeSeconds':'0','ClassIdentityRules':'yes','BalanceRevamp':'yes','UseClassFormulas':'yes','MaxSkillLevel':'10','SkillsFile':'./data/aster-vale-skills.ini'}
     for ident,p in CLASSES.items():
         for key in ('spell_scale','heal_wis','heal_int','heal_cha'):values[f'Balance.{ident}.{key}']=str(p[key])
     values['Balance.7.pk_spell_scale']=str(CLASSES[7]['pk_spell_scale'])
@@ -341,7 +339,10 @@ def configure(runtime):
         values[f'BalanceItem.{ident}.classes']=','.join(map(str,item.get('allowed_classes',[])))
     for ident,pet in COMPANIONS.items():
         for key in ('npc_id','upkeep','power'):values[f'BalancePetSpell.{ident}.{key}']=str(pet[key])
-    for ident,egg in EGGS.items():values[f'BalanceEgg.{ident}.spell']=str(egg['spell_id'])
+    for ident,egg in EGGS.items():
+        values[f'BalanceEgg.{ident}.spell']=str(egg['spell_id'])
+        values[f'BalanceEgg.{ident}.npc']=str(egg['npc_id'])
+        values[f'BalancePetSpell.{egg["spell_id"]}.egg']=str(ident)
     for key,value in values.items():
         pattern=r'^'+re.escape(key)+r'\s*=.*$';line=f'{key} = {value}'.rstrip()
         cfg=re.sub(pattern,line,cfg,flags=re.M) if re.search(pattern,cfg,re.M) else cfg.rstrip()+'\n'+line+'\n'
@@ -363,6 +364,39 @@ def configure(runtime):
             else:write(rel,content)
         raise
     return manifest
+
+def migrate_pet_bonds(database):
+    """Keep one legacy bond, return extra unlocks as bound eggs, refund training."""
+    egg_by_spell={e['spell_id']:ident for ident,e in EGGS.items()}
+    rank={e['spell_id']:e['level'] for e in EGGS.values()}
+    report=dict(characters_changed=0,extra_bonds_returned_as_eggs=0,skill_points_refunded=0)
+    with closing(sqlite3.connect(database)) as db,db:
+        db.execute('BEGIN IMMEDIATE')
+        db.execute('CREATE TABLE IF NOT EXISTS aster_spirit_bond_migrations(version INTEGER PRIMARY KEY)')
+        if db.execute('SELECT 1 FROM aster_spirit_bond_migrations WHERE version=?',(VERSION,)).fetchone():return dict(already_applied=True,**report)
+        for name,raw_spells,inventory,points in db.execute('SELECT name,spells,inventory,skillpoints FROM characters').fetchall():
+            spells=[tuple(map(int,p.split(','))) for p in (raw_spells or '').split(';') if p]
+            if any(len(s)!=2 or s[0]<=0 or s[1]<0 for s in spells):raise ValueError('Malformed spell data; bond migration refused')
+            bonds=[s for s in spells if s[0] in egg_by_spell]
+            if not bonds:continue
+            if len({s[0] for s in spells})!=len(spells):raise ValueError('Duplicate spell data; bond migration refused')
+            keep=max(bonds,key=lambda s:rank[s[0]])[0]
+            refunded=sum(s[1] for s in bonds)
+            bag=Counter()
+            for p in (inventory or '').split(';'):
+                if not p:continue
+                ident,amount=map(int,p.split(','))
+                if ident<=0 or amount<=0:raise ValueError('Malformed inventory; bond migration refused')
+                bag[ident]+=amount
+            for ident,_ in bonds:
+                if ident!=keep:bag[egg_by_spell[ident]]+=1
+            if points+refunded>64000:raise ValueError('Skill point refund exceeds native capacity')
+            replacement=''.join(f'{ident},{0 if ident in egg_by_spell else level};' for ident,level in spells if ident not in egg_by_spell or ident==keep)
+            if len(bonds)>1 or refunded:
+                db.execute('UPDATE characters SET spells=?,inventory=?,skillpoints=? WHERE name=?',(replacement,''.join(f'{i},{n};' for i,n in bag.items()),points+refunded,name))
+                report['characters_changed']+=1;report['extra_bonds_returned_as_eggs']+=len(bonds)-1;report['skill_points_refunded']+=refunded
+        db.execute('INSERT INTO aster_spirit_bond_migrations VALUES (?)',(VERSION,))
+    return dict(already_applied=False,**report)
 
 def migrate_equipment(database, profile):
     """Stopped-world, retry-safe movement of newly ineligible worn gear to bags."""
@@ -398,5 +432,7 @@ def migrate_equipment(database, profile):
 if __name__=='__main__':
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--runtime',required=True,type=Path);p.add_argument('--world-stopped',required=True,action='store_true');p.add_argument('--migrate-characters',action='store_true');a=p.parse_args()
     result=configure(a.runtime)
-    if a.migrate_characters:result['migration']=migrate_equipment(a.runtime/'database.sdb',json.loads((a.runtime/'data/balance-profile.json').read_text()))
+    if a.migrate_characters:
+        result['migration']=migrate_equipment(a.runtime/'database.sdb',json.loads((a.runtime/'data/balance-profile.json').read_text()))
+        result['pet_bond_migration']=migrate_pet_bonds(a.runtime/'database.sdb')
     print(json.dumps(result,indent=2))

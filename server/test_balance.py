@@ -11,7 +11,7 @@ BASE=Path(__file__).resolve().parents[1]/'work/server-build/runtime'
 @unittest.skipUnless((BASE/'data/pub/dat001.eif').exists(),'native resources unavailable')
 class BalanceTests(unittest.TestCase):
     def setUp(self):
-        self.temp=tempfile.TemporaryDirectory();self.addCleanup(self.temp.cleanup);self.runtime=Path(self.temp.name)/'runtime';shutil.copytree(BASE/'data',self.runtime/'data');(self.runtime/'config.local.ini').write_text('PasswordSalt = do-not-change\nExpRate = 500%\n');(self.runtime/'etheos').write_bytes(b'isolated fixture BalanceRevamp ClassIdentityRules ClassSignatureRules')
+        self.temp=tempfile.TemporaryDirectory();self.addCleanup(self.temp.cleanup);self.runtime=Path(self.temp.name)/'runtime';shutil.copytree(BASE/'data',self.runtime/'data');(self.runtime/'config.local.ini').write_text('PasswordSalt = do-not-change\nExpRate = 500%\n');(self.runtime/'etheos').write_bytes(b'isolated fixture BalanceRevamp ClassIdentityRules ClassSignatureRules MortalSpiritBonds')
         from configure_feature_content import configure as features
         features(self.runtime)
 
@@ -75,7 +75,7 @@ class BalanceTests(unittest.TestCase):
             if row['level']>=15:
                 for slot in ('head','boots','gloves','ring'):self.assertGreater(row['slots'][slot]['exclusive'],0)
 
-    def test_egg_drops_preserve_original_tables_and_have_reliable_recipes(self):
+    def test_bound_egg_drops_preserve_original_tables_and_have_no_crafting_bypass(self):
         import re
         old=(self.runtime/'data/aster-vale-drops.ini').read_text();_,p=self.install();new=(self.runtime/'data/aster-vale-drops.ini').read_text()
         def entries(text):return {key:raw.strip() for key,raw in re.findall(r'^(\d+)[ \t]*=[ \t]*(.*)$',text,re.M)}
@@ -87,7 +87,7 @@ class BalanceTests(unittest.TestCase):
         for ident,egg in EGGS.items():
             item=p['items'][str(ident)];self.assertEqual(item['hatch_spell'],egg['spell_id']);self.assertEqual(item['type'],23)
             self.assertIn(f"BalanceEgg.{ident}.spell = {egg['spell_id']}",(self.runtime/'config.local.ini').read_text())
-            self.assertTrue(item['acquisition']['craft']);self.assertEqual(item['acquisition']['drop'],[egg['npc_id']])
+            self.assertFalse(item['acquisition'].get('craft'));self.assertEqual(item['acquisition']['drop'],[egg['npc_id']]);self.assertEqual(item['special'],4);self.assertTrue(item['bound'])
             self.assertTrue((Path(__file__).resolve().parents[1]/'client'/egg['icon'].removeprefix('res://')).exists())
         offers=(self.runtime/'data/aster-vale-skills.ini').read_text()
         from class_identity import recipe_sources

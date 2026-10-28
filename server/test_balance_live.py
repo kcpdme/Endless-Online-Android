@@ -115,9 +115,10 @@ def main():
             # Temporary stationary targets use the actual native command.
             admin.call('chat_send',channel='local',message='$snpc 1 6 7')
             admin.until(lambda w:len([n for n in w['npcs'] if n['id']==1])>=6)
+            admin.close();clients.remove(admin) # Spawn fixture is done; do not leave an unread streaming connection.
             for clas in (2,3,7):
                 stage(fixtures[clas],clas,45);actor=Client(url,fixtures[clas]);clients.append(actor)
-                check(actor.entry['balance_catalog']['version']==3 and len(actor.entry['balance_catalog']['items'])==611,'WebSocket delivers complete native balance catalog')
+                check(actor.entry['balance_catalog']['version']==profile['version'] and len(actor.entry['balance_catalog']['items'])==611,'WebSocket delivers complete native balance catalog')
                 spell_id={2:22,3:9,7:29}[clas];spell=profile['spells'][str(spell_id)];target=next(n for n in actor.state['npcs'] if n['id']==1)
                 actor.worlds.clear();before=actor.entry['player']['tp'];actor.call('spell_cast',spell_id=spell_id,target_kind='npc',target_id=target['index'])
                 world=actor.until(lambda w:any(e.get('spell_id')==spell_id and e.get('kind')=='npc_damage' for e in w.get('events',[])))
