@@ -30,6 +30,7 @@ def stats(clas,level,base,equipment):
     for key,formula in [('min_damage','damage'),('max_damage','damage'),('accuracy','accuracy'),('evade','evade'),('armor','defence'),('max_hp','hp'),('max_tp','tp')]:
         item_key={'max_hp':'hp','max_tp':'tp'}.get(key,key)
         out[key]=int(evaluate(p[formula],values))+sum(i.get(item_key,0) for i in equipment)
+        if key=='armor' and clas==6:out[key]+=sum(i.get('armor',0) for i in equipment if i.get('warrior_shield_multiplier')==2)
     if not out['max_damage']:out['max_damage']=1
     return out
 
@@ -70,7 +71,8 @@ def benchmarks(profile):
             if any(i['level_requirement']>level or (i.get('allowed_classes') and clas not in i['allowed_classes']) for i in gear):raise ValueError(f'Invalid benchmark loadout {clas}/{level}')
             s=stats(clas,level,allocation(clas,level),gear)
             target_armor=level*.4;target_evade=level*.6
-            basic=expected_hit(s['min_damage'],s['max_damage'],target_armor)*hit_chance(s['accuracy'],target_evade)/.5
+            shot=weapon.get('shot_power',1);speed=weapon.get('attack_speed',1)
+            basic=expected_hit(max(0,int(s['min_damage']*shot)),max(1,int(s['max_damage']*shot)),target_armor)*hit_chance(s['accuracy'],target_evade)/(.5/speed)
             candidates=[]
             for spell in spells.values():
                 if spell['type']!=1 or spell.get('effect_kind')=='companion' or spell.get('area_radius') or clas not in spell.get('allowed_classes',[]) or spell['level_requirement']>level:continue

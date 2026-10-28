@@ -113,10 +113,12 @@ class LiveSession(NativeFeaturesMixin, WorldFeedbackMixin, AdminMixin, BarberMix
         # Original Attack_Use accepts 48+ timestamp ticks; >=60 forces old facing.
         # Send the desired direction directly, avoiding Face's additional 120 ms queue slot.
         self.cancel_spell()
-        self.timestamp+=50
+        from combat_progression import equipped_combat
+        combat=equipped_combat(self)
+        self.timestamp+=max(1,round(combat['attack_seconds']/.52*50))
         self.send(11,10,number(direction,1)+number(self.timestamp,3))
         self.state['self']['direction']=direction
-        return {'sent':True,'attack_seconds':0.52}
+        return dict(sent=True,**combat)
 
     def spend_stat(self,stat_id):
         stat_id=int(stat_id)
@@ -335,6 +337,8 @@ class LiveSession(NativeFeaturesMixin, WorldFeedbackMixin, AdminMixin, BarberMix
         data=super().snapshot()
         data['world_rules']=world_rules(data['map_id'])
         data['companion']=getattr(self,'companion',None)
+        from combat_progression import equipped_combat
+        data['player']['combat']=equipped_combat(self)
         data['player']['drunk_seconds']=max(0,getattr(self,'drunk_until',0)-time.monotonic())
         data['party']=getattr(self,'party_members',[])
         invitation=getattr(self,'party_invitation',None)

@@ -1,0 +1,240 @@
+--- a/src/character.cpp
++++ b/src/character.cpp
+@@ -616,10 +616,52 @@
+ 	return this->map->Walk(this, direction, true);
+ }
+ 
++double Character::BasicAttackSeconds() const
++{
++    if (!this->world->config["CombatProgression"] || this->clas != 5) return 0.5;
++    const EIF_Data& bow = this->world->eif->Get(this->paperdoll[Weapon]);
++    const EIF_Data& arrows = this->world->eif->Get(this->paperdoll[Shield]);
++    if (bow.subtype != EIF::Ranged || arrows.subtype != EIF::Arrows || !this->BalanceCanEquip(bow) || !this->BalanceCanEquip(arrows)) return 0.5;
++    auto entry = this->world->config.find("BalanceItem."+util::to_string(bow.id)+".attack_speed");
++    return 0.5 / (entry == this->world->config.end() ? 1.0 : util::clamp<double>(entry->second,1.0,2.0));
++}
++
++double Character::RangedShotPower() const
++{
++    if (!this->world->config["CombatProgression"] || this->clas != 5) return 1.0;
++    auto entry = this->world->config.find("BalanceItem."+util::to_string(this->paperdoll[Weapon])+".shot_power");
++    return entry == this->world->config.end() ? 1.0 : util::clamp<double>(entry->second,0.5,1.0);
++}
++
++int Character::WeaponRange() const
++{
++    const EIF_Data& bow = this->world->eif->Get(this->paperdoll[Weapon]);
++    if (bow.subtype != EIF::Ranged) return 1;
++    if (!this->world->config["CombatProgression"]) return int(this->world->config["RangedDistance"]);
++    const EIF_Data& arrows = this->world->eif->Get(this->paperdoll[Shield]);
++    if (this->clas != 5 || arrows.subtype != EIF::Arrows || !this->BalanceCanEquip(bow) || !this->BalanceCanEquip(arrows)) return 1;
++    auto base = this->world->config.find("BalanceItem."+util::to_string(bow.id)+".range_tiles");
++    auto bonus = this->world->config.find("BalanceItem."+util::to_string(arrows.id)+".range_bonus");
++    return util::clamp<int>((base == this->world->config.end() ? 3 : int(base->second)) + (bonus == this->world->config.end() ? 0 : int(bonus->second)),1,10);
++}
++
++double Character::TPRecoveryRate() const
++{
++    if (!this->world->config["CombatProgression"]) return 0.0;
++    auto entry = this->world->config.find("Balance."+util::to_string(this->clas)+".tp_regen");
++    return entry == this->world->config.end() ? 0.0 : util::clamp<double>(entry->second,0.0,0.01);
++}
++
+ void Character::Attack(Direction direction)
+ {
+ 	if (!this->BalanceCanEquip(this->world->eif->Get(this->paperdoll[Weapon]))) return;
+-	this->map->Attack(this, direction);
++	if (this->world->config["CombatProgression"])
++    {
++        double now = Timer::GetTime();
++        if (now < this->next_basic_attack) return;
++        this->next_basic_attack = now + this->BasicAttackSeconds();
++    }
++    this->map->Attack(this, direction);
+ }
+ 
+ void Character::Sit(SitState sit_type)
+@@ -1637,6 +1679,16 @@
+ 
+ void Character::CalculateStats(bool trigger_quests)
+ {
++    // Dismiss is a free class control, independent of which pet egg was hatched.
++    if (this->world->config["CombatProgression"] && this->clas == 7 && !this->HasSpell(35))
++    {
++        this->spells.push_back(Character_Spell(35,0));
++        if (trigger_quests)
++        {
++            PacketBuilder learned(PACKET_STATSKILL,PACKET_TAKE,6);
++            learned.AddShort(35); learned.AddInt(this->HasItem(1)); this->Send(learned);
++        }
++    }
+     std::vector<std::pair<int,int>> displaced;
+     if (this->world->config["ClassIdentityRules"])
+     {
+@@ -1710,6 +1762,14 @@
+ 			this->adj_cha += item.cha;
+ 		}
+ 	}
++
++    if (this->world->config["CombatProgression"] && this->clas == 6)
++    {
++        const EIF_Data& shield = this->world->eif->Get(this->paperdoll[Shield]);
++        if (shield.type == EIF::Shield && shield.subtype == 0 && this->BalanceCanEquip(shield)
++          && this->world->config["BalanceItem."+util::to_string(shield.id)+".warrior_shield"])
++            this->armor += shield.armor;
++    }
+ 
+ 	if (this->weight < 0 || this->weight > 250)
+ 	{
+@@ -2590,7 +2650,7 @@
+         const EIF_Data& arrows = this->world->eif->Get(this->paperdoll[Shield]);
+         if (bow.type != EIF::Weapon || bow.subtype != EIF::Ranged || arrows.type != EIF::Shield || arrows.subtype != EIF::Arrows
+           || !this->BalanceCanEquip(bow) || !this->BalanceCanEquip(arrows)) return false;
+-        if (targeted && util::path_length(this->x,this->y,tx,ty) > int(this->world->config["RangedDistance"])) return false;
++        if (targeted && util::path_length(this->x,this->y,tx,ty) > this->WeaponRange()) return false;
+     }
+     return true;
+ }
+--- a/src/character.hpp
++++ b/src/character.hpp
+@@ -333,6 +333,11 @@
+         int companion_target = -1;
+         int companion_target_type = 0;
+         double companion_command_time = 0.0;
++        double next_basic_attack = 0.0;
++        double BasicAttackSeconds() const;
++        double RangedShotPower() const;
++        int WeaponRange() const;
++        double TPRecoveryRate() const;
+         double BackstabMultiplier(int target_x, int target_y, Direction facing) const;
+         bool SignatureCanCast(unsigned short id, int target_x, int target_y, bool targeted = true) const;
+         bool HatchCompanionEgg(unsigned short id);
+--- a/src/eoserv_config.cpp
++++ b/src/eoserv_config.cpp
+@@ -58,6 +58,7 @@
+ 	eoserv_config_default(config, "CompanionLifetimeSeconds", 90.0);
+ 	eoserv_config_default(config, "ClassIdentityRules", false);
+     eoserv_config_default(config, "ClassSignatureRules", false);
++    eoserv_config_default(config, "CombatProgression", false);
+     eoserv_config_default(config, "MortalSpiritBonds", false);
+     eoserv_config_default(config, "PriestRegenRate", 0.02);
+     eoserv_config_default(config, "PriestSittingRegenRate", 0.04);
+--- a/src/handlers/Attack.cpp
++++ b/src/handlers/Attack.cpp
+@@ -25,7 +25,7 @@
+ 
+ 	if (character->world->config["EnforceTimestamps"])
+ 	{
+-		if (ts_diff < 48)
++		if (ts_diff < int(48 * character->BasicAttackSeconds() / 0.5))
+ 		{
+ 			return;
+ 		}
+@@ -44,7 +44,7 @@
+ 	if (limit_attack != 0 && character->attacks >= limit_attack)
+ 		return;
+ 
+-	if (!character->world->config["EnforceTimestamps"] || ts_diff >= 60)
++	if (!character->world->config["EnforceTimestamps"] || ts_diff >= int(60 * character->BasicAttackSeconds() / 0.5))
+ 	{
+ 		direction = character->direction;
+ 	}
+@@ -53,7 +53,7 @@
+ }
+ 
+ PACKET_HANDLER_REGISTER(PACKET_ATTACK)
+-	Register(PACKET_USE, Attack_Use, Playing, 0.5);
++	Register(PACKET_USE, Attack_Use, Playing, 0.05);
+ PACKET_HANDLER_REGISTER_END(PACKET_ATTACK)
+ 
+ }
+--- a/src/map.cpp
++++ b/src/map.cpp
+@@ -1529,7 +1529,7 @@
+ 
+ 	if (wepdata.subtype == EIF::Ranged)
+ 	{
+-		range = static_cast<int>(this->world->config["RangedDistance"]);
++		range = from->WeaponRange();
+ 	}
+ 
+ 	for (int i = 0; i < range; ++i)
+@@ -1558,7 +1558,7 @@
+ 			if ((npc->ENF().type == ENF::Passive || npc->ENF().type == ENF::Aggressive)
+ 			 && npc->alive && npc->x == target_x && npc->y == target_y)
+ 			{
+-				int amount = util::rand(from->mindam, from->maxdam);
++				int amount = int(util::rand(from->mindam, from->maxdam) * from->RangedShotPower());
+ 				double rand = util::rand(0.0, 1.0);
+ 				// Checks if target is facing you
+ 				double backstab = from->BackstabMultiplier(npc->x,npc->y,npc->direction);
+@@ -1621,7 +1621,7 @@
+ 
+ 	if (this->world->eif->Get(from->paperdoll[Character::Weapon]).subtype == EIF::Ranged)
+ 	{
+-		range = static_cast<int>(this->world->config["RangedDistance"]);
++		range = from->WeaponRange();
+ 	}
+ 
+ 	for (int i = 0; i < range; ++i)
+@@ -1649,7 +1649,7 @@
+ 		{
+ 			if (character->mapid == this->id && !character->nowhere && character->x == target_x && character->y == target_y)
+ 			{
+-				int amount = util::rand(from->mindam, from->maxdam);
++				int amount = int(util::rand(from->mindam, from->maxdam) * from->RangedShotPower());
+ 				double rand = util::rand(0.0, 1.0);
+ 				// Checks if target is facing you
+ 				double backstab = from->BackstabMultiplier(character->x,character->y,character->direction);
+--- a/src/world.cpp
++++ b/src/world.cpp
+@@ -129,7 +129,8 @@
+ 
+ 		if (character->tp != character->maxtp)
+ 		{
+-			if (character->sitting != SIT_STAND) character->tp += static_cast<short>(character->maxtp * double(world->config["SitTPRecoverRate"]));
++			if (character->TPRecoveryRate() > 0.0) {} // Fast class recovery replaces the ordinary TP pulse.
++            else if (character->sitting != SIT_STAND) character->tp += static_cast<short>(character->maxtp * double(world->config["SitTPRecoverRate"]));
+ 			else                                 character->tp += static_cast<short>(character->maxtp * double(world->config["TPRecoverRate"]));
+ 
+ 			character->tp = std::min(character->tp, character->maxtp);
+@@ -154,17 +155,21 @@
+     if (!world->config["ClassSignatureRules"]) return;
+     for (Character *character : world->characters)
+     {
+-        if ((character->clas != 2 && world->ecf->Get(character->clas).base != 2)
+-          || character->hp <= 0 || character->hp >= character->maxhp || character->nowhere) continue;
+-        double rate = character->sitting == SIT_STAND ? double(world->config["PriestRegenRate"]) : double(world->config["PriestSittingRegenRate"]);
+-        rate = util::clamp<double>(rate,0.0,0.05);
+-        if (character->map->pk || character->arena || (world->config["GlobalPK"] && !world->PKExcept(character->mapid))) rate *= 0.5;
+-        if (rate <= 0.0) continue;
+-        int gain = std::max(1,int(character->maxhp * rate));
+-        character->hp = std::min<int>(character->maxhp,character->hp + gain);
++        if (character->hp <= 0 || character->nowhere || !character->map) continue;
++        bool pk = character->map->pk || character->arena || (world->config["GlobalPK"] && !world->PKExcept(character->mapid));
++        int hp_before = character->hp, tp_before = character->tp;
++        if (character->clas == 2 || world->ecf->Get(character->clas).base == 2)
++        {
++            double rate = character->sitting == SIT_STAND ? double(world->config["PriestRegenRate"]) : double(world->config["PriestSittingRegenRate"]);
++            rate = util::clamp<double>(rate,0.0,0.05) * (pk ? 0.5 : 1.0);
++            if (rate > 0.0) character->hp = std::min<int>(character->maxhp,character->hp+std::max(1,int(character->maxhp*rate)));
++        }
++        double rate = character->TPRecoveryRate() * (character->sitting == SIT_STAND ? 1.0 : 2.0) * (pk ? 0.5 : 1.0);
++        if (rate > 0.0) character->tp = std::min<int>(character->maxtp,character->tp+std::max(1,int(character->maxtp*rate)));
++        if (character->hp == hp_before && character->tp == tp_before) continue;
+         PacketBuilder reply(PACKET_RECOVER, PACKET_PLAYER, 6);
+         reply.AddShort(character->hp);reply.AddShort(character->tp);reply.AddShort(0);character->Send(reply);
+-        if (character->party) character->party->UpdateHP(character);
++        if (character->party && character->hp != hp_before) character->party->UpdateHP(character);
+     }
+ }
+ 
+@@ -346,7 +351,7 @@
+ 	Handlers::SetDelay(PACKET_WALK, PACKET_PLAYER, rate_walk);
+ 	Handlers::SetDelay(PACKET_WALK, PACKET_SPEC, rate_walk);
+ 
+-	Handlers::SetDelay(PACKET_ATTACK, PACKET_USE, rate_attack);
++	Handlers::SetDelay(PACKET_ATTACK, PACKET_USE, this->config["CombatProgression"] ? 0.05 : rate_attack);
+ 
+ 	std::array<double, 7> npc_speed_table;
+ 

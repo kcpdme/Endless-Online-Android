@@ -1,0 +1,17 @@
+{
+  "result": "passed",
+  "checks": 49,
+  "range_boundaries": true,
+  "elemental_arrows_and_walls": true,
+  "forged_cadence_limited": true,
+  "observed_hits_in_1_55_seconds": {
+    "297": 3,
+    "316": 5,
+    "457": 6
+  },
+  "standing_sitting_pk_recovery": true,
+  "warrior_shield_double": true,
+  "pk_range": true,
+  "isolated_database": true,
+  "production_database_opened": false
+}

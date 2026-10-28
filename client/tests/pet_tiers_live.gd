@@ -28,7 +28,12 @@ func run() -> void:
 	if failed: game.queue_free(); await process_frame; quit(1); return
 	c.character_list.select(0); c._enter_selected()
 	check(await wait_for(func() -> bool: return c.active and c.streaming and c.session.is_idle()), "Regular Summoner enters native world")
-	check(int(c.player.stats.admin) == 0 and int(c.catalog.balance_version) == 7, "Tier catalog reaches a regular character")
+	check(int(c.player.stats.admin) == 0 and int(c.catalog.balance_version) == 8, "Tier catalog reaches a regular character")
+	game.pet_ui.tick()
+	check(game.pet_ui.button.visible, "Summoner has a dedicated pet control")
+	check(game.bag_button.get_global_rect().position.y < 100, "Inventory moved to the top row")
+	check(game.chat_button.get_parent() == game.chat_ui.quick_root, "Conversations follows the bottom message composer")
+	check(not game.chat_button.get_global_rect().intersects(game.chat_ui.quick_bar.get_global_rect()), "Conversations does not cover the message field")
 	var keeper: Dictionary = {}
 	for npc: Dictionary in c.npcs:
 		if int(npc.id) == 321: keeper = npc
@@ -58,11 +63,18 @@ func run() -> void:
 	check(game.stats_ui.item_art.texture != null and game.stats_ui.item_body.text.contains("Normal tier"), "Inventory detail shows the pet and its tier")
 	game.stats_ui.dismiss(); game.skills_ui.selected = 51; game.skills_ui.refresh_detail()
 	check(game.skills_ui.detail.text.contains("Normal tier") and game.skills_ui.detail.text.contains("82%"), "Summon skill advertises the same tier combat values")
-	c.session.request("spell_cast", {"spell_id":51, "target_kind":"self"})
+	game.pet_ui.press()
 	check(await wait_for(func() -> bool:
 		for npc: Dictionary in c.npcs:
 			if int(npc.id) == 309: return true
 		return false), "New pet appears through the actual native summon")
+	check(await wait_for(func() -> bool: return not c.companion.is_empty() and not game.pet_ui.button.disabled), "Pet control receives native active state")
+	check(game.pet_ui.caption.text == "Dismiss", "Pet control changes to Dismiss")
+	game.pet_ui.press()
+	check(await wait_for(func() -> bool: return c.companion.is_empty() and not game.pet_ui.button.disabled), "Dedicated control dismisses the native pet")
+	check(game.skills_ui.known(51), "Dismiss retains the hatched bond")
+	game.pet_ui.press()
+	check(await wait_for(func() -> bool: return not c.companion.is_empty()), "Dedicated control recalls without another egg")
 	check(not c.npc_graphic({"id":309}).is_empty(), "Penguin uses original rendered creature art")
 	var report: Dictionary = {"result":"failed" if failed else "passed", "checks":checks, "pet_previews":16, "phone_viewports":2, "native_shop_purchase_hatch_summon":true}
 	FileAccess.open(OS.get_environment("ASTER_VALE_TEST_REPORT"), FileAccess.WRITE).store_string(JSON.stringify(report, "  ") + "\n")

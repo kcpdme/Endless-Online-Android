@@ -121,6 +121,7 @@ func _actor_bounds(actor: Dictionary) -> Rect2:
 func _hover_in_world() -> bool:
 	if not hovering: return false
 	if get_viewport().gui_get_hovered_control()!=null: return false
+	if game.pet_ui.contains(hover_screen): return false
 	if game.joystick.contains_point(hover_screen) or game.chat_ui.hud_contains(hover_screen) or game.minimap.contains(hover_screen): return false
 	for button: Control in [game.attack_button,game.bag_button,game.sit_button,game.chat_button,game.character_button,game.quest_journal.button,game.party_ui.button,game.admin_ui.button]:
 		if button.visible and button.contains_point(hover_screen): return false

@@ -1,4 +1,8 @@
-# Summoner pet choices — profile 7, Android 0.45.2
+# Summoner pet choices — current combat update in profile 8
+
+Profile 8 retains the roster and level gates below and adds a dedicated pet
+control plus faster class TP recovery. See [Combat progression](COMBAT_PROGRESSION.md).
+The profile-7 release/measurement record below remains historical.
 
 The Aeven Eggkeeper now sells **16 deterministic pet eggs**, beside the market
 at **map 5, tile 35,46**. Only Summoners can buy and hatch them. Every appearance

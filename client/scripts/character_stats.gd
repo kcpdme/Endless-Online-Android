@@ -196,6 +196,8 @@ func refresh() -> void:
 		item_heading.text += "  ·  Equipped" if item_is_equipped else "  ×%d" % quantity
 		if int(item.get("type", -1)) == 12: requirements.append("Female" if int(item.get("gender", 0)) == 0 else "Male")
 		item_body.text = "Damage  %d–%d\nArmor  +%d\n\nAccuracy  +%d\nEvade  +%d\n\nHP  +%d\nTP  +%d\n\n%s\n\nWeight  %d\n\nRequirements\n%s" % [int(item.get("min_damage", 0)), int(item.get("max_damage", 0)), int(item.get("armor", 0)), int(item.get("accuracy", 0)), int(item.get("evade", 0)), int(item.get("hp", 0)), int(item.get("tp", 0)), "\n".join(bonuses), int(item.get("weight", 0)), "\n".join(requirements) if not requirements.is_empty() else "None"]
+		var combat_text: String = preload("res://scripts/combat_details.gd").describe(item)
+		if not combat_text.is_empty(): item_body.text += "\n\n" + combat_text
 		if item.get("backstab", false): item_body.text += "\n\nRogue rear strikes: 1.5x or 2x damage, without critical stacking."
 		if int(item.get("hatch_spell", 0)) > 0:
 			var summon: Dictionary = (game.online.catalog.get("spells", {}) as Dictionary).get(str(int(item.hatch_spell)), {}) as Dictionary

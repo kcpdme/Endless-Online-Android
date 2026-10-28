@@ -265,6 +265,8 @@ func _render_details(offer: Dictionary, id: int, reset: bool) -> void:
 	for key: String in ["armor", "accuracy", "evade", "hp", "tp", "strength", "intelligence", "wisdom", "agility", "constitution", "charisma"]:
 		var value: int = int(info.get(key, 0))
 		if value != 0: parts.append("%s %s%d" % [key.to_upper() if key in ["hp", "tp"] else key.capitalize(), "+" if value > 0 else "", value])
+	var combat_text: String = preload("res://scripts/combat_details.gd").describe(info)
+	if not combat_text.is_empty(): parts.append(combat_text)
 	parts.append("Weight %d" % int(info.get("weight", 0)))
 	if int(info.get("level_requirement", 0)) > 0: parts.append("Requires level %d" % int(info.level_requirement))
 	var professions: String = game.online.equipment_classes(info)

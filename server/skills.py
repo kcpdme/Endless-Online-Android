@@ -66,6 +66,9 @@ class SkillsMixin:
         else:raise EOError('Choose a valid target for this skill')
         me=self.state['self']
         reach=profile().get('spells',{}).get(str(spell_id),{}).get('range',11)
+        if profile().get('spells',{}).get(str(spell_id),{}).get('weapon_range') and target_kind not in ('area','self'):
+            from combat_progression import equipped_combat
+            reach=equipped_combat(self)['range_tiles']
         if abs(target['x']-me['x'])+abs(target['y']-me['y'])>reach:raise EOError('The target is too far away')
         if target_kind=='self' and spell['type']==0 and me.get('hp',0)>=me.get('maxhp',1):raise EOError('Your health is already full. Nothing was cast.')
         self.timestamp+=1
@@ -98,6 +101,9 @@ class SkillsMixin:
                     self.cancel_spell();self.events.append(dict(kind='spell_failed',message='The target is no longer here.'));return
                 from balance_rules import profile
                 reach=profile().get('spells',{}).get(str(cast['spell_id']),{}).get('range',11)
+                if profile().get('spells',{}).get(str(cast['spell_id']),{}).get('weapon_range'):
+                    from combat_progression import equipped_combat
+                    reach=equipped_combat(self)['range_tiles']
                 if abs(target['x']-self.state['self']['x'])+abs(target['y']-self.state['self']['y'])>reach:
                     self.cancel_spell();self.events.append(dict(kind='spell_failed',message='The target is out of range.'));return
             if cast['target_kind']=='player':

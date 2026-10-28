@@ -1,0 +1,14 @@
+{
+  "result": "passed",
+  "version": "0.46.0",
+  "version_code": 83,
+  "device": "Samsung Galaxy S23 Ultra",
+  "full_signed_update": true,
+  "installed_bytes_match_release": true,
+  "apk_sha256": "f0bf981c56c4aa550c9327e4526d84ae61902728e22d5b0ee5cf475a8a3f4250",
+  "original_first_install_time_preserved": true,
+  "app_process_running": true,
+  "display_awake": true,
+  "system_overlay_visible": true,
+  "handset_gameplay_verified": false
+}

@@ -46,6 +46,7 @@ var paperdoll: ClassicPaperdoll
 var stats_ui: CharacterStats
 var player_hit_flash: float = 0.0
 var character_panel: Control
+var pet_ui: RefCounted
 var bag_button: HudIconButton
 var character_button: HudIconButton
 const AUTO_ATTACK_HOLD_MSEC: int = 600
@@ -296,6 +297,7 @@ func _walkable(tile: Vector2i) -> bool:
 
 func _process(delta: float) -> void:
 	if skills_ui != null: skills_ui.tick()
+	if pet_ui != null: pet_ui.tick()
 	if quick_items != null: quick_items.refresh()
 	if online != null: online.shortcuts.tick()
 	if chat_ui != null: chat_ui.tick()
@@ -309,7 +311,7 @@ func _process(delta: float) -> void:
 	var attack_remainder: float = maxf(0.0, delta - attack_clock)
 	attack_clock = maxf(0.0, attack_clock - delta)
 	swing_clock = maxf(0.0, swing_clock - delta)
-	if attack_button != null: attack_button.cooldown_fraction = attack_clock / (ONLINE_ATTACK_COOLDOWN if online_mode else ATTACK_COOLDOWN)
+	if attack_button != null: attack_button.cooldown_fraction = attack_clock / (_online_attack_seconds() if online_mode else ATTACK_COOLDOWN)
 	hit_flash = maxf(0.0, hit_flash - delta)
 	player_hit_flash = maxf(0.0, player_hit_flash - delta)
 	if stats_ui != null:
@@ -585,7 +587,7 @@ func _input(event: InputEvent) -> void:
 		if started and not _modal_open() and minimap != null and minimap.contains(event.position):
 			get_viewport().set_input_as_handled()
 			return
-		var native_control: bool = started and not _modal_open() and ((skills_ui != null and skills_ui.contains(event.position) >= 0) or (quick_items != null and quick_items.contains(event.position) >= 0) or attack_button.contains_point(event.position) or bag_button.contains_point(event.position) or sit_button.contains_point(event.position) or chat_button.contains_point(event.position) or quest_journal.button.contains_point(event.position) or (party_ui.button.visible and party_ui.button.contains_point(event.position)) or (admin_ui.button.visible and admin_ui.button.contains_point(event.position)) or menu_button.get_global_rect().has_point(event.position) or character_button.contains_point(event.position) or joystick.contains_point(event.position) or (online_mode and (skills_ui.armed > 0 or not online.map_entity_target(_screen_to_world(event.position)).is_empty())) or (online_mode and online.loot_button.visible and online.loot_button.get_global_rect().has_point(event.position)))
+		var native_control: bool = started and not _modal_open() and ((skills_ui != null and skills_ui.contains(event.position) >= 0) or (quick_items != null and quick_items.contains(event.position) >= 0) or attack_button.contains_point(event.position) or (pet_ui != null and pet_ui.contains(event.position)) or bag_button.contains_point(event.position) or sit_button.contains_point(event.position) or chat_button.contains_point(event.position) or quest_journal.button.contains_point(event.position) or (party_ui.button.visible and party_ui.button.contains_point(event.position)) or (admin_ui.button.visible and admin_ui.button.contains_point(event.position)) or menu_button.get_global_rect().has_point(event.position) or character_button.contains_point(event.position) or joystick.contains_point(event.position) or (online_mode and (skills_ui.armed > 0 or not online.map_entity_target(_screen_to_world(event.position)).is_empty())) or (online_mode and online.loot_button.visible and online.loot_button.get_global_rect().has_point(event.position)))
 		# Godot may synthesize the mouse press before delivering its native touch.
 		if dismissing_modal or native_control or not owned_touches.is_empty():
 			get_viewport().set_input_as_handled()
@@ -646,6 +648,11 @@ func _input(event: InputEvent) -> void:
 		if sit_button.visible and sit_button.contains_point(event.position):
 			owned_touches[event.index] = true
 			if online_mode: online.toggle_sit()
+			get_viewport().set_input_as_handled()
+			return
+		if pet_ui != null and pet_ui.contains(event.position):
+			owned_touches[event.index] = true
+			pet_ui.press()
 			get_viewport().set_input_as_handled()
 			return
 		if bag_button.contains_point(event.position):
@@ -812,12 +819,15 @@ func _place_enemy() -> void:
 			return
 	enemy_tile = player_tile
 
+func _online_attack_seconds() -> float:
+	return clampf(float((online.player.get("combat", {}) as Dictionary).get("attack_seconds", ONLINE_ATTACK_COOLDOWN)), 0.26, ONLINE_ATTACK_COOLDOWN)
+
 func _attack() -> void:
 	if online_mode:
 		if online.active and started and not _modal_open() and attack_clock <= 0.0:
 			if not online.request_attack(): return
-			attack_clock = ONLINE_ATTACK_COOLDOWN
-			swing_clock = ONLINE_ATTACK_SWING_DURATION
+			attack_clock = _online_attack_seconds()
+			swing_clock = minf(ONLINE_ATTACK_SWING_DURATION, _online_attack_seconds())
 			animation_clock = 0.0
 			_play_sound("attack")
 		return
@@ -1037,7 +1047,7 @@ func _frame(character: Dictionary, direction: String, state: String, phase: floa
 		var frame_rate: float = frames.size() / online.MOVE_SECONDS if online_mode and state == "frames" else 9.0
 		var frame_index: int = int((phase if phase >= 0.0 else animation_clock) * frame_rate) % frames.size() if phase >= 0.0 or (moving and state != "idle") or bool(character.get("animate_idle", false)) else 0
 		if state in ["attack", "ranged_attack"]:
-			if online_mode: frame_index = mini(int((phase if phase >= 0.0 else ONLINE_ATTACK_SWING_DURATION - swing_clock) / (0.24 if frames.size() == 2 else 0.12)), frames.size() - 1)
+			if online_mode: frame_index = mini(int((phase if phase >= 0.0 else minf(ONLINE_ATTACK_SWING_DURATION, _online_attack_seconds()) - swing_clock) / ((ONLINE_ATTACK_SWING_DURATION if phase >= 0.0 else minf(ONLINE_ATTACK_SWING_DURATION, _online_attack_seconds())) / frames.size())), frames.size() - 1)
 			else: frame_index = mini(int((phase / 0.36 if phase >= 0.0 else 1.0 - swing_clock / ATTACK_SWING_DURATION) * frames.size()), frames.size() - 1)
 		return frames[frame_index] as Dictionary
 	return {}
@@ -1210,12 +1220,12 @@ func _build_ui() -> void:
 	bottom_hint.set_anchors_preset(Control.PRESET_BOTTOM_LEFT, true)
 	bag_button = HudIconButton.new()
 	bag_button.kind = "bag"
-	bag_button.position = Vector2(-262, -100) + COMBAT_HUD_SHIFT
-	bag_button.size = Vector2(76, 76)
+	bag_button.position = Vector2(-266, 24)
+	bag_button.size = Vector2(68, 68)
 	bag_button.tooltip_text = "Inventory bag"
 	bag_button.pressed.connect(_toggle_inventory)
 	root.add_child(bag_button)
-	bag_button.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT, true)
+	bag_button.set_anchors_preset(Control.PRESET_TOP_RIGHT, true)
 	sit_button = HudIconButton.new()
 	sit_button.kind = "sit"
 	sit_button.position = Vector2(-174, -88) + COMBAT_HUD_SHIFT
@@ -1254,6 +1264,8 @@ func _build_ui() -> void:
 	drink_effects.game = self
 	skills_ui = preload("res://scripts/skills_controller.gd").new()
 	skills_ui.build(self, root)
+	pet_ui = preload("res://scripts/pet_control.gd").new()
+	pet_ui.build(self, root)
 	quick_items = preload("res://scripts/quick_items.gd").new()
 	quick_items.build(self, root)
 	services_ui = preload("res://scripts/services_window.gd").new()

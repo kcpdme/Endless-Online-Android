@@ -1,0 +1,38 @@
+{
+  "result": "passed",
+  "unit_tests": 26,
+  "native_combat_checks": 49,
+  "native_balance_checks": 515,
+  "native_pet_checks": 135,
+  "godot_pet_hud_checks": 120,
+  "godot_balance_pass": true,
+  "full_patch_stack_reconstruction_pass": true,
+  "renderer_preview_sizes": [
+    [
+      1280,
+      720
+    ],
+    [
+      1544,
+      720
+    ]
+  ],
+  "renderer_preview_states": [
+    "summon",
+    "dismiss"
+  ],
+  "public_https_wss_pass": true,
+  "full_tp_depletion_measured": false,
+  "handset_gameplay_verified": false,
+  "reports": {
+    "combat-progression-android-report.json": "59b5c58ff5bbfeb589ba8b25c337105e1c38b916ebf3f5fc663f2aaee12f518d",
+    "combat-progression-balance-report.json": "b39391452a33f464f319912f9b7d08426efedd1de49550417a6e0ae419059e42",
+    "combat-progression-client-report.json": "efb884955e242878f67131bd9df038f69809b33198da5abe76fb02ca30634c52",
+    "combat-progression-deployment-report.json": "9e2ba336073a8456d737a4f0a1fe6b27afc71c5195d45a74535c92b2eb49bc69",
+    "combat-progression-native-report.json": "92d6e7936691721445cc2e39c6138faf4b9814280b34077058cf96c2c148c39f",
+    "combat-progression-pets-report.json": "c90daedb200609bc84701e6b9722e052d91bab6abf30662692ea80fcde195421",
+    "combat-progression-phone-report.json": "cd74ddb9ae918edd205b71f97bb65d726147c1d007b21f4d840466031aa58cbc",
+    "combat-progression-public-report.json": "6cca0c3f1efb1fdbe1d792f4abdf6feb589b8a21ebbbcc1d3663f483805f36ce",
+    "combat-progression-tp-report.json": "4c60e1d04a59b431fb3677bf08b99958019578b1c63cb1e5fd9e1988961fbe86"
+  }
+}

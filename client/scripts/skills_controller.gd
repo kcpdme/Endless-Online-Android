@@ -350,7 +350,8 @@ func refresh_detail() -> void:
 			lines.append("Requires level %d" % int(spell.get("level_requirement", 1)))
 			if spell.has("learn_source"): lines.append(str(spell.learn_source))
 			if spell.get("requires_bow", false): lines.append("Requires a bow and arrows.")
-			if int(spell.get("range", 0)) > 0: lines.append("Range: %d tiles." % int(spell.range))
+			if spell.get("weapon_range", false): lines.append("Range: %d tiles with your current bow and arrows." % int((game.online.player.get("combat", {}) as Dictionary).get("range_tiles", 1)))
+			elif int(spell.get("range", 0)) > 0: lines.append("Range: %d tiles." % int(spell.range))
 		if spell.get("effect_kind", "") == "companion":
 			var pet: Dictionary = spell.get("companion", {}) as Dictionary
 			if pet.has("tier"): lines.append(PET_DETAILS.combat_text(pet))

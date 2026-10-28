@@ -1,5 +1,9 @@
 # Class and equipment revamp for levels 1–50
 
+Profile 8 adds Summoner HUD controls, class TP recovery, bow range/fire-rate
+progression and Warrior shields. See [Combat progression](COMBAT_PROGRESSION.md)
+for the current rules and release validation.
+
 Profile 7 sets pet hatch/summon levels to 5 / 10 / 20 / 30 / 40 and retains
 the requested sixteen pet appearances across five equal-within-tier combat budgets
 and the Aeven Eggkeeper. See [Summoner pet tiers](SUMMONER_PET_TIERS.md) for

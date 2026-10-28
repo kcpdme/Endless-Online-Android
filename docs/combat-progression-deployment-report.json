@@ -1,0 +1,21 @@
+{
+  "result": "passed",
+  "backup": "/opt/aster-vale/backups/combat-progression-v8-20261028T081130Z",
+  "services_healthy": true,
+  "balance_profile_version": 8,
+  "native_sha256": "ab1b444355d36686139f2f9c8833f8b0ce66ee0a38306ce3df17fcad77e075ce",
+  "profile_sha256": "ce6a737fcd4c133891e3dd38a23fcea71de3bcbb48243ee18e854c18467bcfac",
+  "aeven_map_sha256": "c880b13d526ca99a6e38c0ce4f038a3712e818e298b5dfeedcdc22ef73081e18",
+  "pet_choices": 16,
+  "tiers": 5,
+  "account_database_bytes_unchanged_during_install": true,
+  "no_character_migration_run": true,
+  "native_binary_matches_acceptance": true,
+  "existing_egg_tiers_level_access_and_value_preserved": true,
+  "tp_recovery_seconds": 2,
+  "warrior_shield_multiplier": 2,
+  "unrelated_runtime_content_preserved": true,
+  "sky_walking_maps_and_admin_teleport_preserved": true,
+  "unrelated_configuration_preserved": true,
+  "installer_repeat_identical": true
+}

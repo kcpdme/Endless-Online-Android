@@ -71,6 +71,7 @@ var catalog: Dictionary = {}
 var request_operations: Dictionary = {}
 var interaction: Dictionary = {}
 var world_rules: Dictionary = {}
+var companion: Dictionary = {}
 var collect_pending: bool = false
 var loot_attempt_after: Dictionary = {}
 var pickup_pending: Dictionary = {}
@@ -430,6 +431,8 @@ func _enter_world(data: Dictionary) -> void:
 	if not resumed: game._toast("Arena · stand on a marked gate tile. Rounds every %ds." % int((game.world.arena as Dictionary).get("interval_seconds", 90)) if game.world.has("arena") else "You have entered your online world.")
 
 func _apply_snapshot(data: Dictionary, entering: bool = false) -> void:
+	if entering: companion = {}
+	if data.has("companion"): companion = data.companion as Dictionary if data.companion is Dictionary else {}
 	render_pose_cache.clear()
 	if data.has("world_rules"): world_rules = data.world_rules as Dictionary
 	for raw: Variant in data.get("events", []):
@@ -1728,5 +1731,6 @@ func _select_character_card(index: int) -> void:
 	character_flow.refresh()
 
 func log_out() -> void:
+	companion = {}
 	session.close()
 	_on_closed("Logged out.",false)

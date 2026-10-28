@@ -46,32 +46,30 @@ TP, rather than another egg.
 | Legend | 30 | 38 | 4 |
 | Mythic | 40 | 45 | 5 |
 
-## TP measurement
+## Current TP recovery — profile 8
 
-The isolated native world used this exact gear and attributes. It confirmed
-**1,108 maximum TP**, the Mythic **45 TP** call, **42 deductions of 5 TP** during
-96 seconds, and one standing recovery pulse of **110 TP**. Average observed
-upkeep spacing was **2.238 seconds**; the configured check is due every two
-seconds, processed on the pet’s AI tick. Timing varies with the world loop.
-The full depletion time was **not measured**.
+The same equipped character retains **1,108 TP**. Standing now restores **4 TP
+every two seconds**, and sitting restores **8 TP**. These fast class pulses
+replace the old 90-second TP recovery. PK halves the recovery rate before
+rounding. A Mythic call still costs 45 TP, and upkeep still costs 5 TP per
+configured two-second check, processed on the pet’s AI tick. The current native
+test observed those costs and the 4-TP pulses over 12 seconds.
 
-A simple event simulation with no offensive spells, potions, dismissals or extra
-summon calls estimates **13–17 minutes of standing Mythic-pet uptime** from a
-full bar. It uses 2.0–2.238 second upkeep spacing and the phase of the shared
-90-second recovery clock. This is a timing estimate for this loadout, not a
-promise of a particular combat session length. Without any TP recovery, the
-configured two-second rate alone gives about **7 minutes** after the call.
+The older profile-7 13–17 minute standing estimate is superseded. Exact two-second
+pet upkeep would give roughly 35 minutes of pet-only standing uptime; actual AI
+spacing can extend it. Sitting can sustain idle upkeep. Full depletion has not
+been timed. Spirit Bolt (5 TP), Lance (14), Grasp (22), Storm (32) and Dark Bite
+(38) consume TP on top of upkeep. Basic attacks have no TP cost. Leave potions
+unused and note spells cast when timing a combat session.
 
-Standing recovers floor(max TP × 10%) every 90 seconds: **110 TP** for this kit.
-Sitting recovers floor(max TP × 20%): **221 TP**. Sitting can nearly or fully
-cover idle Mythic upkeep depending on AI timing. Attack spells consume TP on top
-of pet upkeep: Spirit Bolt costs 5, Spirit Lance 14, Spirit Grasp 22, Spirit
-Storm 32 and Dark Bite 38. Basic attacks have no TP cost. Keep potions unused
-when measuring the natural duration, and note which attack spells you cast.
+The **Summon/Dismiss paw button** replaces the old bottom Inventory position.
+Inventory is now on the top row and Conversations is beside the message field.
+See [Combat progression](COMBAT_PROGRESSION.md) for all current class changes.
 
 ## Release and verification
 
-Profile **7**, Android **0.45.2 / code 82**. The new gates are enforced by native
+Original character provisioning: profile **7**, Android **0.45.2 / code 82**.
+Current installed release: profile **8**, Android **0.46.0 / code 83**. The new gates are enforced by native
 handlers as well as adapter/client checks. Native acceptance passed 135 checks;
 Godot passed 111 checks; 26 unit tests passed. The balance install was repeated
 with identical results. A stopped-world backup was taken before adding the

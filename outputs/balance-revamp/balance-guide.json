@@ -1,5 +1,5 @@
 {
-  "version": 7,
+  "version": 8,
   "equipment": [
     {
       "id": 20,
@@ -242,6 +242,9 @@
           206
         ]
       },
+      "range_tiles": 3,
+      "attack_speed": 1.0,
+      "shot_power": 1.0,
       "backstab": false
     },
     {
@@ -1323,6 +1326,9 @@
         ],
         "craft": []
       },
+      "range_tiles": 3,
+      "attack_speed": 1.0,
+      "shot_power": 1.0,
       "backstab": false
     },
     {
@@ -1371,6 +1377,9 @@
           15
         ]
       },
+      "range_tiles": 4,
+      "attack_speed": 1.25,
+      "shot_power": 0.95,
       "backstab": false
     },
     {
@@ -2994,6 +3003,9 @@
         ],
         "craft": []
       },
+      "range_tiles": 4,
+      "attack_speed": 1.25,
+      "shot_power": 0.95,
       "backstab": false
     },
     {
@@ -3087,6 +3099,9 @@
           206
         ]
       },
+      "range_tiles": 5,
+      "attack_speed": 1.5,
+      "shot_power": 0.85,
       "backstab": false
     },
     {
@@ -3745,6 +3760,9 @@
           255
         ]
       },
+      "range_tiles": 7,
+      "attack_speed": 2.0,
+      "shot_power": 0.7,
       "backstab": false
     },
     {
@@ -4079,6 +4097,9 @@
           87
         ]
       },
+      "range_tiles": 8,
+      "attack_speed": 2.0,
+      "shot_power": 0.7,
       "backstab": false
     },
     {
@@ -4195,7 +4216,7 @@
       "max_damage": 0,
       "accuracy": 0,
       "evade": 0,
-      "armor": 1,
+      "armor": 4,
       "strength": 0,
       "intelligence": 0,
       "wisdom": 0,
@@ -4220,7 +4241,8 @@
           40
         ],
         "craft": []
-      }
+      },
+      "warrior_shield_multiplier": 2
     },
     {
       "id": 53,
@@ -4240,7 +4262,7 @@
       "max_damage": 0,
       "accuracy": 0,
       "evade": 0,
-      "armor": 1,
+      "armor": 5,
       "strength": 0,
       "intelligence": 0,
       "wisdom": 0,
@@ -4265,7 +4287,8 @@
           40
         ],
         "craft": []
-      }
+      },
+      "warrior_shield_multiplier": 2
     },
     {
       "id": 55,
@@ -4285,7 +4308,7 @@
       "max_damage": 0,
       "accuracy": 0,
       "evade": 0,
-      "armor": 1,
+      "armor": 4,
       "strength": 0,
       "intelligence": 0,
       "wisdom": 0,
@@ -4310,7 +4333,8 @@
           40
         ],
         "craft": []
-      }
+      },
+      "warrior_shield_multiplier": 2
     },
     {
       "id": 56,
@@ -4330,7 +4354,7 @@
       "max_damage": 0,
       "accuracy": 0,
       "evade": 0,
-      "armor": 1,
+      "armor": 3,
       "strength": 0,
       "intelligence": 0,
       "wisdom": 0,
@@ -4355,7 +4379,8 @@
           40
         ],
         "craft": []
-      }
+      },
+      "warrior_shield_multiplier": 2
     },
     {
       "id": 57,
@@ -4375,7 +4400,7 @@
       "max_damage": 0,
       "accuracy": 0,
       "evade": 0,
-      "armor": 1,
+      "armor": 6,
       "strength": 0,
       "intelligence": 0,
       "wisdom": 0,
@@ -4400,7 +4425,8 @@
           40
         ],
         "craft": []
-      }
+      },
+      "warrior_shield_multiplier": 2
     },
     {
       "id": 209,
@@ -4420,7 +4446,7 @@
       "max_damage": 0,
       "accuracy": 0,
       "evade": 0,
-      "armor": 1,
+      "armor": 5,
       "strength": 0,
       "intelligence": 0,
       "wisdom": 0,
@@ -4445,7 +4471,8 @@
           40
         ],
         "craft": []
-      }
+      },
+      "warrior_shield_multiplier": 2
     },
     {
       "id": 384,
@@ -4572,7 +4599,8 @@
         "drop": [
           206
         ]
-      }
+      },
+      "range_bonus": 0
     },
     {
       "id": 432,
@@ -4592,7 +4620,7 @@
       "max_damage": 0,
       "accuracy": 0,
       "evade": 0,
-      "armor": 1,
+      "armor": 3,
       "strength": 0,
       "intelligence": 0,
       "wisdom": 0,
@@ -4615,7 +4643,8 @@
         "drop": [
           141
         ]
-      }
+      },
+      "warrior_shield_multiplier": 2
     },
     {
       "id": 445,
@@ -4699,7 +4728,7 @@
       "max_damage": 0,
       "accuracy": 0,
       "evade": 0,
-      "armor": 1,
+      "armor": 4,
       "strength": 0,
       "intelligence": 0,
       "wisdom": 0,
@@ -4722,7 +4751,8 @@
         "drop": [
           214
         ]
-      }
+      },
+      "warrior_shield_multiplier": 2
     },
     {
       "id": 378,
@@ -4742,7 +4772,7 @@
       "max_damage": 0,
       "accuracy": 0,
       "evade": 0,
-      "armor": 5,
+      "armor": 12,
       "strength": 0,
       "intelligence": 0,
       "wisdom": 0,
@@ -4766,7 +4796,8 @@
           126
         ],
         "craft": []
-      }
+      },
+      "warrior_shield_multiplier": 2
     },
     {
       "id": 379,
@@ -4786,7 +4817,7 @@
       "max_damage": 0,
       "accuracy": 0,
       "evade": 0,
-      "armor": 5,
+      "armor": 14,
       "strength": 0,
       "intelligence": 0,
       "wisdom": 0,
@@ -4810,7 +4841,8 @@
           126
         ],
         "craft": []
-      }
+      },
+      "warrior_shield_multiplier": 2
     },
     {
       "id": 380,
@@ -4830,7 +4862,7 @@
       "max_damage": 0,
       "accuracy": 0,
       "evade": 0,
-      "armor": 5,
+      "armor": 13,
       "strength": 0,
       "intelligence": 0,
       "wisdom": 0,
@@ -4854,7 +4886,8 @@
           126
         ],
         "craft": []
-      }
+      },
+      "warrior_shield_multiplier": 2
     },
     {
       "id": 416,
@@ -4874,7 +4907,7 @@
       "max_damage": 0,
       "accuracy": 0,
       "evade": 0,
-      "armor": 5,
+      "armor": 16,
       "strength": 0,
       "intelligence": 0,
       "wisdom": 0,
@@ -4898,7 +4931,8 @@
           179
         ],
         "craft": []
-      }
+      },
+      "warrior_shield_multiplier": 2
     },
     {
       "id": 417,
@@ -4918,7 +4952,7 @@
       "max_damage": 0,
       "accuracy": 0,
       "evade": 0,
-      "armor": 5,
+      "armor": 15,
       "strength": 0,
       "intelligence": 0,
       "wisdom": 0,
@@ -4942,7 +4976,8 @@
           179
         ],
         "craft": []
-      }
+      },
+      "warrior_shield_multiplier": 2
     },
     {
       "id": 424,
@@ -4988,7 +5023,8 @@
         "craft": [
           179
         ]
-      }
+      },
+      "range_bonus": 2
     },
     {
       "id": 425,
@@ -5034,7 +5070,8 @@
         "craft": [
           179
         ]
-      }
+      },
+      "range_bonus": 2
     },
     {
       "id": 47,
@@ -20800,7 +20837,8 @@
       "max_level": 10,
       "training_bonus": 2,
       "requires_bow": true,
-      "range": 5
+      "range": 10,
+      "weapon_range": true
     },
     "14": {
       "id": 14,
@@ -21375,7 +21413,8 @@
       "max_level": 10,
       "training_bonus": 2,
       "requires_bow": true,
-      "range": 5,
+      "range": 10,
+      "weapon_range": true,
       "template_id": 16
     },
     "37": {
@@ -21400,7 +21439,8 @@
       "max_level": 10,
       "training_bonus": 2,
       "requires_bow": true,
-      "range": 5,
+      "range": 10,
+      "weapon_range": true,
       "template_id": 16
     },
     "38": {
@@ -21520,7 +21560,8 @@
       "max_level": 10,
       "training_bonus": 2,
       "requires_bow": true,
-      "range": 5,
+      "range": 10,
+      "weapon_range": true,
       "template_id": 16
     },
     "43": {
@@ -21569,7 +21610,8 @@
       "max_level": 10,
       "training_bonus": 2,
       "requires_bow": true,
-      "range": 5,
+      "range": 10,
+      "weapon_range": true,
       "template_id": 16
     },
     "45": {
@@ -21665,7 +21707,8 @@
       "max_level": 10,
       "training_bonus": 2,
       "requires_bow": true,
-      "range": 5,
+      "range": 10,
+      "weapon_range": true,
       "template_id": 16
     },
     "49": {
@@ -22580,10 +22623,14 @@
       "skills": 3,
       "signature": {
         "name": "Renewal",
-        "description": "Regenerate 2% maximum HP every 2 seconds; 4% while sitting. Half strength in PK areas.",
+        "description": "Regenerate 2% maximum HP every 2 seconds; 4% while sitting. Half strength in PK areas. Recover 0.3% max TP every 2 seconds; double while sitting, half in PK.",
         "regen_rate": 0.02,
         "sitting_regen_rate": 0.04,
-        "regen_seconds": 2
+        "regen_seconds": 2,
+        "tp_regen_rate": 0.003,
+        "tp_regen_seconds": 2,
+        "tp_regen_sitting_multiplier": 2,
+        "tp_regen_pk_multiplier": 0.5
       }
     },
     {
@@ -22637,10 +22684,14 @@
       "skills": 4,
       "signature": {
         "name": "Renewal",
-        "description": "Regenerate 2% maximum HP every 2 seconds; 4% while sitting. Half strength in PK areas.",
+        "description": "Regenerate 2% maximum HP every 2 seconds; 4% while sitting. Half strength in PK areas. Recover 0.3% max TP every 2 seconds; double while sitting, half in PK.",
         "regen_rate": 0.02,
         "sitting_regen_rate": 0.04,
-        "regen_seconds": 2
+        "regen_seconds": 2,
+        "tp_regen_rate": 0.003,
+        "tp_regen_seconds": 2,
+        "tp_regen_sitting_multiplier": 2,
+        "tp_regen_pk_multiplier": 0.5
       }
     },
     {
@@ -22694,10 +22745,14 @@
       "skills": 6,
       "signature": {
         "name": "Renewal",
-        "description": "Regenerate 2% maximum HP every 2 seconds; 4% while sitting. Half strength in PK areas.",
+        "description": "Regenerate 2% maximum HP every 2 seconds; 4% while sitting. Half strength in PK areas. Recover 0.3% max TP every 2 seconds; double while sitting, half in PK.",
         "regen_rate": 0.02,
         "sitting_regen_rate": 0.04,
-        "regen_seconds": 2
+        "regen_seconds": 2,
+        "tp_regen_rate": 0.003,
+        "tp_regen_seconds": 2,
+        "tp_regen_sitting_multiplier": 2,
+        "tp_regen_pk_multiplier": 0.5
       }
     },
     {
@@ -22751,10 +22806,14 @@
       "skills": 7,
       "signature": {
         "name": "Renewal",
-        "description": "Regenerate 2% maximum HP every 2 seconds; 4% while sitting. Half strength in PK areas.",
+        "description": "Regenerate 2% maximum HP every 2 seconds; 4% while sitting. Half strength in PK areas. Recover 0.3% max TP every 2 seconds; double while sitting, half in PK.",
         "regen_rate": 0.02,
         "sitting_regen_rate": 0.04,
-        "regen_seconds": 2
+        "regen_seconds": 2,
+        "tp_regen_rate": 0.003,
+        "tp_regen_seconds": 2,
+        "tp_regen_sitting_multiplier": 2,
+        "tp_regen_pk_multiplier": 0.5
       }
     },
     {
@@ -22808,10 +22867,14 @@
       "skills": 9,
       "signature": {
         "name": "Renewal",
-        "description": "Regenerate 2% maximum HP every 2 seconds; 4% while sitting. Half strength in PK areas.",
+        "description": "Regenerate 2% maximum HP every 2 seconds; 4% while sitting. Half strength in PK areas. Recover 0.3% max TP every 2 seconds; double while sitting, half in PK.",
         "regen_rate": 0.02,
         "sitting_regen_rate": 0.04,
-        "regen_seconds": 2
+        "regen_seconds": 2,
+        "tp_regen_rate": 0.003,
+        "tp_regen_seconds": 2,
+        "tp_regen_sitting_multiplier": 2,
+        "tp_regen_pk_multiplier": 0.5
       }
     },
     {
@@ -22865,10 +22928,14 @@
       "skills": 10,
       "signature": {
         "name": "Renewal",
-        "description": "Regenerate 2% maximum HP every 2 seconds; 4% while sitting. Half strength in PK areas.",
+        "description": "Regenerate 2% maximum HP every 2 seconds; 4% while sitting. Half strength in PK areas. Recover 0.3% max TP every 2 seconds; double while sitting, half in PK.",
         "regen_rate": 0.02,
         "sitting_regen_rate": 0.04,
-        "regen_seconds": 2
+        "regen_seconds": 2,
+        "tp_regen_rate": 0.003,
+        "tp_regen_seconds": 2,
+        "tp_regen_sitting_multiplier": 2,
+        "tp_regen_pk_multiplier": 0.5
       }
     },
     {
@@ -22922,8 +22989,12 @@
       "skills": 1,
       "signature": {
         "name": "Arcane mastery",
-        "description": "Highest spell multiplier, with early and late capped area magic.",
-        "spell_multiplier": 2.4
+        "description": "Highest spell multiplier and area magic. Recover 0.8% max TP every 2 seconds; double while sitting, half in PK.",
+        "spell_multiplier": 2.4,
+        "tp_regen_rate": 0.008,
+        "tp_regen_seconds": 2,
+        "tp_regen_sitting_multiplier": 2,
+        "tp_regen_pk_multiplier": 0.5
       }
     },
     {
@@ -22977,8 +23048,12 @@
       "skills": 3,
       "signature": {
         "name": "Arcane mastery",
-        "description": "Highest spell multiplier, with early and late capped area magic.",
-        "spell_multiplier": 2.4
+        "description": "Highest spell multiplier and area magic. Recover 0.8% max TP every 2 seconds; double while sitting, half in PK.",
+        "spell_multiplier": 2.4,
+        "tp_regen_rate": 0.008,
+        "tp_regen_seconds": 2,
+        "tp_regen_sitting_multiplier": 2,
+        "tp_regen_pk_multiplier": 0.5
       }
     },
     {
@@ -23032,8 +23107,12 @@
       "skills": 4,
       "signature": {
         "name": "Arcane mastery",
-        "description": "Highest spell multiplier, with early and late capped area magic.",
-        "spell_multiplier": 2.4
+        "description": "Highest spell multiplier and area magic. Recover 0.8% max TP every 2 seconds; double while sitting, half in PK.",
+        "spell_multiplier": 2.4,
+        "tp_regen_rate": 0.008,
+        "tp_regen_seconds": 2,
+        "tp_regen_sitting_multiplier": 2,
+        "tp_regen_pk_multiplier": 0.5
       }
     },
     {
@@ -23087,8 +23166,12 @@
       "skills": 6,
       "signature": {
         "name": "Arcane mastery",
-        "description": "Highest spell multiplier, with early and late capped area magic.",
-        "spell_multiplier": 2.4
+        "description": "Highest spell multiplier and area magic. Recover 0.8% max TP every 2 seconds; double while sitting, half in PK.",
+        "spell_multiplier": 2.4,
+        "tp_regen_rate": 0.008,
+        "tp_regen_seconds": 2,
+        "tp_regen_sitting_multiplier": 2,
+        "tp_regen_pk_multiplier": 0.5
       }
     },
     {
@@ -23142,8 +23225,12 @@
       "skills": 8,
       "signature": {
         "name": "Arcane mastery",
-        "description": "Highest spell multiplier, with early and late capped area magic.",
-        "spell_multiplier": 2.4
+        "description": "Highest spell multiplier and area magic. Recover 0.8% max TP every 2 seconds; double while sitting, half in PK.",
+        "spell_multiplier": 2.4,
+        "tp_regen_rate": 0.008,
+        "tp_regen_seconds": 2,
+        "tp_regen_sitting_multiplier": 2,
+        "tp_regen_pk_multiplier": 0.5
       }
     },
     {
@@ -23197,8 +23284,12 @@
       "skills": 10,
       "signature": {
         "name": "Arcane mastery",
-        "description": "Highest spell multiplier, with early and late capped area magic.",
-        "spell_multiplier": 2.4
+        "description": "Highest spell multiplier and area magic. Recover 0.8% max TP every 2 seconds; double while sitting, half in PK.",
+        "spell_multiplier": 2.4,
+        "tp_regen_rate": 0.008,
+        "tp_regen_seconds": 2,
+        "tp_regen_sitting_multiplier": 2,
+        "tp_regen_pk_multiplier": 0.5
       }
     },
     {
@@ -23600,7 +23691,7 @@
       "skills": 1,
       "signature": {
         "name": "Marksmanship",
-        "description": "Sustained ranged attacks and shots with a bow and arrows; AGI drives damage and accuracy."
+        "description": "Bows gain range and firing speed through progression. Fire/Frost arrows add 2 tiles. Rapid bows trade per-shot impact for cadence; AGI drives damage and accuracy."
       }
     },
     {
@@ -23654,7 +23745,7 @@
       "skills": 2,
       "signature": {
         "name": "Marksmanship",
-        "description": "Sustained ranged attacks and shots with a bow and arrows; AGI drives damage and accuracy."
+        "description": "Bows gain range and firing speed through progression. Fire/Frost arrows add 2 tiles. Rapid bows trade per-shot impact for cadence; AGI drives damage and accuracy."
       }
     },
     {
@@ -23708,7 +23799,7 @@
       "skills": 3,
       "signature": {
         "name": "Marksmanship",
-        "description": "Sustained ranged attacks and shots with a bow and arrows; AGI drives damage and accuracy."
+        "description": "Bows gain range and firing speed through progression. Fire/Frost arrows add 2 tiles. Rapid bows trade per-shot impact for cadence; AGI drives damage and accuracy."
       }
     },
     {
@@ -23762,7 +23853,7 @@
       "skills": 4,
       "signature": {
         "name": "Marksmanship",
-        "description": "Sustained ranged attacks and shots with a bow and arrows; AGI drives damage and accuracy."
+        "description": "Bows gain range and firing speed through progression. Fire/Frost arrows add 2 tiles. Rapid bows trade per-shot impact for cadence; AGI drives damage and accuracy."
       }
     },
     {
@@ -23816,7 +23907,7 @@
       "skills": 5,
       "signature": {
         "name": "Marksmanship",
-        "description": "Sustained ranged attacks and shots with a bow and arrows; AGI drives damage and accuracy."
+        "description": "Bows gain range and firing speed through progression. Fire/Frost arrows add 2 tiles. Rapid bows trade per-shot impact for cadence; AGI drives damage and accuracy."
       }
     },
     {
@@ -23870,7 +23961,7 @@
       "skills": 6,
       "signature": {
         "name": "Marksmanship",
-        "description": "Sustained ranged attacks and shots with a bow and arrows; AGI drives damage and accuracy."
+        "description": "Bows gain range and firing speed through progression. Fire/Frost arrows add 2 tiles. Rapid bows trade per-shot impact for cadence; AGI drives damage and accuracy."
       }
     },
     {
@@ -23924,7 +24015,7 @@
       "skills": 1,
       "signature": {
         "name": "Might",
-        "description": "Each STR gives 0.65 base attack power, versus 0.20 for Rogue and 0.15 for Archer.",
+        "description": "Each STR gives 0.65 base attack power, versus 0.20 for Rogue and 0.15 for Archer. Real shields grant double their armour value to Warriors.",
         "strength_damage": 0.65
       }
     },
@@ -23979,7 +24070,7 @@
       "skills": 2,
       "signature": {
         "name": "Might",
-        "description": "Each STR gives 0.65 base attack power, versus 0.20 for Rogue and 0.15 for Archer.",
+        "description": "Each STR gives 0.65 base attack power, versus 0.20 for Rogue and 0.15 for Archer. Real shields grant double their armour value to Warriors.",
         "strength_damage": 0.65
       }
     },
@@ -24034,7 +24125,7 @@
       "skills": 3,
       "signature": {
         "name": "Might",
-        "description": "Each STR gives 0.65 base attack power, versus 0.20 for Rogue and 0.15 for Archer.",
+        "description": "Each STR gives 0.65 base attack power, versus 0.20 for Rogue and 0.15 for Archer. Real shields grant double their armour value to Warriors.",
         "strength_damage": 0.65
       }
     },
@@ -24089,7 +24180,7 @@
       "skills": 4,
       "signature": {
         "name": "Might",
-        "description": "Each STR gives 0.65 base attack power, versus 0.20 for Rogue and 0.15 for Archer.",
+        "description": "Each STR gives 0.65 base attack power, versus 0.20 for Rogue and 0.15 for Archer. Real shields grant double their armour value to Warriors.",
         "strength_damage": 0.65
       }
     },
@@ -24144,7 +24235,7 @@
       "skills": 5,
       "signature": {
         "name": "Might",
-        "description": "Each STR gives 0.65 base attack power, versus 0.20 for Rogue and 0.15 for Archer.",
+        "description": "Each STR gives 0.65 base attack power, versus 0.20 for Rogue and 0.15 for Archer. Real shields grant double their armour value to Warriors.",
         "strength_damage": 0.65
       }
     },
@@ -24199,7 +24290,7 @@
       "skills": 6,
       "signature": {
         "name": "Might",
-        "description": "Each STR gives 0.65 base attack power, versus 0.20 for Rogue and 0.15 for Archer.",
+        "description": "Each STR gives 0.65 base attack power, versus 0.20 for Rogue and 0.15 for Archer. Real shields grant double their armour value to Warriors.",
         "strength_damage": 0.65
       }
     },
@@ -24254,7 +24345,11 @@
       "skills": 2,
       "signature": {
         "name": "Spirit bond",
-        "description": "Choose from 16 pets at the Aeven Eggkeeper or earn bound eggs from monsters. Five tiers share combat stats within each tier; stronger tiers improve damage and accuracy. One TP-funded living bond lasts until your death. Travel, logout and TP exhaustion keep it. PK areas use stronger spirit casting instead of pets."
+        "description": "Choose from 16 pets at the Aeven Eggkeeper or earn bound eggs from monsters. Five tiers share combat stats within each tier; stronger tiers improve damage and accuracy. One TP-funded living bond lasts until your death. Travel, logout and TP exhaustion keep it. Recover 0.4% max TP every 2 seconds; double sitting, half in PK. PK areas use stronger spirit casting instead of pets.",
+        "tp_regen_rate": 0.004,
+        "tp_regen_seconds": 2,
+        "tp_regen_sitting_multiplier": 2,
+        "tp_regen_pk_multiplier": 0.5
       }
     },
     {
@@ -24308,7 +24403,11 @@
       "skills": 5,
       "signature": {
         "name": "Spirit bond",
-        "description": "Choose from 16 pets at the Aeven Eggkeeper or earn bound eggs from monsters. Five tiers share combat stats within each tier; stronger tiers improve damage and accuracy. One TP-funded living bond lasts until your death. Travel, logout and TP exhaustion keep it. PK areas use stronger spirit casting instead of pets."
+        "description": "Choose from 16 pets at the Aeven Eggkeeper or earn bound eggs from monsters. Five tiers share combat stats within each tier; stronger tiers improve damage and accuracy. One TP-funded living bond lasts until your death. Travel, logout and TP exhaustion keep it. Recover 0.4% max TP every 2 seconds; double sitting, half in PK. PK areas use stronger spirit casting instead of pets.",
+        "tp_regen_rate": 0.004,
+        "tp_regen_seconds": 2,
+        "tp_regen_sitting_multiplier": 2,
+        "tp_regen_pk_multiplier": 0.5
       }
     },
     {
@@ -24362,7 +24461,11 @@
       "skills": 9,
       "signature": {
         "name": "Spirit bond",
-        "description": "Choose from 16 pets at the Aeven Eggkeeper or earn bound eggs from monsters. Five tiers share combat stats within each tier; stronger tiers improve damage and accuracy. One TP-funded living bond lasts until your death. Travel, logout and TP exhaustion keep it. PK areas use stronger spirit casting instead of pets."
+        "description": "Choose from 16 pets at the Aeven Eggkeeper or earn bound eggs from monsters. Five tiers share combat stats within each tier; stronger tiers improve damage and accuracy. One TP-funded living bond lasts until your death. Travel, logout and TP exhaustion keep it. Recover 0.4% max TP every 2 seconds; double sitting, half in PK. PK areas use stronger spirit casting instead of pets.",
+        "tp_regen_rate": 0.004,
+        "tp_regen_seconds": 2,
+        "tp_regen_sitting_multiplier": 2,
+        "tp_regen_pk_multiplier": 0.5
       }
     },
     {
@@ -24416,7 +24519,11 @@
       "skills": 13,
       "signature": {
         "name": "Spirit bond",
-        "description": "Choose from 16 pets at the Aeven Eggkeeper or earn bound eggs from monsters. Five tiers share combat stats within each tier; stronger tiers improve damage and accuracy. One TP-funded living bond lasts until your death. Travel, logout and TP exhaustion keep it. PK areas use stronger spirit casting instead of pets."
+        "description": "Choose from 16 pets at the Aeven Eggkeeper or earn bound eggs from monsters. Five tiers share combat stats within each tier; stronger tiers improve damage and accuracy. One TP-funded living bond lasts until your death. Travel, logout and TP exhaustion keep it. Recover 0.4% max TP every 2 seconds; double sitting, half in PK. PK areas use stronger spirit casting instead of pets.",
+        "tp_regen_rate": 0.004,
+        "tp_regen_seconds": 2,
+        "tp_regen_sitting_multiplier": 2,
+        "tp_regen_pk_multiplier": 0.5
       }
     },
     {
@@ -24470,7 +24577,11 @@
       "skills": 17,
       "signature": {
         "name": "Spirit bond",
-        "description": "Choose from 16 pets at the Aeven Eggkeeper or earn bound eggs from monsters. Five tiers share combat stats within each tier; stronger tiers improve damage and accuracy. One TP-funded living bond lasts until your death. Travel, logout and TP exhaustion keep it. PK areas use stronger spirit casting instead of pets."
+        "description": "Choose from 16 pets at the Aeven Eggkeeper or earn bound eggs from monsters. Five tiers share combat stats within each tier; stronger tiers improve damage and accuracy. One TP-funded living bond lasts until your death. Travel, logout and TP exhaustion keep it. Recover 0.4% max TP every 2 seconds; double sitting, half in PK. PK areas use stronger spirit casting instead of pets.",
+        "tp_regen_rate": 0.004,
+        "tp_regen_seconds": 2,
+        "tp_regen_sitting_multiplier": 2,
+        "tp_regen_pk_multiplier": 0.5
       }
     },
     {
@@ -24524,7 +24635,11 @@
       "skills": 22,
       "signature": {
         "name": "Spirit bond",
-        "description": "Choose from 16 pets at the Aeven Eggkeeper or earn bound eggs from monsters. Five tiers share combat stats within each tier; stronger tiers improve damage and accuracy. One TP-funded living bond lasts until your death. Travel, logout and TP exhaustion keep it. PK areas use stronger spirit casting instead of pets."
+        "description": "Choose from 16 pets at the Aeven Eggkeeper or earn bound eggs from monsters. Five tiers share combat stats within each tier; stronger tiers improve damage and accuracy. One TP-funded living bond lasts until your death. Travel, logout and TP exhaustion keep it. Recover 0.4% max TP every 2 seconds; double sitting, half in PK. PK areas use stronger spirit casting instead of pets.",
+        "tp_regen_rate": 0.004,
+        "tp_regen_seconds": 2,
+        "tp_regen_sitting_multiplier": 2,
+        "tp_regen_pk_multiplier": 0.5
       }
     }
   ],
@@ -25160,7 +25275,7 @@
       "armor": 14,
       "max_hp": 203,
       "max_tp": 77,
-      "basic_dps": 61.12,
+      "basic_dps": 72.44,
       "spell_dps": 81.72,
       "burst_dps": 81.72,
       "backstab_dps": 0,
@@ -25401,9 +25516,9 @@
       "armor": 19,
       "max_hp": 279,
       "max_tp": 92,
-      "basic_dps": 83.84,
+      "basic_dps": 105.86,
       "spell_dps": 104.73,
-      "burst_dps": 104.73,
+      "burst_dps": 105.86,
       "backstab_dps": 0,
       "passive_hp_per_second": 0,
       "companion_dps": 0,
@@ -25642,9 +25757,9 @@
       "armor": 29,
       "max_hp": 398,
       "max_tp": 127,
-      "basic_dps": 114.86,
+      "basic_dps": 159.6,
       "spell_dps": 127.86,
-      "burst_dps": 127.86,
+      "burst_dps": 159.6,
       "backstab_dps": 0,
       "passive_hp_per_second": 0,
       "companion_dps": 0,
@@ -25883,9 +25998,9 @@
       "armor": 42,
       "max_hp": 506,
       "max_tp": 142,
-      "basic_dps": 143.72,
+      "basic_dps": 199.33,
       "spell_dps": 175.95,
-      "burst_dps": 175.95,
+      "burst_dps": 199.33,
       "backstab_dps": 0,
       "passive_hp_per_second": 0,
       "companion_dps": 0,

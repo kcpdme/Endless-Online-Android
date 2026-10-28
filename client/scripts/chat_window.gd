@@ -204,6 +204,10 @@ func _build_quick(parent: Control) -> void:
 		style.content_margin_top = 4
 		style.content_margin_bottom = 4
 		quick_send.add_theme_stylebox_override(state, style)
+	button.reparent(quick_root)
+	button.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	button.position = Vector2(-64, 144)
+	button.size = Vector2(52, 52)
 	quick_root.hide()
 
 func hud_contains(point: Vector2) -> bool:

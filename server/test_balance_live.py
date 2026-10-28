@@ -19,7 +19,7 @@ def main():
     with tempfile.TemporaryDirectory(prefix='aster-balance-') as tmp:
         base=Path(tmp);runtime=base/'runtime';shutil.copytree(args.runtime,runtime,ignore=shutil.ignore_patterns('database.sdb*','*.log','*.bak'))
         os.environ['ASTER_VALE_RUNTIME']=str(runtime)
-        config=runtime/'config.local.ini';config.write_text(config.read_text()+'\nPort = 18896\nRecoverSpeed = 1h\nNPCRecoverSpeed = 1h\nPriestRegenRate = 0\nPriestSittingRegenRate = 0\nIPReconnectLimit = 0\n')
+        config=runtime/'config.local.ini';config.write_text(config.read_text()+'\nPort = 18896\nRecoverSpeed = 1h\nNPCRecoverSpeed = 1h\nBalance.2.tp_regen = 0\nBalance.3.tp_regen = 0\nBalance.7.tp_regen = 0\nPriestRegenRate = 0\nPriestSittingRegenRate = 0\nIPReconnectLimit = 0\n')
         # Meeting room forces relog to its NPC-boundary entry tile. Disable
         # that redirect only in this disposable map so staged combat fixtures
         # actually stand on the intended walkable room floor.

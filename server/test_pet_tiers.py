@@ -45,15 +45,20 @@ class PetTierTests(unittest.TestCase):
             for key in ('npc_id','power','accuracy','hit_cap','upkeep'):self.assertEqual(before_pet[key],pet[key],(ident,key))
             before_spell=old['spells'][str(after['spell_id'])];after_spell=SUMMON_SPELLS[after['spell_id']]
             self.assertEqual((before_spell['tp'],before_spell['cast_time']),(after_spell[3],after_spell[4]))
-    @unittest.skipUnless((ROOT/'work/summoner-50/runtime/data/balance-profile.json').exists(),'rewritten profile unavailable')
+    @unittest.skipUnless((ROOT/'work/class-combat/runtime/data/balance-profile.json').exists(),'rewritten profile unavailable')
     def test_non_pet_native_definitions_and_world_maps_are_preserved(self):
         from configure_balance import records
-        before=ROOT/'work/pet-tiers/runtime/data';after=ROOT/'work/summoner-50/runtime/data'
+        before=ROOT/'work/pet-tiers/runtime/data';after=ROOT/'work/class-combat/runtime/data'
         for name in ('pub/dat001.ecf','formulas.ini','aster-vale-skills.ini'):
             self.assertEqual((before/name).read_bytes(),(after/name).read_bytes(),name)
         for name,magic,size,limit in [('dat001.eif',b'EIF',58,608),('dtn001.enf',b'ENF',39,305)]:
             a=records((before/'pub'/name).read_bytes(),magic,size);b=records((after/'pub'/name).read_bytes(),magic,size)
-            self.assertEqual(a[:limit],b[:limit],name)
+            from combat_progression import SHIELDS
+            for old_row,new_row in zip(a[:limit],b[:limit]):
+                if name=='dat001.eif' and old_row['id'] in SHIELDS:
+                    new_row=dict(new_row,fields=bytearray(new_row['fields']))
+                    new_row['fields'][17:19]=old_row['fields'][17:19]
+                self.assertEqual(old_row,new_row,name)
         a=records((before/'pub/dtn001.enf').read_bytes(),b'ENF',39);b=records((after/'pub/dtn001.enf').read_bytes(),b'ENF',39)
         self.assertEqual(a[320],b[320],'Shipped merchant ID 321 must remain a shop')
         old=json.loads((before/'balance-profile.json').read_text());pet_spells={e['spell_id'] for e in old['eggs'].values()}
@@ -100,9 +105,9 @@ class PetTierTests(unittest.TestCase):
         self.assertEqual(repair(new),new)
         before,after=parse_emf(raw,5),parse_emf(new,5)
         npc=after['npcs'].pop();self.assertEqual(npc,dict(x=35,y=46,id=EGGKEEPER['id'],spawn_type=7,respawn=180,amount=1));self.assertEqual(before,after)
-    @unittest.skipUnless((ROOT/'work/summoner-50/runtime/data/balance-profile.json').exists(),'installed profile unavailable')
+    @unittest.skipUnless((ROOT/'work/class-combat/runtime/data/balance-profile.json').exists(),'installed profile unavailable')
     def test_all_shop_eggs_have_same_tier_price_no_sell_and_no_skillmaster_bypass(self):
-        r=ROOT/'work/summoner-50/runtime';p=json.loads((r/'data/balance-profile.json').read_text());self.assertEqual(p['version'],7)
+        r=ROOT/'work/class-combat/runtime';p=json.loads((r/'data/balance-profile.json').read_text());self.assertEqual(p['version'],8)
         import re
         text=(r/'data/aster-vale-shops.ini').read_text();trade=next(raw for key,raw in re.findall(r'^(\d+)\.trade\s*=\s*(.*)$',text,re.M) if int(key)==EGGKEEPER['id']);values=list(map(int,trade.split(',')))
         self.assertEqual(values,[n for ident in egg_stock() for n in (ident,EGGS[ident]['price'],0)])
@@ -111,10 +116,10 @@ class PetTierTests(unittest.TestCase):
             item=p['items'][str(ident)];self.assertEqual(item['special'],4);self.assertEqual(item['acquisition']['buy'],[EGGKEEPER['id']]);self.assertFalse(item['acquisition'].get('craft'))
             self.assertEqual(p['spells'][str(egg['spell_id'])]['max_level'],0)
             for raw in re.findall(r'^\d+\.learn\s*=\s*(.*)$',skilltext,re.M):self.assertNotIn(egg['spell_id'],list(map(int,raw.split(',')))[::14])
-    @unittest.skipUnless((ROOT/'work/summoner-50/runtime/data/balance-profile.json').exists(),'installed profile unavailable')
+    @unittest.skipUnless((ROOT/'work/class-combat/runtime/data/balance-profile.json').exists(),'installed profile unavailable')
     def test_combined_summoner_budget_stays_within_the_class_cohort(self):
         from balance_model import benchmarks
-        p=json.loads((ROOT/'work/summoner-50/runtime/data/balance-profile.json').read_text());rows=benchmarks(p)
+        p=json.loads((ROOT/'work/class-combat/runtime/data/balance-profile.json').read_text());rows=benchmarks(p)
         for level in (1,8,15,25,35,45):
             cohort=[r for r in rows if r['level']==level];summoner=next(r for r in cohort if r['class_id']==7);others=[r['burst_dps'] for r in cohort if r['class_id']!=7]
             self.assertEqual(summoner['companion_dps']>0,level>=TIERS['normal']['level']);self.assertLessEqual(summoner['burst_dps'],max(others)*1.10)
