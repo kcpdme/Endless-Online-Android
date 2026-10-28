@@ -19,7 +19,7 @@ func _ready() -> void:
  if not path.is_empty():artwork=game._texture(path)
  var gradient: Gradient=Gradient.new()
  gradient.offsets=PackedFloat32Array([0,.42,1])
- gradient.colors=PackedColorArray([Color(.025,.06,.07,.6),Color(.025,.06,.07,.2),Color(.025,.06,.07,.94)])
+ gradient.colors=PackedColorArray([Color(.025,.06,.07,.08),Color(.025,.06,.07,.06),Color(.025,.06,.07,.78)])
  shade=GradientTexture2D.new();shade.gradient=gradient;shade.fill_from=Vector2(.5,0);shade.fill_to=Vector2(.5,1)
  eyebrow=label("A WORLD OF ADVENTURE",13,Color("d9c497"))
  brand=label("Aster Vale",60,Color("f6dda0"))
@@ -33,7 +33,10 @@ func _ready() -> void:
  for spec: Dictionary in [
   {"role":"WARRIOR","gender":1,"hairstyle":7,"haircolor":4,"body":509,"boots":598,"head":0,"offhand":416,"weapon":498},
   {"role":"MAGICIAN","gender":1,"hairstyle":5,"haircolor":2,"body":501,"boots":574,"head":0,"offhand":0,"weapon":493},
-  {"role":"ARCHER","gender":0,"hairstyle":11,"haircolor":4,"body":508,"boots":590,"head":0,"offhand":425,"weapon":496}
+  {"role":"ARCHER","gender":0,"hairstyle":11,"haircolor":4,"body":508,"boots":590,"head":0,"offhand":425,"weapon":496},
+  {"role":"ROGUE","gender":1,"hairstyle":3,"haircolor":0,"body":505,"boots":582,"head":0,"offhand":0,"weapon":497},
+  {"role":"PRIEST","gender":0,"hairstyle":10,"haircolor":8,"body":500,"boots":566,"head":0,"offhand":0,"weapon":495},
+  {"role":"SUMMONER","gender":1,"hairstyle":14,"haircolor":6,"body":503,"boots":606,"head":0,"offhand":0,"weapon":494}
  ]:
   var slot: Control=Control.new();slot.size_flags_horizontal=Control.SIZE_EXPAND_FILL;slot.mouse_filter=Control.MOUSE_FILTER_IGNORE;party.add_child(slot)
   var preview: Control=preload("res://scripts/character_preview.gd").new();preview.game=game
@@ -68,7 +71,7 @@ func _draw() -> void:
  var bounds: Rect2=Rect2(Vector2.ZERO,size)
  draw_style_box(game._style(Color("18282a"),Color("b49458"),14),bounds)
  var inside: Rect2=Rect2(Vector2(5,5),size-Vector2(10,10))
- if artwork!=null:draw_texture_rect_region(artwork,inside,Rect2(12,145,616,320),Color(.82,.85,.8))
+ if artwork!=null:draw_texture_rect(artwork,inside,false)
  if shade!=null:draw_texture_rect(shade,inside,false)
  var y: float=size.y*.5+42
  draw_line(Vector2(size.x*.19,y),Vector2(size.x*.43,y),Color("ad8d50"),1,true)

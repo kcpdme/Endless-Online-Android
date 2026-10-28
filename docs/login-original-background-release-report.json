@@ -1,0 +1,46 @@
+{
+  "result": "passed",
+  "date": "2026-10-29",
+  "version": "0.49.1",
+  "version_code": 90,
+  "full_original_login_picture": true,
+  "original_logo_and_border_visible": true,
+  "source_texture_cropped": false,
+  "image_asset_edited": false,
+  "centered_aster_vale_title": true,
+  "classes": [
+    "Warrior",
+    "Magician",
+    "Archer",
+    "Rogue",
+    "Priest",
+    "Summoner"
+  ],
+  "native_existing_sprites": true,
+  "rendered_viewports": [
+    [
+      960,
+      540
+    ],
+    [
+      1280,
+      720
+    ],
+    [
+      1544,
+      720
+    ]
+  ],
+  "all_saved_login_controls_visible": true,
+  "script_errors": false,
+  "android_export_passed": true,
+  "signature_verified": true,
+  "alignment_16kb_verified": true,
+  "apk_sha256": "f53536aba4b95e16c389f965efeffe9b52c3e6a8839a6d3adf3d3043dc068726",
+  "phone_character_opened": false,
+  "phone_gameplay_tested": false,
+  "installed_version": "0.49.1",
+  "installed_version_code": 90,
+  "installed_bytes_verified": true,
+  "app_data_preserved": true
+}

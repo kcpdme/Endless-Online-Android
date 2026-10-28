@@ -1,6 +1,6 @@
-# Aster Vale login — Android 0.49.0 (89)
+# Aster Vale login — Android 0.49.1 (90)
 
-The login artwork now carries a large, centered gold **Aster Vale** title with a serif font, outline and shadow. Original forest scenery fills the framed panel; the old title portion is cropped from the composition. Three native paper-doll previews show Warrior, Magician and Archer equipment from the existing item catalog. A dark gradient keeps the title readable, with gold corner ornaments and a short tagline.
+The login artwork now carries a large, centered gold **Aster Vale** title with a serif font, outline and shadow. The complete original login picture fills the framed panel, including its original border and Endless Online logo. It is rendered from the full texture without cropping. A lighter gradient preserves the original artwork beneath the new centered title. Six native paper-doll previews show Warrior, Magician, Archer, Rogue, Priest and Summoner with equipment from the existing item catalog. Gold corner ornaments and a short tagline complete the panel.
 
 The account form uses its own dark frame. The Android Remember, automatic sign-in and Forget controls fit alongside the art, with Log in, Create account and Server settings visible in the initial phone view. Server details still expand when requested. Authentication, credential storage, character selection and creation use the existing handlers.
 
@@ -8,6 +8,8 @@ No generated character art or replacement sprites are required. The forest and c
 
 ## Verification
 
-Rendered the actual Godot UI at 960×540, 1280×720 and 1544×720 with all Android credential controls visible, using synthetic UI state without opening a live player character. Inspected the title, character sprites and form placement. Existing account/login/sign tests passed 151 checks; automatic-login regression passed 16; character flow passed 153 across four landscape sizes and zero through three characters. Detailed results accompany this document.
+Rendered the actual Godot UI at 960×540, 1280×720 and 1544×720 with all Android credential controls visible, using synthetic UI state without opening a live player character. Inspected the title, character sprites and form placement. For the underlying 0.49.0 login flow, account/login/sign tests passed 151 checks; automatic-login regression passed 16; character flow passed 153 across four landscape sizes and zero through three characters. Detailed results accompany this document.
 
 The release report records APK signature/alignment, embedded assets and phone update verification. The phone update preserves app data; visual checks use isolated fixtures.
+
+The 0.49.1 correction restores the full original artwork after the initial refresh cropped away its logo and border. The six-character lineup and all saved-login controls were rendered and inspected at 960×540, 1280×720 and 1544×720. No image asset was edited.
