@@ -150,7 +150,7 @@ func _ready() -> void:
 	# Android Back navigates within the game; desktop close requests retain normal quitting.
 	get_tree().quit_on_go_back = false
 	DisplayServer.window_set_min_size(Vector2i(960, 540))
-	camera = Camera2D.new()
+	camera = preload("res://scripts/world_camera.gd").new()
 	camera.zoom = Vector2(1.65, 1.65)
 	camera.position_smoothing_enabled = false
 	camera.position_smoothing_speed = 8.0
@@ -1045,6 +1045,11 @@ func _frame(character: Dictionary, direction: String, state: String, phase: floa
 func _draw_character_frame(character: Dictionary, at: Vector2, direction: String, state: String, tint: Color = Color.WHITE, phase: float = -1.0) -> bool:
 	var frame: Dictionary = _frame(character, direction, state, phase)
 	if frame.is_empty(): return false
+	# Moving actors keep the same sampling phase too, including the followed hero.
+	# All equipment layers share one aligned anchor; animation/network poses stay exact.
+	var to_pixels: Transform2D = get_viewport().get_final_transform() * get_global_transform_with_canvas()
+	var pixel_phase: Vector2 = preload("res://scripts/world_camera.gd").PIXEL_PHASE
+	at = to_pixels.affine_inverse() * ((to_pixels * at - pixel_phase).round() + pixel_phase)
 	if frame.has("layers"):
 		for layer: Dictionary in frame.layers: _paint_character_frame(layer, at, tint)
 		return true

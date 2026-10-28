@@ -1,0 +1,52 @@
+{
+  "result": "passed",
+  "release": {
+    "version_name": "0.43.2",
+    "version_code": 77,
+    "apk_sha256": "a6d2d8134ffa1d0368301dc27909ff59771062eebb9341864a34a61b56b46ed2",
+    "signer_sha256": "fbf80de525cf74dbedbcb1ae73899c6fe9a55ea9661b31e93637f074d7e979ed"
+  },
+  "device": {
+    "model": "Samsung Galaxy S23 Ultra (SM-S918B)",
+    "android_version": 17,
+    "sdk": 37
+  },
+  "installation": {
+    "streamed_update": "passed",
+    "installed_apk_sha256_matches": true,
+    "original_first_install_time_preserved": true,
+    "signature_verified": true,
+    "zipalign_16k_verified": true
+  },
+  "handset_checks": {
+    "public_tls_developer_fixture_login_and_world_entry": "passed",
+    "walking_beside_church_and_npcs": "passed",
+    "church_npc_and_player_art_visible": "passed",
+    "runtime_script_or_fatal_errors": 0,
+    "original_saved_login_character_selection_restored": true
+  },
+  "recordings": {
+    "before_version": "0.43.1",
+    "after_version": "0.43.2",
+    "native_resolution": [
+      2316,
+      1080
+    ],
+    "purpose": "Live visual and walking smoke checks. Compressed recordings with different timing are not a quantitative pixel comparison; use the rendered sampling report for that evidence."
+  },
+  "data_preservation": {
+    "app_data_cleared": false,
+    "app_uninstalled": false,
+    "saved_login_preserved": true,
+    "private_app_data_byte_comparison": "Not available on the signed non-debuggable release."
+  },
+  "regressions": [
+    "2624 rendered sampling checks across 27 cases, all corrected channel differences zero",
+    "403 name checks",
+    "96 name occlusion checks",
+    "109 rendered stepping-stone checks",
+    "prediction and reconciliation",
+    "four-direction bow and NPC rendering",
+    "movement timing at 15/24/30/59/60/90/120/144 FPS"
+  ]
+}

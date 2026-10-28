@@ -1,0 +1,57 @@
+{
+  "local": [
+    {
+      "fps": 15,
+      "max_position_error_px": 0.0001220703125,
+      "stationary_frames": 0,
+      "tiles_per_second": 2.38095238095238
+    },
+    {
+      "fps": 24,
+      "max_position_error_px": 0.0001220703125,
+      "stationary_frames": 0,
+      "tiles_per_second": 2.38095238095238
+    },
+    {
+      "fps": 30,
+      "max_position_error_px": 0.0001220703125,
+      "stationary_frames": 0,
+      "tiles_per_second": 2.38095238095238
+    },
+    {
+      "fps": 59,
+      "max_position_error_px": 0.0001220703125,
+      "stationary_frames": 0,
+      "tiles_per_second": 2.38095238095238
+    },
+    {
+      "fps": 60,
+      "max_position_error_px": 0.0001220703125,
+      "stationary_frames": 0,
+      "tiles_per_second": 2.38095238095238
+    },
+    {
+      "fps": 90,
+      "max_position_error_px": 0.0001220703125,
+      "stationary_frames": 0,
+      "tiles_per_second": 2.38095238095238
+    },
+    {
+      "fps": 120,
+      "max_position_error_px": 0.0001220703125,
+      "stationary_frames": 0,
+      "tiles_per_second": 2.38095238095238
+    },
+    {
+      "fps": 144,
+      "max_position_error_px": 0.0001220703125,
+      "stationary_frames": 0,
+      "tiles_per_second": 2.38095238095238
+    }
+  ],
+  "native_step_ms": 420,
+  "remote_buffer_ms": 100,
+  "remote_jitter_idle_frames": 0,
+  "remote_jitter_max_position_error_px": 0.0001220703125,
+  "result": "passed"
+}

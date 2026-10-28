@@ -208,3 +208,14 @@ After the fix, the same 180 engine touch traces report **zero premature steps, z
 Additional checks pass: 38 mobile controls/culling/lifecycle checks, 32 heading/input combinations, original movement controls, eight simulated frame rates and controlled jitter, committed release/network regressions, gameplay/world smoke, 26 guild UI checks and 141 Python tests. The pre-existing intermittent two-resource Godot shutdown diagnostic can still appear after successful assertions.
 
 The native step pace remains 420 ms; the fix removes startup delay and incorrect input interpretation, rather than increasing server movement speed. Version 0.35.1 / code 48 uses the existing Android package and release key. No Android device is connected, so installation and physical device verification remain outstanding.
+
+## Version 0.43.2: display sampling during camera movement
+
+Church-window and stationary-NPC shimmer came from changing the texture's
+display sampling phase as the camera followed fractional movement. The camera
+now aligns after zoom, stretch and quake offsets, and actor artwork aligns its
+final shared equipment anchor. Simulation positions, prediction, native 420 ms
+steps and stepping-stone lift stay unchanged. The correction is bounded by half
+a physical display pixel per axis. See
+[WORLD_PIXEL_SAMPLING.md](WORLD_PIXEL_SAMPLING.md) for the rendered comparison
+and movement/nameplate regressions.

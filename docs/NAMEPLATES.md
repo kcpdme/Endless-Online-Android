@@ -28,7 +28,9 @@ At default zoom, names retain the readable 17 px NPC and 18 px player sizes
 and existing colors. Zoom changes the font size in whole screen pixels rather
 than stretching a small world-space glyph texture. Glyphs render at screen
 resolution and their baselines align after viewport/device scaling. They share the sprite's cached
-interpolation sample; sprites and camera retain fractional movement.
+interpolation sample. Since 0.43.2, the final camera translation and sprite
+drawing anchors align to display-pixel sampling; logical movement remains
+fractional. See [world sampling](WORLD_PIXEL_SAMPLING.md).
 
 A mobile collision safeguard hides a **whole** inspected name if it overlaps
 another actor's standing/current artwork bounds. It needs 6 px clearance before

@@ -136,7 +136,7 @@ func sync() -> void:
 	var map_id: int = int(game.world.get("id",-1))
 	if map_id!=frame_cache_map:
 		frame_images.clear();frame_bounds.clear();frame_cache_map=map_id
-	game.camera.force_update_scroll()
+	game.camera.align_to_display_pixels()
 	var world_to_local: Transform2D = get_global_transform_with_canvas().affine_inverse()*game.get_global_transform_with_canvas()
 	var actors: Array[Dictionary] = _actors()
 	var selected: String = inspected_key if Time.get_ticks_msec()<inspected_until and inspected_map==int(game.world.get("id",-1)) else ""

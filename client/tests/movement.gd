@@ -19,6 +19,7 @@ func _run() -> void:
 	game.online_mode = true
 	var c: Node = game.online
 	c.active = true
+	game.online.panel.hide() # Entered-world fixture has no login modal above Stats.
 	c.streaming = true
 	var me: Dictionary = {"name": "devfixture", "player_id": 100, "map_id": 5, "x": 40, "y": 40, "direction": 3}
 	c._apply_snapshot({"player": me.duplicate(), "players": [], "npcs": [], "items": []}, true)
