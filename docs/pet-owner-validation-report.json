@@ -1,0 +1,33 @@
+{
+  "result": "passed",
+  "balance_profile": 9,
+  "android_version": "0.47.0",
+  "unit_tests": 29,
+  "native_combat_checks": 60,
+  "native_balance_checks": 515,
+  "native_pet_tier_checks": 140,
+  "native_owner_pet_egg_emote_checks": 31,
+  "godot_pet_ui_checks": 134,
+  "godot_prediction_cadence_checks": 14,
+  "full_native_patch_stack_reconstruction_pass": true,
+  "native_patch_count": 22,
+  "live_backup": "/opt/aster-vale/backups/pet-owner-v9-20261028T091351Z",
+  "live_native_sha256": "7f398d2f53f9776b1d413497a72236030c1a637ecdfac89f0cc2c1434ef82c58",
+  "phone_installed_and_ui_tested": true,
+  "public_native_persistence_pass": true,
+  "administrator_character": "summontest",
+  "admin_level": 4,
+  "report_hashes": {
+    "pet-owner-android-report.json": "b26c9622dded47c59534c8e7740a174afabe8af1acc01c355593a4213defc8e0",
+    "pet-owner-balance-report.json": "644d1d0e30ed8a6a257819f1c399bc0d7c60f8325165d3564f3500b32ddd7f20",
+    "pet-owner-client-report.json": "399fcafa48840f3bf0fa1842de457dbe86918559f8c342ba0d966842d5fd718f",
+    "pet-owner-combat-report.json": "d213a2732d6c1c003432bfdb310ee08f20fd866f174302d82d797e9b35e7985b",
+    "pet-owner-deployment-report.json": "4d4de249319b543ec4e6d065c3c8f493280606990bba3d7de6ddff4d00ab0fb9",
+    "pet-owner-native-report.json": "711e4e91bb440f2edd393ccb2c2524a49e23480f621eac467e12b3b7d72e3466",
+    "pet-owner-phone-report.json": "b25a3fa1e6f5926a36217baa18adcaeab18885df3a902c8f568b4d2acc204168",
+    "pet-owner-public-report.json": "77a70b9e32a4ae5d62e79dd39fee9eed78be2283a5930ee1291118c4f373843c",
+    "pet-owner-tiers-report.json": "99546a4dec7b9f2b4e9f8f8067bc36dce6f939202c664a2790f4d8cde1755f3d",
+    "pet-owner-tp-report.json": "cee8ebabcfbb8cc0d7d3810d458d0e56b8222dda8f62aafc14fc15f7e21de012"
+  },
+  "apk_sha256": "1c32c65cdc98872d9219200d95a91ebc590c907d351d5225bb529968b993b55d"
+}

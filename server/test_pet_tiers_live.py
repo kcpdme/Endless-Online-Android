@@ -10,7 +10,7 @@ from pet_catalog import EGGS,COMPANIONS,TIERS,EGGKEEPER
 ROOT=Path(__file__).resolve().parents[1]
 
 def main():
-    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--runtime',type=Path,default=ROOT/'work/class-combat/runtime');p.add_argument('--godot',type=Path);a=p.parse_args()
+    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--runtime',type=Path,default=ROOT/'work/pet-owner-scale/runtime');p.add_argument('--godot',type=Path);a=p.parse_args()
     checks=[];pets=[];processes=[];streams=[]
     def check(ok,why):
         if not ok:raise AssertionError(why)
@@ -40,7 +40,7 @@ def main():
             try:s.register(f['username'],f['password']);s.login(f['username'],f['password']);s.create_character(f['character_name'])
             finally:s.close()
             time.sleep(.6);return f
-        def stage(f,clas=7,level=40,inventory='1,100000;',spells='23,0;35,0;',location=(5,35,45),admin=0,hp=30000):
+        def stage(f,clas=7,level=40,inventory='1,500000;',spells='23,0;35,0;',location=(5,35,45),admin=0,hp=30000):
             time.sleep(.65)
             with closing(sqlite3.connect(r/'database.sdb')) as db,db:
                 result=db.execute('UPDATE characters SET class=?,level=?,map=?,x=?,y=?,cha=100,"int"=50,"con"=1000,hp=?,tp=30000,spells=?,inventory=?,admin=? WHERE name=? AND account=?',(clas,level,*location,hp,spells,inventory,admin,f['character_name'],f['username']));assert result.rowcount==1
@@ -92,9 +92,14 @@ def main():
                     if egg['tier'] not in seen:
                         until(s,lambda:s.stats['tp']==before-tier['tp']-tier['upkeep']);check(True,'Native tier upkeep charges the configured TP')
                         target=next(n for n in s.state['npcs'] if n['id']==1 and (n['x'],n['y'])==(36,45));s.events.clear();s.cast_spell(23,'npc',target['index'])
-                        until(s,lambda:any(e.get('kind')=='companion_attack' and e.get('damage',0)>0 for e in s.events))
-                        damage=next(e['damage'] for e in s.events if e.get('kind')=='companion_attack' and e.get('damage',0)>0);base=int((10+s.stats['level']*.5+s.stats['charisma']*.55+s.stats['intelligence']*.2)*tier['power'])
-                        check(base-2<=damage<=base+2,'Native pet damage uses its tier power and current owner attributes');seen.add(egg['tier'])
+                        deadline=time.monotonic()+12;last_strike=0
+                        while time.monotonic()<deadline and not any(e.get('kind')=='companion_attack' and e.get('damage',0)>0 for e in s.events):
+                            if time.monotonic()-last_strike>.8:s.strike(3);last_strike=time.monotonic()
+                            s.poll_actions()
+                            if select.select([s.sock],[],[],.03)[0]:s.pump()
+                        check(any(e.get('kind')=='companion_attack' and e.get('damage',0)>0 for e in s.events),'Actively commanded '+egg['tier']+' pet reaches and damages the target')
+                        damage=next(e['damage'] for e in s.events if e.get('kind')=='companion_attack' and e.get('damage',0)>0);low=int(s.stats['min_damage']*tier['power']);high=__import__('math').ceil(s.stats['max_damage']*tier['power'])
+                        check(max(1,low)<=damage<=max(1,high),'Native pet damage scales from the current owner attack roll');seen.add(egg['tier'])
                     s.cast_spell(35,'self');until(s,lambda:not getattr(s,'companion',None))
                     check(any(x['id']==spell for x in s.spells) and s.item_amount(ident)==1,'Dismissal preserves the living bond and spare egg')
                     pets.append(dict(egg_id=ident,spell_id=spell,npc_id=pet['npc_id'],tier=egg['tier']))
@@ -124,11 +129,11 @@ def main():
                 stage(f,level=40);fixture=b/'fixture.json';fixture.write_text(json.dumps(f));fixture.chmod(0o600)
                 start('gateway',[sys.executable,ROOT/'server/gateway.py','--port',18931,'--eo-port',18930],18931)
                 start('websocket',[sys.executable,ROOT/'server/ws_gateway.py','--port',18932,'--tcp-port',18931,'--deps-dir',ROOT/'work/server-build/python'],18932)
-                env=dict(os.environ,ASTER_VALE_PET_FIXTURE=str(fixture),ASTER_VALE_TEST_HOST='ws://127.0.0.1:18932/ws',ASTER_VALE_TEST_REPORT=str(ROOT/'work/class-combat/client-report.json'),XDG_DATA_HOME=str(b/'godot-data'),XDG_CONFIG_HOME=str(b/'godot-config'))
+                env=dict(os.environ,ASTER_VALE_PET_FIXTURE=str(fixture),ASTER_VALE_TEST_HOST='ws://127.0.0.1:18932/ws',ASTER_VALE_TEST_REPORT=str(ROOT/'work/pet-owner-scale/client-report.json'),XDG_DATA_HOME=str(b/'godot-data'),XDG_CONFIG_HOME=str(b/'godot-config'))
                 result=subprocess.run([str(a.godot.resolve()),'--headless','--path',str(ROOT/'client'),'--script','res://tests/pet_tiers_live.gd'],env=env,capture_output=True,text=True,timeout=120)
-                (ROOT/'work/class-combat/client-live.log').write_text(result.stdout+result.stderr);check(result.returncode==0 and 'SCRIPT ERROR' not in result.stderr,'Real Godot Eggkeeper UI and live hatching/summoning pass')
+                (ROOT/'work/pet-owner-scale/client-live.log').write_text(result.stdout+result.stderr);check(result.returncode==0 and 'SCRIPT ERROR' not in result.stderr,'Real Godot Eggkeeper UI and live hatching/summoning pass')
             report=dict(result='passed',checks=len(checks),native_pet_choices=pets,tiers=len(seen),native_purchase_hatch_summon_upkeep_dismiss_death=True,isolated_database=True,production_database_opened=False)
-            (ROOT/'work/class-combat/native-report.json').write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report,indent=2))
+            (ROOT/'work/pet-owner-scale/native-report.json').write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report,indent=2))
         finally:
             for proc in reversed(processes):
                 proc.terminate()
@@ -136,6 +141,6 @@ def main():
                 except subprocess.TimeoutExpired:proc.kill();proc.wait()
             for stream in streams:stream.close()
             for name in ('native','gateway','websocket'):
-                if (b/(name+'.log')).exists():shutil.copy2(b/(name+'.log'),ROOT/'work/class-combat'/(name+'.log'))
+                if (b/(name+'.log')).exists():shutil.copy2(b/(name+'.log'),ROOT/'work/pet-owner-scale'/(name+'.log'))
 
 if __name__=='__main__':main()

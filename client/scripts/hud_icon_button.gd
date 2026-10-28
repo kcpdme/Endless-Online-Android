@@ -48,6 +48,11 @@ func _draw() -> void:
 		draw_colored_polygon(hand, light)
 		draw_line(Vector2(-2, 5), Vector2(8, 2), gold, 2.0, true)
 		draw_line(Vector2(-1, 10), Vector2(9, 8), gold, 2.0, true)
+	elif kind == "emote":
+		draw_circle(Vector2.ZERO, 21, gold)
+		draw_circle(Vector2(-7, -6), 3, ink)
+		draw_circle(Vector2(7, -6), 3, ink)
+		draw_arc(Vector2(0, 2), 11, 0.15, PI - 0.15, 20, ink, 3, true)
 	elif kind == "pet":
 		for at: Vector2 in [Vector2(-15, -12), Vector2(-5, -21), Vector2(7, -21), Vector2(17, -11)]: draw_circle(at, 5.5, light)
 		draw_colored_polygon(PackedVector2Array([Vector2(-16, 10), Vector2(-9, -2), Vector2(0, -7), Vector2(10, -1), Vector2(18, 11), Vector2(12, 20), Vector2(0, 15), Vector2(-11, 20)]), gold)

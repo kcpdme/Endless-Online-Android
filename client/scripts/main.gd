@@ -46,6 +46,7 @@ var paperdoll: ClassicPaperdoll
 var stats_ui: CharacterStats
 var player_hit_flash: float = 0.0
 var character_panel: Control
+var emote_ui: RefCounted
 var pet_ui: RefCounted
 var bag_button: HudIconButton
 var character_button: HudIconButton
@@ -301,6 +302,7 @@ func _process(delta: float) -> void:
 	if quick_items != null: quick_items.refresh()
 	if online != null: online.shortcuts.tick()
 	if chat_ui != null: chat_ui.tick()
+	if emote_ui != null: emote_ui.tick()
 	if guild_ui != null: guild_ui.tick()
 	if feature_ui != null: feature_ui.tick()
 	if admin_ui != null: admin_ui.tick()
@@ -470,7 +472,7 @@ func _step(direction: Vector2i) -> void:
 func local_render_pose() -> Dictionary:
 	var state: String = "frames" if moving else "cast" if online_mode and skills_ui.is_chanting(int(online.player.get("player_id",0))) else "attack" if swing_clock>0.0 else "idle"
 	if online_mode and online.seated(): state="sit_chair" if int(online.player.sitting)==1 else "sit_floor"
-	var base: Dictionary = {"position":player_world,"direction":facing,"state":state,"phase":animation_clock if moving else -1.0}
+	var base: Dictionary = {"position":player_world,"direction":facing,"state":state,"phase":animation_clock * (online.MOVE_SECONDS / step_duration if online_mode else 1.0) if moving else -1.0}
 	return stepping_stones.pose(base,tile_specs,step_origin_tile,player_tile,step_progress)
 
 func play_stone_step(from: Vector2i, to: Vector2i) -> void:
@@ -527,6 +529,7 @@ func _release_attack() -> void:
 	if attack_button != null: attack_button.automatic = false
 
 func _cancel_controls(force_stop: bool = false) -> void:
+	if emote_ui != null: emote_ui.cancel()
 	_release_attack()
 	_cancel_movement(force_stop)
 
@@ -541,6 +544,9 @@ func _screen_to_world(point: Vector2) -> Vector2:
 	return get_global_transform_with_canvas().affine_inverse() * point
 
 func _input(event: InputEvent) -> void:
+	if emote_ui != null and emote_ui.input(event):
+		get_viewport().set_input_as_handled()
+		return
 	var dismissing_modal: bool = Time.get_ticks_msec() < modal_input_until
 	if event is InputEventKey:
 		if event.keycode == KEY_F11 and event.pressed and not event.echo and started and online_mode and not _modal_open() and not _editing_text():
@@ -820,7 +826,21 @@ func _place_enemy() -> void:
 	enemy_tile = player_tile
 
 func _online_attack_seconds() -> float:
-	return clampf(float((online.player.get("combat", {}) as Dictionary).get("attack_seconds", ONLINE_ATTACK_COOLDOWN)), 0.26, ONLINE_ATTACK_COOLDOWN)
+	var combat: Dictionary = online.player.get("combat", {}) as Dictionary
+	var seconds: float = float(combat.get("attack_seconds", ONLINE_ATTACK_COOLDOWN))
+	var offset: Vector2i = {"north":Vector2i.UP,"east":Vector2i.RIGHT,"south":Vector2i.DOWN,"west":Vector2i.LEFT}.get(facing, Vector2i.DOWN)
+	var tile: Vector2i = player_tile
+	for distance: int in range(int(combat.get("close_range", 0))):
+		tile += offset
+		for npc: Dictionary in online.npcs:
+			if Vector2i(int(npc.x), int(npc.y)) == tile and online.is_combat_npc(npc):
+				return float(combat.get("close_attack_seconds", seconds))
+		if bool(online.world_rules.get("pk", false)):
+			for peer: Dictionary in online.players:
+				if int(peer.get("player_id", 0)) != int(online.player.get("player_id", 0)) and Vector2i(int(peer.x), int(peer.y)) == tile:
+					return float(combat.get("close_attack_seconds", seconds))
+		if server_blocked.has(tile): break
+	return clampf(seconds, 0.26, ONLINE_ATTACK_COOLDOWN)
 
 func _attack() -> void:
 	if online_mode:
@@ -1220,12 +1240,12 @@ func _build_ui() -> void:
 	bottom_hint.set_anchors_preset(Control.PRESET_BOTTOM_LEFT, true)
 	bag_button = HudIconButton.new()
 	bag_button.kind = "bag"
-	bag_button.position = Vector2(-266, 24)
+	bag_button.position = Vector2(-88, -88) + COMBAT_HUD_SHIFT
 	bag_button.size = Vector2(68, 68)
 	bag_button.tooltip_text = "Inventory bag"
 	bag_button.pressed.connect(_toggle_inventory)
 	root.add_child(bag_button)
-	bag_button.set_anchors_preset(Control.PRESET_TOP_RIGHT, true)
+	bag_button.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT, true)
 	sit_button = HudIconButton.new()
 	sit_button.kind = "sit"
 	sit_button.position = Vector2(-174, -88) + COMBAT_HUD_SHIFT
@@ -1297,6 +1317,8 @@ func _build_ui() -> void:
 	online.build_ui(root)
 	chat_ui = preload("res://scripts/chat_window.gd").new()
 	chat_ui.build(self, root)
+	emote_ui = preload("res://scripts/emote_control.gd").new()
+	emote_ui.build(self, chat_ui.quick_root)
 	quest_journal = preload("res://scripts/quest_journal.gd").new()
 	quest_journal.build(self, root)
 	speech_layer = preload("res://scripts/speech_bubbles.gd").new()

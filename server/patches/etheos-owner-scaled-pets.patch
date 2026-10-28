@@ -1,0 +1,83 @@
+--- a/src/eoserv_config.cpp
++++ b/src/eoserv_config.cpp
+@@ -59,6 +59,7 @@
+ 	eoserv_config_default(config, "ClassIdentityRules", false);
+     eoserv_config_default(config, "ClassSignatureRules", false);
+     eoserv_config_default(config, "CombatProgression", false);
++    eoserv_config_default(config, "OwnerScaledPets", false);
+     eoserv_config_default(config, "MortalSpiritBonds", false);
+     eoserv_config_default(config, "PriestRegenRate", 0.02);
+     eoserv_config_default(config, "PriestSittingRegenRate", 0.04);
+--- a/src/npc.cpp
++++ b/src/npc.cpp
+@@ -634,14 +634,35 @@
+     // Class-bound eggs only enter their source monster's table for a Summoner
+     // who actually wins this kill's ordinary loot rights. Other loot is unchanged.
+     std::vector<NPC_Drop*> eligible_drops;
++    std::vector<NPC_Drop*> eligible_eggs;
+     for (const auto& candidate : this->Data().drops)
+     {
+         auto egg = this->map->world->config.find("BalanceEgg." + util::to_string(candidate->id) + ".npc");
+         if (this->map->world->config["MortalSpiritBonds"] && egg != this->map->world->config.end()
+           && (!drop_winner || drop_winner->clas != 7 || int(egg->second) != this->id)) continue;
++        if (this->map->world->config["OwnerScaledPets"] && egg != this->map->world->config.end())
++        {
++            // A separate roll is not multiplied or normalised by ordinary loot.
++            if (drop_winner && drop_winner->clas == 7 && int(egg->second) == this->id)
++                eligible_eggs.push_back(candidate.get());
++            continue;
++        }
+         eligible_drops.push_back(candidate.get());
+     }
+ 
++    if (!eligible_eggs.empty())
++    {
++        double roll = util::rand(0.0,100.0), offset = 0.0;
++        for (auto *egg : eligible_eggs)
++        {
++            double chance = util::clamp<double>(this->map->world->config["BalanceEgg."+util::to_string(egg->id)+".chance"],0.0,100.0);
++            if (roll >= offset && roll < offset+chance) { drop = egg; break; }
++            offset += chance;
++        }
++    }
++    // Preserve the original one-drop-per-kill rule; an egg occupies that slot.
++    if (!drop)
++    {
+ 	if (dropratemode == 1)
+ 	{
+ 		std::vector<NPC_Drop *> drops;
+@@ -720,6 +741,8 @@
+ 			}
+ 		}
+ 	}
++
++    }
+ 
+ 
+ 	int dropuid = 0;
+@@ -1097,6 +1120,10 @@
+ 	}
+ 
+ 	target->hp -= limitamount;
++    // Defensive assistance requires a real aggressive-monster hit on a living
++    // owner. Misses, player attacks and the pet's own damage cannot renew it.
++    if (this->map->world->config["OwnerScaledPets"] && limitamount > 0 && target->hp > 0
++      && this->ENF().type == ENF::Aggressive) target->CommandCompanion(this);
+ 	if (target->party)
+ 	{
+ 		target->party->UpdateHP(target);
+@@ -1237,6 +1264,14 @@
+         std::unordered_map<std::string,double> vars;
+         owner->FormulaVars(vars); target->FormulaVars(vars,"target_");
+         vars["damage"] = util::rand(std::max(1,base-2),base+2); vars["critical"] = 0;
++        if (this->map->world->config["OwnerScaledPets"])
++        {
++            double scaled = std::max(0,util::rand(owner->mindam,owner->maxdam)) * this->companion_power;
++            int whole = int(std::floor(scaled));
++            // Integer combat packets retain fractional expected power: 10*.45
++            // yields 4 or 5, averaging 4.5, without an independent stat budget.
++            vars["damage"] = whole + (util::rand(0.0,1.0) < scaled-whole ? 1 : 0);
++        }
+         vars["modifier"] = this->map->world->config["MobRate"];
+         int amount = std::max(1,int(rpn_eval(rpn_parse(this->map->world->formulas_config["damage"]),vars)));
+         double hit_cap = 0.95;

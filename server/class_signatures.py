@@ -1,11 +1,11 @@
 """Profile-three professions: explicit additions, hatch rewards and coverage inputs."""
 SIGNATURES = {
     2: dict(name='Renewal',description='Regenerate 2% maximum HP every 2 seconds; 4% while sitting. Half strength in PK areas. Recover 0.3% max TP every 2 seconds; double while sitting, half in PK.',regen_rate=.02,sitting_regen_rate=.04,regen_seconds=2),
-    3: dict(name='Arcane mastery',description='Highest spell multiplier and area magic. Recover 0.8% max TP every 2 seconds; double while sitting, half in PK.',spell_multiplier=2.4),
-    4: dict(name='Backstab',description='A successful adjacent attack directly behind a target deals randomly 1.5x or 2x damage with a Rogue blade. Does not stack with critical hits.',backstab_multipliers=[1.5,2.0]),
-    5: dict(name='Marksmanship',description='Bows gain range and firing speed through progression. Fire/Frost arrows add 2 tiles. Rapid bows trade per-shot impact for cadence; AGI drives damage and accuracy.'),
+    3: dict(name='Arcane mastery',description='Highest spell multiplier and 25% stronger area magic. Recover 0.8% max TP every 2 seconds; double while sitting, half in PK.',spell_multiplier=2.4,area_multiplier=1.25),
+    4: dict(name='Backstab',description='Move twice as fast. A successful adjacent attack directly behind a target deals randomly 1.5x or 2x damage with a Rogue blade. Does not stack with critical hits.',backstab_multipliers=[1.5,2.0],walking_multiplier=2),
+    5: dict(name='Marksmanship',description='Red Bow fires at x1, Crossbow x1.2, Scav/Dawn x1.5 or x2 with a target within 2 tiles ahead. Fire/Frost arrows add 2 tiles. Rapid bows trade per-shot impact for cadence; AGI drives damage and accuracy.'),
     6: dict(name='Might',description='Each STR gives 0.65 base attack power, versus 0.20 for Rogue and 0.15 for Archer. Real shields grant double their armour value to Warriors.',strength_damage=.65),
-    7: dict(name='Spirit bond',description='Choose from 16 pets at the Aeven Eggkeeper or earn bound eggs from monsters. Five tiers share combat stats within each tier; stronger tiers improve damage and accuracy. One TP-funded living bond lasts until your death. Travel, logout and TP exhaustion keep it. Recover 0.4% max TP every 2 seconds; double sitting, half in PK. PK areas use stronger spirit casting instead of pets.'),
+    7: dict(name='Spirit bond',description='Choose from 16 pets at the Aeven Eggkeeper or earn bound eggs from monsters. Five tiers multiply your equipped attack by 0.45/0.7/1.0/1.2/1.5. Pets retaliate when an aggressive monster hurts you; higher tiers spend more TP. One TP-funded living bond lasts until your death. Travel, logout and TP exhaustion keep it. Recover 0.4% max TP every 2 seconds; double sitting, half in PK. PK areas use stronger spirit casting instead of pets.'),
 }
 ITEMS=[
  (544,'Stormcaller Staff',389,3,'intelligence',4),

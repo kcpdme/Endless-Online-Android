@@ -50,7 +50,7 @@ class LiveSession(NativeFeaturesMixin, WorldFeedbackMixin, AdminMixin, BarberMix
         if len(self.pending_moves)>=4:raise EOError('Wait for outstanding movement')
         if int(map_id)!=self.state['map_id']:raise EOError('Movement map changed')
         if not(0<=x<=251 and 0<=y<=251):raise EOError('Movement destination is outside protocol bounds')
-        # Bound the queue; the native server enforces its 400 ms cadence. Network jitter
+        # Bound the queue; the native server enforces its per-class walking cadence. Network jitter
         # may deliver valid, evenly spaced client inputs in a burst. Never sleep here.
         self.skillmaster=None
         self.quest_dialog=None;self.quest_context=None;self.inn=None;self.guild=None;self.barber=None
@@ -60,7 +60,8 @@ class LiveSession(NativeFeaturesMixin, WorldFeedbackMixin, AdminMixin, BarberMix
         # prediction. Rechecking a moving NPC here rejects an already-predicted
         # step using a newer world state, creating an extra rollback absent in EO.
         move=dict(seq=seq,x=x,y=y,direction=direction)
-        self.timestamp+=42
+        from combat_progression import movement_seconds
+        self.timestamp+=round(movement_seconds(self)*100)
         self.send(6,8,number(direction,1)+number(self.timestamp,3)+number(x,1)+number(y,1))
         self.pending_moves.append(move)
         self.last_walk=now;self.last_input_seq=seq;self.metrics['moves']+=1
@@ -113,9 +114,9 @@ class LiveSession(NativeFeaturesMixin, WorldFeedbackMixin, AdminMixin, BarberMix
         # Original Attack_Use accepts 48+ timestamp ticks; >=60 forces old facing.
         # Send the desired direction directly, avoiding Face's additional 120 ms queue slot.
         self.cancel_spell()
-        from combat_progression import equipped_combat
+        from combat_progression import equipped_combat, mobility_enabled
         combat=equipped_combat(self)
-        self.timestamp+=max(1,round(combat['attack_seconds']/.52*50))
+        self.timestamp+=50 if mobility_enabled() else max(1,round(combat['attack_seconds']/.52*50))
         self.send(11,10,number(direction,1)+number(self.timestamp,3))
         self.state['self']['direction']=direction
         return dict(sent=True,**combat)
@@ -339,6 +340,8 @@ class LiveSession(NativeFeaturesMixin, WorldFeedbackMixin, AdminMixin, BarberMix
         data['companion']=getattr(self,'companion',None)
         from combat_progression import equipped_combat
         data['player']['combat']=equipped_combat(self)
+        from combat_progression import publish_movement
+        publish_movement(self,data)
         data['player']['drunk_seconds']=max(0,getattr(self,'drunk_until',0)-time.monotonic())
         data['party']=getattr(self,'party_members',[])
         invitation=getattr(self,'party_invitation',None)

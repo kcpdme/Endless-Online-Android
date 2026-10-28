@@ -660,7 +660,7 @@ func _start_step(tile: Vector2i, direction: String) -> void:
 	game.step_to = game.tile_position(tile)
 	game.player_tile = tile
 	game.step_progress = 0.0
-	game.step_duration = MOVE_SECONDS
+	game.step_duration = float((player.get("combat", {}) as Dictionary).get("move_seconds", MOVE_SECONDS))
 	game.facing = direction
 	game.animation_clock = 0.0
 	game.moving = true
@@ -840,14 +840,14 @@ func _track_entities(kind: String, rows: Array[Dictionary], id_field: String, at
 		if steps.size() >= MAX_PREDICTIONS:
 			remote_motion[key] = {"to":target,"tile":tile,"steps":[],"walk_start":now}
 			continue
-		var end: float = float(steps.back().start) + MOVE_SECONDS if not steps.is_empty() else now - 1.0
+		var end: float = float(steps.back().start) + float(steps.back().get("duration", MOVE_SECONDS)) if not steps.is_empty() else now - 1.0
 		var start: float = end if end >= now else now + REMOTE_BUFFER_SECONDS
 		if end < now: motion.walk_start = start
 		# Original EO queues/replays adjacent steps instead of restarting the
 		# current interpolation from a fractional position on every packet.
 		if kind=="player" and int(record.get(id_field,-1))!=int(player.get("player_id",-2)):
 			game.play_stone_step(game._world_tile(motion.to),tile)
-		steps.append({"from":motion.to,"to":target,"start":start,"direction":_facing(record.get("direction", 0))})
+		steps.append({"from":motion.to,"to":target,"start":start,"duration":float(record.get("move_seconds", MOVE_SECONDS)),"direction":_facing(record.get("direction", 0))})
 		motion.to = target
 		motion.tile = tile
 	for key: Variant in remote_motion.keys():
@@ -857,13 +857,14 @@ func _remote_sample(key: String, fallback: Vector2, now: float) -> Dictionary:
 	var motion: Dictionary = remote_motion.get(key, {}) as Dictionary
 	if motion.is_empty(): return {"position":fallback,"state":"idle","phase":0.0}
 	var steps: Array = motion.steps
-	while steps.size() > 1 and now >= float(steps[0].start) + MOVE_SECONDS:
+	while steps.size() > 1 and now >= float(steps[0].start) + float(steps[0].get("duration", MOVE_SECONDS)):
 		steps.pop_front()
 	if steps.is_empty(): return {"position":motion.to,"state":"idle","phase":0.0}
 	var step: Dictionary = steps[0]
 	var elapsed: float = now - float(step.start)
-	var fraction: float = clampf(elapsed / MOVE_SECONDS, 0.0, 1.0)
-	return {"position":(step.from as Vector2).lerp(step.to as Vector2, fraction),"state":"frames" if elapsed >= 0.0 and elapsed < MOVE_SECONDS else "idle","phase":maxf(0.0, now - float(motion.walk_start)),"direction":step.direction,"from_tile":game._world_tile(step.from),"to_tile":game._world_tile(step.to),"step_progress":fraction}
+	var duration: float = float(step.get("duration", MOVE_SECONDS))
+	var fraction: float = clampf(elapsed / duration, 0.0, 1.0)
+	return {"position":(step.from as Vector2).lerp(step.to as Vector2, fraction),"state":"frames" if elapsed >= 0.0 and elapsed < duration else "idle","phase":maxf(0.0, now - float(motion.walk_start)) * MOVE_SECONDS / duration,"direction":step.direction,"from_tile":game._world_tile(step.from),"to_tile":game._world_tile(step.to),"step_progress":fraction}
 
 func _remote_position(key: String, fallback: Vector2) -> Vector2:
 	return _remote_sample(key, fallback, Time.get_ticks_msec() / 1000.0).position

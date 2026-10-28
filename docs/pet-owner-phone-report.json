@@ -1,0 +1,21 @@
+{
+  "result": "passed",
+  "version": "0.47.0",
+  "version_code": 84,
+  "device": "Samsung Galaxy S23 Ultra",
+  "full_signed_update": true,
+  "installed_bytes_match_release": true,
+  "apk_sha256": "1c32c65cdc98872d9219200d95a91ebc590c907d351d5225bb529968b993b55d",
+  "original_first_install_time_preserved": true,
+  "saved_login_preserved": true,
+  "app_process_running": true,
+  "handset_gameplay_verified": true,
+  "summontest_level50_entered": true,
+  "admin_crown_visible": true,
+  "bottom_right_inventory_opens": true,
+  "hold_picker_visible": true,
+  "drag_release_happy_emote_rendered": true,
+  "no_godot_or_android_runtime_errors": true,
+  "character_items_gold_equipment_unmodified_by_phone_test": true,
+  "final_direction_and_animation_fix_installed": true
+}

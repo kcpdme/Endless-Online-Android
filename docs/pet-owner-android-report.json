@@ -1,0 +1,19 @@
+{
+  "result": "passed",
+  "version": "0.47.0",
+  "version_code": 84,
+  "apk_sha256": "1c32c65cdc98872d9219200d95a91ebc590c907d351d5225bb529968b993b55d",
+  "signature_verified": true,
+  "signer_sha256": "fbf80de525cf74dbedbcb1ae73899c6fe9a55ea9661b31e93637f074d7e979ed",
+  "alignment_16kb_verified": true,
+  "embedded_catalog_matches": true,
+  "embedded_manifest_matches": true,
+  "aeven_map_matches": true,
+  "emote_bytecode_present": true,
+  "source_sha256": {
+    "main.gd": "69da4a5c07121738b9d9273d4515516e447394836693536b5c57f81496753d56",
+    "online_controller.gd": "f2ce4f14309b380ac1b92c6e7aad77cddb862c1ac9667da7d0a132c3dcebf4d3",
+    "emote_control.gd": "78096e9e2ad949138a10d37f0835b2c9dfb5c45767fde99c6f11ed994a8292ea",
+    "combat_details.gd": "7369dddb76a815ffe72ebc26243fc32f1bd6182e91f0160ac64509dff885e3c2"
+  }
+}

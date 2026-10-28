@@ -166,6 +166,7 @@ def build_classes(original):
         put(row['fields'],1,p['family'])
         for a,key in enumerate(ATTRIBUTES):put(row['fields'],2+a*2,p['base_attributes'][key],2)
         result[str(ident)]=dict(id=ident,name=p['name'],base=num(row['fields'],0),type=p['family'],build_hint=p['hint'],spell_scale=p['spell_scale'],heal_wis=p['heal_wis'],heal_int=p['heal_int'],heal_cha=p['heal_cha'],base_attributes=p['base_attributes'])
+    result['3']['area_multiplier']=CLASSES[3]['area_multiplier']
     result['7']['pk_spell_scale']=CLASSES[7]['pk_spell_scale']
     for ident,signature in SIGNATURES.items():result[str(ident)]['signature']=signature
     result['8']['signature']=SIGNATURES[2]
@@ -181,7 +182,7 @@ def build_spells(original):
         name,level,classes,tp,chant,low,high,hp,target,restrict,radius,cap=p;row=rows[ident-1];f=row['fields']
         row['names'][0]=name;row['names'][1]=name.lower()
         for start,value,size in [(4,tp,2),(8,chant,1),(11,2 if ident==17 else 0 if hp else 1,1),(17,restrict,1),(18,target,1),(23,low,2),(25,high,2),(34,hp,2)]:put(f,start,value,size)
-        result[str(ident)]=dict(id=ident,name=name,shout=name.lower(),tp=tp,cast_time=chant,type=num(f,11),restrict=restrict,target=target,min_damage=low,max_damage=high,hp=hp,level_requirement=level,allowed_classes=list(classes),area_radius=radius,area_targets=cap,area_scale=.8 if radius==1 else .6 if radius else 1,max_level=10,training_bonus=2)
+        result[str(ident)]=dict(id=ident,name=name,shout=name.lower(),tp=tp,cast_time=chant,type=num(f,11),restrict=restrict,target=target,min_damage=low,max_damage=high,hp=hp,level_requirement=level,allowed_classes=list(classes),area_radius=radius,area_targets=cap,area_scale=((.8 if radius==1 else .6)*CLASSES[3]['area_multiplier'] if classes==(3,) else .8 if radius==1 else .6) if radius else 1,max_level=10,training_bonus=2)
         if classes in ((4,),(6,)) and not radius:result[str(ident)]['range']=1
         if classes==(5,):result[str(ident)].update(requires_bow=True,range=10,weapon_range=True)
         if ident in {e['spell_id'] for e in EGGS.values()}:result[str(ident)].update(learn_source='Hatch a bound egg from Aeven Eggkeeper or its monster; your death breaks the pet bond',max_level=0,bond_lost_on_death=True)
@@ -322,7 +323,7 @@ def build_quest(original):
 def configure(runtime):
     runtime=Path(runtime)
     if any((runtime/r).is_symlink() for r in ('data','data/pub')):raise ValueError('Materialize runtime data directories first')
-    if any(marker not in (runtime/'etheos').read_bytes() for marker in (b'PetEggTiers',b'CombatProgression')):raise ValueError('Install the combat-progression-capable native binary first')
+    if any(marker not in (runtime/'etheos').read_bytes() for marker in (b'PetEggTiers',b'CombatProgression',b'OwnerScaledPets',b'ClassMobility')):raise ValueError('Install the combat-progression-capable native binary first')
     baseline=runtime/'data/balance-v1-baseline';manifest_path=runtime/'data/balance-v1-manifest.json'
     old_manifest=json.loads(manifest_path.read_text()) if manifest_path.exists() else None
     if old_manifest:
@@ -342,7 +343,7 @@ def configure(runtime):
     profile=dict(version=VERSION,levels=LEVELS,max_skill_level=10,classes=classes,spells=spells,items=items,npcs=npcs,class_identity=True,class_signatures=True,mortal_spirit_bonds=True,companions=COMPANIONS,eggs=EGGS,pet_tiers=TIERS,pet_roster=ROSTER,eggkeeper=EGGKEEPER)
     proposed['data/balance-profile.json']=(json.dumps(profile,indent=2)+'\n').encode()
     cfg=(runtime/'config.local.ini').read_text()
-    values={'CombatProgression':'yes','PetEggTiers':'yes','MortalSpiritBonds':'yes','ClassSignatureRules':'yes','PriestRegenRate':'0.02','PriestSittingRegenRate':'0.04','CompanionLifetimeSeconds':'0','ClassIdentityRules':'yes','BalanceRevamp':'yes','UseClassFormulas':'yes','MaxSkillLevel':'10','SkillsFile':'./data/aster-vale-skills.ini'}
+    values={'ClassMobility':'yes','OwnerScaledPets':'yes','CombatProgression':'yes','PetEggTiers':'yes','MortalSpiritBonds':'yes','ClassSignatureRules':'yes','PriestRegenRate':'0.02','PriestSittingRegenRate':'0.04','CompanionLifetimeSeconds':'0','ClassIdentityRules':'yes','BalanceRevamp':'yes','UseClassFormulas':'yes','MaxSkillLevel':'10','SkillsFile':'./data/aster-vale-skills.ini'}
     for ident,rate in TP_RECOVERY.items():
         values[f'Balance.{ident}.tp_regen']=str(rate)
     for ident,traits in BOWS.items():
@@ -351,6 +352,7 @@ def configure(runtime):
     for ident in SHIELDS:values[f'BalanceItem.{ident}.warrior_shield']='yes'
     for ident,p in CLASSES.items():
         for key in ('spell_scale','heal_wis','heal_int','heal_cha'):values[f'Balance.{ident}.{key}']=str(p[key])
+    values['Balance.3.area_multiplier']=str(CLASSES[3]['area_multiplier'])
     values['Balance.7.pk_spell_scale']=str(CLASSES[7]['pk_spell_scale'])
     for ident,p in SPELLS.items():
         _,level,allowed,*_,radius,cap=p
@@ -363,6 +365,7 @@ def configure(runtime):
     for ident,egg in EGGS.items():
         values[f'BalanceEgg.{ident}.spell']=str(egg['spell_id'])
         values[f'BalanceEgg.{ident}.npc']=str(egg['npc_id'])
+        values[f'BalanceEgg.{ident}.chance']=str(egg['chance'])
         values[f'BalancePetSpell.{egg["spell_id"]}.egg']=str(ident)
     for key,value in values.items():
         pattern=r'^'+re.escape(key)+r'\s*=.*$';line=f'{key} = {value}'.rstrip()

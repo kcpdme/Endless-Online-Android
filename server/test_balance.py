@@ -11,7 +11,7 @@ BASE=Path(__file__).resolve().parents[1]/'work/server-build/runtime'
 @unittest.skipUnless((BASE/'data/pub/dat001.eif').exists(),'native resources unavailable')
 class BalanceTests(unittest.TestCase):
     def setUp(self):
-        self.temp=tempfile.TemporaryDirectory();self.addCleanup(self.temp.cleanup);self.runtime=Path(self.temp.name)/'runtime';shutil.copytree(BASE/'data',self.runtime/'data');(self.runtime/'config.local.ini').write_text('PasswordSalt = do-not-change\nExpRate = 500%\n');(self.runtime/'etheos').write_bytes(b'isolated fixture BalanceRevamp ClassIdentityRules ClassSignatureRules MortalSpiritBonds PetEggTiers CombatProgression')
+        self.temp=tempfile.TemporaryDirectory();self.addCleanup(self.temp.cleanup);self.runtime=Path(self.temp.name)/'runtime';shutil.copytree(BASE/'data',self.runtime/'data');(self.runtime/'config.local.ini').write_text('PasswordSalt = do-not-change\nExpRate = 500%\n');(self.runtime/'etheos').write_bytes(b'isolated fixture BalanceRevamp ClassIdentityRules ClassSignatureRules MortalSpiritBonds PetEggTiers CombatProgression OwnerScaledPets ClassMobility')
         from configure_feature_content import configure as features
         features(self.runtime)
 

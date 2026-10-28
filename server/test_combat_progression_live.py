@@ -12,7 +12,7 @@ from combat_progression import TP_RECOVERY,SHIELDS
 ROOT=Path(__file__).resolve().parents[1]
 
 def main():
- out=ROOT/'work/class-combat';checks=[];sessions=[];observed={}
+ out=ROOT/'work/pet-owner-scale';checks=[];sessions=[];observed={}
  def check(ok,why):
   if not ok:raise AssertionError(why)
   checks.append(why)
@@ -66,10 +66,39 @@ def main():
     while time.monotonic()-start<1.55:
      s.timestamp+=50;s.send(11,10,number(3,1)+number(s.timestamp,3));sent+=1;pump(s,.055)
     hits=[e for e in s.events if e.get('kind')=='npc_damage'];observed[str(bow)]=len(hits)
-    bound=math.ceil(1.55/({297:.5,316:1/3,457:.25}[bow]))
+    bound=math.ceil(1.55/({297:.5,316:.5/1.2,457:.25}[bow]))
     check(1<=len(hits)<=bound,'Forged rapid packets cannot bypass server wall-clock cooldown');close(s)
    print('observed cadence',observed,flush=True)
    check(observed['297']<observed['316']<observed['457'],'Native Crossbow/Scav firing rates exceed starter Bow in order')
+   # Range-gated bonus and normal-class movement are checked against native time.
+   distances={}
+   for x in (7,9,10):
+    stage(f,bow=457,x=x);s=login(f);s.events.clear();start=time.monotonic();times=[]
+    while time.monotonic()-start<2.2:
+     s.timestamp+=50;s.send(11,10,number(3,1)+number(s.timestamp,3));pump(s,.04)
+     events=[e for e in s.events if e.get('kind')=='npc_damage']
+     while len(times)<len(events):times.append(time.monotonic()-start)
+    distances[str(11-x)]=dict(hits=len(times),intervals=[round(b-a,3) for a,b in zip(times,times[1:])])
+    floor=.32 if x==7 else .23
+    check(len(times)>=5 and all(b-a>=floor for a,b in zip(times,times[1:])),'Scav near/far cadence is bounded by actual target distance')
+    close(s)
+   check(distances['1']['hits']>distances['4']['hits'] and distances['2']['hits']>distances['4']['hits'],'Scav x2 only within two tiles; x1.5 outside')
+   walking={}
+   for clas in (4,6):
+    stage(f,clas=clas,bow=0,offhand=0,x=2);s=login(f)
+    check(s.snapshot()['player']['combat']['move_seconds']==(.21 if clas==4 else .42),'Prediction metadata follows current native class')
+    start=time.monotonic();times=[];previous=s.metrics['walk_acks']
+    for x in (3,4,5,6):
+     s.timestamp+=100 # Forged large timestamps cannot speed up native queue.
+     s.move(3,x-2,21,x,8)
+    while time.monotonic()-start<2.5 and len(times)<4:
+     pump(s,.012)
+     if s.metrics['walk_acks']>previous:times.append(time.monotonic()-start);previous=s.metrics['walk_acks']
+    check(len(times)==4 and s.state['self']['x']==6,'Four queued valid native walks complete without correction')
+    intervals=[b-a for a,b in zip(times,times[1:])];floor=.18 if clas==4 else .38
+    check(all(i>=floor for i in intervals),'Forged movement timestamps cannot bypass current-class queue cadence')
+    walking[str(clas)]=dict(acknowledgements=4,mean_step_seconds=round(sum(intervals)/len(intervals),3));close(s)
+   check(1.7<walking['6']['mean_step_seconds']/walking['4']['mean_step_seconds']<2.3,'Rogue really walks twice as fast as Warrior')
    for clas in (3,7,2,8):
     stage(f,clas=clas,bow=0,offhand=0);s=login(f);start=s.stats['tp'];pump(s,2.15);gain=max(1,int(s.stats['max_tp']*TP_RECOVERY[clas]));check(s.stats['tp']-start in (gain,gain*2),f'Class {clas} standing TP pulse: delta={s.stats["tp"]-start}, expected={gain}, maximum={s.stats["max_tp"]}')
     before=s.stats['tp'];s.sit();before=s.stats['tp'];pump(s,2.15);sitting=max(1,int(s.stats['max_tp']*TP_RECOVERY[clas]*2));check(s.stats['tp']-before in (sitting,sitting*2),f'Class {clas} sitting: delta={s.stats["tp"]-before}, expected={sitting}, max={s.stats["max_tp"]}, seat={s.state["self"].get("sitting")}');close(s)
@@ -86,7 +115,7 @@ def main():
    stage(op,clas=6,bow=0,offhand=0,x=11,map_id=22);target=login(op)
    stage(f,bow=457,offhand=425,x=2,map_id=22);s=login(f);s.events.clear();s.strike(3);pump(s,.3);pump(target,.1)
    check(any(e.get('kind')=='player_damage' for e in s.events+target.events),'Extended bow range reaches a player in PK');close(s);close(target)
-   report=dict(result='passed',checks=len(checks),range_boundaries=True,elemental_arrows_and_walls=True,forged_cadence_limited=True,observed_hits_in_1_55_seconds=observed,standing_sitting_pk_recovery=True,warrior_shield_double=True,pk_range=True,isolated_database=True,production_database_opened=False)
+   report=dict(result='passed',checks=len(checks),range_boundaries=True,elemental_arrows_and_walls=True,forged_cadence_limited=True,observed_hits_in_1_55_seconds=observed,scav_distance_cadence=distances,native_class_walking=walking,standing_sitting_pk_recovery=True,warrior_shield_double=True,pk_range=True,isolated_database=True,production_database_opened=False)
    (out/'combat-report.json').write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report,indent=2))
   finally:
    for s in sessions:s.close()

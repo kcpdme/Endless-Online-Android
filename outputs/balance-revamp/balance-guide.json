@@ -1,5 +1,5 @@
 {
-  "version": 8,
+  "version": 9,
   "equipment": [
     {
       "id": 20,
@@ -1378,7 +1378,7 @@
         ]
       },
       "range_tiles": 4,
-      "attack_speed": 1.25,
+      "attack_speed": 1.1,
       "shot_power": 0.95,
       "backstab": false
     },
@@ -3004,7 +3004,7 @@
         "craft": []
       },
       "range_tiles": 4,
-      "attack_speed": 1.25,
+      "attack_speed": 1.1,
       "shot_power": 0.95,
       "backstab": false
     },
@@ -3100,7 +3100,7 @@
         ]
       },
       "range_tiles": 5,
-      "attack_speed": 1.5,
+      "attack_speed": 1.2,
       "shot_power": 0.85,
       "backstab": false
     },
@@ -3761,7 +3761,9 @@
         ]
       },
       "range_tiles": 7,
-      "attack_speed": 2.0,
+      "attack_speed": 1.5,
+      "close_attack_speed": 2.0,
+      "close_range": 2,
       "shot_power": 0.7,
       "backstab": false
     },
@@ -4098,7 +4100,9 @@
         ]
       },
       "range_tiles": 8,
-      "attack_speed": 2.0,
+      "attack_speed": 1.5,
+      "close_attack_speed": 2.0,
+      "close_range": 2,
       "shot_power": 0.7,
       "backstab": false
     },
@@ -20858,7 +20862,7 @@
       ],
       "area_radius": 2,
       "area_targets": 5,
-      "area_scale": 0.6,
+      "area_scale": 0.75,
       "max_level": 10,
       "training_bonus": 2
     },
@@ -21010,7 +21014,7 @@
       ],
       "area_radius": 2,
       "area_targets": 5,
-      "area_scale": 0.6,
+      "area_scale": 0.75,
       "max_level": 10,
       "training_bonus": 2
     },
@@ -21098,7 +21102,7 @@
       ],
       "area_radius": 2,
       "area_targets": 5,
-      "area_scale": 0.6,
+      "area_scale": 0.75,
       "max_level": 10,
       "training_bonus": 2
     },
@@ -21177,8 +21181,10 @@
         "tier": "rare",
         "tier_name": "Rare",
         "tier_color": "78b9ee",
-        "upkeep": 2,
-        "power": 1.05,
+        "upkeep": 5,
+        "upkeep_seconds": 2,
+        "power": 0.7,
+        "damage_basis": "owner_attack",
         "accuracy": 3,
         "hit_cap": 0.86
       },
@@ -21308,8 +21314,10 @@
         "tier": "epic",
         "tier_name": "Epic",
         "tier_color": "bf94ef",
-        "upkeep": 3,
-        "power": 1.2,
+        "upkeep": 7,
+        "upkeep_seconds": 2,
+        "power": 1.0,
+        "damage_basis": "owner_attack",
         "accuracy": 6,
         "hit_cap": 0.9
       },
@@ -21348,8 +21356,10 @@
         "tier": "mythic",
         "tier_name": "Mythic",
         "tier_color": "f08093",
-        "upkeep": 5,
-        "power": 1.3,
+        "upkeep": 12,
+        "upkeep_seconds": 2,
+        "power": 1.5,
+        "damage_basis": "owner_attack",
         "accuracy": 12,
         "hit_cap": 0.95
       },
@@ -21729,7 +21739,7 @@
       ],
       "area_radius": 1,
       "area_targets": 3,
-      "area_scale": 0.8,
+      "area_scale": 1.0,
       "max_level": 10,
       "training_bonus": 2,
       "template_id": 16
@@ -21789,8 +21799,10 @@
         "tier": "normal",
         "tier_name": "Normal",
         "tier_color": "b8c5c9",
-        "upkeep": 1,
-        "power": 0.65,
+        "upkeep": 2,
+        "upkeep_seconds": 2,
+        "power": 0.45,
+        "damage_basis": "owner_attack",
         "accuracy": 0,
         "hit_cap": 0.82
       },
@@ -21829,8 +21841,10 @@
         "tier": "normal",
         "tier_name": "Normal",
         "tier_color": "b8c5c9",
-        "upkeep": 1,
-        "power": 0.65,
+        "upkeep": 2,
+        "upkeep_seconds": 2,
+        "power": 0.45,
+        "damage_basis": "owner_attack",
         "accuracy": 0,
         "hit_cap": 0.82
       },
@@ -21869,8 +21883,10 @@
         "tier": "normal",
         "tier_name": "Normal",
         "tier_color": "b8c5c9",
-        "upkeep": 1,
-        "power": 0.65,
+        "upkeep": 2,
+        "upkeep_seconds": 2,
+        "power": 0.45,
+        "damage_basis": "owner_attack",
         "accuracy": 0,
         "hit_cap": 0.82
       },
@@ -21909,8 +21925,10 @@
         "tier": "rare",
         "tier_name": "Rare",
         "tier_color": "78b9ee",
-        "upkeep": 2,
-        "power": 1.05,
+        "upkeep": 5,
+        "upkeep_seconds": 2,
+        "power": 0.7,
+        "damage_basis": "owner_attack",
         "accuracy": 3,
         "hit_cap": 0.86
       },
@@ -21949,8 +21967,10 @@
         "tier": "rare",
         "tier_name": "Rare",
         "tier_color": "78b9ee",
-        "upkeep": 2,
-        "power": 1.05,
+        "upkeep": 5,
+        "upkeep_seconds": 2,
+        "power": 0.7,
+        "damage_basis": "owner_attack",
         "accuracy": 3,
         "hit_cap": 0.86
       },
@@ -21989,8 +22009,10 @@
         "tier": "epic",
         "tier_name": "Epic",
         "tier_color": "bf94ef",
-        "upkeep": 3,
-        "power": 1.2,
+        "upkeep": 7,
+        "upkeep_seconds": 2,
+        "power": 1.0,
+        "damage_basis": "owner_attack",
         "accuracy": 6,
         "hit_cap": 0.9
       },
@@ -22029,8 +22051,10 @@
         "tier": "epic",
         "tier_name": "Epic",
         "tier_color": "bf94ef",
-        "upkeep": 3,
-        "power": 1.2,
+        "upkeep": 7,
+        "upkeep_seconds": 2,
+        "power": 1.0,
+        "damage_basis": "owner_attack",
         "accuracy": 6,
         "hit_cap": 0.9
       },
@@ -22069,8 +22093,10 @@
         "tier": "legend",
         "tier_name": "Legend",
         "tier_color": "edb75b",
-        "upkeep": 4,
-        "power": 1.25,
+        "upkeep": 9,
+        "upkeep_seconds": 2,
+        "power": 1.2,
+        "damage_basis": "owner_attack",
         "accuracy": 9,
         "hit_cap": 0.93
       },
@@ -22109,8 +22135,10 @@
         "tier": "legend",
         "tier_name": "Legend",
         "tier_color": "edb75b",
-        "upkeep": 4,
-        "power": 1.25,
+        "upkeep": 9,
+        "upkeep_seconds": 2,
+        "power": 1.2,
+        "damage_basis": "owner_attack",
         "accuracy": 9,
         "hit_cap": 0.93
       },
@@ -22149,8 +22177,10 @@
         "tier": "legend",
         "tier_name": "Legend",
         "tier_color": "edb75b",
-        "upkeep": 4,
-        "power": 1.25,
+        "upkeep": 9,
+        "upkeep_seconds": 2,
+        "power": 1.2,
+        "damage_basis": "owner_attack",
         "accuracy": 9,
         "hit_cap": 0.93
       },
@@ -22189,8 +22219,10 @@
         "tier": "mythic",
         "tier_name": "Mythic",
         "tier_color": "f08093",
-        "upkeep": 5,
-        "power": 1.3,
+        "upkeep": 12,
+        "upkeep_seconds": 2,
+        "power": 1.5,
+        "damage_basis": "owner_attack",
         "accuracy": 12,
         "hit_cap": 0.95
       },
@@ -22229,8 +22261,10 @@
         "tier": "mythic",
         "tier_name": "Mythic",
         "tier_color": "f08093",
-        "upkeep": 5,
-        "power": 1.3,
+        "upkeep": 12,
+        "upkeep_seconds": 2,
+        "power": 1.5,
+        "damage_basis": "owner_attack",
         "accuracy": 12,
         "hit_cap": 0.95
       },
@@ -22269,8 +22303,10 @@
         "tier": "mythic",
         "tier_name": "Mythic",
         "tier_color": "f08093",
-        "upkeep": 5,
-        "power": 1.3,
+        "upkeep": 12,
+        "upkeep_seconds": 2,
+        "power": 1.5,
+        "damage_basis": "owner_attack",
         "accuracy": 12,
         "hit_cap": 0.95
       },
@@ -22285,7 +22321,7 @@
       "spell_id": 28,
       "level": 10,
       "npc_id": 74,
-      "chance": 3,
+      "chance": 2.0,
       "template_id": 11,
       "icon": "res://icons/rare_egg.svg",
       "tier": "rare",
@@ -22299,7 +22335,7 @@
       "spell_id": 33,
       "level": 20,
       "npc_id": 121,
-      "chance": 1.5,
+      "chance": 2.0,
       "template_id": 11,
       "icon": "res://icons/epic_egg.svg",
       "tier": "epic",
@@ -22313,13 +22349,13 @@
       "spell_id": 34,
       "level": 40,
       "npc_id": 225,
-      "chance": 8,
+      "chance": 0.5,
       "template_id": 11,
       "icon": "res://icons/mythic_egg.svg",
       "tier": "mythic",
       "tier_name": "Mythic",
       "tier_color": "f08093",
-      "price": 12000
+      "price": 100000
     },
     "612": {
       "name": "Penguin Spirit Egg",
@@ -22327,7 +22363,7 @@
       "spell_id": 51,
       "level": 5,
       "npc_id": 13,
-      "chance": 2,
+      "chance": 2.0,
       "template_id": 11,
       "icon": "res://icons/normal_egg.svg",
       "tier": "normal",
@@ -22341,7 +22377,7 @@
       "spell_id": 52,
       "level": 5,
       "npc_id": 7,
-      "chance": 2,
+      "chance": 2.0,
       "template_id": 11,
       "icon": "res://icons/normal_egg.svg",
       "tier": "normal",
@@ -22355,7 +22391,7 @@
       "spell_id": 53,
       "level": 5,
       "npc_id": 5,
-      "chance": 2,
+      "chance": 2.0,
       "template_id": 11,
       "icon": "res://icons/normal_egg.svg",
       "tier": "normal",
@@ -22369,7 +22405,7 @@
       "spell_id": 54,
       "level": 10,
       "npc_id": 17,
-      "chance": 2,
+      "chance": 2.0,
       "template_id": 11,
       "icon": "res://icons/rare_egg.svg",
       "tier": "rare",
@@ -22383,7 +22419,7 @@
       "spell_id": 55,
       "level": 10,
       "npc_id": 133,
-      "chance": 2,
+      "chance": 2.0,
       "template_id": 11,
       "icon": "res://icons/rare_egg.svg",
       "tier": "rare",
@@ -22397,7 +22433,7 @@
       "spell_id": 56,
       "level": 20,
       "npc_id": 134,
-      "chance": 1.5,
+      "chance": 2.0,
       "template_id": 11,
       "icon": "res://icons/epic_egg.svg",
       "tier": "epic",
@@ -22411,7 +22447,7 @@
       "spell_id": 57,
       "level": 20,
       "npc_id": 138,
-      "chance": 1.5,
+      "chance": 2.0,
       "template_id": 11,
       "icon": "res://icons/epic_egg.svg",
       "tier": "epic",
@@ -22425,7 +22461,7 @@
       "spell_id": 58,
       "level": 30,
       "npc_id": 9,
-      "chance": 1,
+      "chance": 1.0,
       "template_id": 11,
       "icon": "res://icons/legend_egg.svg",
       "tier": "legend",
@@ -22439,7 +22475,7 @@
       "spell_id": 59,
       "level": 30,
       "npc_id": 140,
-      "chance": 1,
+      "chance": 1.0,
       "template_id": 11,
       "icon": "res://icons/legend_egg.svg",
       "tier": "legend",
@@ -22453,7 +22489,7 @@
       "spell_id": 60,
       "level": 30,
       "npc_id": 207,
-      "chance": 1,
+      "chance": 1.0,
       "template_id": 11,
       "icon": "res://icons/legend_egg.svg",
       "tier": "legend",
@@ -22467,13 +22503,13 @@
       "spell_id": 61,
       "level": 40,
       "npc_id": 209,
-      "chance": 2,
+      "chance": 0.5,
       "template_id": 11,
       "icon": "res://icons/mythic_egg.svg",
       "tier": "mythic",
       "tier_name": "Mythic",
       "tier_color": "f08093",
-      "price": 12000
+      "price": 100000
     },
     "623": {
       "name": "King Wurm Spirit Egg",
@@ -22481,13 +22517,13 @@
       "spell_id": 62,
       "level": 40,
       "npc_id": 174,
-      "chance": 1,
+      "chance": 0.5,
       "template_id": 11,
       "icon": "res://icons/mythic_egg.svg",
       "tier": "mythic",
       "tier_name": "Mythic",
       "tier_color": "f08093",
-      "price": 12000
+      "price": 100000
     },
     "624": {
       "name": "Wraith Spirit Egg",
@@ -22495,13 +22531,13 @@
       "spell_id": 63,
       "level": 40,
       "npc_id": 113,
-      "chance": 1,
+      "chance": 0.5,
       "template_id": 11,
       "icon": "res://icons/mythic_egg.svg",
       "tier": "mythic",
       "tier_name": "Mythic",
       "tier_color": "f08093",
-      "price": 12000
+      "price": 100000
     }
   },
   "pet_tiers": {
@@ -22512,8 +22548,8 @@
       "price": 100,
       "tp": 10,
       "chant": 1,
-      "upkeep": 1,
-      "power": 0.65,
+      "upkeep": 2,
+      "power": 0.45,
       "accuracy": 0,
       "hit_cap": 0.82,
       "color": "b8c5c9"
@@ -22525,8 +22561,8 @@
       "price": 600,
       "tp": 18,
       "chant": 1,
-      "upkeep": 2,
-      "power": 1.05,
+      "upkeep": 5,
+      "power": 0.7,
       "accuracy": 3,
       "hit_cap": 0.86,
       "color": "78b9ee"
@@ -22538,8 +22574,8 @@
       "price": 2000,
       "tp": 30,
       "chant": 2,
-      "upkeep": 3,
-      "power": 1.2,
+      "upkeep": 7,
+      "power": 1.0,
       "accuracy": 6,
       "hit_cap": 0.9,
       "color": "bf94ef"
@@ -22551,8 +22587,8 @@
       "price": 6000,
       "tp": 38,
       "chant": 2,
-      "upkeep": 4,
-      "power": 1.25,
+      "upkeep": 9,
+      "power": 1.2,
       "accuracy": 9,
       "hit_cap": 0.93,
       "color": "edb75b"
@@ -22561,11 +22597,11 @@
       "name": "Mythic",
       "rank": 4,
       "level": 40,
-      "price": 12000,
+      "price": 100000,
       "tp": 45,
       "chant": 2,
-      "upkeep": 5,
-      "power": 1.3,
+      "upkeep": 12,
+      "power": 1.5,
       "accuracy": 12,
       "hit_cap": 0.95,
       "color": "f08093"
@@ -22989,8 +23025,9 @@
       "skills": 1,
       "signature": {
         "name": "Arcane mastery",
-        "description": "Highest spell multiplier and area magic. Recover 0.8% max TP every 2 seconds; double while sitting, half in PK.",
+        "description": "Highest spell multiplier and 25% stronger area magic. Recover 0.8% max TP every 2 seconds; double while sitting, half in PK.",
         "spell_multiplier": 2.4,
+        "area_multiplier": 1.25,
         "tp_regen_rate": 0.008,
         "tp_regen_seconds": 2,
         "tp_regen_sitting_multiplier": 2,
@@ -23048,8 +23085,9 @@
       "skills": 3,
       "signature": {
         "name": "Arcane mastery",
-        "description": "Highest spell multiplier and area magic. Recover 0.8% max TP every 2 seconds; double while sitting, half in PK.",
+        "description": "Highest spell multiplier and 25% stronger area magic. Recover 0.8% max TP every 2 seconds; double while sitting, half in PK.",
         "spell_multiplier": 2.4,
+        "area_multiplier": 1.25,
         "tp_regen_rate": 0.008,
         "tp_regen_seconds": 2,
         "tp_regen_sitting_multiplier": 2,
@@ -23107,8 +23145,9 @@
       "skills": 4,
       "signature": {
         "name": "Arcane mastery",
-        "description": "Highest spell multiplier and area magic. Recover 0.8% max TP every 2 seconds; double while sitting, half in PK.",
+        "description": "Highest spell multiplier and 25% stronger area magic. Recover 0.8% max TP every 2 seconds; double while sitting, half in PK.",
         "spell_multiplier": 2.4,
+        "area_multiplier": 1.25,
         "tp_regen_rate": 0.008,
         "tp_regen_seconds": 2,
         "tp_regen_sitting_multiplier": 2,
@@ -23166,8 +23205,9 @@
       "skills": 6,
       "signature": {
         "name": "Arcane mastery",
-        "description": "Highest spell multiplier and area magic. Recover 0.8% max TP every 2 seconds; double while sitting, half in PK.",
+        "description": "Highest spell multiplier and 25% stronger area magic. Recover 0.8% max TP every 2 seconds; double while sitting, half in PK.",
         "spell_multiplier": 2.4,
+        "area_multiplier": 1.25,
         "tp_regen_rate": 0.008,
         "tp_regen_seconds": 2,
         "tp_regen_sitting_multiplier": 2,
@@ -23225,8 +23265,9 @@
       "skills": 8,
       "signature": {
         "name": "Arcane mastery",
-        "description": "Highest spell multiplier and area magic. Recover 0.8% max TP every 2 seconds; double while sitting, half in PK.",
+        "description": "Highest spell multiplier and 25% stronger area magic. Recover 0.8% max TP every 2 seconds; double while sitting, half in PK.",
         "spell_multiplier": 2.4,
+        "area_multiplier": 1.25,
         "tp_regen_rate": 0.008,
         "tp_regen_seconds": 2,
         "tp_regen_sitting_multiplier": 2,
@@ -23284,8 +23325,9 @@
       "skills": 10,
       "signature": {
         "name": "Arcane mastery",
-        "description": "Highest spell multiplier and area magic. Recover 0.8% max TP every 2 seconds; double while sitting, half in PK.",
+        "description": "Highest spell multiplier and 25% stronger area magic. Recover 0.8% max TP every 2 seconds; double while sitting, half in PK.",
         "spell_multiplier": 2.4,
+        "area_multiplier": 1.25,
         "tp_regen_rate": 0.008,
         "tp_regen_seconds": 2,
         "tp_regen_sitting_multiplier": 2,
@@ -23343,11 +23385,12 @@
       "skills": 1,
       "signature": {
         "name": "Backstab",
-        "description": "A successful adjacent attack directly behind a target deals randomly 1.5x or 2x damage with a Rogue blade. Does not stack with critical hits.",
+        "description": "Move twice as fast. A successful adjacent attack directly behind a target deals randomly 1.5x or 2x damage with a Rogue blade. Does not stack with critical hits.",
         "backstab_multipliers": [
           1.5,
           2.0
-        ]
+        ],
+        "walking_multiplier": 2
       }
     },
     {
@@ -23401,11 +23444,12 @@
       "skills": 2,
       "signature": {
         "name": "Backstab",
-        "description": "A successful adjacent attack directly behind a target deals randomly 1.5x or 2x damage with a Rogue blade. Does not stack with critical hits.",
+        "description": "Move twice as fast. A successful adjacent attack directly behind a target deals randomly 1.5x or 2x damage with a Rogue blade. Does not stack with critical hits.",
         "backstab_multipliers": [
           1.5,
           2.0
-        ]
+        ],
+        "walking_multiplier": 2
       }
     },
     {
@@ -23459,11 +23503,12 @@
       "skills": 3,
       "signature": {
         "name": "Backstab",
-        "description": "A successful adjacent attack directly behind a target deals randomly 1.5x or 2x damage with a Rogue blade. Does not stack with critical hits.",
+        "description": "Move twice as fast. A successful adjacent attack directly behind a target deals randomly 1.5x or 2x damage with a Rogue blade. Does not stack with critical hits.",
         "backstab_multipliers": [
           1.5,
           2.0
-        ]
+        ],
+        "walking_multiplier": 2
       }
     },
     {
@@ -23517,11 +23562,12 @@
       "skills": 4,
       "signature": {
         "name": "Backstab",
-        "description": "A successful adjacent attack directly behind a target deals randomly 1.5x or 2x damage with a Rogue blade. Does not stack with critical hits.",
+        "description": "Move twice as fast. A successful adjacent attack directly behind a target deals randomly 1.5x or 2x damage with a Rogue blade. Does not stack with critical hits.",
         "backstab_multipliers": [
           1.5,
           2.0
-        ]
+        ],
+        "walking_multiplier": 2
       }
     },
     {
@@ -23575,11 +23621,12 @@
       "skills": 5,
       "signature": {
         "name": "Backstab",
-        "description": "A successful adjacent attack directly behind a target deals randomly 1.5x or 2x damage with a Rogue blade. Does not stack with critical hits.",
+        "description": "Move twice as fast. A successful adjacent attack directly behind a target deals randomly 1.5x or 2x damage with a Rogue blade. Does not stack with critical hits.",
         "backstab_multipliers": [
           1.5,
           2.0
-        ]
+        ],
+        "walking_multiplier": 2
       }
     },
     {
@@ -23633,11 +23680,12 @@
       "skills": 6,
       "signature": {
         "name": "Backstab",
-        "description": "A successful adjacent attack directly behind a target deals randomly 1.5x or 2x damage with a Rogue blade. Does not stack with critical hits.",
+        "description": "Move twice as fast. A successful adjacent attack directly behind a target deals randomly 1.5x or 2x damage with a Rogue blade. Does not stack with critical hits.",
         "backstab_multipliers": [
           1.5,
           2.0
-        ]
+        ],
+        "walking_multiplier": 2
       }
     },
     {
@@ -23691,7 +23739,7 @@
       "skills": 1,
       "signature": {
         "name": "Marksmanship",
-        "description": "Bows gain range and firing speed through progression. Fire/Frost arrows add 2 tiles. Rapid bows trade per-shot impact for cadence; AGI drives damage and accuracy."
+        "description": "Red Bow fires at x1, Crossbow x1.2, Scav/Dawn x1.5 or x2 with a target within 2 tiles ahead. Fire/Frost arrows add 2 tiles. Rapid bows trade per-shot impact for cadence; AGI drives damage and accuracy."
       }
     },
     {
@@ -23745,7 +23793,7 @@
       "skills": 2,
       "signature": {
         "name": "Marksmanship",
-        "description": "Bows gain range and firing speed through progression. Fire/Frost arrows add 2 tiles. Rapid bows trade per-shot impact for cadence; AGI drives damage and accuracy."
+        "description": "Red Bow fires at x1, Crossbow x1.2, Scav/Dawn x1.5 or x2 with a target within 2 tiles ahead. Fire/Frost arrows add 2 tiles. Rapid bows trade per-shot impact for cadence; AGI drives damage and accuracy."
       }
     },
     {
@@ -23799,7 +23847,7 @@
       "skills": 3,
       "signature": {
         "name": "Marksmanship",
-        "description": "Bows gain range and firing speed through progression. Fire/Frost arrows add 2 tiles. Rapid bows trade per-shot impact for cadence; AGI drives damage and accuracy."
+        "description": "Red Bow fires at x1, Crossbow x1.2, Scav/Dawn x1.5 or x2 with a target within 2 tiles ahead. Fire/Frost arrows add 2 tiles. Rapid bows trade per-shot impact for cadence; AGI drives damage and accuracy."
       }
     },
     {
@@ -23853,7 +23901,7 @@
       "skills": 4,
       "signature": {
         "name": "Marksmanship",
-        "description": "Bows gain range and firing speed through progression. Fire/Frost arrows add 2 tiles. Rapid bows trade per-shot impact for cadence; AGI drives damage and accuracy."
+        "description": "Red Bow fires at x1, Crossbow x1.2, Scav/Dawn x1.5 or x2 with a target within 2 tiles ahead. Fire/Frost arrows add 2 tiles. Rapid bows trade per-shot impact for cadence; AGI drives damage and accuracy."
       }
     },
     {
@@ -23907,7 +23955,7 @@
       "skills": 5,
       "signature": {
         "name": "Marksmanship",
-        "description": "Bows gain range and firing speed through progression. Fire/Frost arrows add 2 tiles. Rapid bows trade per-shot impact for cadence; AGI drives damage and accuracy."
+        "description": "Red Bow fires at x1, Crossbow x1.2, Scav/Dawn x1.5 or x2 with a target within 2 tiles ahead. Fire/Frost arrows add 2 tiles. Rapid bows trade per-shot impact for cadence; AGI drives damage and accuracy."
       }
     },
     {
@@ -23961,7 +24009,7 @@
       "skills": 6,
       "signature": {
         "name": "Marksmanship",
-        "description": "Bows gain range and firing speed through progression. Fire/Frost arrows add 2 tiles. Rapid bows trade per-shot impact for cadence; AGI drives damage and accuracy."
+        "description": "Red Bow fires at x1, Crossbow x1.2, Scav/Dawn x1.5 or x2 with a target within 2 tiles ahead. Fire/Frost arrows add 2 tiles. Rapid bows trade per-shot impact for cadence; AGI drives damage and accuracy."
       }
     },
     {
@@ -24345,7 +24393,7 @@
       "skills": 2,
       "signature": {
         "name": "Spirit bond",
-        "description": "Choose from 16 pets at the Aeven Eggkeeper or earn bound eggs from monsters. Five tiers share combat stats within each tier; stronger tiers improve damage and accuracy. One TP-funded living bond lasts until your death. Travel, logout and TP exhaustion keep it. Recover 0.4% max TP every 2 seconds; double sitting, half in PK. PK areas use stronger spirit casting instead of pets.",
+        "description": "Choose from 16 pets at the Aeven Eggkeeper or earn bound eggs from monsters. Five tiers multiply your equipped attack by 0.45/0.7/1.0/1.2/1.5. Pets retaliate when an aggressive monster hurts you; higher tiers spend more TP. One TP-funded living bond lasts until your death. Travel, logout and TP exhaustion keep it. Recover 0.4% max TP every 2 seconds; double sitting, half in PK. PK areas use stronger spirit casting instead of pets.",
         "tp_regen_rate": 0.004,
         "tp_regen_seconds": 2,
         "tp_regen_sitting_multiplier": 2,
@@ -24403,7 +24451,7 @@
       "skills": 5,
       "signature": {
         "name": "Spirit bond",
-        "description": "Choose from 16 pets at the Aeven Eggkeeper or earn bound eggs from monsters. Five tiers share combat stats within each tier; stronger tiers improve damage and accuracy. One TP-funded living bond lasts until your death. Travel, logout and TP exhaustion keep it. Recover 0.4% max TP every 2 seconds; double sitting, half in PK. PK areas use stronger spirit casting instead of pets.",
+        "description": "Choose from 16 pets at the Aeven Eggkeeper or earn bound eggs from monsters. Five tiers multiply your equipped attack by 0.45/0.7/1.0/1.2/1.5. Pets retaliate when an aggressive monster hurts you; higher tiers spend more TP. One TP-funded living bond lasts until your death. Travel, logout and TP exhaustion keep it. Recover 0.4% max TP every 2 seconds; double sitting, half in PK. PK areas use stronger spirit casting instead of pets.",
         "tp_regen_rate": 0.004,
         "tp_regen_seconds": 2,
         "tp_regen_sitting_multiplier": 2,
@@ -24461,7 +24509,7 @@
       "skills": 9,
       "signature": {
         "name": "Spirit bond",
-        "description": "Choose from 16 pets at the Aeven Eggkeeper or earn bound eggs from monsters. Five tiers share combat stats within each tier; stronger tiers improve damage and accuracy. One TP-funded living bond lasts until your death. Travel, logout and TP exhaustion keep it. Recover 0.4% max TP every 2 seconds; double sitting, half in PK. PK areas use stronger spirit casting instead of pets.",
+        "description": "Choose from 16 pets at the Aeven Eggkeeper or earn bound eggs from monsters. Five tiers multiply your equipped attack by 0.45/0.7/1.0/1.2/1.5. Pets retaliate when an aggressive monster hurts you; higher tiers spend more TP. One TP-funded living bond lasts until your death. Travel, logout and TP exhaustion keep it. Recover 0.4% max TP every 2 seconds; double sitting, half in PK. PK areas use stronger spirit casting instead of pets.",
         "tp_regen_rate": 0.004,
         "tp_regen_seconds": 2,
         "tp_regen_sitting_multiplier": 2,
@@ -24519,7 +24567,7 @@
       "skills": 13,
       "signature": {
         "name": "Spirit bond",
-        "description": "Choose from 16 pets at the Aeven Eggkeeper or earn bound eggs from monsters. Five tiers share combat stats within each tier; stronger tiers improve damage and accuracy. One TP-funded living bond lasts until your death. Travel, logout and TP exhaustion keep it. Recover 0.4% max TP every 2 seconds; double sitting, half in PK. PK areas use stronger spirit casting instead of pets.",
+        "description": "Choose from 16 pets at the Aeven Eggkeeper or earn bound eggs from monsters. Five tiers multiply your equipped attack by 0.45/0.7/1.0/1.2/1.5. Pets retaliate when an aggressive monster hurts you; higher tiers spend more TP. One TP-funded living bond lasts until your death. Travel, logout and TP exhaustion keep it. Recover 0.4% max TP every 2 seconds; double sitting, half in PK. PK areas use stronger spirit casting instead of pets.",
         "tp_regen_rate": 0.004,
         "tp_regen_seconds": 2,
         "tp_regen_sitting_multiplier": 2,
@@ -24577,7 +24625,7 @@
       "skills": 17,
       "signature": {
         "name": "Spirit bond",
-        "description": "Choose from 16 pets at the Aeven Eggkeeper or earn bound eggs from monsters. Five tiers share combat stats within each tier; stronger tiers improve damage and accuracy. One TP-funded living bond lasts until your death. Travel, logout and TP exhaustion keep it. Recover 0.4% max TP every 2 seconds; double sitting, half in PK. PK areas use stronger spirit casting instead of pets.",
+        "description": "Choose from 16 pets at the Aeven Eggkeeper or earn bound eggs from monsters. Five tiers multiply your equipped attack by 0.45/0.7/1.0/1.2/1.5. Pets retaliate when an aggressive monster hurts you; higher tiers spend more TP. One TP-funded living bond lasts until your death. Travel, logout and TP exhaustion keep it. Recover 0.4% max TP every 2 seconds; double sitting, half in PK. PK areas use stronger spirit casting instead of pets.",
         "tp_regen_rate": 0.004,
         "tp_regen_seconds": 2,
         "tp_regen_sitting_multiplier": 2,
@@ -24635,7 +24683,7 @@
       "skills": 22,
       "signature": {
         "name": "Spirit bond",
-        "description": "Choose from 16 pets at the Aeven Eggkeeper or earn bound eggs from monsters. Five tiers share combat stats within each tier; stronger tiers improve damage and accuracy. One TP-funded living bond lasts until your death. Travel, logout and TP exhaustion keep it. Recover 0.4% max TP every 2 seconds; double sitting, half in PK. PK areas use stronger spirit casting instead of pets.",
+        "description": "Choose from 16 pets at the Aeven Eggkeeper or earn bound eggs from monsters. Five tiers multiply your equipped attack by 0.45/0.7/1.0/1.2/1.5. Pets retaliate when an aggressive monster hurts you; higher tiers spend more TP. One TP-funded living bond lasts until your death. Travel, logout and TP exhaustion keep it. Recover 0.4% max TP every 2 seconds; double sitting, half in PK. PK areas use stronger spirit casting instead of pets.",
         "tp_regen_rate": 0.004,
         "tp_regen_seconds": 2,
         "tp_regen_sitting_multiplier": 2,
@@ -24682,6 +24730,14 @@
       "spell_tp": 5,
       "spell_casts_from_full": 18,
       "heal_self": 19,
+      "heal_other": 29,
+      "heal_other_spell_id": 2,
+      "heal_other_tp": 8,
+      "close_basic_dps": 8.01,
+      "area_total_dps": 0,
+      "area_spell_id": 0,
+      "area_targets": 0,
+      "walking_multiplier": 1,
       "model": "Weapon/body, head, boots, gloves and two rings, plus basic Archer arrows; 60/25/15 allocation. Target armour 0.4xlevel and evade 0.6xlevel. Front-facing single-target expectations, no criticals or kiting; Summoner has an adjacent commanded spirit. Backstab is separate and conditional. Burst assumes TP available; it is not sustained farming DPS."
     },
     {
@@ -24722,6 +24778,14 @@
       "spell_tp": 5,
       "spell_casts_from_full": 16,
       "heal_self": 0,
+      "heal_other": 0,
+      "heal_other_spell_id": 0,
+      "heal_other_tp": 0,
+      "close_basic_dps": 6.23,
+      "area_total_dps": 0,
+      "area_spell_id": 0,
+      "area_targets": 0,
+      "walking_multiplier": 1,
       "model": "Weapon/body, head, boots, gloves and two rings, plus basic Archer arrows; 60/25/15 allocation. Target armour 0.4xlevel and evade 0.6xlevel. Front-facing single-target expectations, no criticals or kiting; Summoner has an adjacent commanded spirit. Backstab is separate and conditional. Burst assumes TP available; it is not sustained farming DPS."
     },
     {
@@ -24762,6 +24826,14 @@
       "spell_tp": 5,
       "spell_casts_from_full": 7,
       "heal_self": 0,
+      "heal_other": 0,
+      "heal_other_spell_id": 0,
+      "heal_other_tp": 0,
+      "close_basic_dps": 12.86,
+      "area_total_dps": 0,
+      "area_spell_id": 0,
+      "area_targets": 0,
+      "walking_multiplier": 2,
       "model": "Weapon/body, head, boots, gloves and two rings, plus basic Archer arrows; 60/25/15 allocation. Target armour 0.4xlevel and evade 0.6xlevel. Front-facing single-target expectations, no criticals or kiting; Summoner has an adjacent commanded spirit. Backstab is separate and conditional. Burst assumes TP available; it is not sustained farming DPS."
     },
     {
@@ -24803,6 +24875,14 @@
       "spell_tp": 5,
       "spell_casts_from_full": 7,
       "heal_self": 0,
+      "heal_other": 0,
+      "heal_other_spell_id": 0,
+      "heal_other_tp": 0,
+      "close_basic_dps": 14.25,
+      "area_total_dps": 0,
+      "area_spell_id": 0,
+      "area_targets": 0,
+      "walking_multiplier": 1,
       "model": "Weapon/body, head, boots, gloves and two rings, plus basic Archer arrows; 60/25/15 allocation. Target armour 0.4xlevel and evade 0.6xlevel. Front-facing single-target expectations, no criticals or kiting; Summoner has an adjacent commanded spirit. Backstab is separate and conditional. Burst assumes TP available; it is not sustained farming DPS."
     },
     {
@@ -24843,6 +24923,14 @@
       "spell_tp": 5,
       "spell_casts_from_full": 6,
       "heal_self": 0,
+      "heal_other": 0,
+      "heal_other_spell_id": 0,
+      "heal_other_tp": 0,
+      "close_basic_dps": 14.92,
+      "area_total_dps": 0,
+      "area_spell_id": 0,
+      "area_targets": 0,
+      "walking_multiplier": 1,
       "model": "Weapon/body, head, boots, gloves and two rings, plus basic Archer arrows; 60/25/15 allocation. Target armour 0.4xlevel and evade 0.6xlevel. Front-facing single-target expectations, no criticals or kiting; Summoner has an adjacent commanded spirit. Backstab is separate and conditional. Burst assumes TP available; it is not sustained farming DPS."
     },
     {
@@ -24883,6 +24971,14 @@
       "spell_tp": 5,
       "spell_casts_from_full": 16,
       "heal_self": 0,
+      "heal_other": 0,
+      "heal_other_spell_id": 0,
+      "heal_other_tp": 0,
+      "close_basic_dps": 6.23,
+      "area_total_dps": 0,
+      "area_spell_id": 0,
+      "area_targets": 0,
+      "walking_multiplier": 1,
       "model": "Weapon/body, head, boots, gloves and two rings, plus basic Archer arrows; 60/25/15 allocation. Target armour 0.4xlevel and evade 0.6xlevel. Front-facing single-target expectations, no criticals or kiting; Summoner has an adjacent commanded spirit. Backstab is separate and conditional. Burst assumes TP available; it is not sustained farming DPS."
     },
     {
@@ -24923,6 +25019,14 @@
       "spell_tp": 5,
       "spell_casts_from_full": 39,
       "heal_self": 38,
+      "heal_other": 48,
+      "heal_other_spell_id": 2,
+      "heal_other_tp": 8,
+      "close_basic_dps": 24.7,
+      "area_total_dps": 0,
+      "area_spell_id": 0,
+      "area_targets": 0,
+      "walking_multiplier": 1,
       "model": "Weapon/body, head, boots, gloves and two rings, plus basic Archer arrows; 60/25/15 allocation. Target armour 0.4xlevel and evade 0.6xlevel. Front-facing single-target expectations, no criticals or kiting; Summoner has an adjacent commanded spirit. Backstab is separate and conditional. Burst assumes TP available; it is not sustained farming DPS."
     },
     {
@@ -24963,6 +25067,14 @@
       "spell_tp": 8,
       "spell_casts_from_full": 21,
       "heal_self": 0,
+      "heal_other": 0,
+      "heal_other_spell_id": 0,
+      "heal_other_tp": 0,
+      "close_basic_dps": 22.8,
+      "area_total_dps": 89.2,
+      "area_spell_id": 49,
+      "area_targets": 3,
+      "walking_multiplier": 1,
       "model": "Weapon/body, head, boots, gloves and two rings, plus basic Archer arrows; 60/25/15 allocation. Target armour 0.4xlevel and evade 0.6xlevel. Front-facing single-target expectations, no criticals or kiting; Summoner has an adjacent commanded spirit. Backstab is separate and conditional. Burst assumes TP available; it is not sustained farming DPS."
     },
     {
@@ -25003,6 +25115,14 @@
       "spell_tp": 12,
       "spell_casts_from_full": 3,
       "heal_self": 0,
+      "heal_other": 0,
+      "heal_other_spell_id": 0,
+      "heal_other_tp": 0,
+      "close_basic_dps": 30.4,
+      "area_total_dps": 0,
+      "area_spell_id": 0,
+      "area_targets": 0,
+      "walking_multiplier": 2,
       "model": "Weapon/body, head, boots, gloves and two rings, plus basic Archer arrows; 60/25/15 allocation. Target armour 0.4xlevel and evade 0.6xlevel. Front-facing single-target expectations, no criticals or kiting; Summoner has an adjacent commanded spirit. Backstab is separate and conditional. Burst assumes TP available; it is not sustained farming DPS."
     },
     {
@@ -25044,6 +25164,14 @@
       "spell_tp": 12,
       "spell_casts_from_full": 3,
       "heal_self": 0,
+      "heal_other": 0,
+      "heal_other_spell_id": 0,
+      "heal_other_tp": 0,
+      "close_basic_dps": 32.3,
+      "area_total_dps": 0,
+      "area_spell_id": 0,
+      "area_targets": 0,
+      "walking_multiplier": 1,
       "model": "Weapon/body, head, boots, gloves and two rings, plus basic Archer arrows; 60/25/15 allocation. Target armour 0.4xlevel and evade 0.6xlevel. Front-facing single-target expectations, no criticals or kiting; Summoner has an adjacent commanded spirit. Backstab is separate and conditional. Burst assumes TP available; it is not sustained farming DPS."
     },
     {
@@ -25084,6 +25212,14 @@
       "spell_tp": 10,
       "spell_casts_from_full": 4,
       "heal_self": 0,
+      "heal_other": 0,
+      "heal_other_spell_id": 0,
+      "heal_other_tp": 0,
+      "close_basic_dps": 39.38,
+      "area_total_dps": 0,
+      "area_spell_id": 0,
+      "area_targets": 0,
+      "walking_multiplier": 1,
       "model": "Weapon/body, head, boots, gloves and two rings, plus basic Archer arrows; 60/25/15 allocation. Target armour 0.4xlevel and evade 0.6xlevel. Front-facing single-target expectations, no criticals or kiting; Summoner has an adjacent commanded spirit. Backstab is separate and conditional. Burst assumes TP available; it is not sustained farming DPS."
     },
     {
@@ -25115,15 +25251,23 @@
       "max_hp": 116,
       "max_tp": 174,
       "basic_dps": 17.1,
-      "spell_dps": 17.81,
-      "burst_dps": 29.78,
+      "spell_dps": 18.8,
+      "burst_dps": 21.67,
       "backstab_dps": 0,
       "passive_hp_per_second": 0,
-      "companion_dps": 11.97,
+      "companion_dps": 2.87,
       "spell_id": 23,
       "spell_tp": 5,
       "spell_casts_from_full": 34,
       "heal_self": 0,
+      "heal_other": 0,
+      "heal_other_spell_id": 0,
+      "heal_other_tp": 0,
+      "close_basic_dps": 17.1,
+      "area_total_dps": 0,
+      "area_spell_id": 0,
+      "area_targets": 0,
+      "walking_multiplier": 1,
       "model": "Weapon/body, head, boots, gloves and two rings, plus basic Archer arrows; 60/25/15 allocation. Target armour 0.4xlevel and evade 0.6xlevel. Front-facing single-target expectations, no criticals or kiting; Summoner has an adjacent commanded spirit. Backstab is separate and conditional. Burst assumes TP available; it is not sustained farming DPS."
     },
     {
@@ -25164,6 +25308,14 @@
       "spell_tp": 5,
       "spell_casts_from_full": 88,
       "heal_self": 70,
+      "heal_other": 111,
+      "heal_other_spell_id": 7,
+      "heal_other_tp": 16,
+      "close_basic_dps": 49.78,
+      "area_total_dps": 0,
+      "area_spell_id": 0,
+      "area_targets": 0,
+      "walking_multiplier": 1,
       "model": "Weapon/body, head, boots, gloves and two rings, plus basic Archer arrows; 60/25/15 allocation. Target armour 0.4xlevel and evade 0.6xlevel. Front-facing single-target expectations, no criticals or kiting; Summoner has an adjacent commanded spirit. Backstab is separate and conditional. Burst assumes TP available; it is not sustained farming DPS."
     },
     {
@@ -25204,6 +25356,14 @@
       "spell_tp": 14,
       "spell_casts_from_full": 27,
       "heal_self": 0,
+      "heal_other": 0,
+      "heal_other_spell_id": 0,
+      "heal_other_tp": 0,
+      "close_basic_dps": 42.75,
+      "area_total_dps": 137.8,
+      "area_spell_id": 49,
+      "area_targets": 3,
+      "walking_multiplier": 1,
       "model": "Weapon/body, head, boots, gloves and two rings, plus basic Archer arrows; 60/25/15 allocation. Target armour 0.4xlevel and evade 0.6xlevel. Front-facing single-target expectations, no criticals or kiting; Summoner has an adjacent commanded spirit. Backstab is separate and conditional. Burst assumes TP available; it is not sustained farming DPS."
     },
     {
@@ -25244,6 +25404,14 @@
       "spell_tp": 14,
       "spell_casts_from_full": 5,
       "heal_self": 0,
+      "heal_other": 0,
+      "heal_other_spell_id": 0,
+      "heal_other_tp": 0,
+      "close_basic_dps": 56.05,
+      "area_total_dps": 0,
+      "area_spell_id": 0,
+      "area_targets": 0,
+      "walking_multiplier": 2,
       "model": "Weapon/body, head, boots, gloves and two rings, plus basic Archer arrows; 60/25/15 allocation. Target armour 0.4xlevel and evade 0.6xlevel. Front-facing single-target expectations, no criticals or kiting; Summoner has an adjacent commanded spirit. Backstab is separate and conditional. Burst assumes TP available; it is not sustained farming DPS."
     },
     {
@@ -25275,7 +25443,7 @@
       "armor": 14,
       "max_hp": 203,
       "max_tp": 77,
-      "basic_dps": 72.44,
+      "basic_dps": 63.74,
       "spell_dps": 81.72,
       "burst_dps": 81.72,
       "backstab_dps": 0,
@@ -25285,6 +25453,14 @@
       "spell_tp": 14,
       "spell_casts_from_full": 5,
       "heal_self": 0,
+      "heal_other": 0,
+      "heal_other_spell_id": 0,
+      "heal_other_tp": 0,
+      "close_basic_dps": 63.74,
+      "area_total_dps": 0,
+      "area_spell_id": 0,
+      "area_targets": 0,
+      "walking_multiplier": 1,
       "model": "Weapon/body, head, boots, gloves and two rings, plus basic Archer arrows; 60/25/15 allocation. Target armour 0.4xlevel and evade 0.6xlevel. Front-facing single-target expectations, no criticals or kiting; Summoner has an adjacent commanded spirit. Backstab is separate and conditional. Burst assumes TP available; it is not sustained farming DPS."
     },
     {
@@ -25325,6 +25501,14 @@
       "spell_tp": 10,
       "spell_casts_from_full": 7,
       "heal_self": 0,
+      "heal_other": 0,
+      "heal_other_spell_id": 0,
+      "heal_other_tp": 0,
+      "close_basic_dps": 70.3,
+      "area_total_dps": 148.44,
+      "area_spell_id": 16,
+      "area_targets": 3,
+      "walking_multiplier": 1,
       "model": "Weapon/body, head, boots, gloves and two rings, plus basic Archer arrows; 60/25/15 allocation. Target armour 0.4xlevel and evade 0.6xlevel. Front-facing single-target expectations, no criticals or kiting; Summoner has an adjacent commanded spirit. Backstab is separate and conditional. Burst assumes TP available; it is not sustained farming DPS."
     },
     {
@@ -25356,15 +25540,23 @@
       "max_hp": 199,
       "max_tp": 387,
       "basic_dps": 30.4,
-      "spell_dps": 43.33,
-      "burst_dps": 77.56,
+      "spell_dps": 45.45,
+      "burst_dps": 54.87,
       "backstab_dps": 0,
       "passive_hp_per_second": 0,
-      "companion_dps": 34.23,
+      "companion_dps": 9.42,
       "spell_id": 24,
       "spell_tp": 14,
       "spell_casts_from_full": 27,
       "heal_self": 0,
+      "heal_other": 0,
+      "heal_other_spell_id": 0,
+      "heal_other_tp": 0,
+      "close_basic_dps": 30.4,
+      "area_total_dps": 0,
+      "area_spell_id": 0,
+      "area_targets": 0,
+      "walking_multiplier": 1,
       "model": "Weapon/body, head, boots, gloves and two rings, plus basic Archer arrows; 60/25/15 allocation. Target armour 0.4xlevel and evade 0.6xlevel. Front-facing single-target expectations, no criticals or kiting; Summoner has an adjacent commanded spirit. Backstab is separate and conditional. Burst assumes TP available; it is not sustained farming DPS."
     },
     {
@@ -25405,6 +25597,14 @@
       "spell_tp": 5,
       "spell_casts_from_full": 121,
       "heal_self": 97,
+      "heal_other": 138,
+      "heal_other_spell_id": 7,
+      "heal_other_tp": 16,
+      "close_basic_dps": 67.26,
+      "area_total_dps": 0,
+      "area_spell_id": 0,
+      "area_targets": 0,
+      "walking_multiplier": 1,
       "model": "Weapon/body, head, boots, gloves and two rings, plus basic Archer arrows; 60/25/15 allocation. Target armour 0.4xlevel and evade 0.6xlevel. Front-facing single-target expectations, no criticals or kiting; Summoner has an adjacent commanded spirit. Backstab is separate and conditional. Burst assumes TP available; it is not sustained farming DPS."
     },
     {
@@ -25445,6 +25645,14 @@
       "spell_tp": 20,
       "spell_casts_from_full": 26,
       "heal_self": 0,
+      "heal_other": 0,
+      "heal_other_spell_id": 0,
+      "heal_other_tp": 0,
+      "close_basic_dps": 59.28,
+      "area_total_dps": 242.04,
+      "area_spell_id": 14,
+      "area_targets": 5,
+      "walking_multiplier": 1,
       "model": "Weapon/body, head, boots, gloves and two rings, plus basic Archer arrows; 60/25/15 allocation. Target armour 0.4xlevel and evade 0.6xlevel. Front-facing single-target expectations, no criticals or kiting; Summoner has an adjacent commanded spirit. Backstab is separate and conditional. Burst assumes TP available; it is not sustained farming DPS."
     },
     {
@@ -25485,6 +25693,14 @@
       "spell_tp": 18,
       "spell_casts_from_full": 5,
       "heal_self": 0,
+      "heal_other": 0,
+      "heal_other_spell_id": 0,
+      "heal_other_tp": 0,
+      "close_basic_dps": 81.43,
+      "area_total_dps": 0,
+      "area_spell_id": 0,
+      "area_targets": 0,
+      "walking_multiplier": 2,
       "model": "Weapon/body, head, boots, gloves and two rings, plus basic Archer arrows; 60/25/15 allocation. Target armour 0.4xlevel and evade 0.6xlevel. Front-facing single-target expectations, no criticals or kiting; Summoner has an adjacent commanded spirit. Backstab is separate and conditional. Burst assumes TP available; it is not sustained farming DPS."
     },
     {
@@ -25516,9 +25732,9 @@
       "armor": 19,
       "max_hp": 279,
       "max_tp": 92,
-      "basic_dps": 105.86,
+      "basic_dps": 84.69,
       "spell_dps": 104.73,
-      "burst_dps": 105.86,
+      "burst_dps": 104.73,
       "backstab_dps": 0,
       "passive_hp_per_second": 0,
       "companion_dps": 0,
@@ -25526,6 +25742,14 @@
       "spell_tp": 18,
       "spell_casts_from_full": 5,
       "heal_self": 0,
+      "heal_other": 0,
+      "heal_other_spell_id": 0,
+      "heal_other_tp": 0,
+      "close_basic_dps": 84.69,
+      "area_total_dps": 0,
+      "area_spell_id": 0,
+      "area_targets": 0,
+      "walking_multiplier": 1,
       "model": "Weapon/body, head, boots, gloves and two rings, plus basic Archer arrows; 60/25/15 allocation. Target armour 0.4xlevel and evade 0.6xlevel. Front-facing single-target expectations, no criticals or kiting; Summoner has an adjacent commanded spirit. Backstab is separate and conditional. Burst assumes TP available; it is not sustained farming DPS."
     },
     {
@@ -25566,6 +25790,14 @@
       "spell_tp": 16,
       "spell_casts_from_full": 5,
       "heal_self": 0,
+      "heal_other": 0,
+      "heal_other_spell_id": 0,
+      "heal_other_tp": 0,
+      "close_basic_dps": 97.44,
+      "area_total_dps": 194.11,
+      "area_spell_id": 16,
+      "area_targets": 3,
+      "walking_multiplier": 1,
       "model": "Weapon/body, head, boots, gloves and two rings, plus basic Archer arrows; 60/25/15 allocation. Target armour 0.4xlevel and evade 0.6xlevel. Front-facing single-target expectations, no criticals or kiting; Summoner has an adjacent commanded spirit. Backstab is separate and conditional. Burst assumes TP available; it is not sustained farming DPS."
     },
     {
@@ -25597,15 +25829,23 @@
       "max_hp": 273,
       "max_tp": 536,
       "basic_dps": 43.7,
-      "spell_dps": 58.97,
-      "burst_dps": 113.33,
+      "spell_dps": 61.85,
+      "burst_dps": 82.55,
       "backstab_dps": 0,
       "passive_hp_per_second": 0,
-      "companion_dps": 54.36,
+      "companion_dps": 20.7,
       "spell_id": 26,
       "spell_tp": 22,
       "spell_casts_from_full": 24,
       "heal_self": 0,
+      "heal_other": 0,
+      "heal_other_spell_id": 0,
+      "heal_other_tp": 0,
+      "close_basic_dps": 43.7,
+      "area_total_dps": 0,
+      "area_spell_id": 0,
+      "area_targets": 0,
+      "walking_multiplier": 1,
       "model": "Weapon/body, head, boots, gloves and two rings, plus basic Archer arrows; 60/25/15 allocation. Target armour 0.4xlevel and evade 0.6xlevel. Front-facing single-target expectations, no criticals or kiting; Summoner has an adjacent commanded spirit. Backstab is separate and conditional. Burst assumes TP available; it is not sustained farming DPS."
     },
     {
@@ -25646,6 +25886,14 @@
       "spell_tp": 22,
       "spell_casts_from_full": 42,
       "heal_self": 136,
+      "heal_other": 222,
+      "heal_other_spell_id": 8,
+      "heal_other_tp": 28,
+      "close_basic_dps": 90.49,
+      "area_total_dps": 0,
+      "area_spell_id": 0,
+      "area_targets": 0,
+      "walking_multiplier": 1,
       "model": "Weapon/body, head, boots, gloves and two rings, plus basic Archer arrows; 60/25/15 allocation. Target armour 0.4xlevel and evade 0.6xlevel. Front-facing single-target expectations, no criticals or kiting; Summoner has an adjacent commanded spirit. Backstab is separate and conditional. Burst assumes TP available; it is not sustained farming DPS."
     },
     {
@@ -25686,6 +25934,14 @@
       "spell_tp": 28,
       "spell_casts_from_full": 29,
       "heal_self": 0,
+      "heal_other": 0,
+      "heal_other_spell_id": 0,
+      "heal_other_tp": 0,
+      "close_basic_dps": 81.46,
+      "area_total_dps": 311.57,
+      "area_spell_id": 25,
+      "area_targets": 5,
+      "walking_multiplier": 1,
       "model": "Weapon/body, head, boots, gloves and two rings, plus basic Archer arrows; 60/25/15 allocation. Target armour 0.4xlevel and evade 0.6xlevel. Front-facing single-target expectations, no criticals or kiting; Summoner has an adjacent commanded spirit. Backstab is separate and conditional. Burst assumes TP available; it is not sustained farming DPS."
     },
     {
@@ -25726,6 +25982,14 @@
       "spell_tp": 18,
       "spell_casts_from_full": 7,
       "heal_self": 0,
+      "heal_other": 0,
+      "heal_other_spell_id": 0,
+      "heal_other_tp": 0,
+      "close_basic_dps": 109.63,
+      "area_total_dps": 259.44,
+      "area_spell_id": 39,
+      "area_targets": 3,
+      "walking_multiplier": 2,
       "model": "Weapon/body, head, boots, gloves and two rings, plus basic Archer arrows; 60/25/15 allocation. Target armour 0.4xlevel and evade 0.6xlevel. Front-facing single-target expectations, no criticals or kiting; Summoner has an adjacent commanded spirit. Backstab is separate and conditional. Burst assumes TP available; it is not sustained farming DPS."
     },
     {
@@ -25757,9 +26021,9 @@
       "armor": 29,
       "max_hp": 398,
       "max_tp": 127,
-      "basic_dps": 159.6,
+      "basic_dps": 119.7,
       "spell_dps": 127.86,
-      "burst_dps": 159.6,
+      "burst_dps": 127.86,
       "backstab_dps": 0,
       "passive_hp_per_second": 0,
       "companion_dps": 0,
@@ -25767,6 +26031,14 @@
       "spell_tp": 18,
       "spell_casts_from_full": 7,
       "heal_self": 0,
+      "heal_other": 0,
+      "heal_other_spell_id": 0,
+      "heal_other_tp": 0,
+      "close_basic_dps": 159.6,
+      "area_total_dps": 135.94,
+      "area_spell_id": 37,
+      "area_targets": 3,
+      "walking_multiplier": 1,
       "model": "Weapon/body, head, boots, gloves and two rings, plus basic Archer arrows; 60/25/15 allocation. Target armour 0.4xlevel and evade 0.6xlevel. Front-facing single-target expectations, no criticals or kiting; Summoner has an adjacent commanded spirit. Backstab is separate and conditional. Burst assumes TP available; it is not sustained farming DPS."
     },
     {
@@ -25807,6 +26079,14 @@
       "spell_tp": 20,
       "spell_casts_from_full": 6,
       "heal_self": 0,
+      "heal_other": 0,
+      "heal_other_spell_id": 0,
+      "heal_other_tp": 0,
+      "close_basic_dps": 141.64,
+      "area_total_dps": 269.81,
+      "area_spell_id": 16,
+      "area_targets": 3,
+      "walking_multiplier": 1,
       "model": "Weapon/body, head, boots, gloves and two rings, plus basic Archer arrows; 60/25/15 allocation. Target armour 0.4xlevel and evade 0.6xlevel. Front-facing single-target expectations, no criticals or kiting; Summoner has an adjacent commanded spirit. Backstab is separate and conditional. Burst assumes TP available; it is not sustained farming DPS."
     },
     {
@@ -25838,15 +26118,23 @@
       "max_hp": 390,
       "max_tp": 821,
       "basic_dps": 59.14,
-      "spell_dps": 64.82,
-      "burst_dps": 141.45,
+      "spell_dps": 69.13,
+      "burst_dps": 103.98,
       "backstab_dps": 0,
       "passive_hp_per_second": 0,
-      "companion_dps": 76.63,
+      "companion_dps": 34.85,
       "spell_id": 26,
       "spell_tp": 22,
       "spell_casts_from_full": 37,
       "heal_self": 0,
+      "heal_other": 0,
+      "heal_other_spell_id": 0,
+      "heal_other_tp": 0,
+      "close_basic_dps": 59.14,
+      "area_total_dps": 97.64,
+      "area_spell_id": 27,
+      "area_targets": 4,
+      "walking_multiplier": 1,
       "model": "Weapon/body, head, boots, gloves and two rings, plus basic Archer arrows; 60/25/15 allocation. Target armour 0.4xlevel and evade 0.6xlevel. Front-facing single-target expectations, no criticals or kiting; Summoner has an adjacent commanded spirit. Backstab is separate and conditional. Burst assumes TP available; it is not sustained farming DPS."
     },
     {
@@ -25887,6 +26175,14 @@
       "spell_tp": 22,
       "spell_casts_from_full": 52,
       "heal_self": 171,
+      "heal_other": 317,
+      "heal_other_spell_id": 20,
+      "heal_other_tp": 48,
+      "close_basic_dps": 113.05,
+      "area_total_dps": 0,
+      "area_spell_id": 0,
+      "area_targets": 0,
+      "walking_multiplier": 1,
       "model": "Weapon/body, head, boots, gloves and two rings, plus basic Archer arrows; 60/25/15 allocation. Target armour 0.4xlevel and evade 0.6xlevel. Front-facing single-target expectations, no criticals or kiting; Summoner has an adjacent commanded spirit. Backstab is separate and conditional. Burst assumes TP available; it is not sustained farming DPS."
     },
     {
@@ -25927,6 +26223,14 @@
       "spell_tp": 38,
       "spell_casts_from_full": 27,
       "heal_self": 0,
+      "heal_other": 0,
+      "heal_other_spell_id": 0,
+      "heal_other_tp": 0,
+      "close_basic_dps": 101.65,
+      "area_total_dps": 393.76,
+      "area_spell_id": 21,
+      "area_targets": 5,
+      "walking_multiplier": 1,
       "model": "Weapon/body, head, boots, gloves and two rings, plus basic Archer arrows; 60/25/15 allocation. Target armour 0.4xlevel and evade 0.6xlevel. Front-facing single-target expectations, no criticals or kiting; Summoner has an adjacent commanded spirit. Backstab is separate and conditional. Burst assumes TP available; it is not sustained farming DPS."
     },
     {
@@ -25967,6 +26271,14 @@
       "spell_tp": 28,
       "spell_casts_from_full": 5,
       "heal_self": 0,
+      "heal_other": 0,
+      "heal_other_spell_id": 0,
+      "heal_other_tp": 0,
+      "close_basic_dps": 135.38,
+      "area_total_dps": 308.61,
+      "area_spell_id": 39,
+      "area_targets": 3,
+      "walking_multiplier": 2,
       "model": "Weapon/body, head, boots, gloves and two rings, plus basic Archer arrows; 60/25/15 allocation. Target armour 0.4xlevel and evade 0.6xlevel. Front-facing single-target expectations, no criticals or kiting; Summoner has an adjacent commanded spirit. Backstab is separate and conditional. Burst assumes TP available; it is not sustained farming DPS."
     },
     {
@@ -25998,9 +26310,9 @@
       "armor": 42,
       "max_hp": 506,
       "max_tp": 142,
-      "basic_dps": 199.33,
+      "basic_dps": 149.5,
       "spell_dps": 175.95,
-      "burst_dps": 199.33,
+      "burst_dps": 175.95,
       "backstab_dps": 0,
       "passive_hp_per_second": 0,
       "companion_dps": 0,
@@ -26008,6 +26320,14 @@
       "spell_tp": 28,
       "spell_casts_from_full": 5,
       "heal_self": 0,
+      "heal_other": 0,
+      "heal_other_spell_id": 0,
+      "heal_other_tp": 0,
+      "close_basic_dps": 199.33,
+      "area_total_dps": 164.16,
+      "area_spell_id": 37,
+      "area_targets": 3,
+      "walking_multiplier": 1,
       "model": "Weapon/body, head, boots, gloves and two rings, plus basic Archer arrows; 60/25/15 allocation. Target armour 0.4xlevel and evade 0.6xlevel. Front-facing single-target expectations, no criticals or kiting; Summoner has an adjacent commanded spirit. Backstab is separate and conditional. Burst assumes TP available; it is not sustained farming DPS."
     },
     {
@@ -26048,6 +26368,14 @@
       "spell_tp": 20,
       "spell_casts_from_full": 6,
       "heal_self": 0,
+      "heal_other": 0,
+      "heal_other_spell_id": 0,
+      "heal_other_tp": 0,
+      "close_basic_dps": 168.08,
+      "area_total_dps": 315.16,
+      "area_spell_id": 16,
+      "area_targets": 3,
+      "walking_multiplier": 1,
       "model": "Weapon/body, head, boots, gloves and two rings, plus basic Archer arrows; 60/25/15 allocation. Target armour 0.4xlevel and evade 0.6xlevel. Front-facing single-target expectations, no criticals or kiting; Summoner has an adjacent commanded spirit. Backstab is separate and conditional. Burst assumes TP available; it is not sustained farming DPS."
     },
     {
@@ -26079,15 +26407,23 @@
       "max_hp": 486,
       "max_tp": 1032,
       "basic_dps": 75.05,
-      "spell_dps": 86.45,
-      "burst_dps": 182.4,
+      "spell_dps": 91.93,
+      "burst_dps": 148.55,
       "backstab_dps": 0,
       "passive_hp_per_second": 0,
-      "companion_dps": 95.95,
+      "companion_dps": 56.62,
       "spell_id": 29,
       "spell_tp": 38,
       "spell_casts_from_full": 27,
       "heal_self": 0,
+      "heal_other": 0,
+      "heal_other_spell_id": 0,
+      "heal_other_tp": 0,
+      "close_basic_dps": 75.05,
+      "area_total_dps": 110.27,
+      "area_spell_id": 27,
+      "area_targets": 4,
+      "walking_multiplier": 1,
       "model": "Weapon/body, head, boots, gloves and two rings, plus basic Archer arrows; 60/25/15 allocation. Target armour 0.4xlevel and evade 0.6xlevel. Front-facing single-target expectations, no criticals or kiting; Summoner has an adjacent commanded spirit. Backstab is separate and conditional. Burst assumes TP available; it is not sustained farming DPS."
     }
   ]

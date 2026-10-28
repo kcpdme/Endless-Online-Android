@@ -28,12 +28,37 @@ func run() -> void:
 	if failed: game.queue_free(); await process_frame; quit(1); return
 	c.character_list.select(0); c._enter_selected()
 	check(await wait_for(func() -> bool: return c.active and c.streaming and c.session.is_idle()), "Regular Summoner enters native world")
-	check(int(c.player.stats.admin) == 0 and int(c.catalog.balance_version) == 8, "Tier catalog reaches a regular character")
+	check(int(c.player.stats.admin) == 0 and int(c.catalog.balance_version) == 9, "Tier catalog reaches a regular character")
 	game.pet_ui.tick()
 	check(game.pet_ui.button.visible, "Summoner has a dedicated pet control")
-	check(game.bag_button.get_global_rect().position.y < 100, "Inventory moved to the top row")
+	check(game.bag_button.get_global_rect().position.y > 500, "Inventory restored to the bottom-right row")
+	check(not game.bag_button.get_global_rect().intersects(game.pet_ui.button.get_global_rect()) and not game.bag_button.get_global_rect().intersects(game.sit_button.get_global_rect()), "Inventory remains separate from Summon and Sit touch targets")
 	check(game.chat_button.get_parent() == game.chat_ui.quick_root, "Conversations follows the bottom message composer")
 	check(not game.chat_button.get_global_rect().intersects(game.chat_ui.quick_bar.get_global_rect()), "Conversations does not cover the message field")
+	game.emote_ui.tick()
+	check(game.emote_ui.button.visible and game.emote_ui.button.get_global_rect().position.x > game.chat_ui.quick_bar.get_global_rect().end.x, "Emote button is right of Send")
+	for row: Control in game.emote_ui.rows:
+		check((row.get_child(0) as TextureRect).texture != null, "Quick emote uses original EO artwork")
+	var touch: InputEventScreenTouch = InputEventScreenTouch.new()
+	touch.index = 77; touch.pressed = true; touch.position = game.emote_ui.button.get_global_rect().get_center(); game._input(touch)
+	await create_timer(0.25).timeout
+	check(game.emote_ui.popup.visible, "Holding opens translucent vertical emote choices")
+	var slide: InputEventScreenDrag = InputEventScreenDrag.new()
+	slide.index = 77; slide.position = game.emote_ui.rows[2].get_global_rect().get_center(); game._input(slide)
+	check(game.emote_ui.selected == 2 and game.touch_move_id == -1, "Dragging selects an emote without moving the character")
+	touch.pressed = false; touch.position = slide.position; game._input(touch)
+	check(await wait_for(func() -> bool: return game.drink_effects.social_emotes.has(int(c.player.player_id))), "Release sends the actual native emote and displays it above the owner")
+	check(int(game.drink_effects.social_emotes[int(c.player.player_id)].id) == 4, "Selected Angry emote is used")
+	check(not game.emote_ui.popup.visible and game.emote_ui.pointer == -99, "Release closes and relinquishes the gesture")
+	game.chat_ui.quick_root.position.y -= 400
+	game.emote_ui.layout()
+	check(game.emote_ui.popup.get_global_rect().position.y >= 0, "Vertical picker stays on screen above a lifted keyboard composer")
+	game.chat_ui.tick(); game.emote_ui.layout()
+	var last_sent: int = game.emote_ui.last_sent
+	touch.pressed = true; touch.position = game.emote_ui.button.get_global_rect().get_center(); game._input(touch)
+	await create_timer(0.25).timeout
+	slide.position = Vector2(20, 100); game._input(slide); touch.pressed = false; touch.position = slide.position; game._input(touch)
+	check(game.emote_ui.last_sent == last_sent and not game.emote_ui.popup.visible, "Sliding outside cancels without sending an emote")
 	var keeper: Dictionary = {}
 	for npc: Dictionary in c.npcs:
 		if int(npc.id) == 321: keeper = npc

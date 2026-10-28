@@ -1,0 +1,46 @@
+{
+  "result": "passed",
+  "checks": 31,
+  "fixed_owner_attack": 10,
+  "pet_damage_samples": {
+    "normal": [
+      5,
+      5,
+      4,
+      5
+    ],
+    "rare": [
+      7,
+      7,
+      7,
+      7
+    ],
+    "epic": [
+      10,
+      10,
+      10,
+      10
+    ],
+    "legend": [
+      12,
+      12,
+      12,
+      12
+    ],
+    "mythic": [
+      15,
+      15,
+      15,
+      15
+    ]
+  },
+  "aggressive_retaliation_without_owner_attack": true,
+  "unprovoked_passive_not_attacked": true,
+  "pet_untargetable": true,
+  "independent_egg_roll_extremes": true,
+  "regular_drop_multiplier_ignored_by_eggs": true,
+  "non_summoner_egg_denied": true,
+  "nearby_native_emote_broadcasts": 5,
+  "isolated_database": true,
+  "production_database_opened": false
+}

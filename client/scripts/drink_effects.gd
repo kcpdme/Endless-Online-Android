@@ -1,9 +1,14 @@
 extends RefCounted
 ## Original drunk emote and confirmed soda timer; original chat slur lives in gateway.
+const SOCIAL_SETS: Dictionary = {1:0, 2:1, 3:1, 4:4, 5:3, 6:2, 7:6, 8:7, 9:9, 10:5, 14:13}
+static func social_set(ident: int) -> int:
+	return int(SOCIAL_SETS.get(ident, ident - 1))
+
 var game: Node
 var until: int = 0
 var emotes: Dictionary = {}
 var music_emotes: Dictionary = {}
+var social_emotes: Dictionary = {}
 
 func drunk() -> bool:
 	return Time.get_ticks_msec() < until
@@ -16,6 +21,7 @@ func clear() -> void:
 	until = 0
 	emotes.clear()
 	music_emotes.clear()
+	social_emotes.clear()
 
 func event(data: Dictionary) -> void:
 	var kind: String = str(data.get("kind", ""))
@@ -28,7 +34,14 @@ func event(data: Dictionary) -> void:
 	elif kind == "player_emote" and int(data.get("emote",0)) == 15:
 		music_emotes[int(data.player_id)] = Time.get_ticks_msec()
 
+	elif kind == "player_emote" and (int(data.get("emote", 0)) in range(1, 11) or int(data.get("emote", 0)) == 14):
+		social_emotes[int(data.player_id)] = {"id":int(data.emote), "at":Time.get_ticks_msec()}
+
 func draw() -> void:
+	for key: Variant in social_emotes.keys():
+		var row: Dictionary = social_emotes[key]
+		if Time.get_ticks_msec() - int(row.at) >= 960: social_emotes.erase(key); continue
+		_draw_emotes({key:int(row.at)}, social_set(int(row.id)), 0)
 	_draw_emotes(emotes,int((game.manifest.get("drinks",{}) as Dictionary).get("drunk_set",10)),0.0)
 	_draw_emotes(music_emotes,14,24.0)
 

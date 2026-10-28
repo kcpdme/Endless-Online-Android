@@ -1,0 +1,136 @@
+--- a/src/character.cpp
++++ b/src/character.cpp
+@@ -616,14 +616,34 @@
+ 	return this->map->Walk(this, direction, true);
+ }
+ 
+-double Character::BasicAttackSeconds() const
++double Character::BasicAttackSeconds(int direction) const
+ {
+     if (!this->world->config["CombatProgression"] || this->clas != 5) return 0.5;
+     const EIF_Data& bow = this->world->eif->Get(this->paperdoll[Weapon]);
+     const EIF_Data& arrows = this->world->eif->Get(this->paperdoll[Shield]);
+     if (bow.subtype != EIF::Ranged || arrows.subtype != EIF::Arrows || !this->BalanceCanEquip(bow) || !this->BalanceCanEquip(arrows)) return 0.5;
+     auto entry = this->world->config.find("BalanceItem."+util::to_string(bow.id)+".attack_speed");
+-    return 0.5 / (entry == this->world->config.end() ? 1.0 : util::clamp<double>(entry->second,1.0,2.0));
++    double speed = entry == this->world->config.end() ? 1.0 : util::clamp<double>(entry->second,1.0,2.0);
++    auto close = this->world->config.find("BalanceItem."+util::to_string(bow.id)+".close_attack_speed");
++    if (this->world->config["ClassMobility"] && close != this->world->config.end() && this->map)
++    {
++        if (direction < 0) direction = this->direction;
++        int x = this->x, y = this->y;
++        int distance = util::clamp<int>(this->world->config["BalanceItem."+util::to_string(bow.id)+".close_range"],0,2);
++        bool pk = this->map->pk || (this->world->config["GlobalPK"] && !this->world->PKExcept(this->mapid));
++        for (int i = 0; i < distance; ++i)
++        {
++            switch (direction) { case DIRECTION_UP: --y; break; case DIRECTION_RIGHT: ++x; break; case DIRECTION_DOWN: ++y; break; case DIRECTION_LEFT: --x; break; default: return 0.5 / speed; }
++            for (NPC* npc : this->map->npcs)
++                if (npc->alive && (npc->ENF().type == ENF::Passive || npc->ENF().type == ENF::Aggressive) && npc->x == x && npc->y == y)
++                    return 0.5 / util::clamp<double>(close->second,1.0,2.0);
++            if (pk && this->CanInteractPKCombat())
++                for (Character* other : this->map->characters)
++                    if (other != this && !other->nowhere && other->x == x && other->y == y) return 0.5 / util::clamp<double>(close->second,1.0,2.0);
++            if (!this->map->Walkable(x,y,true)) break;
++        }
++    }
++    return 0.5 / speed;
+ }
+ 
+ double Character::RangedShotPower() const
+@@ -659,7 +679,7 @@
+     {
+         double now = Timer::GetTime();
+         if (now < this->next_basic_attack) return;
+-        this->next_basic_attack = now + this->BasicAttackSeconds();
++        this->next_basic_attack = now + this->BasicAttackSeconds(direction);
+     }
+     this->map->Attack(this, direction);
+ }
+@@ -1164,7 +1184,13 @@
+     }
+ 	int amount = int(attack * std::max(1.0, scale)) + base + 2 * std::min<int>(10, this->SpellLevel(id));
+ 	int radius = this->BalanceAreaRadius(id);
+-	if (radius > 0) amount = int(amount * (radius == 1 ? 0.8 : 0.6));
++	if (radius > 0)
++    {
++        double area_scale = radius == 1 ? 0.8 : 0.6;
++        if (this->world->config["ClassMobility"] && clas == 3)
++            area_scale *= util::clamp<double>(this->world->config["Balance.3.area_multiplier"],1.0,1.25);
++        amount = int(amount * area_scale);
++    }
+ 	return util::clamp<int>(amount, 1, 32000);
+ }
+ 
+--- a/src/character.hpp
++++ b/src/character.hpp
+@@ -334,7 +334,7 @@
+         int companion_target_type = 0;
+         double companion_command_time = 0.0;
+         double next_basic_attack = 0.0;
+-        double BasicAttackSeconds() const;
++        double BasicAttackSeconds(int direction = -1) const;
+         double RangedShotPower() const;
+         int WeaponRange() const;
+         double TPRecoveryRate() const;
+--- a/src/eoserv_config.cpp
++++ b/src/eoserv_config.cpp
+@@ -60,6 +60,7 @@
+     eoserv_config_default(config, "ClassSignatureRules", false);
+     eoserv_config_default(config, "CombatProgression", false);
+     eoserv_config_default(config, "OwnerScaledPets", false);
++    eoserv_config_default(config, "ClassMobility", false);
+     eoserv_config_default(config, "MortalSpiritBonds", false);
+     eoserv_config_default(config, "PriestRegenRate", 0.02);
+     eoserv_config_default(config, "PriestSittingRegenRate", 0.04);
+--- a/src/eoserver.cpp
++++ b/src/eoserver.cpp
+@@ -176,7 +176,13 @@
+ 			}
+ #endif // DEBUG_EXCEPTIONS
+ 
+-			if (!expedited) client->queue.next = now + action->time;
++			if (!expedited)
++            {
++                double delay = action->time;
++                if (!action->auto_queue && action->reader.Family() == PACKET_WALK && server->world->config["ClassMobility"] && client->player && client->player->character)
++                    delay = double(server->world->config["PacketRateWalk"]) / (client->player->character->clas == 4 ? 2.0 : 1.0);
++                client->queue.next = now + delay;
++            }
+ 		}
+ 	}
+ }
+--- a/src/handlers/Attack.cpp
++++ b/src/handlers/Attack.cpp
+@@ -22,10 +22,11 @@
+ 	Timestamp timestamp = reader.GetThree();
+ 
+ 	int ts_diff = timestamp - character->timestamp;
++    if (direction > 3) return;
+ 
+ 	if (character->world->config["EnforceTimestamps"])
+ 	{
+-		if (ts_diff < int(48 * character->BasicAttackSeconds() / 0.5))
++		if (ts_diff < int(48 * character->BasicAttackSeconds(direction) / 0.5))
+ 		{
+ 			return;
+ 		}
+@@ -44,7 +45,7 @@
+ 	if (limit_attack != 0 && character->attacks >= limit_attack)
+ 		return;
+ 
+-	if (!character->world->config["EnforceTimestamps"] || ts_diff >= int(60 * character->BasicAttackSeconds() / 0.5))
++	if (!character->world->config["ClassMobility"] && (!character->world->config["EnforceTimestamps"] || ts_diff >= int(60 * character->BasicAttackSeconds(direction) / 0.5)))
+ 	{
+ 		direction = character->direction;
+ 	}
+--- a/src/handlers/Walk.cpp
++++ b/src/handlers/Walk.cpp
+@@ -26,7 +26,7 @@
+ 
+ 	if (character->world->config["EnforceTimestamps"])
+ 	{
+-		if (timestamp - character->timestamp < 36)
++		if (timestamp - character->timestamp < (character->world->config["ClassMobility"] && character->clas == 4 ? 18 : 36))
+ 		{
+ 			return;
+ 		}

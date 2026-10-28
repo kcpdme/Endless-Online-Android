@@ -43,6 +43,13 @@ def spell_preview(clas,spell,s,trained=0):
 def hit_chance(accuracy,evade):return min(.95,max(.35,accuracy/(10+accuracy*.5+evade)))
 def expected_hit(low,high,armor):return sum(max(1,int(n*100/(100+2*armor))) for n in range(low,high+1))/(high-low+1)
 
+def pet_expected_damage(low,high,power,armor):
+    values=[]
+    for roll in range(low,high+1):
+        scaled=max(0,roll)*power;whole=math.floor(scaled);fraction=scaled-whole
+        values.append(expected_hit(whole,whole,armor)*(1-fraction)+expected_hit(whole+1,whole+1,armor)*fraction)
+    return sum(values)/len(values)
+
 GEAR = {
     2:([33,23,362,534,390,495],[549,531,406,525,519,499]),
     3:([29,205,290,389,544,493],[551,128,156,523,521,501]),
@@ -82,12 +89,23 @@ def benchmarks(profile):
             spell_dps,ident=max(candidates) if candidates else (0,0)
             spell=spells.get(str(ident),dict(tp=0))
             heal=spell_preview(clas,spells['1'],s)['heal'] if clas==2 else 0
+            heals=[(spell_preview(clas,h,s)['heal'],h['id'],h['tp']) for h in spells.values() if h['type']==0 and clas in h.get('allowed_classes',[]) and h['level_requirement']<=level and h['target'] == 0] if clas==2 else []
+            party_heal,heal_id,heal_tp=max(heals) if heals else (0,0,0)
+            area=[]
+            for a in spells.values():
+                if clas not in a.get('allowed_classes',[]) or a['level_requirement']>level or not a.get('area_radius'):continue
+                power=spell_preview(clas,a,s,0)
+                per_target=expected_hit(power['min_damage'],power['max_damage'],target_armor)*hit_chance(s['accuracy'],target_evade)/max(.96,a['cast_time']*.48+.48)
+                area.append((per_target*a['area_targets'],a['id'],a['area_targets']))
+            area_dps,area_id,area_targets=max(area) if area else (0,0,0)
+            close_basic=basic*weapon.get('close_attack_speed',speed)/speed
+            walking_multiplier=2 if clas==4 else 1
             eligible=[pet for spell_id,pet in profile['companions'].items() if pet['npc_id']>0 and profile['spells'][str(spell_id)]['level_requirement']<=level]
             pet=max(eligible,key=lambda p:(p['power'],p.get('accuracy',0)),default=dict(power=0))
             pet_power=pet['power']
-            pet_base=int((10+level*.5+s['charisma']*.55+s['intelligence']*.2)*pet_power)
+            pet_damage=pet_expected_damage(s['min_damage'],s['max_damage'],pet_power,target_armor)
             pet_hit=min(pet.get('hit_cap',.95),hit_chance(s['accuracy']+pet.get('accuracy',0),target_evade))
-            pet_dps=expected_hit(max(1,pet_base-2),pet_base+2,target_armor)*pet_hit if clas==7 and pet_power else 0
+            pet_dps=pet_damage*pet_hit if clas==7 and pet_power else 0
             burst=max(basic,spell_dps)+pet_dps
-            rows.append(dict(class_id=clas,role=CLASSES[clas]['name'],level=level,weapon_id=weapon['id'],body_id=body['id'],equipment_ids=[i['id'] for i in gear],**s,basic_dps=round(basic,2),spell_dps=round(spell_dps,2),burst_dps=round(burst,2),backstab_dps=round(burst*1.75,2) if clas==4 else 0,passive_hp_per_second=max(1,int(s['max_hp']*.02))/2 if clas==2 else 0,companion_dps=round(pet_dps,2),spell_id=ident,spell_tp=spell['tp'],spell_casts_from_full=s['max_tp']//spell['tp'] if spell['tp'] else 0,heal_self=heal,model='Weapon/body, head, boots, gloves and two rings, plus basic Archer arrows; 60/25/15 allocation. Target armour 0.4xlevel and evade 0.6xlevel. Front-facing single-target expectations, no criticals or kiting; Summoner has an adjacent commanded spirit. Backstab is separate and conditional. Burst assumes TP available; it is not sustained farming DPS.'))
+            rows.append(dict(class_id=clas,role=CLASSES[clas]['name'],level=level,weapon_id=weapon['id'],body_id=body['id'],equipment_ids=[i['id'] for i in gear],**s,basic_dps=round(basic,2),spell_dps=round(spell_dps,2),burst_dps=round(burst,2),backstab_dps=round(burst*1.75,2) if clas==4 else 0,passive_hp_per_second=max(1,int(s['max_hp']*.02))/2 if clas==2 else 0,companion_dps=round(pet_dps,2),spell_id=ident,spell_tp=spell['tp'],spell_casts_from_full=s['max_tp']//spell['tp'] if spell['tp'] else 0,heal_self=heal,heal_other=party_heal,heal_other_spell_id=heal_id,heal_other_tp=heal_tp,close_basic_dps=round(close_basic,2),area_total_dps=round(area_dps,2),area_spell_id=area_id,area_targets=area_targets,walking_multiplier=walking_multiplier,model='Weapon/body, head, boots, gloves and two rings, plus basic Archer arrows; 60/25/15 allocation. Target armour 0.4xlevel and evade 0.6xlevel. Front-facing single-target expectations, no criticals or kiting; Summoner has an adjacent commanded spirit. Backstab is separate and conditional. Burst assumes TP available; it is not sustained farming DPS.'))
     return rows
