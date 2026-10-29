@@ -39,7 +39,7 @@ func build(owner_game: Node, parent: Control) -> void:
 		var slot: int = index
 		var button: Button = preload("res://scripts/hud_icon_button.gd").new() if index == 2 else Button.new()
 		if index == 2: button.set("kind", "skills")
-		button.position = [Vector2(-258, -318), Vector2(-166, -346), Vector2(-446, 24)][index]
+		button.position = [Vector2(-258, -318), Vector2(-166, -346), Vector2(-412, 24)][index]
 		if index < 2: button.position += game.COMBAT_HUD_SHIFT
 		button.size = Vector2(68, 68)
 		button.focus_mode = Control.FOCUS_NONE
@@ -96,7 +96,7 @@ func build(owner_game: Node, parent: Control) -> void:
 	for index: int in range(2):
 		var slot: int = index
 		game._button(card, "Set slot %d" % (index + 1), Vector2(30 + index * 398, 516), Vector2(380, 50), func() -> void:
-			if not known(selected):
+			if pet_command(selected) or not known(selected):
 				game._toast("Learn this skill first.")
 				return
 			while slots.size() < 2: slots.append(0)
@@ -116,6 +116,9 @@ func build(owner_game: Node, parent: Control) -> void:
 
 func info(ident: int) -> Dictionary:
 	return (game.online.catalog.get("spells", {}) as Dictionary).get(str(ident), {}) as Dictionary
+
+func pet_command(ident:int)->bool:
+	return info(ident).get("effect_kind","")=="companion"
 
 func area_skill(ident: int) -> bool:
 	return int(info(ident).get("area_radius", 0)) > 0 if int(game.online.catalog.get("balance_version", 0)) > 0 else ident in ICE_BLAST_IDS
@@ -155,6 +158,9 @@ func press(index: int) -> void:
 		return
 	if Time.get_ticks_msec() < ready_at:
 		game._toast("Your skill is recovering.")
+		return
+	if pet_command(slots[index]):
+		game._toast("Use the pet button to call or dismiss your bound pet.")
 		return
 	if not usable(slots[index]):
 		game._toast("This skill is locked for your current class or level.")
@@ -297,12 +303,12 @@ func refresh() -> void:
 		for spell: Dictionary in learned:
 			var index: int = defaults.find(0)
 			if index < 0: break
-			if not defaults.has(int(spell.id)): defaults[index] = int(spell.id)
+			if not pet_command(int(spell.id)) and not defaults.has(int(spell.id)): defaults[index] = int(spell.id)
 		slots.assign(game.online.shortcuts.load_slots("skills", settings_path, identity, defaults))
 	# Only an authoritative learned list can invalidate an unlearned skill.
 	if active and game.online.player.has("spells"):
 		for index: int in range(slots.size()):
-			if slots[index] != 0 and not known(slots[index]):
+			if slots[index] != 0 and (pet_command(slots[index]) or not known(slots[index])):
 				slots[index] = 0
 				game.online.shortcuts.save_slots("skills", settings_path, shortcut_identity, slots)
 	for index: int in range(buttons.size()):
@@ -321,10 +327,13 @@ func refresh() -> void:
 	if not panel.visible: return
 	heading.text = str(master.get("name", "SKILLS"))
 	var rows: Dictionary = {}
-	for spell: Dictionary in learned: rows[int(spell.id)] = spell
+	for spell: Dictionary in learned:
+		if not pet_command(int(spell.id)):rows[int(spell.id)] = spell
 	for offer: Dictionary in master.get("offers", []):
+		if pet_command(int(offer.id)):continue
 		if int(game.online.catalog.get("balance_version", 0)) > 0 and not class_usable(int(offer.id)): continue
 		rows[int(offer.id)] = offer
+	if selected!=0 and not rows.has(selected):selected=0
 	var stamp: String = JSON.stringify([rows, learned])
 	if stamp != last_rows:
 		last_rows = stamp
@@ -340,6 +349,7 @@ func refresh() -> void:
 	refresh_detail()
 
 func refresh_detail() -> void:
+	if pet_command(selected):selected=0
 	var spell: Dictionary = info(selected)
 	var balanced: bool = int(game.online.catalog.get("balance_version", 0)) > 0
 	var cap: int = int(spell.get("max_level", 100)) if balanced else 100
@@ -406,7 +416,7 @@ func refresh_detail() -> void:
 	forget_button.disabled = master.is_empty() or not known(selected) or bool(info(selected).get("permanent_pet", false))
 
 func change(action: String) -> void:
-	if selected == 0: return
+	if selected == 0 or pet_command(selected): return
 	game.online.session.request("skill_" + action, {"spell_id": selected})
 
 func flash_spell(ident: int, suffix: String = "") -> void:

@@ -20,7 +20,7 @@ func build(owner_game: Node, parent: Control) -> void:
 	game = owner_game
 	button = preload("res://scripts/hud_icon_button.gd").new()
 	button.kind = "party"
-	button.position = Vector2(-536, 24)
+	button.position = Vector2(-488, 24)
 	button.size = Vector2(68, 68)
 	button.pressed.connect(open)
 	parent.add_child(button)

@@ -1,12 +1,25 @@
 extends RefCounted
 ## Small vector skill glyphs and bounded animated impacts; no raster art pack.
-const COLORS:Array[String]=["e5bb72","f5da85","8abfff","d6a2ee","9bdea4","e9ac71","ae9bea"]
+const PALETTES:Dictionary={
+	"heal":["36e88b","c2ffdc"],"holy":["ffcc38","fff5bf"],
+	"fire":["ff4939","ffd04a"],"thunder":["ffdb28","fffbd1"],
+	"ice":["39d8ff","dbfbff"],"energy":["29efdc","bffbff"],
+	"arcane":["b369ff","f0caff"],"stone":["c79c50","ffe0a0"],
+	"dagger":["c674f5","e4d9ff"],"sword":["e68c49","ffe1a1"],
+	"hammer":["f45b54","ffd491"],"arrow":["61d455","def8a2"],
+	"spirit":["a587ff","77f5e2"],"music":["ff72bd","ffe1f1"],
+}
 const CONVERTED:Array[int]=[3,16,18,27,37,39,46]
 
 static func style(ident:int,spell:Dictionary)->String:
 	if ident==17:return "music"
 	if spell.get("effect_kind","")=="companion":return "pet"
 	if int(spell.get("hp",0))>0:return "heal"
+	if ident in [4,10,25,31]:return "fire"
+	if ident in [14,21]:return "ice"
+	if ident==5:return "thunder"
+	if ident==15:return "energy"
+	if ident==19:return "stone"
 	var classes:Array=spell.get("allowed_classes",[])
 	var clas:int=int(classes[0]) if not classes.is_empty() else 3
 	if clas==4:return "dagger"
@@ -14,17 +27,20 @@ static func style(ident:int,spell:Dictionary)->String:
 	if clas==6:return "hammer" if ident in [38,40,45,46] else "sword"
 	if clas==2:return "holy"
 	if clas==7:return "spirit"
-	if ident in [4,10,25,31]:return "fire"
-	if ident in [14,21]:return "ice"
-	if ident==5:return "thunder"
-	if ident==19:return "stone"
 	return "arcane"
 
-static func color(spell:Dictionary)->Color:
-	var classes:Array=spell.get("allowed_classes",[])
-	var clas:int=int(classes[0]) if not classes.is_empty() else 3
-	if clas==7:return Color(str((spell.get("companion",{}) as Dictionary).get("tier_color","ae9bea")))
-	return Color(COLORS[clampi(clas-1,0,6)])
+static func palette(ident:int,spell:Dictionary)->Array:
+	if spell.get("effect_kind","")=="companion":
+		return [str((spell.get("companion",{}) as Dictionary).get("tier_color","ae9bea")),"fff0d4"]
+	# Green Flame and Dark Bite keep the identity in their names.
+	if ident==31:return ["31e979","d8ff6c"]
+	if ident==29:return ["dc468d","e7b8ff"]
+	if ident==40:return ["59bddf","ffe1a1"] # Steel Shieldbreaker, gold impact.
+	if ident in [36,37,48]:return ["42cfae","e5ffac"]
+	return PALETTES.get(style(ident,spell),PALETTES.arcane)
+
+static func color(spell:Dictionary,ident:int=-1)->Color:
+	return Color(str(palette(int(spell.get("id",0)) if ident<0 else ident,spell)[0]))
 
 static func icon(ident:int,spell:Dictionary,highlight:bool=false)->Texture2D:
 	if ident<=0 or spell.is_empty():return null
@@ -42,9 +58,12 @@ static func icon(ident:int,spell:Dictionary,highlight:bool=false)->Texture2D:
 		"pet":"<path d='M24 7C16 7 11 24 11 31c0 13 26 13 26 0C37 24 32 7 24 7z'/><path d='M13 28l7-4 5 6 8-5' fill='none' stroke='#273248' stroke-width='3'/>",
 		"music":"<path d='M20 34V11l17-4v23M20 16l17-4' fill='none' stroke-width='4'/><ellipse cx='14' cy='35' rx='7' ry='5'/><ellipse cx='31' cy='31' rx='7' ry='5'/>",
 		"stone":"<path d='M8 28l6-15 15-7 12 16-7 17-18 2z'/><path d='M14 13l11 13 16-4M25 26l-9 15' fill='none' stroke='#4b4c67' stroke-width='2'/>",
+		"energy":"<circle cx='24' cy='24' r='10'/><path d='M7 19C9 6 38 4 41 23M7 27c3 17 31 15 34-1' fill='none' stroke-width='3'/>",
 		"arcane":"<circle cx='24' cy='24' r='13'/><path d='M5 24h8M35 24h8M24 5v8M24 35v8' fill='none' stroke-width='2'/>",
 	}
-	var tint:String=color(spell).to_html(false)
+	var tones:Array=palette(ident,spell)
+	var tint:String=str(tones[0]);var accent:String=str(tones[1])
+	var background:String=Color(tint).darkened(.84).to_html(false)
 	var glyph:String=str(shapes.get(style(ident,spell),shapes.arcane))
 	# Different tiny rune marks distinguish abilities sharing the same family.
 	var marks:String=""
@@ -52,7 +71,7 @@ static func icon(ident:int,spell:Dictionary,highlight:bool=false)->Texture2D:
 	for bit:int in range(6):
 		if ident & (1<<bit):marks+="<rect x='43' y='%d' width='2' height='2' rx='.5' fill='#fff1ce'/>"%(8+bit*5)
 	var detail:String="<path d='M%d 5h5M5 %dv5' stroke='#fff1ce' stroke-width='1.5'/>"%[8+ident%20,8+(ident*7)%20]
-	var svg:String="<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'><rect x='1' y='1' width='46' height='46' rx='9' fill='#14222d' stroke='#%s' stroke-width='%d'/><g fill='#%s' stroke='#%s' stroke-linecap='round' stroke-linejoin='round'>%s</g>%s%s</svg>"%["ffefb5" if highlight else tint,3 if highlight else 1,tint,tint,glyph,marks,detail]
+	var svg:String="<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'><defs><linearGradient id='ink' x1='0' y1='0' x2='.8' y2='1'><stop stop-color='#%s'/><stop offset='1' stop-color='#%s'/></linearGradient></defs><rect x='1' y='1' width='46' height='46' rx='9' fill='#%s' stroke='#%s' stroke-width='%d'/><circle cx='24' cy='23' r='18' fill='#%s' opacity='.12'/><g fill='url(#ink)' stroke='#%s' stroke-linecap='round' stroke-linejoin='round'>%s</g>%s%s</svg>"%[accent,tint,background,"ffefb5" if highlight else tint,3 if highlight else 1,tint,tint,glyph,marks,detail]
 	var pixels:Image=Image.new()
 	if pixels.load_svg_from_string(svg)!=OK:return null
 	return ImageTexture.create_from_image(pixels)
@@ -60,7 +79,7 @@ static func icon(ident:int,spell:Dictionary,highlight:bool=false)->Texture2D:
 static func effect(ident:int,spell:Dictionary)->Dictionary:
 	var native:Dictionary=(spell.get("effect",{}) as Dictionary).duplicate(true)
 	if native.is_empty() or (native.get("paths",{}) as Dictionary).is_empty() or ident>=32 or ident in CONVERTED or spell.get("effect_kind","")=="companion":
-		return {"procedural":true,"style":style(ident,spell),"color":color(spell),"frames":6,"loops":1,"spell_id":ident}
+		return {"procedural":true,"style":style(ident,spell),"color":color(spell,ident),"frames":6,"loops":1,"spell_id":ident}
 	return native
 
 static func draw(game:Node,fx:Dictionary,front:bool)->void:

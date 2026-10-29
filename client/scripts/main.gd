@@ -638,7 +638,7 @@ func _input(event: InputEvent) -> void:
 			return
 	# The joystick activation area owns presses before chat/world/NPC hit tests.
 	var pad_press: bool = (event is InputEventScreenTouch and event.pressed) or (event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT)
-	if pad_press and started and not dismissing_modal and not _modal_open() and joystick.contains_point(event.position):
+	if pad_press and started and not dismissing_modal and not _modal_open() and joystick.contains_point(event.position) and _extra_hud_at(event.position)==null and not (chat_button.visible and chat_button.contains_point(event.position)):
 		if not (event is InputEventMouseButton and event.device == InputEvent.DEVICE_ID_EMULATION):
 			if chat_ui != null: chat_ui.blur_quick()
 			var pointer: int = event.index if event is InputEventScreenTouch else -2
@@ -1324,17 +1324,17 @@ func _build_ui() -> void:
 	menu_button.set_anchors_preset(Control.PRESET_TOP_RIGHT, true)
 	character_button = HudIconButton.new()
 	character_button.kind = "person"
-	character_button.position = Vector2(-176, 24)
+	character_button.position = Vector2(-184, 24)
 	character_button.size = Vector2(68, 68)
 	character_button.tooltip_text = "Character equipment"
 	character_button.pressed.connect(_toggle_paperdoll)
 	root.add_child(character_button)
 	character_button.set_anchors_preset(Control.PRESET_TOP_RIGHT, true)
 	stats_button=HudIconButton.new();stats_button.kind="stats"
-	stats_button.position=Vector2(-266,24);stats_button.size=Vector2(68,68)
+	stats_button.position=Vector2(-260,24);stats_button.size=Vector2(68,68)
 	stats_button.pressed.connect(_open_stats);root.add_child(stats_button)
 	stats_button.set_anchors_preset(Control.PRESET_TOP_RIGHT,true);stats_button.hide()
-	zoom_button=HudIconButton.new();zoom_button.kind="zoom";zoom_button.position=Vector2(-626,24);zoom_button.size=Vector2(68,68)
+	zoom_button=HudIconButton.new();zoom_button.kind="zoom";zoom_button.position=Vector2(-564,24);zoom_button.size=Vector2(68,68)
 	zoom_button.toggle_mode=true;zoom_button.set_pressed_no_signal(camera.zoomed);zoom_button.pressed.connect(_toggle_camera_view)
 	root.add_child(zoom_button);zoom_button.set_anchors_preset(Control.PRESET_TOP_RIGHT,true)
 	zoom_button.tooltip_text="125% view · tap for Normal" if camera.zoomed else "Normal view · tap for 125%"
@@ -1433,7 +1433,7 @@ func _build_ui() -> void:
 	auto_attack_button.toggle_mode=true;auto_attack_button.pressed.connect(_toggle_auto_attack_mode)
 	chat_ui.quick_root.add_child(auto_attack_button)
 	_refresh_auto_attack_mode();auto_attack_button.hide()
-	run_ui=preload("res://scripts/run_control.gd").new();run_ui.build(self,root)
+	run_ui=preload("res://scripts/run_control.gd").new();run_ui.build(self,chat_ui.quick_root)
 	quest_journal = preload("res://scripts/quest_journal.gd").new()
 	quest_journal.build(self, root)
 	speech_layer = preload("res://scripts/speech_bubbles.gd").new()
@@ -1996,7 +1996,12 @@ func _layout_safe_area() -> void:
 			hud_root.offset_top = maxf(0.0, float(safe.position.y)) * ratio.y
 			hud_root.offset_right = -maxf(0.0, float(pixels.x - safe.end.x)) * ratio.x
 			hud_root.offset_bottom = -maxf(0.0, float(pixels.y - safe.end.y)) * ratio.y
-	if joystick != null and not joystick.active: joystick.reset()
+	if joystick != null and not joystick.active:
+		# Leave a clear footer below the stick on smaller landscape displays.
+		joystick.radius=104.0 if hud_root.size.x<1100 else 128.0
+		joystick.size=Vector2.ONE*joystick.radius*2
+		joystick.resting_position=Vector2(24,-300 if hud_root.size.x<1100 else -282)
+		joystick.reset()
 	_layout_combat_controls()
 	_layout_dialogs()
 

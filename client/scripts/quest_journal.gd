@@ -16,7 +16,7 @@ var busy: bool = false
 func build(owner_game: Node, parent: Control) -> void:
 	game = owner_game
 	button = preload("res://scripts/hud_icon_button.gd").new(); button.kind = "quests"
-	button.position = Vector2(-356,24); button.size = Vector2(68,68)
+	button.position = Vector2(-336,24); button.size = Vector2(68,68)
 	button.pressed.connect(open); parent.add_child(button); button.set_anchors_preset(Control.PRESET_TOP_RIGHT,true)
 	panel = game._modal(parent,Vector2(950,620)); var card: Control = panel.get_child(0)
 	game._wood_card(card,"quests")

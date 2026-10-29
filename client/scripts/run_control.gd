@@ -7,8 +7,8 @@ var pending:int=-1
 func build(owner_game:Node,parent:Control)->void:
 	game=owner_game
 	button=preload("res://scripts/hud_icon_button.gd").new();button.kind="run"
-	button.position=Vector2(-626,110);button.size=Vector2(68,68);button.toggle_mode=true
-	parent.add_child(button);button.set_anchors_preset(Control.PRESET_TOP_RIGHT,true)
+	button.position=game.chat_button.position-Vector2(80,8);button.size=Vector2(68,68);button.toggle_mode=true
+	parent.add_child(button);button.set_anchors_preset(Control.PRESET_TOP_LEFT,true)
 	button.pressed.connect(press);button.hide()
 	game.online.session.message_received.connect(func(message:Dictionary)->void:
 		if str(message.get("op",""))!="run_mode":return
