@@ -8,8 +8,8 @@ This public repository contains source code, content import tools, build scripts
 
 After importing content and building, install `builds/aster-vale-debug.apk` on an Android device (Android 7 / API 24 or later). This development build includes ARM64 and x86_64. Open **Aster Vale**, log in, select your character and join the persistent shared world. The build is signed with a development key, not configured for Google Play release.
 
-The current Android package is **`com.cloudgameboy.astervale`**, version 0.49.2
-(code 91). It installs separately from the earlier `io.astervale.prototype` app;
+The current Android package is **`com.cloudgameboy.astervale`**, version 0.50.0
+(code 92). It installs separately from the earlier `io.astervale.prototype` app;
 online accounts remain on the same server. Release APK and AAB exports use the
 same private release signing key.
 
@@ -52,6 +52,15 @@ APK update (`--no-incremental -r`), verifies installed bytes and version, and
 checks that Android kept the app's original installation timestamp.
 
 ## Play online
+
+Version **0.50.0**, balance profile **12**, adds a permanent Summoner pet
+collection with separate Egg and Hatched Egg icons. The top paw chooses a bound
+pet; dismissal, TP exhaustion and death share five minutes of recovery. Ordinary,
+PK and arena deaths preserve collected pets. Travel/logout start no recovery.
+Emotes open on a tap and close on selection, outside tap or after three seconds;
+seated emotes follow the lower head position. Monster EXP returns to original
+PUB rewards at ×1, with no quest reward multiplier or existing-level reset.
+See [pet collection, EXP and verification](docs/PET_COLLECTION_V12.md).
 
 Version **0.49.2** adds smooth illustrated versions of all six classes to the
 login artwork. The original background, title and world sprites remain intact.

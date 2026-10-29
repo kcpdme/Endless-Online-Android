@@ -34,7 +34,8 @@ class ConsumablesMixin:
         if kind==3:self._mobile_action()
         else:self._standing()
         if kind not in USABLE_TYPES:raise EOError('This item cannot be used as a consumable')
-        if self.item_amount(item_id)<=0:raise EOError('This item is no longer in your bag')
+        owned_hatched=item.get('egg_state')=='hatched' and any(s['id']==item.get('hatch_spell') for s in self.spells)
+        if self.item_amount(item_id)<=0 and not owned_hatched:raise EOError('This item is no longer in your bag')
         from balance_rules import check_hatch
         check_hatch(self,item_id)
         me=self.state['self']

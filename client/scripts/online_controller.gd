@@ -73,6 +73,8 @@ var request_operations: Dictionary = {}
 var interaction: Dictionary = {}
 var world_rules: Dictionary = {}
 var companion: Dictionary = {}
+var pet_state: Dictionary = {}
+var pet_ready_at: int = 0
 var collect_pending: bool = false
 var loot_attempt_after: Dictionary = {}
 var pickup_pending: Dictionary = {}
@@ -432,8 +434,11 @@ func _enter_world(data: Dictionary) -> void:
 	if not resumed: game._toast("Arena · stand on a marked gate tile. Rounds every %ds." % int((game.world.arena as Dictionary).get("interval_seconds", 90)) if game.world.has("arena") else "You have entered your online world.")
 
 func _apply_snapshot(data: Dictionary, entering: bool = false) -> void:
-	if entering: companion = {}
+	if entering:
+		companion = {};pet_state = {};pet_ready_at=0
 	if data.has("companion"): companion = data.companion as Dictionary if data.companion is Dictionary else {}
+	if data.has("pet_state") and data.pet_state is Dictionary:
+		pet_state=data.pet_state as Dictionary;pet_ready_at=Time.get_ticks_msec()+int(pet_state.get("cooldown_seconds",0))*1000
 	render_pose_cache.clear()
 	if data.has("world_rules"): world_rules = data.world_rules as Dictionary
 	for raw: Variant in data.get("events", []):
@@ -1469,9 +1474,9 @@ func refresh_game_ui() -> void:
 	game.item_title.text = str(info.get("name", "Your inventory"))
 	var usable: bool = consumable(selected)
 	game.equip_button.disabled = not owned or bag_amount(item_id(selected)) <= 0 or (not usable and int(info.get("type", 0)) not in range(10, 22)) or not _action_ready()
-	game.equip_button.text = "Hatch" if int(item_info(selected).get("hatch_spell", 0)) > 0 else "Use" if usable else "Equip"
+	game.equip_button.text = "Bind" if info.get("egg_state", "") == "hatched" else "Hatch" if int(item_info(selected).get("hatch_spell", 0)) > 0 else "Use" if usable else "Equip"
 	game.drop_button.disabled = not _action_ready() or bag_amount(item_id(selected)) <= 0 or int(info.get("special", 0)) == 4
-	game.junk_button.disabled = not _action_ready() or bag_amount(item_id(selected)) <= 0
+	game.junk_button.disabled = not _action_ready() or bag_amount(item_id(selected)) <= 0 or info.get("egg_state", "") == "hatched"
 	drop_ui.refresh()
 	game.paperdoll.refresh(selected)
 	if game.paperdoll.information_labels.size() >= 2:

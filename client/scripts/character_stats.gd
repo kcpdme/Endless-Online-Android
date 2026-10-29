@@ -201,7 +201,7 @@ func refresh() -> void:
 		if item.get("backstab", false): item_body.text += "\n\nRogue rear strikes: 1.5x or 2x damage, without critical stacking."
 		if int(item.get("hatch_spell", 0)) > 0:
 			var summon: Dictionary = (game.online.catalog.get("spells", {}) as Dictionary).get(str(int(item.hatch_spell)), {}) as Dictionary
-			if bool(item.get("bond_lost_on_death", false)):
+			if item.has("egg_state") or bool(item.get("bond_lost_on_death", false)):
 				item_body.text = PET_DETAILS.description(game, item)
 				item_art.texture = PET_DETAILS.texture(game, item)
 			else:

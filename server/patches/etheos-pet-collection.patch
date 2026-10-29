@@ -1,0 +1,349 @@
+--- a/src/arena.cpp
++++ b/src/arena.cpp
+@@ -160,6 +160,8 @@
+ 	{
+ 		if (character->arena == this && character->x == target_x && character->y == target_y)
+ 		{
++			character->StartCompanionCooldown();
++            if (character->CompanionCooldown() > 0) character->CompanionStatus(nullptr);
+ 			++from->arena_kills;
+ 			actions.push_back({character, this->map->id, this->map->relog_x, this->map->relog_y});
+ 
+--- a/src/character.cpp
++++ b/src/character.cpp
+@@ -481,6 +481,17 @@
+ 	this->bank = ItemUnserialize(row["bank"]);
+ 	this->paperdoll = DollUnserialize(row["paperdoll"]);
+ 	this->spells = SpellUnserialize(row["spells"]);
++    if (this->world->config["PermanentPetCollection"])
++    {
++        auto state = db_ptr->Query("SELECT selected_spell, ready_at FROM aster_pet_state WHERE character_name = '$'", name.c_str());
++        if (!state.empty())
++        { this->selected_companion = int(state.front()["selected_spell"]); this->companion_ready_at = int(state.front()["ready_at"]); }
++        if (!this->HasSpell(this->selected_companion)) this->selected_companion = 0;
++        if (!this->selected_companion)
++            for (const auto& spell : this->spells)
++                if (int(this->world->config["BalancePetSpell." + util::to_string(spell.id) + ".egg"]) > 0)
++                { this->selected_companion = spell.id; break; }
++    }
+ 
+ 	this->player = 0;
+ 	std::string guild_tag = util::trim(static_cast<std::string>(row["guild"]));
+@@ -1013,6 +1024,8 @@
+ 
+ bool Character::DelSpell(short spell)
+ {
++    if (this->world->config["PermanentPetCollection"] && int(this->world->config["BalancePetSpell." + util::to_string(spell) + ".egg"]) > 0)
++    { this->StatusMsg("Hatched pets are permanent collection unlocks and cannot be forgotten."); return false; }
+ 	auto remove_it = std::remove_if(UTIL_RANGE(this->spells), [&](Character_Spell cs) { return cs.id == spell; });
+ 	bool removed = (remove_it != this->spells.end());
+ 	this->spells.erase(remove_it, this->spells.end());
+@@ -1747,7 +1760,7 @@
+     std::vector<std::pair<int,int>> displaced;
+     if (this->world->config["ClassIdentityRules"])
+     {
+-        if (this->clas != 7) this->DismissCompanion();
++        if (this->clas != 7) this->DismissCompanion(true);
+         if (this->spell_id && !this->BalanceCanCast(this->spell_id)) this->CancelSpell();
+         for (std::size_t slot = 0; slot < this->paperdoll.size(); ++slot)
+         {
+@@ -2617,17 +2630,52 @@
+     reply.AddShort(pet ? pet->id : 0); reply.AddShort(this->tp);
+     reply.AddShort(pet ? util::clamp<int>(int(pet->companion_expires - Timer::GetTime()), 0, 90) : 0);
+     reply.AddShort(spell); reply.AddChar(target); reply.AddThree(std::max(0, damage));
++    if (this->world->config["PermanentPetCollection"])
++    { reply.AddShort(this->selected_companion); reply.AddShort(this->CompanionCooldown()); }
+     for (auto *other : this->map->characters)
+         if (other == this || this->InRange(other)) other->Send(reply);
+ }
+ 
+-void Character::DismissCompanion()
++int Character::CompanionCooldown() const
++{
++    return std::max(0, this->companion_ready_at - int(std::time(0)));
++}
++
++void Character::SaveCompanionState()
++{
++    if (!this->world->config["PermanentPetCollection"]) return;
++    auto state = this->world->db->Query("SELECT character_name FROM aster_pet_state WHERE character_name = '$'", this->real_name.c_str());
++    if (state.empty()) this->world->db->Query("INSERT INTO aster_pet_state (character_name, selected_spell, ready_at) VALUES ('$', #, #)", this->real_name.c_str(), int(this->selected_companion), this->companion_ready_at);
++    else this->world->db->Query("UPDATE aster_pet_state SET selected_spell = #, ready_at = # WHERE character_name = '$'", int(this->selected_companion), this->companion_ready_at, this->real_name.c_str());
++}
++
++void Character::StartCompanionCooldown()
++{
++    if (!this->world->config["PermanentPetCollection"]) return;
++    bool owned = false;
++    for (const auto& spell : this->spells)
++        if (int(this->world->config["BalancePetSpell." + util::to_string(spell.id) + ".egg"]) > 0) { owned = true; break; }
++    if (!owned) return;
++    this->companion_ready_at = std::max(this->companion_ready_at, int(std::time(0)) + util::clamp<int>(this->world->config["PetCollectionCooldownSeconds"], 1, 300));
++    this->SaveCompanionState();
++}
++
++NPC *Character::GetCompanion() const
++{
++    if (this->map)
++        for (auto *npc : this->map->npcs)
++            if (npc->companion_owner == this->PlayerID()) return npc;
++    return nullptr;
++}
++
++void Character::DismissCompanion(bool cooldown)
+ {
+     this->companion_target = -1; this->companion_command_time = 0.0;
+     if (!this->map) return;
+     std::vector<NPC*> pets;
+     for (auto *npc : this->map->npcs)
+         if (npc->companion_owner == this->PlayerID()) pets.push_back(npc);
++    if (cooldown && !pets.empty()) this->StartCompanionCooldown();
+     for (auto *npc : pets) npc->Die();
+     if (!pets.empty()) this->CompanionStatus(nullptr);
+ }
+@@ -2653,7 +2701,14 @@
+         return nullptr;
+     };
+     int definition = configured->second;
+-    if (definition < 0) { this->DismissCompanion(); this->CompanionStatus(nullptr, id); return true; }
++    if (definition < 0) { this->DismissCompanion(true); this->CompanionStatus(nullptr, id); return true; }
++    if (this->world->config["PermanentPetCollection"])
++    {
++        if (this->CompanionCooldown() > 0)
++        { this->StatusMsg("Your pets are recovering. Wait for the collection cooldown."); this->CompanionStatus(existing_pet(),id); return true; }
++        if (existing_pet())
++        { this->StatusMsg("Dismiss your current pet before changing or recalling it. Dismissal starts its recovery timer."); this->CompanionStatus(existing_pet(),id); return true; }
++    }
+     if (this->arena || this->map->pk || (this->world->config["GlobalPK"] && !this->world->PKExcept(this->mapid)))
+     { this->StatusMsg("Spirit companions can only be summoned outside arenas and PK areas."); this->DismissCompanion(); this->CompanionStatus(nullptr,id); return true; }
+     const ESF_Data& spell = this->world->esf->Get(id);
+@@ -2674,6 +2729,8 @@
+     if (spawn_x < 0) { this->StatusMsg("Move to an open space to summon a companion."); this->CompanionStatus(existing_pet(),id); return true; }
+     // Validate the replacement first; failure never discards an existing pet.
+     this->DismissCompanion(); this->tp -= spell.tp;
++    if (this->world->config["PermanentPetCollection"])
++    { this->selected_companion = id; this->SaveCompanionState(); }
+     NPC *pet = new NPC(this->map, definition, spawn_x, spawn_y, 7, 0, index, true);
+     pet->companion_owner = this->PlayerID(); pet->companion_spell = id;
+     double lifetime = this->world->config["CompanionLifetimeSeconds"];
+@@ -2717,6 +2774,61 @@
+ 
+ bool Character::HatchCompanionEgg(unsigned short id)
+ {
++    if (this->world->config["PermanentPetCollection"])
++    {
++        std::string key = util::to_string(id);
++        auto egg = this->world->config.find("BalanceEgg." + key + ".spell");
++        auto hatched = this->world->config.find("BalanceHatchedEgg." + key + ".spell");
++        bool selecting = hatched != this->world->config.end() && int(hatched->second) > 0;
++        if (!selecting && (egg == this->world->config.end() || int(egg->second) <= 0)) return false;
++        unsigned short spell = int(selecting ? hatched->second : egg->second);
++        int token = int(this->world->config["BalancePetSpell." + util::to_string(spell) + ".hatched_egg"]);
++        if (this->clas != 7) this->StatusMsg("Only Summoners can hatch or bind spirit eggs.");
++        else if (!this->BalanceCanCast(spell)) this->StatusMsg("Reach the required level before hatching or binding this pet.");
++        else if (this->hp <= 0 || this->nowhere) this->StatusMsg("Recover before choosing a pet.");
++        else if (selecting)
++        {
++            if (!this->HasSpell(spell)) this->StatusMsg("Hatch this pet first to add it to your collection.");
++            else if (this->CompanionCooldown() > 0) this->StatusMsg("Your pets are recovering. Binding unlocks after the shared cooldown.");
++            else if (this->GetCompanion() && this->selected_companion != spell) this->StatusMsg("Dismiss your current pet first. You may switch after its five-minute recovery.");
++            else
++            {
++                this->selected_companion = spell;
++                if (!this->HasItem(id) && this->inventory.size() < 250 && std::none_of(this->bank.begin(),this->bank.end(),[id](const Character_Item& item) { return item.id == id; }))
++                {
++                    if (this->AddItem(id,1))
++                    {
++                        PacketBuilder gained(PACKET_ITEM, PACKET_GET, 9);
++                        gained.AddShort(0); gained.AddShort(id); gained.AddThree(1); gained.AddChar(this->weight); gained.AddChar(this->maxweight); this->Send(gained);
++                        this->Save();
++                    }
++                }
++                this->SaveCompanionState(); this->StatusMsg("Pet bound. Use Summon to call it.");
++            }
++        }
++        else if (!this->HasItem(id)) this->StatusMsg("This egg is not in your bag.");
++        else if (this->HasSpell(spell)) this->StatusMsg("This pet is already hatched. Keep or sell the spare unhatched egg.");
++        else if (this->inventory.size() >= 250 && this->HasItem(id) > 1) this->StatusMsg("Make one inventory slot available for the Hatched Egg. The egg is kept.");
++        else if (token <= 0 || std::size_t(token) >= this->world->eif->data.size() || spell == 0 || std::size_t(spell) >= this->world->esf->data.size()) this->StatusMsg("This pet definition is unavailable. The egg is kept.");
++        else if (this->AddItem(token,1))
++        {
++            this->DelItem(id,1); this->AddSpell(spell);
++            if (!this->selected_companion) this->selected_companion = spell;
++            PacketBuilder learned(PACKET_STATSKILL, PACKET_TAKE, 6);
++            learned.AddShort(spell); learned.AddInt(this->HasItem(1)); this->Send(learned);
++            PacketBuilder gained(PACKET_ITEM, PACKET_GET, 9);
++            gained.AddShort(0); gained.AddShort(token); gained.AddThree(1);
++            gained.AddChar(this->weight); gained.AddChar(this->maxweight); this->Send(gained);
++            this->Save(); this->SaveCompanionState();
++            this->StatusMsg("Pet hatched permanently! Your Hatched Egg is a bound keepsake. Choose a pet from the top paw icon.");
++        }
++        this->CompanionStatus(this->GetCompanion(),spell);
++        PacketBuilder reply(PACKET_ITEM, PACKET_REPLY, 11);
++        reply.AddChar(EIF::EffectPotion); reply.AddShort(id); reply.AddInt(this->HasItem(id));
++        reply.AddChar(this->weight); reply.AddChar(this->maxweight); reply.AddShort(0); this->Send(reply);
++        return true;
++    }
++
+     auto entry = this->world->config.find("BalanceEgg." + util::to_string(id) + ".spell");
+     const EIF_Data& item = this->world->eif->Get(id);
+     if (entry == this->world->config.end() && !(item.type == EIF::EffectPotion && item.classreq == 7)) return false;
+@@ -2751,6 +2863,12 @@
+ // Clearing every legacy summon also closes dismiss/TP/class-switch death bypasses.
+ void Character::LoseCompanionBond()
+ {
++    if (this->world->config["PermanentPetCollection"])
++    {
++        this->StartCompanionCooldown(); this->DismissCompanion(); this->CompanionStatus(nullptr);
++        if (this->selected_companion) this->StatusMsg("Your hatched pets are safe. They can be called after the five-minute recovery.");
++        return;
++    }
+     if (!this->world->config["MortalSpiritBonds"]) return;
+     this->DismissCompanion();
+     std::vector<std::pair<int,int>> lost;
+--- a/src/character.hpp
++++ b/src/character.hpp
+@@ -346,7 +346,13 @@
+         bool HatchCompanionEgg(unsigned short id);
+         void LoseCompanionBond();
+         bool CompanionSpell(unsigned short id);
+-        void DismissCompanion();
++        unsigned short selected_companion = 0;
++        int companion_ready_at = 0;
++        int CompanionCooldown() const;
++        void SaveCompanionState();
++        void StartCompanionCooldown();
++        NPC *GetCompanion() const;
++        void DismissCompanion(bool cooldown = false);
+         void CommandCompanion(NPC *target);
+         void CompanionStatus(NPC *pet, unsigned short spell = 0, unsigned char target = 0, int damage = 0);
+ 		bool BalanceCanEquip(const EIF_Data& item) const;
+--- a/src/eoserv_config.cpp
++++ b/src/eoserv_config.cpp
+@@ -64,6 +64,8 @@
+     eoserv_config_default(config, "CarryCapacityRules", false);
+     eoserv_config_default(config, "PriestRegenSeconds", 2.0);
+     eoserv_config_default(config, "MortalSpiritBonds", false);
++    eoserv_config_default(config, "PermanentPetCollection", false);
++    eoserv_config_default(config, "PetCollectionCooldownSeconds", 300);
+     eoserv_config_default(config, "PriestRegenRate", 0.02);
+     eoserv_config_default(config, "PriestSittingRegenRate", 0.04);
+ 	eoserv_config_default(config, "BalanceRevamp"     , false);
+--- a/src/handlers/Item.cpp
++++ b/src/handlers/Item.cpp
+@@ -31,6 +31,7 @@
+ 	if (character->trading) return;
+ 
+ 	int id = reader.GetShort();
++    if (character->world->config["PermanentPetCollection"] && int(character->world->config["BalanceHatchedEgg." + util::to_string(id) + ".spell"]) > 0 && character->HatchCompanionEgg(id)) return;
+ 
+ 	if (!character->HasItem(id))
+ 	{
+@@ -446,6 +447,8 @@
+ 
+ 	int id = reader.GetShort();
+ 	int amount = reader.GetInt();
++    if (character->world->config["PermanentPetCollection"] && int(character->world->config["BalanceHatchedEgg." + util::to_string(id) + ".spell"]) > 0)
++    { character->StatusMsg("Hatched Eggs are permanent bound keepsakes and cannot be discarded."); return; }
+ 
+ 	if (amount <= 0)
+ 		return;
+@@ -473,7 +476,7 @@
+ 
+ 	if (item)
+ 	{
+-        if (character->world->config["MortalSpiritBonds"] && int(character->world->config["BalanceEgg." + util::to_string(item->id) + ".npc"]) > 0
++        if ((character->world->config["MortalSpiritBonds"] || character->world->config["PermanentPetCollection"]) && int(character->world->config["BalanceEgg." + util::to_string(item->id) + ".npc"]) > 0
+           && (character->clas != 7 || item->companion_egg_owner != character->real_name)) return;
+ 		int distance = util::path_length(item->x, item->y, character->x, character->y);
+ 
+--- a/src/handlers/Shop.cpp
++++ b/src/handlers/Shop.cpp
+@@ -125,6 +125,7 @@
+ 
+ 	short item = reader.GetShort();
+ 	int amount = reader.GetInt();
++    if (character->world->config["PermanentPetCollection"] && int(character->world->config["BalanceHatchedEgg." + util::to_string(item) + ".spell"]) > 0) return;
+ 	/*int shopid = reader.GetInt();*/
+ 
+ 	if (amount <= 0 || amount > static_cast<int>(character->world->config["MaxItem"])) return;
+--- a/src/handlers/StatSkill.cpp
++++ b/src/handlers/StatSkill.cpp
+@@ -199,7 +199,7 @@
+ 
+ 		case TRAIN_SKILL:
+             // Mortal bonds are not trained with permanent character skill points.
+-            if (character->world->config["MortalSpiritBonds"] && int(character->world->config["BalancePetSpell." + util::to_string(stat_id) + ".egg"]) > 0) return;
++            if ((character->world->config["MortalSpiritBonds"] || character->world->config["PermanentPetCollection"]) && int(character->world->config["BalancePetSpell." + util::to_string(stat_id) + ".egg"]) > 0) return;
+ 			if (character->skillpoints <= 0 || !character->BalanceCanCast(stat_id) || !character->HasSpell(stat_id)
+ 			 || character->SpellLevel(stat_id) >= int(character->world->config["MaxSkillLevel"]))
+ 			{
+--- a/src/handlers/Welcome.cpp
++++ b/src/handlers/Welcome.cpp
+@@ -371,6 +371,7 @@
+ 		reply.AddThree(item->amount);
+ 	}
+ 	player->Send(reply);
++    if (player->world->config["PermanentPetCollection"]) player->character->CompanionStatus(nullptr);
+ }
+ 
+ // Client wants a file
+--- a/src/npc.cpp
++++ b/src/npc.cpp
+@@ -638,9 +638,9 @@
+     for (const auto& candidate : this->Data().drops)
+     {
+         auto egg = this->map->world->config.find("BalanceEgg." + util::to_string(candidate->id) + ".npc");
+-        if (this->map->world->config["MortalSpiritBonds"] && egg != this->map->world->config.end()
++        if ((this->map->world->config["MortalSpiritBonds"] || this->map->world->config["PermanentPetCollection"]) && egg != this->map->world->config.end() && int(egg->second) > 0
+           && (!drop_winner || drop_winner->clas != 7 || int(egg->second) != this->id)) continue;
+-        if (this->map->world->config["OwnerScaledPets"] && egg != this->map->world->config.end())
++        if (this->map->world->config["OwnerScaledPets"] && egg != this->map->world->config.end() && int(egg->second) > 0)
+         {
+             // A separate roll is not multiplied or normalised by ordinary loot.
+             if (drop_winner && drop_winner->clas == 7 && int(egg->second) == this->id)
+@@ -760,7 +760,7 @@
+ 		dropuid = this->map->GenerateItemID();
+ 
+ 		std::shared_ptr<Map_Item> newitem(std::make_shared<Map_Item>(dropuid, dropid, dropamount, this->x, this->y, from->PlayerID(), Timer::GetTime() + static_cast<int>(this->map->world->config["ProtectNPCDrop"])));
+-        if (this->map->world->config["MortalSpiritBonds"] && drop_winner
++        if ((this->map->world->config["MortalSpiritBonds"] || this->map->world->config["PermanentPetCollection"]) && drop_winner
+           && int(this->map->world->config["BalanceEgg." + util::to_string(dropid) + ".npc"]) > 0)
+             newitem->companion_egg_owner = drop_winner->real_name;
+ 		this->map->items.push_back(newitem);
+@@ -1238,13 +1238,13 @@
+       || this->map->pk || owner->arena || (this->map->world->config["GlobalPK"] && !this->map->world->PKExcept(this->map->id))
+       || (this->companion_expires > 0.0 && now >= this->companion_expires) || util::path_length(this->x,this->y,owner->x,owner->y) > 12)
+     {
+-        if (owner) owner->CompanionStatus(nullptr);
++        if (owner) { owner->StartCompanionCooldown(); owner->CompanionStatus(nullptr); }
+         this->Die(); return;
+     }
+     if (now >= this->companion_upkeep)
+     {
+         this->companion_upkeep = now + 2.0;
+-        if (owner->tp < this->companion_cost) { owner->CompanionStatus(nullptr); this->Die(); return; }
++        if (owner->tp < this->companion_cost) { owner->StartCompanionCooldown(); owner->CompanionStatus(nullptr); this->Die(); return; }
+         owner->tp -= this->companion_cost; owner->CompanionStatus(this);
+     }
+     NPC *target = nullptr;
+--- a/src/world.cpp
++++ b/src/world.cpp
+@@ -420,6 +420,8 @@
+ 
+ void World::Initialize()
+ {
++    if (this->config["PermanentPetCollection"])
++        this->db->Query("CREATE TABLE IF NOT EXISTS aster_pet_state (character_name VARCHAR(16) PRIMARY KEY, selected_spell INTEGER NOT NULL DEFAULT 0, ready_at INTEGER NOT NULL DEFAULT 0)");
+ 	if (int(this->timer.resolution * 1000.0) > 1)
+ 	{
+ 		Console::Out("Timers set at approx. %i ms resolution", int(this->timer.resolution * 1000.0));
+@@ -1786,6 +1788,8 @@
+ 
+ void World::DeleteCharacter(std::string name)
+ {
++    if (this->config["PermanentPetCollection"])
++        this->db->Query("DELETE FROM aster_pet_state WHERE character_name = '$'", name.c_str());
+ 	this->db->Query("DELETE FROM `characters` WHERE name = '$'", name.c_str());
+ }
+ 

@@ -41,8 +41,8 @@ static func social_texture(ident: int, frame: int = 0) -> Texture2D:
 	if ident not in SOCIAL_SETS: return null
 	return frame_texture(social_set(ident), frame)
 
-static func social_rect(at: Vector2, _elapsed: int = 0) -> Rect2:
-	return Rect2(at + Vector2(-SOCIAL_SIZE / 2.0, SOCIAL_BOTTOM - SOCIAL_SIZE), Vector2.ONE * SOCIAL_SIZE)
+static func social_rect(at: Vector2, _elapsed: int = 0, head_shift: float = 0.0) -> Rect2:
+	return Rect2(at + Vector2(-SOCIAL_SIZE / 2.0, SOCIAL_BOTTOM + head_shift - SOCIAL_SIZE), Vector2.ONE * SOCIAL_SIZE)
 
 static func social_set(ident: int) -> int:
 	return int(SOCIAL_SETS.get(ident, ident - 1))
@@ -80,6 +80,20 @@ func event(data: Dictionary) -> void:
 	elif kind == "player_emote" and (int(data.get("emote", 0)) in range(1, 11) or int(data.get("emote", 0)) == 14):
 		social_emotes[int(data.player_id)] = {"id":int(data.emote), "at":Time.get_ticks_msec()}
 
+static func sitting_head_shift(sitting: int, gender: int, direction: int) -> float:
+	if sitting<=0:return 0.0
+	var back: bool=direction in [1,2]
+	var shift: int=(11+gender if back else 9+gender)*(2 if sitting==2 else 1)
+	return float(shift-1 if sitting==2 and back else shift)
+
+func posture_offset(pid: int) -> float:
+	var record: Dictionary={}
+	if pid==int(game.online.player.get("player_id",-1)):record=game.online.player
+	else:
+		for peer: Dictionary in game.online.players:
+			if int(peer.get("player_id",-1))==pid:record=peer;break
+	return sitting_head_shift(int(record.get("sitting",0)),int(record.get("gender",1)),int(record.get("direction",0)))
+
 func draw() -> void:
 	for key: Variant in social_emotes.keys():
 		var row: Dictionary = social_emotes[key]
@@ -87,7 +101,7 @@ func draw() -> void:
 		var at: Vector2 = game.online.player_visual_position(int(key))
 		if at.is_finite():
 			var texture: Texture2D = social_texture(int(row.id), frame_index(Time.get_ticks_msec() - int(row.at)))
-			if texture != null: game.draw_texture_rect(texture, social_rect(at, Time.get_ticks_msec() - int(row.at)), false)
+			if texture != null: game.draw_texture_rect(texture, social_rect(at, Time.get_ticks_msec() - int(row.at),posture_offset(int(key))), false)
 	_draw_emotes(emotes,int((game.manifest.get("drinks",{}) as Dictionary).get("drunk_set",10)),0.0)
 	_draw_emotes(music_emotes,14,24.0)
 
@@ -101,4 +115,4 @@ func _draw_emotes(entries: Dictionary, set_index: int, horizontal: float) -> voi
 		var at: Vector2 = game.online.player_visual_position(int(key))
 		if not at.is_finite(): continue
 		var texture: Texture2D = frame_texture(set_index, frame_index(elapsed))
-		if texture != null: game.draw_texture_rect(texture, social_rect(at + Vector2(horizontal, 0)), false)
+		if texture != null: game.draw_texture_rect(texture, social_rect(at + Vector2(horizontal, 0),0,posture_offset(int(key))), false)

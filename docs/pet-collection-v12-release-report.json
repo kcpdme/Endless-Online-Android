@@ -1,0 +1,38 @@
+{
+  "result": "passed",
+  "date": "2026-10-29",
+  "version": "0.50.0",
+  "version_code": 92,
+  "balance_profile": 12,
+  "unit_tests": 243,
+  "native_checks": 228,
+  "godot_client_checks": 143,
+  "godot_import_passed": true,
+  "pinned_native_patch_stack_reproducible": true,
+  "original_enhanced_emote_animations_retained": true,
+  "chair_and_floor_head_offset_verified": true,
+  "single_tap_emote_menu": true,
+  "emote_timeout_seconds": 3,
+  "collection_phone_viewports": [
+    [
+      1544,
+      720
+    ],
+    [
+      960,
+      540
+    ]
+  ],
+  "egg_previews": 16,
+  "hatched_egg_definitions": 16,
+  "egg_icon_variants": 10,
+  "apk_signature_verified": true,
+  "apk_16kb_alignment_verified": true,
+  "apk_catalog_and_new_icons_verified": true,
+  "installed_on_connected_phone": true,
+  "installed_bytes_verified": true,
+  "app_first_install_time_preserved": true,
+  "apk_sha256": "2ae0a1896474ac577bfe9288cea6b5b57e054dd3c6cf63970eccbfde5d2f2cdf",
+  "real_player_characters_used_for_gameplay_qa": false,
+  "public_https_wss_verified": true
+}

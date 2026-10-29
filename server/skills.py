@@ -156,6 +156,7 @@ class SkillsMixin:
                 if known:raise EOError('You already know this skill')
                 if not any(o['id']==spell_id for o in self.skillmaster['offers']):raise EOError('This master does not teach that skill')
             elif action=='forget':
+                if rules.get('spells',{}).get(str(spell_id),{}).get('permanent_pet'):raise EOError('Hatched pets are permanent collection unlocks and cannot be forgotten.')
                 if not known:raise EOError('You do not know this skill')
             else:raise EOError('Invalid skill action')
             self.send(16,9 if action=='learn' else 4,number(self.skillmaster['id'],4)+number(spell_id,2))
@@ -167,6 +168,11 @@ class SkillsMixin:
         r=Reader(p);event=self.events[-1];values={}
         if (f,a)==(232,3):
             pid=r.num(2);index=r.num();npc_id=r.num(2);tp=r.num(2);remaining=r.num(2);ident=r.num(2);target=r.num();damage=r.num(3)
+            if len(r.rest())==4:
+                selected=r.num(2);cooldown=r.num(2)
+                if cooldown>300:raise EOError('Invalid native pet cooldown')
+                if pid==self.player_id:
+                    self.pet_selected_spell=selected;self.pet_ready_at=time.monotonic()+cooldown
             if r.rest() or remaining>90:raise EOError('Invalid native companion update')
             event.update(kind='companion',player_id=pid,npc_index=index,npc_id=npc_id,remaining=remaining,spell_id=ident)
             if pid==self.player_id:

@@ -28,7 +28,7 @@ func run() -> void:
 	if failed: game.queue_free(); await process_frame; quit(1); return
 	c.character_list.select(0); c._enter_selected()
 	check(await wait_for(func() -> bool: return c.active and c.streaming and c.session.is_idle()), "Regular Summoner enters native world")
-	check(int(c.player.stats.admin) == 0 and int(c.catalog.balance_version) == 11, "Tier catalog reaches a regular character")
+	check(int(c.player.stats.admin) == 0 and int(c.catalog.balance_version) == 12, "Tier catalog reaches a regular character")
 	game.pet_ui.tick()
 	check(game.pet_ui.button.visible, "Summoner has a dedicated pet control")
 	check(game.bag_button.get_global_rect().position.y > 500, "Inventory restored to the bottom-right row")
@@ -59,6 +59,23 @@ func run() -> void:
 	await create_timer(0.25).timeout
 	slide.position = Vector2(20, 100); game._input(slide); touch.pressed = false; touch.position = slide.position; game._input(touch)
 	check(game.emote_ui.last_sent == last_sent and not game.emote_ui.popup.visible, "Sliding outside cancels without sending an emote")
+	# One tap leaves the menu open, a second tap selects, outside taps are consumed.
+	touch.pressed=true;touch.position=game.emote_ui.button.get_global_rect().get_center();game._input(touch)
+	touch.pressed=false;game._input(touch)
+	check(game.emote_ui.popup.visible and game.emote_ui.pointer==-99, "Single tap leaves the emote menu open")
+	await create_timer(0.9).timeout
+	touch.pressed=true;touch.position=game.emote_ui.rows[0].get_global_rect().get_center();game._input(touch)
+	touch.pressed=false;game._input(touch)
+	check(not game.emote_ui.popup.visible, "Tapping a choice closes the picker")
+	touch.pressed=true;touch.position=game.emote_ui.button.get_global_rect().get_center();game._input(touch)
+	touch.pressed=false;game._input(touch)
+	touch.pressed=true;touch.position=Vector2(20,100);game._input(touch)
+	check(not game.emote_ui.popup.visible and game.touch_move_id==-1, "Outside tap dismisses without moving")
+	touch.pressed=false;game._input(touch)
+	touch.pressed=true;touch.position=game.emote_ui.button.get_global_rect().get_center();game._input(touch)
+	touch.pressed=false;game._input(touch)
+	await create_timer(3.1).timeout
+	check(not game.emote_ui.popup.visible, "Unselected picker closes after three seconds")
 	var keeper: Dictionary = {}
 	for npc: Dictionary in c.npcs:
 		if int(npc.id) == 321: keeper = npc
@@ -73,7 +90,7 @@ func run() -> void:
 		for offer: Dictionary in ui.offers:
 			choose(int(offer.id)); await process_frame
 			check(ui.item_icon.texture != null, "Each egg previews its actual pet appearance")
-			check(ui.description.text.contains("Hit limit") and ui.description.text.contains("Upkeep") and ui.description.text.contains("Death breaks"), "Tier, TP and bond rules are visible before purchase")
+			check(ui.description.text.contains("Hit limit") and ui.description.text.contains("Upkeep") and ui.description.text.contains("permanent"), "Tier, TP and bond rules are visible before purchase")
 			check(not ui.action.disabled, "Summoner can buy each offered egg")
 	choose(612); c.player.stats.class_id = 6; ui.refresh()
 	check(ui.action.disabled and ui.status.text.contains("Only Summoners"), "Shop disables egg purchases for another class")
@@ -102,11 +119,14 @@ func run() -> void:
 	check(await wait_for(func() -> bool: return not c.companion.is_empty() and not game.pet_ui.button.disabled), "Pet control receives native active state")
 	check(game.pet_ui.caption.text == "Dismiss", "Pet control changes to Dismiss")
 	game.pet_ui.press()
-	check(await wait_for(func() -> bool: return c.companion.is_empty() and not game.pet_ui.button.disabled), "Dedicated control dismisses the native pet")
-	check(game.skills_ui.known(51), "Dismiss retains the hatched bond")
-	game.pet_ui.press()
-	check(await wait_for(func() -> bool: return not c.companion.is_empty()), "Dedicated control recalls without another egg")
+	check(await wait_for(func() -> bool: return c.companion.is_empty() and game.pet_ui.button.disabled), "Dismissal starts shared recovery")
+	check(game.skills_ui.known(51) and c.bag_amount(628)==1, "Dismiss retains permanent pet and Hatched Egg")
+	check(game.pet_ui.collection_button.visible, "Summoner has a top collection icon")
+	game.pet_ui.open(); await process_frame
+	check(game.pet_ui.panel.visible and game._modal_open(), "Collection opens as a blocking game modal")
+	check(game.pet_ui.list.item_count==1, "Hatched pet appears in collection")
 	check(not c.npc_graphic({"id":309}).is_empty(), "Penguin uses original rendered creature art")
+	game.pet_ui.panel.hide()
 	var report: Dictionary = {"result":"failed" if failed else "passed", "checks":checks, "pet_previews":16, "phone_viewports":2, "native_shop_purchase_hatch_summon":true}
 	FileAccess.open(OS.get_environment("ASTER_VALE_TEST_REPORT"), FileAccess.WRITE).store_string(JSON.stringify(report, "  ") + "\n")
 	print("PET TIERS LIVE: ", JSON.stringify(report)); c.log_out(); game.queue_free(); await process_frame; await process_frame; quit(1 if failed else 0)

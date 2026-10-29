@@ -1,0 +1,22 @@
+{
+  "result": "passed",
+  "profile": 12,
+  "backup": "/opt/aster-vale/backups/pet-collection-v12-20261028T225520Z",
+  "services_healthy": true,
+  "all_accounts_preserved": true,
+  "existing_character_exp_levels_admin_bank_equipment_preserved": true,
+  "existing_bag_items_and_spell_ownership_preserved": true,
+  "original_monster_exp_verified": 305,
+  "exp_multiplier": 1,
+  "quest_files_unchanged": true,
+  "pet_migration": {
+    "already_applied": false,
+    "characters_changed": 18,
+    "pets_preserved": 18,
+    "hatched_keepsakes_added": 18,
+    "deferred_keepsakes": 0,
+    "skill_points_refunded": 0
+  },
+  "native_sha256": "28fb6d7e5dd902738ab54326ce098648bd626a6cb3ddea244f16c954cf22985d",
+  "profile_sha256": "b4c43762c2ab08240680152582d2e2376d8f90cb768602e50b31d72dd4b3daba"
+}

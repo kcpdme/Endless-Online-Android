@@ -1,8 +1,8 @@
 extends RefCounted
-## Touch/mouse gesture owns one pointer; release outside the column cancels.
+## Tap opens a timed picker; optional drag-to-select still owns one pointer.
 const IDS: Array[int] = [1, 3, 4, 5, 7]
 const NAMES: Array[String] = ["Happy", "Sad", "Angry", "Confused", "Hearts"]
-const HOLD_MSEC: int = 220
+const OPEN_MSEC: int = 3000
 var game: Node
 var button: Button
 var popup: Panel
@@ -12,6 +12,7 @@ var held_at: int = 0
 var selected: int = -1
 var pending: int = -1
 var last_sent: int = -1000
+var mouse_block_until: int = 0
 
 func build(owner_game: Node, parent: Control) -> void:
 	game = owner_game
@@ -19,7 +20,7 @@ func build(owner_game: Node, parent: Control) -> void:
 	button.set("kind", "emote")
 	button.position = Vector2(512, 144)
 	button.size = Vector2(52, 52)
-	button.tooltip_text = "Hold and slide up to an emote; release to use"
+	button.tooltip_text = "Tap to choose an emote · closes after 3 seconds"
 	parent.add_child(button)
 	popup = Panel.new()
 	popup.position = Vector2(500, -150)
@@ -67,6 +68,7 @@ func begin(id: int) -> void:
 	pointer = id
 	held_at = Time.get_ticks_msec()
 	selected = -1
+	popup.show()
 
 func choose(point: Vector2) -> void:
 	selected = -1
@@ -78,8 +80,10 @@ func choose(point: Vector2) -> void:
 func release(point: Vector2) -> void:
 	if popup.visible: choose(point)
 	var index: int = selected
-	cancel()
-	if index >= 0: send_emote(IDS[index])
+	pointer = -99
+	if index >= 0:
+		cancel(); send_emote(IDS[index])
+	elif not button.get_global_rect().has_point(point): cancel()
 
 func cancel() -> void:
 	pointer = -99
@@ -106,16 +110,17 @@ func tick() -> void:
 	layout()
 	button.visible = available()
 	if not available(): cancel(); return
-	if pointer != -99 and Time.get_ticks_msec() - held_at >= HOLD_MSEC: popup.show()
+	if popup.visible and Time.get_ticks_msec() - held_at >= OPEN_MSEC: cancel()
 
 func input(event: InputEvent) -> bool:
+	if event is InputEventScreenTouch and (pointer!=-99 or popup.visible or (available() and button.get_global_rect().has_point(event.position))):mouse_block_until=Time.get_ticks_msec()+150
 	if event is InputEventKey and event.pressed and not event.echo and available() and not game._editing_text() and not game.chat_ui.typing():
 		var keys: Array[int] = [KEY_KP_0, KEY_KP_1, KEY_KP_2, KEY_KP_3, KEY_KP_4, KEY_KP_5, KEY_KP_6, KEY_KP_7, KEY_KP_8, KEY_KP_9]
 		var digit: int = keys.find(event.keycode)
 		if digit >= 0: send_emote(10 if digit == 0 else digit); return true
 	if event is InputEventMouseButton or event is InputEventMouseMotion:
 		if event.device == InputEvent.DEVICE_ID_EMULATION:
-			return pointer != -99 or (contains(event.position) and available())
+			return Time.get_ticks_msec()<mouse_block_until or pointer != -99 or (available() and (popup.visible or contains(event.position)))
 	if pointer != -99:
 		if event is InputEventScreenTouch and event.index == pointer:
 			if not event.pressed:
@@ -129,6 +134,13 @@ func input(event: InputEvent) -> bool:
 			if popup.visible: choose(event.position)
 			return true
 	if not available(): return false
+	var pressed: bool=(event is InputEventScreenTouch or (event is InputEventMouseButton and event.button_index==MOUSE_BUTTON_LEFT)) and event.pressed
+	if popup.visible and pressed:
+		if not popup.get_global_rect().has_point(event.position):
+			cancel(); return true
+		begin(event.index if event is InputEventScreenTouch else -2)
+		choose(event.position)
+		return true
 	if (event is InputEventScreenTouch or (event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT)) and event.pressed and button.get_global_rect().has_point(event.position):
 		begin(event.index if event is InputEventScreenTouch else -2)
 		return true

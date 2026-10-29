@@ -19,8 +19,15 @@ func run() -> void:
    assert(tex.region.position.y==visuals.social_set(ident)*200 and tex.region.position.x==frame*200)
  var rect: Rect2=visuals.social_rect(Vector2.ZERO,480)
  assert(rect.end.y<=-80 and rect.size==Vector2(50,50))
+ for gender: int in [0,1]:
+  for direction: int in range(4):
+   var back: bool=direction==1 or direction==2
+   var chair: float=11+gender if back else 9+gender
+   assert(visuals.sitting_head_shift(1,gender,direction)==chair)
+   assert(visuals.sitting_head_shift(2,gender,direction)==chair*2-(1 if back else 0))
+   assert(visuals.sitting_head_shift(0,gender,direction)==0)
  game.drink_effects.event({"kind":"player_emote","player_id":100,"emote":1})
- game.emote_ui.popup.show()
+ game.emote_ui.begin(77);game.emote_ui.release(game.emote_ui.button.get_global_rect().get_center())
  for _frame: int in range(3):await process_frame
  await RenderingServer.frame_post_draw
  var path: String=OS.get_environment("EO_EMOTE_SCREENSHOT")

@@ -342,6 +342,8 @@ class LiveSession(NativeFeaturesMixin, WorldFeedbackMixin, AdminMixin, BarberMix
         from carry_rules import state as carry_state
         data['player']['stats'].update(carry_state(self))
         data['companion']=getattr(self,'companion',None)
+        from pet_collection import state as pet_state
+        data['pet_state']=pet_state(self)
         from combat_progression import equipped_combat
         data['player']['combat']=equipped_combat(self)
         from combat_progression import publish_movement
@@ -370,7 +372,7 @@ class LiveSession(NativeFeaturesMixin, WorldFeedbackMixin, AdminMixin, BarberMix
         if not before or before['map_id']!=data['map_id'] or any(e.get('kind')=='map_transition' for e in data['events']):return data
         # Compact entity changes, like native EO: never resend the full visible world per step.
         update={k:data[k] for k in ('map_id','position_update','position_seq','correction','events')}
-        for key in ('companion','world_rules','party','party_invitation','party_notice','bank','locker','chest','trade','trade_request','casting','skillmaster','quest_dialog','quest_journal','inn','barber','guild','guild_creation','guild_invitation','guild_requests','guild_notice'):
+        for key in ('companion','pet_state','world_rules','party','party_invitation','party_notice','bank','locker','chest','trade','trade_request','casting','skillmaster','quest_dialog','quest_journal','inn','barber','guild','guild_creation','guild_invitation','guild_requests','guild_notice'):
             if data.get(key)!=before.get(key):update[key]=data.get(key)
         if data['player']!=before['player'] or data['position_update']:update['player']=data['player']
         for collection,key in [('players','player_id'),('npcs','index'),('items','uid')]:

@@ -11,7 +11,7 @@ BASE=Path(__file__).resolve().parents[1]/'work/server-build/runtime'
 @unittest.skipUnless((BASE/'data/pub/dat001.eif').exists(),'native resources unavailable')
 class BalanceTests(unittest.TestCase):
     def setUp(self):
-        self.temp=tempfile.TemporaryDirectory();self.addCleanup(self.temp.cleanup);self.runtime=Path(self.temp.name)/'runtime';shutil.copytree(BASE/'data',self.runtime/'data');(self.runtime/'config.local.ini').write_text('PasswordSalt = do-not-change\nExpRate = 500%\n');(self.runtime/'etheos').write_bytes(b'isolated fixture BalanceRevamp ClassIdentityRules ClassSignatureRules MortalSpiritBonds PetEggTiers CombatProgression OwnerScaledPets ClassMobility CarryCapacityRules')
+        self.temp=tempfile.TemporaryDirectory();self.addCleanup(self.temp.cleanup);self.runtime=Path(self.temp.name)/'runtime';shutil.copytree(BASE/'data',self.runtime/'data');(self.runtime/'config.local.ini').write_text('PasswordSalt = do-not-change\nExpRate = 500%\n');(self.runtime/'etheos').write_bytes(b'isolated fixture BalanceRevamp ClassIdentityRules ClassSignatureRules MortalSpiritBonds PetEggTiers CombatProgression OwnerScaledPets ClassMobility CarryCapacityRules PermanentPetCollection')
         from configure_feature_content import configure as features
         features(self.runtime)
 
@@ -19,7 +19,7 @@ class BalanceTests(unittest.TestCase):
         report=configure(self.runtime);return report,json.loads((self.runtime/'data/balance-profile.json').read_text())
 
     def test_repeated_install_is_identical_and_preserves_private_config_and_operator_item(self):
-        original=(self.runtime/'data/pub/dat001.eif').read_bytes();a,p=self.install();first={str(f.relative_to(self.runtime)):f.read_bytes() for f in self.runtime.rglob('*') if f.is_file()};b,_=self.install();self.assertEqual(a,b);self.assertEqual(first,{str(f.relative_to(self.runtime)):f.read_bytes() for f in self.runtime.rglob('*') if f.is_file()});self.assertIn('PasswordSalt = do-not-change\nExpRate = 500%',(self.runtime/'config.local.ini').read_text());new=(self.runtime/'data/pub/dat001.eif').read_bytes();self.assertEqual(records(original,b'EIF',58)[490],records(new,b'EIF',58)[490]);self.assertEqual(len(p['items']),624)
+        original=(self.runtime/'data/pub/dat001.eif').read_bytes();a,p=self.install();first={str(f.relative_to(self.runtime)):f.read_bytes() for f in self.runtime.rglob('*') if f.is_file()};b,_=self.install();self.assertEqual(a,b);self.assertEqual(first,{str(f.relative_to(self.runtime)):f.read_bytes() for f in self.runtime.rglob('*') if f.is_file()});self.assertIn('PasswordSalt = do-not-change\nExpRate = 100%',(self.runtime/'config.local.ini').read_text());new=(self.runtime/'data/pub/dat001.eif').read_bytes();self.assertEqual(records(original,b'EIF',58)[490],records(new,b'EIF',58)[490]);self.assertEqual(len(p['items']),640)
         from admin_weapon import patch_weapon
         self.assertEqual(patch_weapon(new),(new,False));self.assertEqual(p['items']['21']['level_requirement'],0)
 
@@ -93,6 +93,13 @@ class BalanceTests(unittest.TestCase):
         self.assertTrue(p['items']['436']['acquisition']['craft'])
         for spell in (28,33,34):self.assertTrue(p['spells'][str(spell)]['learn_source'])
         self.assertEqual(p['spells']['28']['duration'],0)
+
+    def test_original_monster_experience_and_unmultiplied_rate(self):
+        original=records((self.runtime/'data/pub/dtn001.enf').read_bytes(),b'ENF',39)
+        self.install()
+        current=records((self.runtime/'data/pub/dtn001.enf').read_bytes(),b'ENF',39)
+        self.assertEqual([num(row['fields'],36,3) for row in original[:-1]], [num(row['fields'],36,3) for row in current[:len(original)-1]])
+        self.assertIn('ExpRate = 100%',(self.runtime/'config.local.ini').read_text())
 
     def test_no_service_npcs_graphics_or_map_routes_change(self):
         before=records((self.runtime/'data/pub/dtn001.enf').read_bytes(),b'ENF',39);maps={p.name:p.read_bytes() for p in (self.runtime/'data/maps').glob('*.emf')};self.install();after=records((self.runtime/'data/pub/dtn001.enf').read_bytes(),b'ENF',39)

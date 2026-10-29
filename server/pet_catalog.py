@@ -48,9 +48,12 @@ for egg,spell,npc,template,name,tier in SPECIES:
     t=TIERS[tier]
     chance=DROP_CHANCES[tier]
     icon=f'res://icons/{tier}_egg.svg'
-    EGGS[egg]=dict(name=f'{name} Spirit Egg',species=name,spell_id=spell,level=t['level'],npc_id=template,chance=chance,template_id=11,icon=icon,tier=tier,tier_name=t['name'],tier_color=t['color'],price=t['price'],sell_price=t['sell_price'])
+    EGGS[egg]=dict(name=f'{name} Egg',hatched_id=egg+16,species=name,spell_id=spell,level=t['level'],npc_id=template,chance=chance,template_id=11,icon=icon,tier=tier,tier_name=t['name'],tier_color=t['color'],price=t['price'],sell_price=t['sell_price'])
     COMPANIONS[spell]=dict(npc_id=npc,name=f'Spirit {name}',template_id=template,tier=tier,tier_name=t['name'],tier_color=t['color'],upkeep=t['upkeep'],upkeep_seconds=2,power=t['power'],damage_basis='owner_attack',accuracy=t['accuracy'],hit_cap=t['hit_cap'])
     SUMMON_SPELLS[spell]=(f'Summon Spirit {name}',t['level'],(7,),t['tp'],t['chant'],0,0,0,1,1,0,0)
+HATCHED_EGGS = {ident+16: dict(egg_id=ident,spell_id=egg['spell_id'],name='Hatched '+egg['species']+' Egg',species=egg['species'],tier=egg['tier'],level=egg['level'],icon=f"res://icons/{egg['tier']}_hatched_egg.svg") for ident,egg in EGGS.items()}
+PET_COOLDOWN_SECONDS = 300
+
 COMPANIONS[35]=dict(npc_id=-1,name='Dismiss Companion',template_id=74,upkeep=0,power=0,accuracy=0,hit_cap=.95)
 
 def egg_stock():

@@ -355,7 +355,7 @@ func refresh_detail() -> void:
 		if spell.get("effect_kind", "") == "companion":
 			var pet: Dictionary = spell.get("companion", {}) as Dictionary
 			if pet.has("tier"): lines.append(PET_DETAILS.combat_text(pet))
-			lines.append("Dismiss your companion; the living bond is kept." if int(pet.get("npc_id", 0)) < 0 else "One strong spirit while upkeep TP lasts. Your death breaks its bond: hatch another egg afterward. Travel and logout keep the bond. Assists your attacks and retaliates when an aggressive monster hurts you." if bool(spell.get("bond_lost_on_death", false)) else "One spirit companion while upkeep TP lasts. Assists your active fights; no idle hunting.")
+			lines.append("Dismiss your pet; starts a shared five-minute recovery. Hatched pets stay permanent." if int(pet.get("npc_id", 0)) < 0 else "One strong spirit while upkeep TP lasts. Your death breaks its bond: hatch another egg afterward. Travel and logout keep the bond. Assists your attacks and retaliates when an aggressive monster hurts you." if bool(spell.get("bond_lost_on_death", false)) else "Permanent hatched pet. One active spirit while upkeep TP lasts. Dismissal, TP exhaustion and death start a five-minute shared recovery. Change the bound pet with the top paw icon afterward.")
 			if int(pet.get("npc_id", 0)) > 0: lines.append("Upkeep: %d TP every 2 seconds. Damage uses your equipped attack roll before target defence." % int(pet.get("upkeep", 0)))
 		for learned: Dictionary in game.online.player.get("spells", []):
 			if int(learned.id) == selected:
@@ -398,7 +398,7 @@ func refresh_detail() -> void:
 		if int(learned.id) == selected and int(learned.level) >= cap: at_cap = true
 	level_button.disabled = at_cap or not known(selected) or int((game.online.player.get("stats", {}) as Dictionary).get("skill_points", 0)) <= 0
 	learn_button.disabled = master.is_empty() or selected == 0 or known(selected)
-	forget_button.disabled = master.is_empty() or not known(selected)
+	forget_button.disabled = master.is_empty() or not known(selected) or bool(info(selected).get("permanent_pet", false))
 
 func change(action: String) -> void:
 	if selected == 0: return

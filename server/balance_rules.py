@@ -46,7 +46,9 @@ def check_hatch(session, ident):
     if not egg:return
     if int(session.stats.get('class_id',0))!=7:raise EOError('Only Summoners can hatch spirit eggs. The egg is kept.')
     if int(session.stats.get('level',0))<egg['level']:raise EOError('Reach level %d before hatching this egg. The egg is kept.'%egg['level'])
-    if rules.get('mortal_spirit_bonds'):
+    if rules.get('pet_collection'):
+        if any(s['id']==egg['spell_id'] for s in session.spells):raise EOError('This pet is already hatched. The spare egg is kept and may be sold.')
+    elif rules.get('mortal_spirit_bonds'):
         bonds={e['spell_id'] for e in rules.get('eggs',{}).values()}
         if any(s['id'] in bonds for s in session.spells):raise EOError('You already have a living pet bond. Keep the egg for after death, or release your bond at a skill master.')
     elif any(s['id']==egg['spell_id'] for s in session.spells):raise EOError('You already know this spirit summon. The egg is kept.')

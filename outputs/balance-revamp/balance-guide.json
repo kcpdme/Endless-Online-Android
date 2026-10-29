@@ -1,5 +1,5 @@
 {
-  "version": 11,
+  "version": 12,
   "equipment": [
     {
       "id": 20,
@@ -21171,8 +21171,9 @@
       "area_scale": 1,
       "max_level": 0,
       "training_bonus": 2,
-      "learn_source": "Hatch a bound egg from Aeven Eggkeeper or its monster; your death breaks the pet bond",
-      "bond_lost_on_death": true,
+      "learn_source": "Hatch an egg to unlock this pet permanently; bind one through the top pet icon",
+      "bond_lost_on_death": false,
+      "permanent_pet": true,
       "effect_kind": "companion",
       "companion": {
         "npc_id": 306,
@@ -21303,8 +21304,9 @@
       "area_scale": 1,
       "max_level": 0,
       "training_bonus": 2,
-      "learn_source": "Hatch a bound egg from Aeven Eggkeeper or its monster; your death breaks the pet bond",
-      "bond_lost_on_death": true,
+      "learn_source": "Hatch an egg to unlock this pet permanently; bind one through the top pet icon",
+      "bond_lost_on_death": false,
+      "permanent_pet": true,
       "template_id": 16,
       "effect_kind": "companion",
       "companion": {
@@ -21345,8 +21347,9 @@
       "area_scale": 1,
       "max_level": 0,
       "training_bonus": 2,
-      "learn_source": "Hatch a bound egg from Aeven Eggkeeper or its monster; your death breaks the pet bond",
-      "bond_lost_on_death": true,
+      "learn_source": "Hatch an egg to unlock this pet permanently; bind one through the top pet icon",
+      "bond_lost_on_death": false,
+      "permanent_pet": true,
       "template_id": 16,
       "effect_kind": "companion",
       "companion": {
@@ -21788,8 +21791,9 @@
       "area_scale": 1,
       "max_level": 0,
       "training_bonus": 2,
-      "learn_source": "Hatch a bound egg from Aeven Eggkeeper or its monster; your death breaks the pet bond",
-      "bond_lost_on_death": true,
+      "learn_source": "Hatch an egg to unlock this pet permanently; bind one through the top pet icon",
+      "bond_lost_on_death": false,
+      "permanent_pet": true,
       "template_id": 16,
       "effect_kind": "companion",
       "companion": {
@@ -21830,8 +21834,9 @@
       "area_scale": 1,
       "max_level": 0,
       "training_bonus": 2,
-      "learn_source": "Hatch a bound egg from Aeven Eggkeeper or its monster; your death breaks the pet bond",
-      "bond_lost_on_death": true,
+      "learn_source": "Hatch an egg to unlock this pet permanently; bind one through the top pet icon",
+      "bond_lost_on_death": false,
+      "permanent_pet": true,
       "template_id": 16,
       "effect_kind": "companion",
       "companion": {
@@ -21872,8 +21877,9 @@
       "area_scale": 1,
       "max_level": 0,
       "training_bonus": 2,
-      "learn_source": "Hatch a bound egg from Aeven Eggkeeper or its monster; your death breaks the pet bond",
-      "bond_lost_on_death": true,
+      "learn_source": "Hatch an egg to unlock this pet permanently; bind one through the top pet icon",
+      "bond_lost_on_death": false,
+      "permanent_pet": true,
       "template_id": 16,
       "effect_kind": "companion",
       "companion": {
@@ -21914,8 +21920,9 @@
       "area_scale": 1,
       "max_level": 0,
       "training_bonus": 2,
-      "learn_source": "Hatch a bound egg from Aeven Eggkeeper or its monster; your death breaks the pet bond",
-      "bond_lost_on_death": true,
+      "learn_source": "Hatch an egg to unlock this pet permanently; bind one through the top pet icon",
+      "bond_lost_on_death": false,
+      "permanent_pet": true,
       "template_id": 16,
       "effect_kind": "companion",
       "companion": {
@@ -21956,8 +21963,9 @@
       "area_scale": 1,
       "max_level": 0,
       "training_bonus": 2,
-      "learn_source": "Hatch a bound egg from Aeven Eggkeeper or its monster; your death breaks the pet bond",
-      "bond_lost_on_death": true,
+      "learn_source": "Hatch an egg to unlock this pet permanently; bind one through the top pet icon",
+      "bond_lost_on_death": false,
+      "permanent_pet": true,
       "template_id": 16,
       "effect_kind": "companion",
       "companion": {
@@ -21998,8 +22006,9 @@
       "area_scale": 1,
       "max_level": 0,
       "training_bonus": 2,
-      "learn_source": "Hatch a bound egg from Aeven Eggkeeper or its monster; your death breaks the pet bond",
-      "bond_lost_on_death": true,
+      "learn_source": "Hatch an egg to unlock this pet permanently; bind one through the top pet icon",
+      "bond_lost_on_death": false,
+      "permanent_pet": true,
       "template_id": 16,
       "effect_kind": "companion",
       "companion": {
@@ -22040,8 +22049,9 @@
       "area_scale": 1,
       "max_level": 0,
       "training_bonus": 2,
-      "learn_source": "Hatch a bound egg from Aeven Eggkeeper or its monster; your death breaks the pet bond",
-      "bond_lost_on_death": true,
+      "learn_source": "Hatch an egg to unlock this pet permanently; bind one through the top pet icon",
+      "bond_lost_on_death": false,
+      "permanent_pet": true,
       "template_id": 16,
       "effect_kind": "companion",
       "companion": {
@@ -22082,8 +22092,9 @@
       "area_scale": 1,
       "max_level": 0,
       "training_bonus": 2,
-      "learn_source": "Hatch a bound egg from Aeven Eggkeeper or its monster; your death breaks the pet bond",
-      "bond_lost_on_death": true,
+      "learn_source": "Hatch an egg to unlock this pet permanently; bind one through the top pet icon",
+      "bond_lost_on_death": false,
+      "permanent_pet": true,
       "template_id": 16,
       "effect_kind": "companion",
       "companion": {
@@ -22124,8 +22135,9 @@
       "area_scale": 1,
       "max_level": 0,
       "training_bonus": 2,
-      "learn_source": "Hatch a bound egg from Aeven Eggkeeper or its monster; your death breaks the pet bond",
-      "bond_lost_on_death": true,
+      "learn_source": "Hatch an egg to unlock this pet permanently; bind one through the top pet icon",
+      "bond_lost_on_death": false,
+      "permanent_pet": true,
       "template_id": 16,
       "effect_kind": "companion",
       "companion": {
@@ -22166,8 +22178,9 @@
       "area_scale": 1,
       "max_level": 0,
       "training_bonus": 2,
-      "learn_source": "Hatch a bound egg from Aeven Eggkeeper or its monster; your death breaks the pet bond",
-      "bond_lost_on_death": true,
+      "learn_source": "Hatch an egg to unlock this pet permanently; bind one through the top pet icon",
+      "bond_lost_on_death": false,
+      "permanent_pet": true,
       "template_id": 16,
       "effect_kind": "companion",
       "companion": {
@@ -22208,8 +22221,9 @@
       "area_scale": 1,
       "max_level": 0,
       "training_bonus": 2,
-      "learn_source": "Hatch a bound egg from Aeven Eggkeeper or its monster; your death breaks the pet bond",
-      "bond_lost_on_death": true,
+      "learn_source": "Hatch an egg to unlock this pet permanently; bind one through the top pet icon",
+      "bond_lost_on_death": false,
+      "permanent_pet": true,
       "template_id": 16,
       "effect_kind": "companion",
       "companion": {
@@ -22250,8 +22264,9 @@
       "area_scale": 1,
       "max_level": 0,
       "training_bonus": 2,
-      "learn_source": "Hatch a bound egg from Aeven Eggkeeper or its monster; your death breaks the pet bond",
-      "bond_lost_on_death": true,
+      "learn_source": "Hatch an egg to unlock this pet permanently; bind one through the top pet icon",
+      "bond_lost_on_death": false,
+      "permanent_pet": true,
       "template_id": 16,
       "effect_kind": "companion",
       "companion": {
@@ -22292,8 +22307,9 @@
       "area_scale": 1,
       "max_level": 0,
       "training_bonus": 2,
-      "learn_source": "Hatch a bound egg from Aeven Eggkeeper or its monster; your death breaks the pet bond",
-      "bond_lost_on_death": true,
+      "learn_source": "Hatch an egg to unlock this pet permanently; bind one through the top pet icon",
+      "bond_lost_on_death": false,
+      "permanent_pet": true,
       "template_id": 16,
       "effect_kind": "companion",
       "companion": {
@@ -22316,7 +22332,8 @@
   },
   "eggs": {
     "609": {
-      "name": "Wolf Spirit Egg",
+      "name": "Wolf Egg",
+      "hatched_id": 625,
       "species": "Wolf",
       "spell_id": 28,
       "level": 10,
@@ -22331,7 +22348,8 @@
       "sell_price": 2400
     },
     "610": {
-      "name": "Carnivo Spirit Egg",
+      "name": "Carnivo Egg",
+      "hatched_id": 626,
       "species": "Carnivo",
       "spell_id": 33,
       "level": 20,
@@ -22346,7 +22364,8 @@
       "sell_price": 8000
     },
     "611": {
-      "name": "Drake Spirit Egg",
+      "name": "Drake Egg",
+      "hatched_id": 627,
       "species": "Drake",
       "spell_id": 34,
       "level": 40,
@@ -22361,7 +22380,8 @@
       "sell_price": 40000
     },
     "612": {
-      "name": "Penguin Spirit Egg",
+      "name": "Penguin Egg",
+      "hatched_id": 628,
       "species": "Penguin",
       "spell_id": 51,
       "level": 5,
@@ -22376,7 +22396,8 @@
       "sell_price": 40
     },
     "613": {
-      "name": "Goat Spirit Egg",
+      "name": "Goat Egg",
+      "hatched_id": 629,
       "species": "Goat",
       "spell_id": 52,
       "level": 5,
@@ -22391,7 +22412,8 @@
       "sell_price": 40
     },
     "614": {
-      "name": "Fox Spirit Egg",
+      "name": "Fox Egg",
+      "hatched_id": 630,
       "species": "Fox",
       "spell_id": 53,
       "level": 5,
@@ -22406,7 +22428,8 @@
       "sell_price": 40
     },
     "615": {
-      "name": "Skeleton Spirit Egg",
+      "name": "Skeleton Egg",
+      "hatched_id": 631,
       "species": "Skeleton",
       "spell_id": 54,
       "level": 10,
@@ -22421,7 +22444,8 @@
       "sell_price": 2400
     },
     "616": {
-      "name": "Butterfly Spirit Egg",
+      "name": "Butterfly Egg",
+      "hatched_id": 632,
       "species": "Butterfly",
       "spell_id": 55,
       "level": 10,
@@ -22436,7 +22460,8 @@
       "sell_price": 2400
     },
     "617": {
-      "name": "Cursed Mask Spirit Egg",
+      "name": "Cursed Mask Egg",
+      "hatched_id": 633,
       "species": "Cursed Mask",
       "spell_id": 56,
       "level": 20,
@@ -22451,7 +22476,8 @@
       "sell_price": 8000
     },
     "618": {
-      "name": "Headless Hunter Spirit Egg",
+      "name": "Headless Hunter Egg",
+      "hatched_id": 634,
       "species": "Headless Hunter",
       "spell_id": 57,
       "level": 20,
@@ -22466,7 +22492,8 @@
       "sell_price": 8000
     },
     "619": {
-      "name": "Reaper Spirit Egg",
+      "name": "Reaper Egg",
+      "hatched_id": 635,
       "species": "Reaper",
       "spell_id": 58,
       "level": 30,
@@ -22481,7 +22508,8 @@
       "sell_price": 24000
     },
     "620": {
-      "name": "Twin Demon Spirit Egg",
+      "name": "Twin Demon Egg",
+      "hatched_id": 636,
       "species": "Twin Demon",
       "spell_id": 59,
       "level": 30,
@@ -22496,7 +22524,8 @@
       "sell_price": 24000
     },
     "621": {
-      "name": "Dark Magician Spirit Egg",
+      "name": "Dark Magician Egg",
+      "hatched_id": 637,
       "species": "Dark Magician",
       "spell_id": 60,
       "level": 30,
@@ -22511,7 +22540,8 @@
       "sell_price": 24000
     },
     "622": {
-      "name": "Banshi Spirit Egg",
+      "name": "Banshi Egg",
+      "hatched_id": 638,
       "species": "Banshi",
       "spell_id": 61,
       "level": 40,
@@ -22526,7 +22556,8 @@
       "sell_price": 40000
     },
     "623": {
-      "name": "King Wurm Spirit Egg",
+      "name": "King Wurm Egg",
+      "hatched_id": 639,
       "species": "King Wurm",
       "spell_id": 62,
       "level": 40,
@@ -22541,7 +22572,8 @@
       "sell_price": 40000
     },
     "624": {
-      "name": "Wraith Spirit Egg",
+      "name": "Wraith Egg",
+      "hatched_id": 640,
       "species": "Wraith",
       "spell_id": 63,
       "level": 40,
@@ -22556,6 +22588,154 @@
       "sell_price": 40000
     }
   },
+  "hatched_eggs": {
+    "625": {
+      "egg_id": 609,
+      "spell_id": 28,
+      "name": "Hatched Wolf Egg",
+      "species": "Wolf",
+      "tier": "rare",
+      "level": 10,
+      "icon": "res://icons/rare_hatched_egg.svg"
+    },
+    "626": {
+      "egg_id": 610,
+      "spell_id": 33,
+      "name": "Hatched Carnivo Egg",
+      "species": "Carnivo",
+      "tier": "epic",
+      "level": 20,
+      "icon": "res://icons/epic_hatched_egg.svg"
+    },
+    "627": {
+      "egg_id": 611,
+      "spell_id": 34,
+      "name": "Hatched Drake Egg",
+      "species": "Drake",
+      "tier": "mythic",
+      "level": 40,
+      "icon": "res://icons/mythic_hatched_egg.svg"
+    },
+    "628": {
+      "egg_id": 612,
+      "spell_id": 51,
+      "name": "Hatched Penguin Egg",
+      "species": "Penguin",
+      "tier": "normal",
+      "level": 5,
+      "icon": "res://icons/normal_hatched_egg.svg"
+    },
+    "629": {
+      "egg_id": 613,
+      "spell_id": 52,
+      "name": "Hatched Goat Egg",
+      "species": "Goat",
+      "tier": "normal",
+      "level": 5,
+      "icon": "res://icons/normal_hatched_egg.svg"
+    },
+    "630": {
+      "egg_id": 614,
+      "spell_id": 53,
+      "name": "Hatched Fox Egg",
+      "species": "Fox",
+      "tier": "normal",
+      "level": 5,
+      "icon": "res://icons/normal_hatched_egg.svg"
+    },
+    "631": {
+      "egg_id": 615,
+      "spell_id": 54,
+      "name": "Hatched Skeleton Egg",
+      "species": "Skeleton",
+      "tier": "rare",
+      "level": 10,
+      "icon": "res://icons/rare_hatched_egg.svg"
+    },
+    "632": {
+      "egg_id": 616,
+      "spell_id": 55,
+      "name": "Hatched Butterfly Egg",
+      "species": "Butterfly",
+      "tier": "rare",
+      "level": 10,
+      "icon": "res://icons/rare_hatched_egg.svg"
+    },
+    "633": {
+      "egg_id": 617,
+      "spell_id": 56,
+      "name": "Hatched Cursed Mask Egg",
+      "species": "Cursed Mask",
+      "tier": "epic",
+      "level": 20,
+      "icon": "res://icons/epic_hatched_egg.svg"
+    },
+    "634": {
+      "egg_id": 618,
+      "spell_id": 57,
+      "name": "Hatched Headless Hunter Egg",
+      "species": "Headless Hunter",
+      "tier": "epic",
+      "level": 20,
+      "icon": "res://icons/epic_hatched_egg.svg"
+    },
+    "635": {
+      "egg_id": 619,
+      "spell_id": 58,
+      "name": "Hatched Reaper Egg",
+      "species": "Reaper",
+      "tier": "legend",
+      "level": 30,
+      "icon": "res://icons/legend_hatched_egg.svg"
+    },
+    "636": {
+      "egg_id": 620,
+      "spell_id": 59,
+      "name": "Hatched Twin Demon Egg",
+      "species": "Twin Demon",
+      "tier": "legend",
+      "level": 30,
+      "icon": "res://icons/legend_hatched_egg.svg"
+    },
+    "637": {
+      "egg_id": 621,
+      "spell_id": 60,
+      "name": "Hatched Dark Magician Egg",
+      "species": "Dark Magician",
+      "tier": "legend",
+      "level": 30,
+      "icon": "res://icons/legend_hatched_egg.svg"
+    },
+    "638": {
+      "egg_id": 622,
+      "spell_id": 61,
+      "name": "Hatched Banshi Egg",
+      "species": "Banshi",
+      "tier": "mythic",
+      "level": 40,
+      "icon": "res://icons/mythic_hatched_egg.svg"
+    },
+    "639": {
+      "egg_id": 623,
+      "spell_id": 62,
+      "name": "Hatched King Wurm Egg",
+      "species": "King Wurm",
+      "tier": "mythic",
+      "level": 40,
+      "icon": "res://icons/mythic_hatched_egg.svg"
+    },
+    "640": {
+      "egg_id": 624,
+      "spell_id": 63,
+      "name": "Hatched Wraith Egg",
+      "species": "Wraith",
+      "tier": "mythic",
+      "level": 40,
+      "icon": "res://icons/mythic_hatched_egg.svg"
+    }
+  },
+  "pet_collection": true,
+  "pet_cooldown_seconds": 300,
   "pet_tiers": {
     "normal": {
       "name": "Normal",
@@ -24425,7 +24605,7 @@
       "skills": 2,
       "signature": {
         "name": "Spirit bond",
-        "description": "Choose from 16 pets at the Aeven Eggkeeper or earn bound eggs from monsters. Five tiers multiply your equipped attack by 0.45/0.7/1.0/1.2/1.5. Pets retaliate when an aggressive monster hurts you; higher tiers spend more TP. One TP-funded living bond lasts until your death. Travel, logout and TP exhaustion keep it. Recover 0.4% max TP every 2 seconds; double sitting, half in PK. PK areas use stronger spirit casting instead of pets.",
+        "description": "Choose from 16 pets at the Aeven Eggkeeper or earn bound eggs from monsters. Five tiers multiply your equipped attack by 0.45/0.7/1.0/1.2/1.5. Pets retaliate when an aggressive monster hurts you; higher tiers spend more TP. Hatched pets stay in a permanent collection. Bind one at a time; dismissal, TP exhaustion and death start a shared five-minute recovery. Travel and logout keep the collection and do not start recovery. Recover 0.4% max TP every 2 seconds; double sitting, half in PK. PK areas use stronger spirit casting instead of pets.",
         "tp_regen_rate": 0.004,
         "tp_regen_seconds": 2,
         "tp_regen_sitting_multiplier": 2,
@@ -24483,7 +24663,7 @@
       "skills": 5,
       "signature": {
         "name": "Spirit bond",
-        "description": "Choose from 16 pets at the Aeven Eggkeeper or earn bound eggs from monsters. Five tiers multiply your equipped attack by 0.45/0.7/1.0/1.2/1.5. Pets retaliate when an aggressive monster hurts you; higher tiers spend more TP. One TP-funded living bond lasts until your death. Travel, logout and TP exhaustion keep it. Recover 0.4% max TP every 2 seconds; double sitting, half in PK. PK areas use stronger spirit casting instead of pets.",
+        "description": "Choose from 16 pets at the Aeven Eggkeeper or earn bound eggs from monsters. Five tiers multiply your equipped attack by 0.45/0.7/1.0/1.2/1.5. Pets retaliate when an aggressive monster hurts you; higher tiers spend more TP. Hatched pets stay in a permanent collection. Bind one at a time; dismissal, TP exhaustion and death start a shared five-minute recovery. Travel and logout keep the collection and do not start recovery. Recover 0.4% max TP every 2 seconds; double sitting, half in PK. PK areas use stronger spirit casting instead of pets.",
         "tp_regen_rate": 0.004,
         "tp_regen_seconds": 2,
         "tp_regen_sitting_multiplier": 2,
@@ -24541,7 +24721,7 @@
       "skills": 9,
       "signature": {
         "name": "Spirit bond",
-        "description": "Choose from 16 pets at the Aeven Eggkeeper or earn bound eggs from monsters. Five tiers multiply your equipped attack by 0.45/0.7/1.0/1.2/1.5. Pets retaliate when an aggressive monster hurts you; higher tiers spend more TP. One TP-funded living bond lasts until your death. Travel, logout and TP exhaustion keep it. Recover 0.4% max TP every 2 seconds; double sitting, half in PK. PK areas use stronger spirit casting instead of pets.",
+        "description": "Choose from 16 pets at the Aeven Eggkeeper or earn bound eggs from monsters. Five tiers multiply your equipped attack by 0.45/0.7/1.0/1.2/1.5. Pets retaliate when an aggressive monster hurts you; higher tiers spend more TP. Hatched pets stay in a permanent collection. Bind one at a time; dismissal, TP exhaustion and death start a shared five-minute recovery. Travel and logout keep the collection and do not start recovery. Recover 0.4% max TP every 2 seconds; double sitting, half in PK. PK areas use stronger spirit casting instead of pets.",
         "tp_regen_rate": 0.004,
         "tp_regen_seconds": 2,
         "tp_regen_sitting_multiplier": 2,
@@ -24599,7 +24779,7 @@
       "skills": 13,
       "signature": {
         "name": "Spirit bond",
-        "description": "Choose from 16 pets at the Aeven Eggkeeper or earn bound eggs from monsters. Five tiers multiply your equipped attack by 0.45/0.7/1.0/1.2/1.5. Pets retaliate when an aggressive monster hurts you; higher tiers spend more TP. One TP-funded living bond lasts until your death. Travel, logout and TP exhaustion keep it. Recover 0.4% max TP every 2 seconds; double sitting, half in PK. PK areas use stronger spirit casting instead of pets.",
+        "description": "Choose from 16 pets at the Aeven Eggkeeper or earn bound eggs from monsters. Five tiers multiply your equipped attack by 0.45/0.7/1.0/1.2/1.5. Pets retaliate when an aggressive monster hurts you; higher tiers spend more TP. Hatched pets stay in a permanent collection. Bind one at a time; dismissal, TP exhaustion and death start a shared five-minute recovery. Travel and logout keep the collection and do not start recovery. Recover 0.4% max TP every 2 seconds; double sitting, half in PK. PK areas use stronger spirit casting instead of pets.",
         "tp_regen_rate": 0.004,
         "tp_regen_seconds": 2,
         "tp_regen_sitting_multiplier": 2,
@@ -24657,7 +24837,7 @@
       "skills": 17,
       "signature": {
         "name": "Spirit bond",
-        "description": "Choose from 16 pets at the Aeven Eggkeeper or earn bound eggs from monsters. Five tiers multiply your equipped attack by 0.45/0.7/1.0/1.2/1.5. Pets retaliate when an aggressive monster hurts you; higher tiers spend more TP. One TP-funded living bond lasts until your death. Travel, logout and TP exhaustion keep it. Recover 0.4% max TP every 2 seconds; double sitting, half in PK. PK areas use stronger spirit casting instead of pets.",
+        "description": "Choose from 16 pets at the Aeven Eggkeeper or earn bound eggs from monsters. Five tiers multiply your equipped attack by 0.45/0.7/1.0/1.2/1.5. Pets retaliate when an aggressive monster hurts you; higher tiers spend more TP. Hatched pets stay in a permanent collection. Bind one at a time; dismissal, TP exhaustion and death start a shared five-minute recovery. Travel and logout keep the collection and do not start recovery. Recover 0.4% max TP every 2 seconds; double sitting, half in PK. PK areas use stronger spirit casting instead of pets.",
         "tp_regen_rate": 0.004,
         "tp_regen_seconds": 2,
         "tp_regen_sitting_multiplier": 2,
@@ -24715,7 +24895,7 @@
       "skills": 22,
       "signature": {
         "name": "Spirit bond",
-        "description": "Choose from 16 pets at the Aeven Eggkeeper or earn bound eggs from monsters. Five tiers multiply your equipped attack by 0.45/0.7/1.0/1.2/1.5. Pets retaliate when an aggressive monster hurts you; higher tiers spend more TP. One TP-funded living bond lasts until your death. Travel, logout and TP exhaustion keep it. Recover 0.4% max TP every 2 seconds; double sitting, half in PK. PK areas use stronger spirit casting instead of pets.",
+        "description": "Choose from 16 pets at the Aeven Eggkeeper or earn bound eggs from monsters. Five tiers multiply your equipped attack by 0.45/0.7/1.0/1.2/1.5. Pets retaliate when an aggressive monster hurts you; higher tiers spend more TP. Hatched pets stay in a permanent collection. Bind one at a time; dismissal, TP exhaustion and death start a shared five-minute recovery. Travel and logout keep the collection and do not start recovery. Recover 0.4% max TP every 2 seconds; double sitting, half in PK. PK areas use stronger spirit casting instead of pets.",
         "tp_regen_rate": 0.004,
         "tp_regen_seconds": 2,
         "tp_regen_sitting_multiplier": 2,
@@ -26604,7 +26784,7 @@
     }
   ],
   "full_kit_audit": {
-    "version": 11,
+    "version": 12,
     "result": "passed",
     "issues": [],
     "builds": [
