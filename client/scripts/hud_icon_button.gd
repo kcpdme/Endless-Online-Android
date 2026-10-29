@@ -20,9 +20,10 @@ func _ready() -> void:
 	button_down.connect(queue_redraw)
 	button_up.connect(queue_redraw)
 	resized.connect(queue_redraw)
-	tooltip_text = {"bag": "Inventory bag", "person": "Character equipment", "chat": "Chat", "quests": "Ongoing quests", "party": "Party", "admin": "Admin functions", "skills": "Skills", "sit": "Sit / Stand"}.get(kind, "")
+	tooltip_text = {"bag": "Inventory bag", "person": "Character equipment", "chat": "Chat", "quests": "Ongoing quests", "party": "Party", "admin": "Admin functions", "skills": "Skills", "sit": "Sit / Stand", "zoom":"Normal / 125% view", "collapse":"Hide messages"}.get(kind, "")
 
 func _has_point(point: Vector2) -> bool:
+	if kind=="collapse":return Rect2(Vector2.ZERO,size).has_point(point)
 	var radius: float = minf(size.x, size.y) * 0.5
 	return point.distance_squared_to(size * 0.5) <= radius * radius
 
@@ -34,15 +35,24 @@ func _draw() -> void:
 	var radius: float = minf(size.x, size.y) * 0.5 - 1.5
 	var down: bool = button_pressed
 	var hovered: bool = is_hovered()
-	draw_circle(center, radius, Color(0.055, 0.12, 0.13, 0.61 if down else 0.42))
-	draw_arc(center, radius, 0.0, TAU, 64, Color(0.98, 0.88, 0.64, 0.90) if down or hovered else Color(0.82, 0.88, 0.79, 0.64), 1.5, true)
+	if kind!="collapse":
+		draw_circle(center, radius, Color(0.055, 0.12, 0.13, 0.61 if down else 0.42))
+		draw_arc(center, radius, 0.0, TAU, 64, Color(0.98, 0.88, 0.64, 0.90) if down or hovered else Color(0.82, 0.88, 0.79, 0.64), 1.5, true)
 	# Base alpha never multiplies the icon. Every icon fill and stroke below is opaque.
 	var scale_factor: float = minf(size.x, size.y) / 76.0
 	draw_set_transform(center + Vector2(0, 1 if down else 0), 0.0, Vector2.ONE * scale_factor)
 	var ink: Color = Color("20312e")
 	var light: Color = Color("f2e8c7")
 	var gold: Color = Color("e7bd70")
-	if kind == "hand":
+	if kind=="zoom":
+		draw_arc(Vector2(-4,-5),14,0,TAU,48,light,3.0,true)
+		draw_line(Vector2(7,7),Vector2(21,21),gold,5.0,true)
+		draw_line(Vector2(-11,-5),Vector2(3,-5),gold,2.5,true)
+		if not button_pressed:draw_line(Vector2(-4,-12),Vector2(-4,2),gold,2.5,true)
+	elif kind=="collapse":
+		var chevron:PackedVector2Array=PackedVector2Array([Vector2(-18,-8),Vector2(0,11),Vector2(18,-8)])
+		draw_polyline(chevron,ink,8,true);draw_polyline(chevron,light,4.5,true)
+	elif kind == "hand":
 		# Open palm: compact pickup action, without a changing item-name ribbon.
 		var hand: PackedVector2Array = PackedVector2Array([Vector2(-13, 5), Vector2(-21, -3), Vector2(-20, -7), Vector2(-16, -8), Vector2(-9, -2), Vector2(-9, -19), Vector2(-6, -22), Vector2(-3, -20), Vector2(-3, -7), Vector2(-2, -25), Vector2(1, -27), Vector2(4, -24), Vector2(4, -7), Vector2(5, -22), Vector2(8, -23), Vector2(11, -20), Vector2(11, -5), Vector2(12, -16), Vector2(15, -17), Vector2(18, -14), Vector2(18, 4), Vector2(13, 16), Vector2(12, 23), Vector2(-5, 23), Vector2(-6, 16)])
 		draw_colored_polygon(hand, light)

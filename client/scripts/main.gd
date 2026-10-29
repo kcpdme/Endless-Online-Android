@@ -50,6 +50,7 @@ var emote_ui: RefCounted
 var pet_ui: RefCounted
 var bag_button: HudIconButton
 var character_button: HudIconButton
+var zoom_button:HudIconButton
 const AUTO_ATTACK_HOLD_MSEC: int = 600
 const COMBAT_HUD_SHIFT: Vector2 = Vector2(-72, -36)
 var auto_attack: bool = false
@@ -155,7 +156,7 @@ func _ready() -> void:
 	get_tree().quit_on_go_back = false
 	DisplayServer.window_set_min_size(Vector2i(960, 540))
 	camera = preload("res://scripts/world_camera.gd").new()
-	camera.zoom = Vector2(1.65, 1.65)
+	camera.load_view()
 	camera.position_smoothing_enabled = false
 	camera.position_smoothing_speed = 8.0
 	add_child(camera)
@@ -317,6 +318,7 @@ func _process(delta: float) -> void:
 	if quick_items != null: quick_items.refresh()
 	if online != null: online.shortcuts.tick()
 	if chat_ui != null: chat_ui.tick()
+	if zoom_button!=null:zoom_button.visible=started and not _modal_open() and not welcome.visible
 	if emote_ui != null: emote_ui.tick()
 	if guild_ui != null: guild_ui.tick()
 	if feature_ui != null: feature_ui.tick()
@@ -558,10 +560,22 @@ func _direction_name(direction: Vector2i) -> String:
 func _screen_to_world(point: Vector2) -> Vector2:
 	return get_global_transform_with_canvas().affine_inverse() * point
 
+func _set_camera_view(close_view:bool)->void:
+	if not camera.select_view(close_view):_toast("Your zoom choice could not be saved.")
+	zoom_button.set_pressed_no_signal(camera.zoomed)
+	zoom_button.tooltip_text="125% view · tap for Normal" if camera.zoomed else "Normal view · tap for 125%"
+	camera.position=player_world;camera.align_to_display_pixels();queue_redraw()
+
+func _toggle_camera_view()->void:
+	if not started or _modal_open():return
+	_cancel_controls();_set_camera_view(not camera.zoomed)
+
 func _input(event: InputEvent) -> void:
 	if emote_ui != null and emote_ui.input(event):
 		get_viewport().set_input_as_handled()
 		return
+	if chat_ui!=null and chat_ui.feed_input(event):
+		get_viewport().set_input_as_handled();return
 	var dismissing_modal: bool = Time.get_ticks_msec() < modal_input_until
 	if event is InputEventKey:
 		if event.keycode == KEY_F11 and event.pressed and not event.echo and started and online_mode and not _modal_open() and not _editing_text():
@@ -604,7 +618,10 @@ func _input(event: InputEvent) -> void:
 				return
 	# Own native controls suppress their separately generated mouse events, including
 	# HUD presses that open a modal. A release can never become a second action.
+	if event is InputEventMouseButton and event.device!=InputEvent.DEVICE_ID_EMULATION and zoom_button.visible and not _modal_open() and zoom_button.contains_point(event.position):return
 	if event is InputEventMouseButton and event.device == InputEvent.DEVICE_ID_EMULATION:
+		if zoom_button!=null and zoom_button.visible and not _modal_open() and zoom_button.contains_point(event.position):
+			get_viewport().set_input_as_handled();return
 		if started and not _modal_open() and minimap != null and minimap.contains(event.position):
 			get_viewport().set_input_as_handled()
 			return
@@ -644,6 +661,9 @@ func _input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		return
 	if event is InputEventScreenTouch and event.pressed:
+		if zoom_button.visible and zoom_button.contains_point(event.position):
+			_toggle_camera_view();owned_touches[event.index]=true
+			get_viewport().set_input_as_handled();return
 		var item_slot: int = quick_items.contains(event.position) if quick_items != null else -1
 		if item_slot >= 0:
 			owned_touches[event.index] = true
@@ -800,7 +820,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		else:
 			_request_path(clicked)
 	if event is InputEventMagnifyGesture:
-		camera.zoom = (camera.zoom * event.factor).clamp(Vector2(1.0, 1.0), Vector2(2.5, 2.5))
+		if event.factor>1.03:_set_camera_view(true)
+		elif event.factor<.97:_set_camera_view(false)
 
 func _request_path(target: Vector2i) -> void:
 	if not _walkable(target):
@@ -1259,6 +1280,11 @@ func _build_ui() -> void:
 	character_button.pressed.connect(_toggle_paperdoll)
 	root.add_child(character_button)
 	character_button.set_anchors_preset(Control.PRESET_TOP_RIGHT, true)
+	zoom_button=HudIconButton.new();zoom_button.kind="zoom";zoom_button.position=Vector2(-716,24);zoom_button.size=Vector2(68,68)
+	zoom_button.toggle_mode=true;zoom_button.set_pressed_no_signal(camera.zoomed);zoom_button.pressed.connect(_toggle_camera_view)
+	root.add_child(zoom_button);zoom_button.set_anchors_preset(Control.PRESET_TOP_RIGHT,true)
+	zoom_button.tooltip_text="125% view · tap for Normal" if camera.zoomed else "Normal view · tap for 125%"
+	zoom_button.hide()
 	joystick = Joystick.new()
 	root.add_child(joystick)
 	joystick.resting_position = Vector2(24, -282)
@@ -1840,7 +1866,7 @@ func _notification(what: int) -> void:
 			_cancel_controls()
 			if stats_ui != null: stats_ui.stop_repeat()
 			if quick_items != null: quick_items.cancel_hold()
-			if chat_ui != null: chat_ui.blur_quick()
+			if chat_ui != null:chat_ui.blur_quick();chat_ui.scroll_fingers.clear();chat_ui.feed_pointer=-1
 			owned_touches.clear()
 	if what == NOTIFICATION_APPLICATION_PAUSED or what == NOTIFICATION_WM_CLOSE_REQUEST:
 		if content_ready and started: _save_progress()

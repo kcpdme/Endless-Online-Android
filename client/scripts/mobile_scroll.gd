@@ -22,6 +22,7 @@ func _added(node: Node) -> void:
 func _configure(node: Node) -> void:
 	if not is_instance_valid(node) or not node.is_inside_tree() or not game.hud_root.is_ancestor_of(node): return
 	if node is VScrollBar or node is HScrollBar:
+		if node.has_meta("compact_hud_scroll"):return
 		var vertical: bool = node is VScrollBar
 		if vertical: node.custom_minimum_size.x = WIDTH
 		else: node.custom_minimum_size.y = WIDTH

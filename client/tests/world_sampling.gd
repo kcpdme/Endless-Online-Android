@@ -47,13 +47,15 @@ func run() -> void:
 			sources["smoothed_townsman"]=game._frame(game.npc_art.enhanced["20"],"south","idle",0.0)
 	var results: Array[Dictionary] = []
 	var reproduced: bool = false
+	var zoom_levels:Array[float]=[1.0,1.65,2.0625,2.5]
+	if "--zoom-125-only" in OS.get_cmdline_user_args():zoom_levels.assign([2.0625])
 	for key: String in sources:
 		game.probe_frame = sources[key]
 		check(not game.probe_frame.is_empty(),"Actual source artwork is available")
 		for display_scale: float in [1.0,1.25,1.5]:
 			view.size = Vector2i(Vector2(640,800)*display_scale); view.size_2d_override = Vector2i(640,800); view.size_2d_override_stretch = true
 			await process_frame; await process_frame
-			for zoom: float in [1.0,1.65,2.5]:
+			for zoom: float in zoom_levels:
 				camera.zoom = Vector2(zoom,zoom)
 				var variants: Dictionary = {}
 				for aligned: bool in [false,true]:

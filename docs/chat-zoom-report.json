@@ -1,0 +1,93 @@
+{
+  "date": "2026-10-29",
+  "version": "0.54.1",
+  "version_code": 98,
+  "chat": {
+    "checks": 75,
+    "feed_timeout_seconds": 8,
+    "manual_collapse_preserves_history_and_draft": true,
+    "network_requests": 0,
+    "rendered": true,
+    "result": "passed",
+    "touch_and_mouse_verified": true,
+    "typing_and_scrolling_protected": true,
+    "zoom_modes": [
+      1,
+      1.25
+    ],
+    "zoom_preference_persists": true,
+    "collapse_control": {
+      "size": [
+        30,
+        30
+      ],
+      "circular_background": false,
+      "reserved_text_column": false,
+      "original_text_width_restored": 480
+    }
+  },
+  "movement": {
+    "aeven_full_grid_candidates": 7569,
+    "bounded_candidates": 2601,
+    "checks": 38,
+    "keyboard_turn_ms": 200,
+    "long_drag_reversal_px": 79,
+    "result": "passed",
+    "step_ms": 420,
+    "touch_turn_ms": 0,
+    "viewport_cases": 15
+  },
+  "camera": {
+    "camera": {
+      "checks": 6120,
+      "original_shimmer_reproduced": true,
+      "phases_per_case": 24,
+      "result": "passed",
+      "rendered_cases": 63
+    },
+    "camera125": {
+      "checks": 2046,
+      "original_shimmer_reproduced": true,
+      "phases_per_case": 24,
+      "result": "passed",
+      "rendered_cases": 21
+    }
+  },
+  "scrolling": {
+    "result": "passed",
+    "checks": 13
+  },
+  "emotes": {
+    "result": "passed"
+  },
+  "graphics": {
+    "additional_artwork": false,
+    "four_x_pilot_activated": false
+  },
+  "phone": {
+    "status": "installed",
+    "model": "Samsung SM-S918B",
+    "version": "0.54.1",
+    "version_code": 98,
+    "installed_apk_hash_verified": true,
+    "original_first_install_time_preserved": true,
+    "verification": "Package install/version/hash only; existing foreground application left alone. No live gameplay or chat actions."
+  },
+  "android": {
+    "version": "0.54.1",
+    "version_code": 98,
+    "apk_bytes": 278809310,
+    "previous_apk_bytes": 278775817,
+    "increase_bytes": 33493,
+    "sha256": "2b4af6948da8333726e979d48ea408a19228684e3635aac0d9a63c9459fb2a13",
+    "native_libraries_unchanged": true,
+    "imported_textures_unchanged": true,
+    "catalog_and_art_registries_unchanged": true,
+    "four_x_pilot_assets_packaged": false,
+    "signature_v2": "passed",
+    "zipalign_16k": "passed",
+    "godot_import": "passed",
+    "godot_runtime": "passed",
+    "signed_export": "passed"
+  }
+}

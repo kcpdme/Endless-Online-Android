@@ -36,6 +36,12 @@ var visible_tab: int = -1
 var roster_stamp: String = ""
 var last_keyboard_lift: float = 0.0
 var scroll_fingers: Dictionary = {}
+const FEED_VISIBLE_MSEC:int=8000
+var feed_until:int=0
+var feed_close:Button
+var feed_pointer:int=-1
+var feed_mouse_until:int=0
+var feed_close_point:Vector2
 
 func build(owner_game: Node, parent: Control) -> void:
 	game = owner_game
@@ -137,6 +143,8 @@ func _log(parent: Control, at: Vector2, dimensions: Vector2, font_size: int) -> 
 
 func _scroll_input(log: RichTextLabel, event: InputEvent) -> void:
 	var key: int = log.get_instance_id()
+	if log==feed and (event is InputEventScreenTouch or event is InputEventScreenDrag or event is InputEventMouseButton):
+		feed_until=Time.get_ticks_msec()+FEED_VISIBLE_MSEC
 	if event is InputEventScreenTouch:
 		if event.pressed: scroll_fingers[key] = event.index
 		elif scroll_fingers.get(key, -1) == event.index: scroll_fingers.erase(key)
@@ -166,9 +174,19 @@ func _build_quick(parent: Control) -> void:
 	feed = _log(quick_root, Vector2(12, 8), Vector2(480, 118), 16)
 	feed.selection_enabled = false
 	feed.scroll_active = true
+	# Finger dragging handles scrolling; keep its indicator out of the text.
+	var feed_scroll:VScrollBar=feed.get_v_scroll_bar();feed_scroll.custom_minimum_size.x=6
+	feed_scroll.set_meta("compact_hud_scroll",true)
+	for state:String in ["scroll","grabber","grabber_highlight","grabber_pressed"]:
+		var slim:StyleBoxFlat=StyleBoxFlat.new();slim.bg_color=Color(0.75,0.80,0.73,.6) if state!="scroll" else Color(0,0,0,.15)
+		slim.content_margin_left=3;slim.content_margin_right=3;feed_scroll.add_theme_stylebox_override(state,slim)
 	feed.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.75))
 	feed.add_theme_constant_override("outline_size", 3)
-	feed_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	feed_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	feed_close=preload("res://scripts/hud_icon_button.gd").new()
+	feed_close.set("kind","collapse");feed_close.position=Vector2(472,-30);feed_close.size=Vector2(30,30)
+	feed_close.action_mode=BaseButton.ACTION_MODE_BUTTON_PRESS;feed_close.pressed.connect(collapse_feed)
+	quick_root.add_child(feed_close);feed_close.tooltip_text="Hide messages"
 	quick_bar = game._panel(quick_root, Vector2(0, 144), Vector2(504, 52), Color(0.03, 0.075, 0.085, 0.86))
 	quick_channel = OptionButton.new()
 	quick_channel.position = Vector2(8, 6)
@@ -211,7 +229,28 @@ func _build_quick(parent: Control) -> void:
 	quick_root.hide()
 
 func hud_contains(point: Vector2) -> bool:
-	return quick_root.visible and (quick_bar.get_global_rect().has_point(point) or (not messages.is_empty() and feed.get_global_rect().has_point(point)))
+	return quick_root.visible and (quick_bar.get_global_rect().has_point(point) or (feed_background.visible and feed_background.get_global_rect().has_point(point)) or (feed_close.visible and feed_close.get_global_rect().has_point(point)))
+
+func feed_input(event:InputEvent)->bool:
+	# Hide on the native press, then own the entire release so the disappearing
+	# button cannot turn the same Android gesture into a world interaction.
+	if event is InputEventScreenTouch and event.index==feed_pointer and not event.pressed:
+		feed_pointer=-1;feed_mouse_until=Time.get_ticks_msec()+350;return true
+	if event is InputEventScreenDrag and event.index==feed_pointer:return true
+	if event is InputEventMouseButton and event.device==InputEvent.DEVICE_ID_EMULATION:
+		if feed_pointer!=-1 or (Time.get_ticks_msec()<feed_mouse_until and event.position.distance_to(feed_close_point)<56):return true
+	if event is InputEventMouseButton and feed_pointer==-2 and not event.pressed:
+		feed_pointer=-1;return true
+	var press:bool=(event is InputEventScreenTouch and event.pressed) or (event is InputEventMouseButton and event.pressed and event.button_index==MOUSE_BUTTON_LEFT)
+	if not press or game._modal_open() or not quick_root.visible or not feed_close.visible or not feed_close.contains_point(event.position):return false
+	if event is InputEventMouseButton and event.device==InputEvent.DEVICE_ID_EMULATION:return true
+	feed_pointer=event.index if event is InputEventScreenTouch else -2;feed_close_point=event.position;feed_mouse_until=Time.get_ticks_msec()+350
+	collapse_feed();return true
+
+func collapse_feed()->void:
+	quick_channel.get_popup().hide();blur_quick()
+	scroll_fingers.erase(feed.get_instance_id());feed_until=0
+	tick()
 
 func typing() -> bool:
 	return quick_entry.has_focus() or quick_channel.get_popup().visible
@@ -227,8 +266,11 @@ func tick() -> void:
 		blur_quick()
 		if panel.visible: close()
 	quick_root.visible = active and not game._modal_open() and not game.welcome.visible
-	feed_background.visible = not messages.is_empty()
-	feed.visible = not messages.is_empty()
+	var now:int=Time.get_ticks_msec()
+	if not quick_root.visible:scroll_fingers.erase(feed.get_instance_id())
+	if quick_root.visible and (typing() or scroll_fingers.has(feed.get_instance_id())) and not messages.is_empty():feed_until=now+FEED_VISIBLE_MSEC
+	var show_feed:bool=not messages.is_empty() and now<feed_until
+	feed_background.visible=show_feed;feed.visible=show_feed;feed_close.visible=show_feed
 	if not quick_root.visible and quick_entry.has_focus(): blur_quick()
 	var keyboard: float = float(DisplayServer.virtual_keyboard_get_height()) if DisplayServer.has_feature(DisplayServer.FEATURE_VIRTUAL_KEYBOARD) else 0.0
 	var lift: float = clampf(keyboard * game.get_viewport_rect().size.y / maxf(1.0, DisplayServer.window_get_size().y), 0, game.get_viewport_rect().size.y * 0.6)
@@ -282,6 +324,8 @@ func close() -> void:
 
 func clear() -> void:
 	messages.clear()
+	feed_until=0;scroll_fingers.clear()
+	feed_pointer=-1;feed_mouse_until=0
 	roster.clear()
 	roster_stamp = ""
 	roster_at = -10000
@@ -301,10 +345,13 @@ func clear() -> void:
 	close()
 
 func receive(event: Dictionary) -> void:
+	if not feed.visible:
+		feed.scroll_following=true;feed.get_v_scroll_bar().value=feed.get_v_scroll_bar().max_value
 	var row: Dictionary = event.duplicate(true)
 	var clock: Dictionary = Time.get_time_dict_from_system()
 	row["time"] = "%02d:%02d" % [int(clock.hour), int(clock.minute)]
 	messages.append(row)
+	feed_until=Time.get_ticks_msec()+FEED_VISIBLE_MSEC
 	while messages.size() > 250: messages.pop_front()
 	var kind: String = str(row.get("channel", "system"))
 	var index: int = CHANNELS.find(kind)
