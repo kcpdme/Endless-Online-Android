@@ -9,7 +9,14 @@ static func texture(game: Node, item: Dictionary) -> Texture2D:
 	var npc: Dictionary = (game.online.catalog.get("npcs", {}) as Dictionary).get(str(int(pet.get("npc_id", 0))), {}) as Dictionary
 	var art: Dictionary = ((game.manifest.get("characters", {}) as Dictionary).get("npcs", {}) as Dictionary).get(str(int(npc.get("graphic", 0))), {}) as Dictionary
 	var pose: Dictionary = game._frame(art, "south", "idle", 0.0)
-	return game._texture(str(pose.get("path", "")))
+	var texture: Texture2D = game._texture(str(pose.get("path", "")))
+	if texture == null or not pose.has("region"): return texture
+	var region: Array = pose.region
+	var atlas: AtlasTexture = AtlasTexture.new()
+	atlas.atlas = texture
+	atlas.region = Rect2(float(region[0]),float(region[1]),float(region[2]),float(region[3]))
+	atlas.filter_clip = true
+	return atlas
 
 static func combat_text(pet: Dictionary) -> String:
 	return "%s tier · Owner attack ×%.2f\nAccuracy +%d · Hit limit %d%%\nTarget evasion still affects hits. All pets in this tier share combat stats and effects." % [str(pet.get("tier_name", "Spirit")), float(pet.get("power", 1.0)), int(pet.get("accuracy", 0)), roundi(float(pet.get("hit_cap", 0.95)) * 100.0)]

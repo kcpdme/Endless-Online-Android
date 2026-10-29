@@ -1,0 +1,114 @@
+{
+  "result": "passed_installed_phone_visual_pending_unlock",
+  "version": "0.51.0",
+  "version_code": 94,
+  "apk_bytes": 255823129,
+  "apk_sha256": "746982b516c7b5aee3f3ce69309baa46bc817801708baf0773654da430695716",
+  "baseline_apk_bytes": 254964773,
+  "growth_bytes": 858356,
+  "sample_assets": [
+    {
+      "path": "assets/.godot/imported/npc134_2x.png-9cf222299171f4d9c92a11f158522cc1.ctex",
+      "bytes": 685770,
+      "stored_bytes": 685543
+    },
+    {
+      "path": "assets/.godot/imported/npc154_2x.png-70115254d4c537e3d5f7a51df9677b87.ctex",
+      "bytes": 155130,
+      "stored_bytes": 154854
+    },
+    {
+      "path": "assets/content/characters/npc_enhanced/npc134_2x.png.import",
+      "bytes": 196,
+      "stored_bytes": 161
+    },
+    {
+      "path": "assets/content/characters/npc_enhanced/npc154_2x.png.import",
+      "bytes": 198,
+      "stored_bytes": 163
+    },
+    {
+      "path": "assets/content/characters/npc_enhanced/pack.json",
+      "bytes": 30069,
+      "stored_bytes": 1403
+    }
+  ],
+  "decoded_rgba_bytes": 3818496,
+  "native_stored_bytes_unchanged": 147888040,
+  "abis": [
+    "arm64-v8a",
+    "x86_64"
+  ],
+  "source_sheets_packaged": false,
+  "server_changes": false,
+  "artwork_committed": false,
+  "generation_tool": "built-in image_gen",
+  "prompt_files": [
+    "docs/art-prompts/npc-piglet-enhancement.txt",
+    "docs/art-prompts/npc-banshi-enhancement.txt"
+  ],
+  "npc_art": {
+    "checks": 876,
+    "frames": 60,
+    "graphics": [
+      134,
+      154
+    ],
+    "logical_geometry_unchanged": true,
+    "pet_preview_cropped": true,
+    "rendered": true,
+    "result": "passed",
+    "audio_driver": "Dummy (visual regression; no audio under test)"
+  },
+  "character_art": {
+    "checks": 371,
+    "classic_assets_unchanged": true,
+    "hd_logical_size_and_anchor_preserved": true,
+    "pixel_render_test": true,
+    "result": "passed",
+    "whole_outfit_fallback": true
+  },
+  "name_inspection": {
+    "checks": 653,
+    "classic_hover_and_metadata": true,
+    "combat_and_speech_priority": true,
+    "mobile_tap_inspection": true,
+    "result": "passed",
+    "transparent_pixel_hit_test": true
+  },
+  "world_sampling": {
+    "checks": 4372,
+    "original_shimmer_reproduced": true,
+    "phases_per_case": 24,
+    "result": "passed",
+    "cases": 45,
+    "max_aligned_channel_delta": 1
+  },
+  "combat_mobility": {
+    "result": "passed",
+    "checks": 17
+  },
+  "combat_mobile": {
+    "result": "passed",
+    "held_attack_mean_seconds": 0.52121212121212,
+    "fixture_updates": [
+      "Priest class for Heal Self",
+      "four 120 ms attack poses"
+    ]
+  },
+  "release_signature_verified": true,
+  "alignment_16k_verified": true,
+  "phone": {
+    "model": "Samsung SM-S918B",
+    "install_result": "passed",
+    "installed_apk_sha256_verified": true,
+    "first_install_time_preserved": true,
+    "version": "0.51.0",
+    "version_code": 94,
+    "startup_activity_launch": "accepted_by_android",
+    "visual_test": "pending_unlock",
+    "reason": "Android KeyguardShowing=true / AodShowing=true; game activity is behind lock screen",
+    "live_player_gameplay_performed": false
+  },
+  "timestamp": "2026-10-29T06:10:16.803868+00:00"
+}

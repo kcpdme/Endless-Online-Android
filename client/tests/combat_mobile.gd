@@ -33,7 +33,7 @@ func _run() -> void:
 	game.server_blocked.clear()
 	game.player_tile=Vector2i(40,40)
 	game.player_world=game.tile_position(game.player_tile)
-	c.player={"player_id":100,"character_id":100,"map_id":40,"x":40,"y":40,"hp":500,"max_hp":1000,"tp":100,"max_tp":100,"inventory":[{"id":375,"amount":5}],"spells":[{"id":1,"level":1}]}
+	c.player={"player_id":100,"character_id":100,"map_id":40,"x":40,"y":40,"hp":500,"max_hp":1000,"tp":100,"max_tp":100,"stats":{"class_id":2,"level":1},"inventory":[{"id":375,"amount":5}],"spells":[{"id":1,"level":1}]}
 	c._sync_inventory()
 	game.quick_items.slots.assign([375,0])
 	game.stick=Vector2.RIGHT
@@ -88,8 +88,8 @@ func _run() -> void:
 		if request.op=="strike": attacks.append(float(request.at))
 	var mean: float=(attacks.back()-attacks[0])/(attacks.size()-1)
 	check(attacks.size()==12 and absf(mean-.52)<.005,"Held attack timer must match native520ms pace instead of accumulating frame gaps: "+str(mean))
-	var art: Dictionary={"attack":{"south":[{"pose":0},{"pose":1},{"pose":2}]}}
-	check(game._frame(art,"south","attack",.12).pose==1 and game._frame(art,"south","attack",.40).pose==2,"Online swing must follow original120ms attack poses through480ms")
+	var art: Dictionary={"attack":{"south":[{"pose":0},{"pose":1},{"pose":2},{"pose":3}]}}
+	check(game._frame(art,"south","attack",.12).pose==1 and game._frame(art,"south","attack",.40).pose==3,"Online swing must follow original120ms attack poses through480ms")
 	game._release_attack()
 	var chat: RefCounted=game.chat_ui
 	chat.messages.clear()

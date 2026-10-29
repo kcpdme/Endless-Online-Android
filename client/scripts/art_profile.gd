@@ -40,6 +40,7 @@ func select_mode(value: String, persist: bool = true) -> bool:
 	mode = value; selections.clear()
 	if persist:
 		var config: ConfigFile = ConfigFile.new()
+		config.load(settings_path)
 		config.set_value("graphics", "characters", mode)
 		return config.save(settings_path) == OK
 	return true

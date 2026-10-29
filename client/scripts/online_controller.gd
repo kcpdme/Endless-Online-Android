@@ -934,12 +934,14 @@ func npc_name_layout(graphic: Dictionary, direction: String, _fighting: bool) ->
 	var region: Array = frame.get("region", [0, 0, 20, 24]) as Array
 	var offset: Array = frame.get("offset", [0, 0]) as Array
 	var visible: Array = frame.get("visible_bounds", [0, 0, region[2], region[3]]) as Array
-	var head: Vector2 = Vector2(float(offset[0]) - float(region[2]) / 2.0 + float(visible[0]) + float(visible[2]) / 2.0, float(offset[1]) - float(region[3]) + float(visible[1]))
+	var scale: float = maxf(1.0, float(frame.get("pixel_scale", 1)))
+	var width: float = float(region[2])/scale
+	var head: Vector2 = Vector2(float(offset[0]) - width/2.0 + (float(visible[0]) + float(visible[2])/2.0)/scale, float(offset[1]) - float(region[3])/scale + float(visible[1])/scale)
 	# NPCRenderer.HorizontalCenter cancels the sprite's asymmetric X offset.
 	# Keep the name at its idle height; combat adds a strip above the name.
 	var classic_top: float = -32.0-float((graphic.get("render_metadata",{}) as Dictionary).get("name_label_offset",0))
 	if pose=="attack" and is_equal_approx(classic_top,-32.0): classic_top=head.y-18.0
-	return {"classic_top":Vector2(0,classic_top),"head": head, "name": Vector2(0, head.y - 5), "health": Rect2(Vector2(-36 if float(region[2]) > 100 else -17, head.y - 25), Vector2(72 if float(region[2]) > 100 else 34, 5))}
+	return {"classic_top":Vector2(0,classic_top),"head": head, "name": Vector2(0, head.y - 5), "health": Rect2(Vector2(-36 if width > 100 else -17, head.y - 25), Vector2(72 if width > 100 else 34, 5))}
 
 var render_pose_cache: Dictionary = {}
 var render_pose_frame: int = -1
@@ -1240,7 +1242,7 @@ func map_entity_target(point: Vector2) -> Dictionary:
 		var frame: Dictionary = game._frame(character, _facing(npc.get("direction", 0)), "idle")
 		var region: Array = frame.get("region", [0, 0, 30, 54]) as Array
 		var offset: Array = frame.get("offset", [0, 0]) as Array
-		var dimensions: Vector2 = Vector2(float(region[2]), float(region[3]))
+		var dimensions: Vector2 = Vector2(float(region[2]), float(region[3])) / maxf(1.0, float(frame.get("pixel_scale", 1)))
 		var at: Vector2 = _remote_position("npc:%d" % int(npc.index), game.tile_position(tile))
 		var rectangle: Rect2 = Rect2(at + Vector2(float(offset[0]), float(offset[1])) - Vector2(dimensions.x / 2.0, dimensions.y), dimensions)
 		if rectangle.grow(5.0).has_point(point): return {"tile": tile, "kind": "npc"}

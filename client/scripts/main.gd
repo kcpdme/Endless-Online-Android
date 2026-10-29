@@ -137,6 +137,7 @@ var sit_button: Button
 var movement_ui: RefCounted
 var graphics_ui: RefCounted
 var art_profile: RefCounted = preload("res://scripts/art_profile.gd").new()
+var npc_art: RefCounted = preload("res://scripts/npc_art_profile.gd").new()
 var world_services: RefCounted
 var guild_ui: RefCounted
 var feature_ui: RefCounted
@@ -159,6 +160,7 @@ func _ready() -> void:
 	add_child(camera)
 	_load_content()
 	art_profile.configure(manifest)
+	npc_art.configure(manifest)
 	music = preload("res://scripts/map_music.gd").new()
 	add_child(music)
 	music.configure(manifest.get("music", {}) as Dictionary)
@@ -272,7 +274,7 @@ func _texture(path: String) -> Texture2D:
 	if not ResourceLoader.exists(path):
 		return null
 	var result: Texture2D = load(path) as Texture2D
-	if path.begins_with("res://icons/") and path.ends_with("_egg.svg"):
+	if (path.begins_with("res://icons/") and path.ends_with("_egg.svg")) or path.begins_with("res://content/characters/npc_enhanced/"):
 		var smooth: CanvasTexture=CanvasTexture.new();smooth.diffuse_texture=result;smooth.texture_filter=CanvasItem.TEXTURE_FILTER_LINEAR;result=smooth
 	textures[path] = result
 	return result

@@ -39,6 +39,9 @@ func run() -> void:
 		"church_window":{"path":"res://content/gfx/006_00342.png","region":[0,0,church.get_width(),church.get_height()],"offset":[0,0]},
 		"stationary_npc":game._frame(game.online.npc_graphic({"id":127}),"south","idle",0.0),
 		"followed_player":game._frame(game._active_hero(),"south","idle",0.0)}
+	if game.npc_art.ready():
+		for gid:String in ["134","154"]:
+			sources["enhanced_npc_"+gid]=game._frame(game.npc_art.enhanced[gid],"south","idle",0.0)
 	var results: Array[Dictionary] = []
 	var reproduced: bool = false
 	for key: String in sources:
