@@ -138,6 +138,7 @@ var movement_ui: RefCounted
 var graphics_ui: RefCounted
 var art_profile: RefCounted = preload("res://scripts/art_profile.gd").new()
 var npc_art: RefCounted = preload("res://scripts/npc_art_profile.gd").new()
+var player_item_art:RefCounted=preload("res://scripts/player_item_art.gd").new()
 var world_services: RefCounted
 var guild_ui: RefCounted
 var feature_ui: RefCounted
@@ -161,6 +162,7 @@ func _ready() -> void:
 	_load_content()
 	art_profile.configure(manifest)
 	npc_art.configure(manifest)
+	player_item_art.configure(manifest)
 	music = preload("res://scripts/map_music.gd").new()
 	add_child(music)
 	music.configure(manifest.get("music", {}) as Dictionary)
@@ -227,6 +229,7 @@ func load_map(map_id: int) -> bool:
 	_cancel_controls()
 	textures.clear()
 	head_images.clear()
+	player_item_art.clear_cache()
 	art_profile.selections.clear()
 	_configure_world(data)
 	if music != null: music.enter_map(world)
@@ -271,6 +274,14 @@ func _configure_world(data: Dictionary) -> void:
 func _texture(path: String) -> Texture2D:
 	if textures.has(path):
 		return textures[path] as Texture2D
+	if path.begins_with(player_item_art.ROOT):
+		var enhanced:Texture2D=player_item_art.atlas(path)
+		if enhanced!=null:textures[path]=enhanced
+		return enhanced
+	var enhanced_item:Texture2D=player_item_art.image(path)
+	if enhanced_item!=null:
+		textures[path]=enhanced_item
+		return enhanced_item
 	if not ResourceLoader.exists(path):
 		return null
 	var result: Texture2D = load(path) as Texture2D
@@ -1044,14 +1055,23 @@ func _frame(character: Dictionary, direction: String, state: String, phase: floa
 				if not head_images.has(path): head_images[path] = _texture(path).get_image()
 				var r: Array = frame.region
 				var part: Image = (head_images[path] as Image).get_region(Rect2i(int(r[0]), int(r[1]), int(r[2]), int(r[3])))
-				if part.get_width() != result.get_width(): part.resize(result.get_width(), result.get_height(), Image.INTERPOLATE_NEAREST)
-				result.blend_rect(part, Rect2i(Vector2i.ZERO, part.get_size()), Vector2i.ZERO)
+				if bool(frame.get("flip_h",false)):part.flip_x()
+				var source_scale:float=maxf(1.0,float(frame.get("pixel_scale",1)))
+				var target_size:Vector2i=Vector2i((Vector2(part.get_size())/source_scale*pixel_scale).round())
+				if part.get_size()!=target_size:part.resize(target_size.x,target_size.y,Image.INTERPOLATE_NEAREST)
+				var offset:Array=frame.get("offset",[0,8])
+				var top_left:Vector2=Vector2(float(offset[0])+96.0-float(r[2])/source_scale/2.0,float(offset[1])+184.0-float(r[3])/source_scale)
+				result.blend_rect(part, Rect2i(Vector2i.ZERO, part.get_size()), Vector2i((top_left*pixel_scale).round()))
 			if bool(character.clip_black):
 				var bytes: PackedByteArray = result.get_data()
 				for index: int in range(0, bytes.size(), 4):
 					if bytes[index] == 0 and bytes[index + 1] == 0 and bytes[index + 2] == 0: bytes[index + 3] = 0
 				result = Image.create_from_data(192 * pixel_scale, 192 * pixel_scale, false, Image.FORMAT_RGBA8, bytes)
-			textures[key] = ImageTexture.create_from_image(result)
+			var head_texture:ImageTexture=ImageTexture.create_from_image(result)
+			if pixel_scale>1:
+				var smooth:CanvasTexture=CanvasTexture.new();smooth.diffuse_texture=head_texture;smooth.texture_filter=CanvasItem.TEXTURE_FILTER_LINEAR
+				textures[key]=smooth
+			else:textures[key]=head_texture
 		var composite: Texture2D = textures[key] as Texture2D
 		return {"path": key, "region": [0, 0, composite.get_width(), composite.get_height()], "offset": [0, 8], "pixel_scale": composite.get_width() / 192.0}
 	if character.has("layers"):
@@ -1065,7 +1085,7 @@ func _frame(character: Dictionary, direction: String, state: String, phase: floa
 		return composed
 	var group: Dictionary = character.get(state, character.get("frames", {})) as Dictionary
 	var raw: Variant = group.get(direction, group.get("south", []))
-	if raw is Dictionary: return raw as Dictionary
+	if raw is Dictionary: return player_item_art.frame(raw as Dictionary)
 	if raw is Array and not (raw as Array).is_empty():
 		var frames: Array = raw as Array
 		var frame_rate: float = frames.size() / online.MOVE_SECONDS if online_mode and state == "frames" else 9.0
@@ -1073,7 +1093,7 @@ func _frame(character: Dictionary, direction: String, state: String, phase: floa
 		if state in ["attack", "ranged_attack"]:
 			if online_mode: frame_index = mini(int((phase if phase >= 0.0 else minf(ONLINE_ATTACK_SWING_DURATION, _online_attack_seconds()) - swing_clock) / ((ONLINE_ATTACK_SWING_DURATION if phase >= 0.0 else minf(ONLINE_ATTACK_SWING_DURATION, _online_attack_seconds())) / frames.size())), frames.size() - 1)
 			else: frame_index = mini(int((phase / 0.36 if phase >= 0.0 else 1.0 - swing_clock / ATTACK_SWING_DURATION) * frames.size()), frames.size() - 1)
-		return frames[frame_index] as Dictionary
+		return player_item_art.frame(frames[frame_index] as Dictionary)
 	return {}
 
 func _draw_character_frame(character: Dictionary, at: Vector2, direction: String, state: String, tint: Color = Color.WHITE, phase: float = -1.0) -> bool:

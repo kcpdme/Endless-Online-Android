@@ -46,12 +46,14 @@ func _draw() -> void:
 			art_cache[key] = Rect2(image.get_region(Rect2i(source)).get_used_rect()) if image != null and not image.is_empty() else Rect2(Vector2.ZERO,source.size)
 		var used: Rect2 = art_cache[key]
 		if not used.has_area(): continue
+		var source_used:Rect2=used
+		if bool(layer.get("flip_h",false)):used.position.x=source.size.x-used.end.x
 		var offset: Array = layer.get("offset",[0,0])
 		var pixel_scale: float = maxf(1.0, float(layer.get("pixel_scale", 1)))
 		var logical_size: Vector2 = source.size / pixel_scale
 		var rectangle: Rect2 = Rect2(Vector2(float(offset[0])-logical_size.x/2.0,float(offset[1])-logical_size.y)+used.position/pixel_scale,used.size/pixel_scale)
 		bounds = rectangle if first else bounds.merge(rectangle); first = false
-		visible_layers.append({"texture":texture,"source":Rect2(source.position+used.position,used.size),"rectangle":rectangle})
+		visible_layers.append({"texture":texture,"source":Rect2(source.position+source_used.position,source_used.size),"rectangle":rectangle,"flip_h":layer.get("flip_h",false)})
 	var scale: float = zoom
 	if fit_to_rect and bounds.has_area():
 		scale = minf(zoom,minf(maxf(1,size.x-32)/bounds.size.x,maxf(1,size.y-bottom_margin-16)/bounds.size.y))
@@ -63,7 +65,9 @@ func _draw() -> void:
 	draw_circle(at+Vector2(0,-2),34,Color(0,0,0,0.18))
 	for layer: Dictionary in visible_layers:
 		var rectangle: Rect2 = layer.rectangle
-		draw_texture_rect_region(layer.texture,Rect2(at+rectangle.position*scale,rectangle.size*scale),layer.source)
+		var destination:Rect2=Rect2(at+rectangle.position*scale,rectangle.size*scale)
+		if bool(layer.flip_h):destination.size.x=-destination.size.x
+		draw_texture_rect_region(layer.texture,destination,layer.source)
 
 func turn(step: int) -> void:
 	var directions: Array[String] = ["south","west","north","east"]

@@ -1,4 +1,4 @@
-# Offline NPC smoothing
+# Offline sprite smoothing
 
 This preparation tool is outside the Godot project. Its JavaScript, WebAssembly, npm modules and 4× intermediate images are never Android runtime dependencies.
 
@@ -9,3 +9,7 @@ This preparation tool is outside the Godot project. Its JavaScript, WebAssembly,
 Approved illustrated Piglet/Banshi poses are supplied separately by `tools/prepare_npc_pilot.gd`. They are preserved without resampling. `configure-imports.mjs` applies WebP quality 0.90 to automatically smoothed atlases and keeps those two painted samples lossless.
 
 The complete local workflow and verification are documented in `docs/NPC_ART_CATALOG.md`.
+
+`smooth-player-items.mjs` uses the same pinned scaler for the complete player and item catalog. `tools/prepare_player_items.gd` trims transparent player canvases, shares identical/mirrored poses and keeps item images at their native dimensions. `tools/pack_player_items.gd` creates compact 2× atlases and the schema-2 registry. `configure-visual-imports.mjs` prepares WebP import settings before Godot imports these atlases; head/hair atlases remain lossless because exact black pixels encode the original hair mask. The scaler cache is bounded to 32 instances.
+
+The player/item workflow, runtime behavior, Android size and verification are documented in `docs/PLAYER_ITEM_ART.md`. All tooling and intermediate images stay outside the shipped client.

@@ -1,0 +1,102 @@
+{
+  "date": "2026-10-29",
+  "method": "Faithful automatic xBRZ 4x followed by alpha-correct Lanczos to 2x",
+  "scope": {
+    "player_layers": 1055,
+    "player_frames": 47120,
+    "item_pngs": 911,
+    "unique_crops": 7124,
+    "source_pngs": 2990
+  },
+  "pack": {
+    "atlases": 1403,
+    "decoded_rgba_bytes": 150680784,
+    "frames": 47120,
+    "item_images": 911,
+    "lossless_mask_atlases": 490,
+    "result": "passed",
+    "unique_crops": 7124
+  },
+  "verification": {
+    "client": {
+      "black_mask_pixels": 4274,
+      "checks": 113195,
+      "geometry_preserved": true,
+      "item_images": 911,
+      "lazy_atlas_loading": true,
+      "native_item_dimensions": true,
+      "player_frames": 47120,
+      "rendered": true,
+      "result": "passed"
+    },
+    "art-profiles": {
+      "checks": 378,
+      "classic_assets_unchanged": true,
+      "hd_logical_size_and_anchor_preserved": true,
+      "pixel_render_test": true,
+      "result": "passed",
+      "whole_outfit_fallback": true
+    },
+    "inspection": {
+      "checks": 697,
+      "classic_hover_and_metadata": true,
+      "combat_and_speech_priority": true,
+      "mobile_tap_inspection": true,
+      "result": "passed",
+      "transparent_pixel_hit_test": true
+    },
+    "npc": {
+      "checks": 20997,
+      "frames": 4992,
+      "gpu_mirror_checked": true,
+      "graphics": 171,
+      "logical_geometry_unchanged": true,
+      "pet_preview_cropped": true,
+      "rendered": true,
+      "result": "passed"
+    }
+  },
+  "camera": {
+    "checks": 6120,
+    "original_shimmer_reproduced": true,
+    "phases_per_case": 24,
+    "result": "passed"
+  },
+  "android": {
+    "version": "0.53.0",
+    "version_code": 96,
+    "apk_bytes": 278775817,
+    "previous_apk_bytes": 264965162,
+    "increase_bytes": 13810655,
+    "sha256": "dc2d7b0e2a8b1a135cfd7cd5a3f249b867c62a761d8925532280b4e6a65b8ff4",
+    "runtime_atlases": 1403,
+    "runtime_texture_bytes": 12325662,
+    "runtime_texture_zip_bytes": 12317195,
+    "working_assets_in_apk": [],
+    "native_libraries_unchanged": true
+  },
+  "phone": {
+    "model": "Samsung SM-S918B",
+    "installed_version": "0.53.0",
+    "version_code": 96,
+    "installed_apk_hash_verified": true,
+    "original_first_install_time_preserved": true,
+    "launch": "passed",
+    "runtime_script_errors": [],
+    "verification_scope": "Launch and UI only; no live player movement, combat, trades or gameplay mutations."
+  },
+  "source_manifest_and_catalog_byte_identical_to_previous_apk": true,
+  "unrelated_legacy_test": {
+    "test": "paperdoll_mobile.gd",
+    "result": "Pre-existing failures reproduced against 401b753",
+    "details": "Single equipment tap assertions fail; old fixture lacks current class/level eligibility for its full-health heal assertion and accesses absent spell label 100. Current art-specific and inspection tests pass. No unrelated gameplay changes made."
+  },
+  "assets": "Private generated assets remain ignored; only code, tooling, tests and reports are committed.",
+  "packer_smoke": {
+    "result": "passed",
+    "player_frames": 128,
+    "item_images": 3,
+    "schema": 2,
+    "metadata_and_pixels_match_full_pack": true
+  }
+}

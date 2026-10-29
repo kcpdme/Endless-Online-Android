@@ -46,6 +46,8 @@ func run() -> void:
 	if "--prepare-art-fixtures" in OS.get_cmdline_user_args(): prepare(); quit(); return
 	var game: Node = load("res://main.tscn").instantiate(); root.add_child(game); await process_frame
 	game.music.stop()
+	# Illustrated outfit selection is independent of the automatic smoothing overlay.
+	game.player_item_art.select(false,false);game.textures.clear();game.head_images.clear()
 	var art: RefCounted = game.art_profile
 	art.settings_path = "user://graphics-regression.cfg"
 	art.select_mode("classic", false)
@@ -100,6 +102,9 @@ func run() -> void:
 	if not before.is_empty(): check(before == await pixels(view), "Switching back restores pixel-identical Classic preview")
 	check(FileAccess.get_sha256("res://content/manifest.json") == original_hash, "Switching never writes the original manifest")
 	game.online.panel.hide(); game.graphics_ui.open(); check(game._modal_open(), "Graphics settings block world input")
+	check(game.graphics_ui.choice.visible and game.graphics_ui.card.size.y==520,"Optional illustrated selector keeps the phone-sized Graphics card")
+	for control:Control in [game.graphics_ui.choice,game.graphics_ui.player_choice,game.graphics_ui.note,game.graphics_ui.npc_choice,game.graphics_ui.npc_note,game.graphics_ui.done]:
+		check(game.graphics_ui.card.get_global_rect().encloses(control.get_global_rect()),"All Graphics choices fit with the optional illustrated pack")
 	game._handle_back(); check(not game.graphics_ui.panel.visible and game.menu.visible, "Android Back returns to the menu")
 	art.replacements.clear(); game.graphics_ui.refresh(); check(game.graphics_ui.choice.is_item_disabled(1), "Unfinished packs are visibly unavailable")
 	check(not art.load_pack(FIXTURE + "missing.json") and art.definitions(record) == classic, "Removing an Enhanced pack safely restores Classic")
