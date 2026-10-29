@@ -25,6 +25,13 @@ func run() -> void:
  check(int(game.world.id)==192 and game.player_tile==Vector2i(7,6),"Client uses the original Tutorial Island spawn")
  check((c.player.get("inventory",[]) as Array).is_empty() and (c.player.get("spells",[]) as Array).is_empty(),"Inventory and learned skills start empty")
  check(int(c.player.stats.level)==0 and int(c.player.stats.admin)==0,"Player is level-zero and regular")
+ check(int(c.catalog.get("balance_version",0))==14,"Live classic Peasant profile reaches the existing client")
+ var s: Dictionary=c.player.stats
+ check(int(s.hp)==10 and int(s.max_hp)==10 and int(s.tp)==10 and int(s.max_tp)==10,"Newborn HP and TP exactly match classic")
+ check(int(s.min_damage)==0 and int(s.max_damage)==1 and int(s.accuracy)==0 and int(s.evade)==0 and int(s.armor)==0,"No free newborn combat bonuses")
+ check(int(s.strength)==0 and int(s.intelligence)==0 and int(s.wisdom)==0 and int(s.agility)==0 and int(s.constitution)==0 and int(s.charisma)==0,"No free newborn attributes")
+ check(int(s.max_sp)==20 and int(s.stat_points)==0 and int(s.skill_points)==0 and int(s.experience)==0,"Classic newborn SP and zero earned points")
+ check(int(s.weight)==0 and int(s.max_weight)==70 and int(s.karma)==1000,"Classic newborn capacity and karma")
  check(not game.pet_ui.button.visible and not game.pet_ui.collection_button.visible,"Peasant has no Summoner controls")
  check(game.bag_button.visible,"Inventory remains available for earned items")
  check(not c.players.is_empty() or c.npcs.size()>=1,"Original nearby house inhabitants are rendered")

@@ -22,6 +22,13 @@ The local server starts new characters at level 0 in the original Tutorial Islan
 
 ## JSON-lines protocol
 
+Profile 14 restores the classic Peasant foundation: a bare newborn has 10 HP,
+10 TP, damage 0–1 and zero combat attributes, accuracy, evade and armour.
+Peasant outgoing/incoming hit and damage calculations use the original formulas;
+professional classes and pets retain the revamped formulas. The entry catalog
+includes actual progression NPC stats, so existing Android clients receive the
+updated encounter values on reconnect. See [profile 14](../docs/PEASANT_V14.md).
+
 Send a flat JSON object followed by a newline. Every reply preserves its `id` and `op` and has either `ok: true, data: ...` or `ok: false, error: ...`. No request body, password, or raw authentication packet is logged. Each connection allows at most 16 requests per second, 16 scalar fields per request, 256 characters per string field, and a 64 KiB input buffer. The gateway caps simultaneous connections at 12.
 
 Supported operations:

@@ -1,0 +1,37 @@
+{
+  "result": "passed",
+  "public_https_wss_verified": true,
+  "new_regular_character_cases": [
+    {
+      "gender": 0,
+      "start": [
+        192,
+        7,
+        6
+      ],
+      "empty_bag_equipment_spells": true,
+      "level_zero": true,
+      "island_death_home": true,
+      "reconnect_no_grants": true,
+      "exact_classic_newborn_stats": true,
+      "current_server_catalog": true
+    },
+    {
+      "gender": 1,
+      "start": [
+        192,
+        7,
+        6
+      ],
+      "empty_bag_equipment_spells": true,
+      "level_zero": true,
+      "island_death_home": true,
+      "reconnect_no_grants": true,
+      "exact_classic_newborn_stats": true,
+      "current_server_catalog": true
+    }
+  ],
+  "existing_accounts_or_characters_modified": false,
+  "android_0501_compatible": true,
+  "profile": 14
+}

@@ -47,7 +47,23 @@ class BalanceTests(unittest.TestCase):
             self.assertEqual(spells[str(ident)]['allowed_classes'],[7]);self.assertEqual(spells[str(ident)]['effect_kind'],'companion')
             self.assertEqual(spells[str(ident)]['companion']['npc_id'],npc)
             self.assertEqual(p['npcs'][str(npc)]['type'],0)
-        self.assertEqual(len(p['npcs']),17)
+        self.assertEqual(sum(n.get('is_companion',False) for n in p['npcs'].values()),16)
+
+    def test_classic_peasant_and_island_rewards_are_preserved(self):
+        old_items=records((self.runtime/'data/pub/dat001.eif').read_bytes(),b'EIF',58)
+        old_npcs=records((self.runtime/'data/pub/dtn001.enf').read_bytes(),b'ENF',39)
+        _,p=self.install()
+        self.assertTrue(p['classic_peasant'])
+        self.assertTrue(all(v==0 for v in p['classes']['1']['base_attributes'].values()))
+        new_items=records((self.runtime/'data/pub/dat001.eif').read_bytes(),b'EIF',58)
+        new_npcs=records((self.runtime/'data/pub/dtn001.enf').read_bytes(),b'ENF',39)
+        for ident in (21,144,151):self.assertEqual(old_items[ident-1],new_items[ident-1])
+        for ident in (6,7,230,231,154,155,258,259,264,268,290):
+            self.assertEqual(old_npcs[ident-1],new_npcs[ident-1])
+        for before,after in zip(old_npcs[:-1],new_npcs):
+            self.assertEqual(num(before['fields'],36,3),num(after['fields'],36,3))
+        self.assertEqual((p['npcs']['174']['hp'],p['npcs']['174']['min_damage'],p['npcs']['174']['max_damage']),(5980,47,68))
+        self.assertEqual((p['npcs']['1']['hp'],p['npcs']['1']['accuracy']),(5,2))
 
     def test_crafting_edge_and_archetypes_are_bounded_and_obtainable(self):
         _,p=self.install();items=p['items']

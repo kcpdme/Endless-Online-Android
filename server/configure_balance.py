@@ -10,7 +10,7 @@ from contextlib import closing
 
 from eo_session import Reader, number
 from combat_progression import TP_RECOVERY, BOWS, ARROWS, SHIELDS, item_traits
-from balance_profile import VERSION, LEVELS, ATTRIBUTES, CLASSES, SPELLS, WEAPON_TIERS, BODY_TIERS, NEW_ITEMS, NEW_ITEM_TIERS, ENCOUNTERS, COMPANIONS
+from balance_profile import VERSION, LEVELS, ATTRIBUTES, CLASSES, SPELLS, WEAPON_TIERS, BODY_TIERS, NEW_ITEMS, NEW_ITEM_TIERS, ENCOUNTERS, COMPANIONS, MONSTER_TUNING
 from class_identity import allowed_classes, role_for, vary_stats, recipe_sources, ACCESSORY_STATS
 from class_signatures import SIGNATURES, SUPPORT, EGGS
 from pet_catalog import TIERS, ROSTER, EGGKEEPER, HATCHED_EGGS, PET_COOLDOWN_SECONDS, egg_stock
@@ -119,6 +119,11 @@ def build_items(original, shops=""):
         cosmetic=t==16 or i['name'].lower() in ('flute','guitar','harp')
         if cosmetic:put(f,37,0,2)
         metadata[str(ident)]=dict(tier=tier,role=role,cosmetic=cosmetic,allowed_classes=list(allowed),archetype=style,crafted=crafted,acquisition=sources.get(ident,{}))
+    # Keep the island's earned tools/outfits byte-for-byte classic. In particular,
+    # the shared Dagger must not inherit a crafting damage bonus at level zero.
+    for ident in (21,144,151):
+        rows[ident-1]['fields'] = bytearray(records(original,b'EIF',58)[ident-1]['fields'])
+        metadata[str(ident)].update(archetype='classic',classic_starter=True)
     for ident,name,template,clas,role in NEW_ITEMS:
         if ident!=len(rows):raise ValueError('New item ID already occupied or nonconsecutive')
         template_row=rows[template-1];f=bytearray(template_row['fields']);i=dict(decode_item(template_row),id=ident,name=name)
@@ -211,11 +216,12 @@ def build_spells(original):
 
 def build_npcs(original):
     rows=records(original,b'ENF',39)
+    definitions={}
     for ident,(level,hp,lo,hi,accuracy,evade,armor,exp) in ENCOUNTERS.items():
         f=rows[ident-1]['fields']
         if num(f,7,2) not in (1,2):raise ValueError('Refusing to change a protected service NPC')
         for start,value,size in [(11,hp,3),(16,lo,2),(18,hi,2),(20,accuracy,2),(22,evade,2),(24,armor,2)]:put(f,start,value,size)
-    definitions={}
+        definitions[str(ident)]=dict(id=ident,name=rows[ident-1]['names'][0],hp=hp,min_damage=lo,max_damage=hi,accuracy=accuracy,evade=evade,armor=armor,exp=num(f,36,3),recommended_level=level)
     if len(rows)!=306:raise ValueError('Expected 305 existing NPC definitions')
     additions={p['npc_id']:p for p in COMPANIONS.values() if p['npc_id']>0}
     additions[EGGKEEPER['id']]=dict(EGGKEEPER,npc_id=EGGKEEPER['id'])
@@ -239,6 +245,15 @@ def formulas(original):
     # The native RPN evaluator pops operands in reverse order. These fractions
     # deliberately encode denominator before numerator.
     replacements={'hit_rate':'10 accuracy 0.5 * target_evade + + accuracy / 0.35 max 0.95 min', 'damage':'100 target_armor 2 * + 100 / damage * 1 max 1 1.5 critical ? * modifier *'}
+    # Native FormulaVars marks NPCs with npc=1 (unprefixed attacker, target_ for
+    # victim). Missing variables evaluate to zero. Never mistake an NPC's absent
+    # class for Peasant: require a character AND class 0/1 on either side.
+    classic_pair='0 npc = 1 class lte & 0 target_npc = 1 target_class lte & |'
+    for key,modern in list(replacements.items()):
+        legacy=re.search(r'^'+key+r'\s*=\s*(.+)$',text,re.M)
+        if not legacy:raise ValueError('Missing original combat formula: '+key)
+        # RPN conditional pops condition, true branch, then false branch.
+        replacements[key]=modern+' '+legacy[1].strip()+' '+classic_pair+' ?'
     for key,value in replacements.items():text=re.sub(r'^'+key+r'\s*=.*$',f'{key} = {value}',text,flags=re.M)
     for p in CLASSES.values():
         for field in ('damage','accuracy','evade','defence','hp','tp'):
@@ -359,7 +374,7 @@ def configure(runtime):
     class_bytes,classes=build_classes(originals['data/pub/dat001.ecf'])
     spell_bytes,spells=build_spells(originals['data/pub/dsl001.esf'])
     proposed={'data/aster-vale-drops.ini':drops,'data/pub/dat001.eif':item_bytes,'data/pub/dat001.ecf':class_bytes,'data/pub/dsl001.esf':spell_bytes,'data/pub/dtn001.enf':npc_bytes,'data/formulas.ini':formulas(originals['data/formulas.ini']),'data/aster-vale-skills.ini':build_skills(),'data/aster-vale-shops.ini':shops,'data/quests/00004.eqf':build_quest(originals['data/quests/00004.eqf'])}
-    profile=dict(version=VERSION,levels=LEVELS,max_skill_level=10,classes=classes,spells=spells,items=items,npcs=npcs,class_identity=True,class_signatures=True,carry_capacity_rules=True,mortal_spirit_bonds=False,pet_collection=True,bonus_egg_drops=True,pet_cooldown_seconds=PET_COOLDOWN_SECONDS,hatched_eggs=HATCHED_EGGS,companions=COMPANIONS,eggs=EGGS,pet_tiers=TIERS,pet_roster=ROSTER,eggkeeper=EGGKEEPER)
+    profile=dict(version=VERSION,levels=LEVELS,max_skill_level=10,classes=classes,spells=spells,items=items,npcs=npcs,classic_peasant=True,monster_tuning=MONSTER_TUNING,class_identity=True,class_signatures=True,carry_capacity_rules=True,mortal_spirit_bonds=False,pet_collection=True,bonus_egg_drops=True,pet_cooldown_seconds=PET_COOLDOWN_SECONDS,hatched_eggs=HATCHED_EGGS,companions=COMPANIONS,eggs=EGGS,pet_tiers=TIERS,pet_roster=ROSTER,eggkeeper=EGGKEEPER)
     proposed['data/balance-profile.json']=(json.dumps(profile,indent=2)+'\n').encode()
     cfg=(runtime/'config.local.ini').read_text()
     values={'ExpRate':'100%','DropRate':'100%','GoldDropRate':'100%','DropRateMode':'3','BonusSpiritEggDrops':'yes','CarryCapacityRules':'yes','ClassMobility':'yes','OwnerScaledPets':'yes','CombatProgression':'yes','PetEggTiers':'yes','MortalSpiritBonds':'no','PermanentPetCollection':'yes','PetCollectionCooldownSeconds':str(PET_COOLDOWN_SECONDS),'ClassSignatureRules':'yes','PriestRegenRate':'0.02','PriestSittingRegenRate':'0.04','CompanionLifetimeSeconds':'0','ClassIdentityRules':'yes','BalanceRevamp':'yes','UseClassFormulas':'yes','MaxSkillLevel':'10','SkillsFile':'./data/aster-vale-skills.ini'}

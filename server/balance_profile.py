@@ -1,10 +1,10 @@
 """Versioned, shared design inputs for the native level 1–50 balance profile."""
 
-VERSION = 13
+VERSION = 14
 LEVELS = (1, 8, 15, 25, 35, 45)
 ATTRIBUTES = ('strength', 'intelligence', 'wisdom', 'agility', 'constitution', 'charisma')
 CLASSES = {
-    1: dict(name='Peasant', family=4, damage='str 0.35 * agi 0.15 * +', accuracy='10 level 0.4 * + agi 0.7 * +', evade='5 agi 0.4 * +', defence='con 0.35 *', hp='35 level 3 * + con 4 * +', tp='20 level 2 * + int 2 * + wis 2 * +', spell_scale=1.0, heal_wis=.2, heal_int=.1, heal_cha=0, hint='Choose a class at the Wise Man. Use potions for recovery; only Priests cast heals.'),
+    1: dict(name='Peasant', family=4, damage='2 str /', accuracy='2 agi /', evade='2 agi /', defence='2 con /', hp='10 2.5 level * 2.5 con * + +', tp='10 2.5 level * 2.5 int * + 1.5 wis * + +', spell_scale=1.0, heal_wis=.2, heal_int=.1, heal_cha=0, hint='Classic Peasant: no free combat attributes. Earn levels, craft a Dagger from two Goat Horns, then choose a profession at the Wise Man.'),
     2: dict(name='Priest', family=5, damage='wis 0.4 * int 0.2 * +', accuracy='12 level 0.5 * + wis 0.8 * +', evade='5 agi 0.35 * + wis 0.1 * +', defence='con 0.4 *', hp='35 level 2.8 * + con 4 * +', tp='45 level 3 * + int 2 * + wis 4 * +', spell_scale=1.9, heal_wis=1.2, heal_int=.3, heal_cha=0, hint='WIS first, then CON and INT. Fast passive HP regeneration, holy attacks and strongest party healing.'),
     3: dict(name='Magician', family=2, damage='int 0.35 * wis 0.1 * +', accuracy='12 level 0.5 * + int 0.8 * +', evade='5 agi 0.35 * +', defence='con 0.3 *', hp='30 level 2.5 * + con 3.5 * +', tp='40 level 3 * + int 3 * + wis 2 * +', spell_scale=2.4, area_multiplier=1.0, single_target_multiplier=1.5, heal_wis=.35, heal_int=.15, heal_cha=0, hint='INT first, then CON and WIS. Highest spell power; early and late area magic spend TP.'),
     4: dict(name='Rogue', family=1, damage='agi 0.45 * str 0.2 * +', accuracy='12 level 0.5 * + agi 0.9 * +', evade='8 agi 0.75 * +', defence='con 0.35 *', hp='35 level 3 * + con 4 * +', tp='25 level 1.5 * + int 1.5 * + wis 1.5 * +', spell_scale=1.6, heal_wis=.2, heal_int=.1, heal_cha=0, hint='AGI first, then CON and STR. Evasion and blade backstabs: strike directly from behind for 1.5x or 2x.'),
@@ -58,6 +58,10 @@ SPELLS = {
     39: ('Blade Dance', 35, (4,), 26, 1, 18, 26, 0, 0, 2, 1, 3),
 }
 for _class_id,_profile in CLASSES.items():
+    # Class 0 (unassigned) shares this classic, attribute-earned foundation.
+    if _class_id == 1:
+        _profile['base_attributes']={k:0 for k in ATTRIBUTES}
+        continue
     _profile['damage']=_profile['damage']+(' 3 +' if _class_id in (4,5,6) else ' 2 +')
     _primary,_secondary={1:('strength','agility'),2:('wisdom','intelligence'),3:('intelligence','wisdom'),4:('agility','strength'),5:('agility','strength'),6:('strength','agility'),7:('charisma','intelligence'),8:('wisdom','intelligence')}[_class_id]
     _profile['base_attributes']={k:3 if k==_primary else 2 if k=='constitution' else 1 if k==_secondary else 0 for k in ATTRIBUTES}
@@ -113,7 +117,7 @@ NEW_ITEM_TIERS = {511:1,512:2,513:3,514:4,515:3,516:3,517:4,518:4,519:4,520:4,52
 # Defined progression encounters. Other original NPCs keep their identity/stats.
 # NPC: recommended level, HP, min/max attack, accuracy, evade, armour, base EXP.
 ENCOUNTERS = {
-    1:(1,12,1,3,9,3,0,8),2:(1,18,2,4,10,4,0,10),3:(1,22,2,5,11,4,1,12),
+    1:(1,5,0,2,2,0,0,8),2:(1,10,0,2,2,0,0,10),3:(1,10,0,2,2,0,0,12),
     4:(5,55,4,8,16,6,2,24),8:(8,95,7,12,20,8,3,40),
     82:(8,105,8,13,22,10,3,45),83:(8,90,7,12,20,9,2,40),
     117:(15,230,13,21,30,14,6,85),232:(20,340,17,26,38,18,8,115),
@@ -123,6 +127,17 @@ ENCOUNTERS = {
     142:(40,8200,52,74,85,38,27,2200),225:(45,11000,62,88,96,44,32,3000),
     129:(50,18000,74,104,112,50,40,4500),
 }
+
+# A restrained adjustment to the existing progression encounters, after the
+# island journey. No speed, evade, armour, rewards or protected NPC roles change.
+MONSTER_TUNING = dict(minimum_level=8, hp_multiplier=1.15, damage_multiplier=1.10)
+for _ident, _encounter in list(ENCOUNTERS.items()):
+    _level,_hp,_low,_high,_acc,_evade,_armor,_exp = _encounter
+    if _level >= MONSTER_TUNING['minimum_level']:
+        ENCOUNTERS[_ident] = (_level, round(_hp*MONSTER_TUNING['hp_multiplier']),
+                              round(_low*MONSTER_TUNING['damage_multiplier']),
+                              round(_high*MONSTER_TUNING['damage_multiplier']),
+                              _acc, _evade, _armor, _exp)
 
 # Summoned creatures use already-exported original art, neutral ENF types and
 # native ownership. They never have loot/EXP or autonomous target selection.

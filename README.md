@@ -53,6 +53,12 @@ checks that Android kept the app's original installation timestamp.
 
 ## Play online
 
+Server balance profile **14** restores exact classic newborn/Peasant stats and
+the original earned Dagger/outfits. Selected level-8+ encounters gain 15% HP and
+approximately 10% damage, with no attack-speed, EXP or drop increase. Existing
+Android 0.50.1 receives the updated stats/catalog on reconnect; no new APK is
+needed. See [classic Peasant rules and encounter validation](docs/PEASANT_V14.md).
+
 Version **0.50.1**, balance profile **13**, centres overhead chat and adds Read
 (default) / Post tabs to the town board, with drafts retained between tabs.
 Classic drop tables, Gold and original monster EXP remain at ×1; Summoner eggs

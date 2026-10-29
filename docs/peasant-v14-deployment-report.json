@@ -1,0 +1,28 @@
+{
+  "result": "passed",
+  "profile": 14,
+  "backup": "/opt/aster-vale/backups/classic-peasant-v14-20261029T043247Z",
+  "database_bytes_unchanged": true,
+  "existing_items_levels_attributes_pets_unchanged": true,
+  "original_maps_quests_drops_exp_unchanged": true,
+  "professional_classes_and_pets_unchanged": true,
+  "native_binary_unchanged": true,
+  "classic_reward_audit": {
+    "result": "passed",
+    "classic_npc_drop_tables": 159,
+    "classic_drop_entries": 262,
+    "original_npc_exp_definitions": 305,
+    "exp_multiplier": 1.0,
+    "item_drop_multiplier": 1.0,
+    "gold_drop_multiplier": 1.0,
+    "goat_horn_chance_percent": 10,
+    "goat_exp": 8,
+    "eggs_are_separate_bonus": true,
+    "issues": [],
+    "database_opened": false,
+    "files_modified": false
+  },
+  "services_healthy": true,
+  "profile_sha256": "766f19bc478b51daa69abe1354955e90dc1d3a28ca1e2be574b2991d32c93d5b",
+  "client_update_required": false
+}
