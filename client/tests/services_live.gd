@@ -8,7 +8,8 @@ func idle() -> bool:
 
 func select_item(list: ItemList, id: int) -> bool:
 	for i: int in range(list.item_count):
-		if int(list.get_item_metadata(i)) == id:
+		var key:Variant=list.get_item_metadata(i)
+		if (int(key[0]) if key is Array else int(key)) == id:
 			list.select(i)
 			list.item_selected.emit(i)
 			return true
@@ -78,10 +79,13 @@ func _run() -> void:
 	if not check(await wait_for(func() -> bool: return not peer_record(c, pid).is_empty()), "Player spawn missing"): return
 	var own_gear: Dictionary = (c.player.equipment as Dictionary).duplicate()
 	c.map_click(Vector2i(2, 3))
+	if not check(game.player_actions.panel.visible,"Player tap did not show compact choices"):return
+	game.player_actions.choose("Paperdoll")
 	if not check(await wait_for(func() -> bool: return ui.panel.visible and ui.mode == "inspect" and idle()), "Player tap did not inspect"): return
 	if not check(int(ui.doll.inspection.player_id) == pid and c.player.equipment == own_gear and ui.doll.background != null, "Inspection must show native original paperdoll without replacing your own equipment"): return
 	await capture("v11-inspect")
-	ui.primary.pressed.emit()
+	if not check(not ui.primary.visible and not ui.extra.visible,"Paperdoll must not show trade or whisper buttons"):return
+	ui.close();c.map_click(Vector2i(2,3));game.player_actions.choose("Trade")
 	await create_timer(.3).timeout
 	await rpc("trade_accept", {"player_id": int(c.player.player_id)})
 	if not check(await wait_for(func() -> bool: return ui.panel.visible and ui.mode == "trade" and idle()), "Native trade did not open"): return

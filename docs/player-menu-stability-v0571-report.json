@@ -1,0 +1,98 @@
+{
+  "version": "0.57.1",
+  "version_code": 104,
+  "result": "passed",
+  "player_ui": {
+    "checks": 563,
+    "four_player_actions": true,
+    "live_offer_updates": true,
+    "offline": true,
+    "paperdoll_unchanged_frames": 120,
+    "player_menu_unchanged_frames": 180,
+    "result": "passed",
+    "trade_unchanged_frames": 180,
+    "viewports": 3
+  },
+  "native_services": {
+    "actual_gameplay_ui": true,
+    "chat_log_and_local_speech_bubble": true,
+    "clean_heart_tp_hud": true,
+    "native_banker_tap_deposit": true,
+    "native_locker_tap_deposit_withdraw": true,
+    "native_two_player_trade_dialog_and_inventory": true,
+    "original_player_inspection_without_self_equipment_overwrite": true,
+    "result": "passed",
+    "whisper_input": true
+  },
+  "native_recovery": {
+    "automatic_startup_native_login": true,
+    "checks": 17,
+    "inventory_preserved": true,
+    "native_reauthentication_and_same_character_entry": true,
+    "no_operator_account_used": true,
+    "permanent_outage_returns_to_login": true,
+    "real_native_world_restart": true,
+    "real_silent_websocket_blackhole": true,
+    "result": "passed"
+  },
+  "transport_tolerance": {
+    "checks": 10,
+    "result": "passed",
+    "tcp_and_websocket": true,
+    "queued_ack_before_deadline": true,
+    "unrelated_world_does_not_hide_transaction_timeout": true
+  },
+  "class_controls": {
+    "checks": 1119,
+    "result": "passed"
+  },
+  "chat_zoom": {
+    "checks": 75,
+    "feed_timeout_seconds": 8,
+    "manual_collapse_preserves_history_and_draft": true,
+    "network_requests": 0,
+    "rendered": true,
+    "result": "passed",
+    "touch_and_mouse_verified": true,
+    "typing_and_scrolling_protected": true,
+    "zoom_modes": [
+      1,
+      1.25
+    ],
+    "zoom_preference_persists": true
+  },
+  "shortcuts": {
+    "all_four_restore_after_local_data_loss": true,
+    "checks": 16,
+    "explicit_zero_and_depleted_items": true,
+    "local_migration": true,
+    "reconnect_pending_retry": true,
+    "result": "passed",
+    "stale_ack_no_revert": true
+  },
+  "movement_and_network_regressions": "passed",
+  "production": {
+    "websocket_sha256": "08b5f2664ca3d788663fa1f58b670709ae6d9f8f84d32055f9590ee4ab3fadfa",
+    "world_and_gateway_processes_preserved": true,
+    "websocket_ping_timeout_seconds": 25
+  },
+  "limits": "Rendered stability fixtures and native desktop integration; phone gameplay still requires user verification.",
+  "classic_dialogs": {
+    "checks": 472,
+    "result": "passed",
+    "viewports": 3,
+    "world_undimmed": true
+  },
+  "apk": {
+    "bytes": 279053352,
+    "sha256": "b1031ef8306411c9f0c169658ed818389c2e05fc9b3731f89935720a0d7c16a0",
+    "signature": "apksigner v2 verified; 16 KiB zip alignment passed"
+  },
+  "android_install": {
+    "version_name": "0.57.1",
+    "version_code": 104,
+    "installed_sha256_matches_release": true,
+    "original_first_install_time_preserved": true,
+    "gameplay_on_phone": "not automated; rendered desktop and native integration verified"
+  }
+}

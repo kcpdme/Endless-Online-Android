@@ -53,7 +53,7 @@ func selected(list: ItemList) -> int:
 	return int(list.get_item_metadata(choices[0])) if not choices.is_empty() else 0
 func open() -> void:
 	if not game.online.active: game.online.show_login(); return
-	game.menu.hide(); game.services_ui.panel.hide(); game.chat_ui.panel.hide()
+	game.player_actions.close();game.menu.hide(); game.services_ui.panel.hide(); game.chat_ui.panel.hide()
 	game._cancel_controls(); panel.show(); stamp = ""; refresh()
 	game.online.session.request("party_refresh")
 func action(kind: String, pid: int = 0) -> void:

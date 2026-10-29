@@ -62,7 +62,7 @@ func run() -> void:
 	if not check(await wait_for(func() -> bool:return c.active and c.streaming),"Native restart did not restore session"):return
 	check(c.player.name==name and JSON.stringify(c.player.inventory)==inventory,"Native restart restores the same saved character and items")
 	mark("blackhole-ready")
-	if not check(await wait_for(func() -> bool:return c.reconnection.running,20),"Silent WebSocket blackhole was not detected by heartbeat"):return
+	if not check(await wait_for(func() -> bool:return c.reconnection.running,35),"Silent WebSocket blackhole was not detected by heartbeat"):return
 	mark("blackhole-detected")
 	if not check(await wait_for(func() -> bool:return c.active and c.streaming),"Transport recovery did not restore session"):return
 	check(c.player.name==name,"Transport recovery retains the same character despite a new native ID")

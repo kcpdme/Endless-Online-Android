@@ -74,7 +74,7 @@ def main():
     transport=Transport((a.tcp_host,a.tcp_port))
     with serve(transport.handle,a.host,a.port,origins=[None]+a.origin,compression=None,
                process_request=process_request,max_size=65536,max_queue=4,open_timeout=10,
-               ping_interval=5,ping_timeout=8,close_timeout=5,server_header=None,logger=logger) as server:
+               ping_interval=5,ping_timeout=25,close_timeout=5,server_header=None,logger=logger) as server:
         print(f'Aster Vale WebSocket gateway ws://{a.host}:{a.port}/ws -> TCP {a.tcp_host}:{a.tcp_port}',flush=True)
         try:server.serve_forever()
         except KeyboardInterrupt:pass

@@ -46,7 +46,7 @@ def main():
       children['godot']=subprocess.Popen([str(a.godot.resolve()),'--headless','--path',str(root/'client'),'--script','res://tests/connection_recovery_live.gd'],env=env,stdout=log,stderr=subprocess.STDOUT)
       wait_marker('restart-ready');stop('native');time.sleep(.8);start('native',[runtime/'etheos'],18878,runtime)
       wait_marker('blackhole-ready');children['websocket'].send_signal(signal.SIGSTOP)
-      wait_marker('blackhole-detected',22);children['websocket'].send_signal(signal.SIGCONT)
+      wait_marker('blackhole-detected',35);children['websocket'].send_signal(signal.SIGCONT)
       wait_marker('offline-ready');stop('websocket');stop('gateway');stop('native')
       assert children['godot'].wait(timeout=45)==0
       text=(base/'godot.log').read_text();assert 'CONNECTION RECOVERY LIVE:' in text and 'SCRIPT ERROR:' not in text and '\nERROR:' not in text,text[-4000:]

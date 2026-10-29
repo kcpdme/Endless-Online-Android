@@ -7,7 +7,8 @@ signal transport_closed(reason: String)
 
 const MAX_RESPONSE_BYTES: int = 4 * 1024 * 1024
 const HEARTBEAT_INTERVAL: float = 5.0
-const HEARTBEAT_TIMEOUT: float = 8.0
+const HEARTBEAT_TIMEOUT: float = 20.0
+const REQUEST_TIMEOUT:float=30.0
 var idle_seconds: float = 0.0
 var peer: StreamPeerTCP = StreamPeerTCP.new()
 var websocket: WebSocketPeer = WebSocketPeer.new()
@@ -65,28 +66,31 @@ func request(operation: String, fields: Dictionary = {}) -> int:
 	return serial
 
 func _process(delta: float) -> void:
-	if not connecting and not connected: return
-	for raw_id: Variant in pending.keys():
-		var record: Dictionary = pending[raw_id] as Dictionary
-		record.age = float(record.age) + delta
-		if float(record.age) > (HEARTBEAT_TIMEOUT if str(record.op) == "ping" else 20.0):
-			_fail("The game server did not answer in time. Please reconnect.")
-			return
-	if connected:
-		idle_seconds += delta
-		if pending.is_empty() and idle_seconds >= HEARTBEAT_INTERVAL:
-			idle_seconds = 0.0
-			if request("ping") < 0: return
-	if websocket_mode:
-		_poll_websocket(delta)
-		return
+	if not connecting and not connected:return
+	for raw_id:Variant in pending.keys():
+		var record:Dictionary=pending[raw_id] as Dictionary
+		record.age=float(record.age)+delta
+	if connected:idle_seconds+=delta
+	# Drain queued replies first. A slow render/background frame must not reject
+	# a response that has already arrived on the healthy connection.
+	if websocket_mode:_poll_websocket(delta)
+	else:_poll_tcp(delta)
+	if not connected:return
+	for record:Dictionary in pending.values():
+		if float(record.age)>(HEARTBEAT_TIMEOUT if str(record.op)=="ping" else REQUEST_TIMEOUT):
+			_fail("The game server did not answer in time. Please reconnect.");return
+	if pending.is_empty() and idle_seconds>=HEARTBEAT_INTERVAL:
+		idle_seconds=0.0
+		request("ping")
+
+func _poll_tcp(delta:float)->void:
 	peer.poll()
 	var status: int = peer.get_status()
 	if connecting:
 		deadline += delta
 		if status == StreamPeerTCP.STATUS_CONNECTED:
 			_mark_connected()
-		elif status == StreamPeerTCP.STATUS_ERROR or deadline > 10.0:
+		elif status == StreamPeerTCP.STATUS_ERROR or deadline > 15.0:
 			_fail("Could not reach the game server. Check its address and connection.")
 			return
 	elif status != StreamPeerTCP.STATUS_CONNECTED:
@@ -115,7 +119,7 @@ func _poll_websocket(delta: float) -> void:
 	if connecting:
 		deadline += delta
 		if state == WebSocketPeer.STATE_OPEN: _mark_connected()
-		elif state == WebSocketPeer.STATE_CLOSED or deadline > 10.0:
+		elif state == WebSocketPeer.STATE_CLOSED or deadline > 15.0:
 			_fail("Could not reach the game server securely. Check its address and connection.")
 			return
 	elif state != WebSocketPeer.STATE_OPEN:

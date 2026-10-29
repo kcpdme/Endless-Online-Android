@@ -6,6 +6,8 @@ class Wire extends "res://scripts/online_session.gd":
 		close(); opens.append({"host":host,"port":port}); connected = true; return OK
 	func request(op: String, fields: Dictionary = {}) -> int:
 		calls.append({"op":op,"fields":fields.duplicate(true)}); return calls.size()
+class TimeoutTransport extends "res://scripts/online_session.gd":
+	func _poll_tcp(_delta:float)->void:pass
 var checks: int = 0
 var failed: bool = false
 func _initialize() -> void:call_deferred("run")
@@ -77,9 +79,9 @@ func run() -> void:
 	check(c.panel.visible and not c.reconnection.running,"Changed or missing character identity never enters another character")
 	activate(c,wire); c.reconnection.credentials.clear(); c._on_closed("Disconnected")
 	check(c.panel.visible and c.auth_box.visible and not c.reconnection.running,"Missing in-memory login goes directly to login, never a blank map")
-	var transport: Node = preload("res://scripts/online_session.gd").new(); root.add_child(transport); transport.set_process(false)
+	var transport:Node=TimeoutTransport.new(); root.add_child(transport); transport.set_process(false)
 	var closed: Array[String] = []; transport.transport_closed.connect(func(reason: String) -> void:closed.append(reason))
-	transport.connected = true; transport.pending[1] = {"op":"ping","age":7.9}
+	transport.connected = true; transport.pending[1] = {"op":"ping","age":transport.HEARTBEAT_TIMEOUT-.1}
 	check(transport.is_idle() and not transport.has_blocking_requests(),"Heartbeat never blocks gameplay actions")
 	transport._process(.2)
 	check(not closed.is_empty() and not transport.connected and transport.pending.is_empty(),"Unanswered heartbeat detects a silent dead connection")

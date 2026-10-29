@@ -14,9 +14,11 @@ def main():
     parser.add_argument('--adb', type=Path, default=Path.home() / 'Android/Sdk/platform-tools/adb')
     parser.add_argument('--device')
     parser.add_argument('--apk', type=Path, default=ROOT / 'builds/aster-vale-release.apk')
+    parser.add_argument('--install-timeout', type=int, default=900, help='Seconds allowed for a full APK transfer (default: 900)')
     args = parser.parse_args()
-    def adb(*parts):
-        return subprocess.check_output([str(args.adb), *parts], text=True, timeout=240).strip()
+    if args.install_timeout <= 0: parser.error('--install-timeout must be positive')
+    def adb(*parts, timeout=240):
+        return subprocess.check_output([str(args.adb), *parts], text=True, timeout=timeout).strip()
     device = args.device
     if not device:
         devices = [line.split()[0] for line in adb('devices').splitlines()[1:] if len(line.split()) >= 2 and line.split()[1] == 'device']
@@ -27,7 +29,7 @@ def main():
     stamps = re.findall(r'firstInstallTime=(.+)', before)
     # Incremental install can report success before a usable package is available.
     # A full update never uninstalls or clears the existing application.
-    print(adb('-s', device, 'install', '--no-incremental', '-r', '--user', '0', str(args.apk.resolve())))
+    print(adb('-s', device, 'install', '--no-incremental', '-r', '--user', '0', str(args.apk.resolve()), timeout=args.install_timeout))
     after = shell('dumpsys', 'package', PACKAGE)
     assert 'versionName=' in after, 'Installed package unavailable'
     if stamps:

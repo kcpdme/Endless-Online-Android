@@ -479,6 +479,7 @@ func _apply_snapshot(data: Dictionary, entering: bool = false) -> void:
 			drop_permissions.clear()
 			game.shop_ui.close()
 			game.services_ui.panel.hide()
+			game.player_actions.close()
 			trade.clear()
 			pending_inputs.clear()
 			recovering = false
@@ -813,6 +814,7 @@ func _on_closed(reason: String, allow_retry: bool = true) -> void:
 	game.stats_ui.dismiss()
 	game.menu.hide()
 	game.chat_ui.clear()
+	game.player_actions.close()
 	game.services_ui.panel.hide(); game.shop_ui.panel.hide()
 	game.skills_ui.panel.hide(); game.skills_ui.casting.clear(); game.skills_ui.armed = 0
 	if game.quick_items != null: game.quick_items.panel.hide(); game.quick_items.cancel_hold()
@@ -1212,7 +1214,7 @@ func map_press(point: Vector2, entities_only: bool = false) -> bool:
 	game.nameplates.inspect_world(point)
 	var hit: Dictionary = map_entity_target(point)
 	if hit.is_empty() and entities_only and game.skills_ui.armed == 0: return false
-	map_click(hit.get("tile", game._world_tile(point)) as Vector2i, str(hit.get("kind", "")))
+	map_click(hit.get("tile", game._world_tile(point)) as Vector2i, str(hit.get("kind", "")),game.get_global_transform_with_canvas()*point)
 	return true
 
 func map_entity_target(point: Vector2) -> Dictionary:
@@ -1272,7 +1274,7 @@ func map_entity_target(point: Vector2) -> Dictionary:
 		if Rect2(at - Vector2(24, 66), Vector2(48, 72)).has_point(point): return {"tile": tile, "kind": "player"}
 	return {}
 
-func map_click(tile: Vector2i, preferred_kind: String = "") -> void:
+func map_click(tile: Vector2i, preferred_kind: String = "",screen_point:Vector2=Vector2(-1,-1)) -> void:
 	if not active or defeated or recovering or transition_pending: return
 	if seated():
 		toggle_sit()
@@ -1290,7 +1292,7 @@ func map_click(tile: Vector2i, preferred_kind: String = "") -> void:
 		if int(peer.get("player_id", 0)) == int(player.get("player_id", 0)): continue
 		if Vector2i(int(peer.x), int(peer.y)) == tile:
 			game._cancel_controls()
-			interaction = {"kind": "player", "id": int(peer.player_id)}
+			game.player_actions.open(peer,screen_point)
 			return
 	for spec: Dictionary in game.world.get("tile_specs", []):
 		if int(spec.spec) in range(20,29) and Vector2i(int(spec.x),int(spec.y)) == tile:

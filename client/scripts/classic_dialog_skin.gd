@@ -49,7 +49,7 @@ static func finish(node:Node)->void:
 	elif (node is Panel or node is PanelContainer) and not node.has_meta("classic_dialog_kind"):
 		if node.get_theme_stylebox("panel") is StyleBoxFlat:node.add_theme_stylebox_override("panel",style("shop",true))
 	elif node is ItemList and not node.has_meta("preserve_panel_skin"):
-		node.add_theme_stylebox_override("panel",style("shop",true))
+		if node.get_theme_stylebox("panel")!=style("shop",true):node.add_theme_stylebox_override("panel",style("shop",true))
 	elif node is LineEdit or node is TextEdit:
-		node.add_theme_stylebox_override("normal",style("shop",true))
+		if node.get_theme_stylebox("normal")!=style("shop",true):node.add_theme_stylebox_override("normal",style("shop",true))
 	for child:Node in node.get_children():finish(child)

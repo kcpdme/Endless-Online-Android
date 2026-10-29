@@ -9,6 +9,7 @@ var game: Node
 var positions: Dictionary = {}
 var items: Array[Dictionary] = []
 var buttons: Dictionary = {}
+var selection_styles:Dictionary={}
 var profile: String = ""
 var signature: String = ""
 var drag_id: int = 0
@@ -162,7 +163,9 @@ func _layout() -> void:
 func _style_selection() -> void:
 	for key: String in buttons:
 		var chosen: bool = game.selected_item == "item:" + key
-		(buttons[key] as Button).add_theme_stylebox_override("normal", game._wood_style(Color("896232") if chosen else Color(0.18, 0.10, 0.035, 0.35), Color("f4d089") if chosen else Color("9a7342"), 2 if chosen else 1))
+		if not selection_styles.has(chosen):selection_styles[chosen]=game._wood_style(Color("896232") if chosen else Color(0.18,0.10,0.035,0.35),Color("f4d089") if chosen else Color("9a7342"),2 if chosen else 1)
+		var button:Button=buttons[key]
+		if button.get_theme_stylebox("normal")!=selection_styles[chosen]:button.add_theme_stylebox_override("normal",selection_styles[chosen])
 	queue_redraw()
 
 func _save() -> void:

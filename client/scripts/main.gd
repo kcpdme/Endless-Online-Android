@@ -53,6 +53,7 @@ var character_button: HudIconButton
 var zoom_button:HudIconButton
 var stats_button:HudIconButton
 var auto_attack_button:HudIconButton
+var player_actions:RefCounted
 var run_ui:RefCounted
 var auto_attack_enabled:bool=true
 var combat_settings_path:String="user://combat.cfg"
@@ -532,7 +533,7 @@ func _joystick_begin(pointer: Vector2, pointer_id: int) -> void:
 
 func _modal_open() -> bool:
 	if online != null and online.reconnection.running: return true
-	return (pet_ui != null and pet_ui.panel != null and pet_ui.panel.visible) or (feature_ui != null and feature_ui.panel.visible) or (admin_ui != null and admin_ui.panel.visible) or (graphics_ui != null and graphics_ui.panel.visible) or (world_services != null and (world_services.barber_panel.visible or world_services.sign_panel.visible)) or (quest_journal != null and quest_journal.panel.visible) or (party_ui != null and party_ui.panel.visible) or (skills_ui != null and (skills_ui.target_panel.visible or skills_ui.bard_panel.visible)) or (movement_ui != null and movement_ui.panel.visible) or (guild_ui != null and guild_ui.panel.visible) or (inn_ui != null and inn_ui.panel.visible) or (quest_ui != null and quest_ui.panel.visible) or (redeem_ui != null and redeem_ui.panel.visible) or (online != null and online.panel != null and online.panel.visible) or (inventory != null and inventory.visible) or (menu != null and menu.visible) or (character_panel != null and character_panel.visible) or (stats_ui != null and stats_ui.is_open()) or (shop_ui != null and shop_ui.panel.visible) or (services_ui != null and services_ui.panel.visible) or (chat_ui != null and chat_ui.panel.visible) or (skills_ui != null and skills_ui.panel.visible) or (quick_items != null and quick_items.panel.visible)
+	return (player_actions!=null and player_actions.panel.visible) or (pet_ui != null and pet_ui.panel != null and pet_ui.panel.visible) or (feature_ui != null and feature_ui.panel.visible) or (admin_ui != null and admin_ui.panel.visible) or (graphics_ui != null and graphics_ui.panel.visible) or (world_services != null and (world_services.barber_panel.visible or world_services.sign_panel.visible)) or (quest_journal != null and quest_journal.panel.visible) or (party_ui != null and party_ui.panel.visible) or (skills_ui != null and (skills_ui.target_panel.visible or skills_ui.bard_panel.visible)) or (movement_ui != null and movement_ui.panel.visible) or (guild_ui != null and guild_ui.panel.visible) or (inn_ui != null and inn_ui.panel.visible) or (quest_ui != null and quest_ui.panel.visible) or (redeem_ui != null and redeem_ui.panel.visible) or (online != null and online.panel != null and online.panel.visible) or (inventory != null and inventory.visible) or (menu != null and menu.visible) or (character_panel != null and character_panel.visible) or (stats_ui != null and stats_ui.is_open()) or (shop_ui != null and shop_ui.panel.visible) or (services_ui != null and services_ui.panel.visible) or (chat_ui != null and chat_ui.panel.visible) or (skills_ui != null and skills_ui.panel.visible) or (quick_items != null and quick_items.panel.visible)
 
 func _begin_attack(pointer_id: int) -> void:
 	if online_mode: route.clear()
@@ -1398,6 +1399,7 @@ func _build_ui() -> void:
 	quick_items.build(self, root)
 	services_ui = preload("res://scripts/services_window.gd").new()
 	services_ui.build(self, root)
+	player_actions=preload("res://scripts/player_actions.gd").new();player_actions.build(self,root)
 	quest_ui = preload("res://scripts/quest_window.gd").new()
 	quest_ui.build(self, root)
 	world_services = preload("res://scripts/world_services.gd").new()
@@ -1613,6 +1615,8 @@ func _layout_dialogs()->void:
 		var curtain:Control=card.get_parent()
 		if not curtain is ColorRect or curtain.color.a>0.0:continue
 		ClassicDialogSkin.finish(card)
+		if card.has_meta("dialog_layout"):
+			(card.get_meta("dialog_layout") as Callable).call();continue
 		# Keyboard-aware conversations/town forms own their responsive layout.
 		if card.has_meta("manual_dialog_layout"):continue
 		var available:Vector2=curtain.size-Vector2(32,32)
@@ -1862,6 +1866,8 @@ func _show_content_error() -> void:
 	push_error("Aster Vale content unavailable. Run tools/import_content.py.")
 
 func _handle_back() -> void:
+	if player_actions!=null and player_actions.panel.visible:
+		player_actions.close();return
 	if pet_ui != null and pet_ui.panel.visible:
 		pet_ui.panel.hide();return
 	if feature_ui != null and feature_ui.panel.visible:

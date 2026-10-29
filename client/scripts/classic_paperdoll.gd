@@ -8,6 +8,8 @@ var pending_kind: String = ""
 var tap_timer: Timer
 signal close_requested
 
+var refresh_stamp:String=""
+var outlines:Dictionary={}
 var inspection: Dictionary = {}
 var game: Node
 var slots: Dictionary = {}
@@ -28,6 +30,7 @@ func _ready() -> void:
 	)
 	add_child(tap_timer)
 	visibility_changed.connect(func() -> void:
+		refresh_stamp=""
 		if not is_visible_in_tree(): pending_kind = ""; tap_timer.stop()
 	)
 	var data: Dictionary = _paperdoll_data()
@@ -101,11 +104,14 @@ func _paperdoll_data() -> Dictionary:
 	return manifest.get("paperdoll", {}) as Dictionary
 
 func _outline(selected: bool, color: Color = Color(0.98, 0.88, 0.53, 0.95)) -> StyleBoxFlat:
+	var key:String=str(selected)+str(color)
+	if outlines.has(key):return outlines[key]
 	var style: StyleBoxFlat = StyleBoxFlat.new()
 	style.bg_color = Color(0, 0, 0, 0)
 	style.border_color = color
 	style.set_border_width_all(1 if selected else 0)
 	style.set_content_margin_all(2.0)
+	outlines[key]=style
 	return style
 
 func _draw() -> void:
@@ -115,6 +121,10 @@ func _draw() -> void:
 func refresh(kind: String) -> void:
 	selected_kind = kind
 	if not is_node_ready(): return
+	var equipment:Dictionary=game.online.player.get("equipment",{}) as Dictionary if game.online_mode else {}
+	var stamp:String=JSON.stringify([kind,inspection,game.online_mode,equipment,game.equipped,game.armor_equipped,game.boots_equipped])
+	if stamp==refresh_stamp:return
+	refresh_stamp=stamp
 	for raw_kind: Variant in slots:
 		var slot_kind: String = str(raw_kind)
 		var button: Button = slots[slot_kind] as Button
@@ -124,5 +134,6 @@ func refresh(kind: String) -> void:
 		button.icon = game.call("_item_texture", item_kind) as Texture2D if worn else null
 		button.text = ""
 		button.tooltip_text = str(game.call("_item_name", item_kind)) if worn else "Empty " + slot_kind + " slot"
-		button.add_theme_stylebox_override("normal", _outline(slot_kind == selected_kind))
+		var outline:StyleBoxFlat=_outline(slot_kind==selected_kind)
+		if button.get_theme_stylebox("normal")!=outline:button.add_theme_stylebox_override("normal",outline)
 	queue_redraw()
