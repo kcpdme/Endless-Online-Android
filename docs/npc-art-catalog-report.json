@@ -1,0 +1,171 @@
+{
+  "result": "passed_installed_phone_visual_pending_unlock",
+  "generation": "Automatic smoothing selected by user; original illustrated Piglet/Banshi preserved",
+  "graphics": 171,
+  "frames": 4992,
+  "canonical_stored_poses": 2496,
+  "automatic_graphics": 169,
+  "painted_graphics": [
+    134,
+    154
+  ],
+  "build": {
+    "version": "0.52.0",
+    "version_code": 95,
+    "apk_bytes": 264965162,
+    "apk_sha256": "b81d70a0ef8f888621de3a8c4adfe0c8ddb92bc337f0db490ea60858b05b086d",
+    "baseline_apk_bytes": 255823129,
+    "growth_bytes": 9142033,
+    "runtime_atlases": 171,
+    "runtime_texture_bytes": 9398316,
+    "runtime_texture_stored_bytes": 9327816,
+    "native_stored_bytes": 147888040,
+    "abis": [
+      "arm64-v8a",
+      "x86_64"
+    ],
+    "unneeded_source_assets": [],
+    "timestamp": "2026-10-29T06:49:32.335180+00:00"
+  },
+  "pack": {
+    "decoded_rgba_bytes": 184883712,
+    "pixel_scale": 2,
+    "mirrored_pose_sharing": true,
+    "transparent_gutter_pixels": 2
+  },
+  "smoothing": {
+    "result": "passed",
+    "algorithm": "xBRZ 4x followed by alpha-correct Lanczos to 2x",
+    "dependency": "@kayahr/xbrz@1.1.2",
+    "graphics": 169,
+    "canonical_frames": 2466,
+    "unique_scaled_frames": 1750,
+    "preserved_pilot_graphics": [
+      134,
+      154
+    ]
+  },
+  "gameplay_audit": {
+    "result": "passed",
+    "changed_catalog_fields": [
+      "available_npc_graphics"
+    ],
+    "original_npc_definitions_preserved": 160,
+    "total_graphics": 171,
+    "gameplay_catalog_sections_unchanged": true
+  },
+  "restored_original_graphics": {
+    "added": [
+      {
+        "graphic": 93,
+        "name": "King"
+      },
+      {
+        "graphic": 108,
+        "name": "Chest"
+      },
+      {
+        "graphic": 131,
+        "name": "Doll"
+      },
+      {
+        "graphic": 135,
+        "name": "Drone Flyer"
+      },
+      {
+        "graphic": 136,
+        "name": "Butter"
+      },
+      {
+        "graphic": 139,
+        "name": "Gator"
+      },
+      {
+        "graphic": 146,
+        "name": "Cacadem"
+      },
+      {
+        "graphic": 152,
+        "name": "Onigiri"
+      },
+      {
+        "graphic": 153,
+        "name": "Rabther"
+      },
+      {
+        "graphic": 157,
+        "name": "Alex Borg"
+      },
+      {
+        "graphic": 162,
+        "name": "Mini Army"
+      }
+    ],
+    "total_graphics": 171,
+    "gameplay_fields_unchanged": true
+  },
+  "tests": {
+    "npc_art": {
+      "checks": 20997,
+      "frames": 4992,
+      "gpu_mirror_checked": true,
+      "graphics": 171,
+      "logical_geometry_unchanged": true,
+      "pet_preview_cropped": true,
+      "rendered": true,
+      "result": "passed"
+    },
+    "inspection": {
+      "checks": 697,
+      "classic_hover_and_metadata": true,
+      "combat_and_speech_priority": true,
+      "mobile_tap_inspection": true,
+      "result": "passed",
+      "transparent_pixel_hit_test": true
+    },
+    "wraith": {
+      "ball_placeholder_removed": true,
+      "checks": 57,
+      "combat_labels_hidden_when_invisible": true,
+      "idle_and_walk_invisible": true,
+      "name_hidden_when_invisible": true,
+      "name_visible_during_attack": true,
+      "original_attack_visible": true,
+      "pixel_render_test": true,
+      "profiles": [
+        "classic",
+        "enhanced"
+      ],
+      "result": "passed",
+      "targeting_preserved": true
+    },
+    "camera": {
+      "checks": 6120,
+      "original_shimmer_reproduced": true,
+      "phases_per_case": 24,
+      "result": "passed",
+      "rendered_cases_count": 63,
+      "max_aligned_channel_delta": 2
+    },
+    "original_art_metadata": {
+      "result": "passed",
+      "tests": 8
+    }
+  },
+  "release_signature_verified": true,
+  "zip_alignment_16k_verified": true,
+  "assets_committed": false,
+  "server_changes": false,
+  "timestamp": "2026-10-29T06:53:16.058274+00:00",
+  "phone": {
+    "model": "Samsung SM-S918B",
+    "installed_version": "0.52.0",
+    "installed_version_code": 95,
+    "full_update": "passed",
+    "installed_sha256_verified": true,
+    "first_install_time_preserved": true,
+    "visual_check": "pending_unlock",
+    "keyguard_showing": true,
+    "live_player_gameplay_performed": false
+  }
+}

@@ -44,7 +44,8 @@ func run() -> void:
 			var rows: Variant = graphic[state][direction]
 			var frames: Array = rows if rows is Array else [rows]
 			for frame: Dictionary in frames:
-				var image: Image = game._texture(frame.path).get_image()
+				var r:Array=frame.region
+				var image: Image = game._texture(frame.path).get_image().get_region(Rect2i(r[0],r[1],r[2],r[3]))
 				check(image.get_used_rect().has_area() == (state == "attack"), "Original idle/walk is transparent and attack is visible")
 	var modes: Array[String] = ["classic"]
 	var art: Variant = game.get("art_profile")

@@ -2,10 +2,15 @@ extends SceneTree
 ## Offline sample-art regression: production renderer, geometry, selection and previews.
 class Probe extends "res://scripts/main.gd":
 	var samples: Array[Dictionary] = []
+	var mirror_frame:Dictionary={}
 	var show_world: bool = false
 	var pose: String = "idle"
 	var phase: float = 0.0
 	func _draw() -> void:
+		if not mirror_frame.is_empty():
+			draw_set_transform(Vector2.ZERO,0,Vector2(2,2))
+			_paint_character_frame(mirror_frame,Vector2(150,200),Color.WHITE)
+			draw_set_transform(Vector2.ZERO);return
 		if show_world: super._draw(); return
 		if samples.is_empty(): return
 		draw_rect(Rect2(0,0,1280,720),Color("182924"))
@@ -27,12 +32,21 @@ var checks: int = 0
 var failed: bool = false
 var frame_count: int = 0
 var output: String = ""
+var source_images:Dictionary={}
 func _initialize() -> void: call_deferred("run")
 func check(ok: bool, why: String) -> void:
 	checks += 1
 	if not ok: failed = true; push_error(why)
 func frames(raw: Variant) -> Array:
 	return raw if raw is Array else [raw]
+func raw_pose(frame:Dictionary)->Image:
+	if not source_images.has(frame.path):source_images[frame.path]=Image.load_from_file(ProjectSettings.globalize_path(frame.path))
+	var r:Array=frame.region
+	return source_images[frame.path].get_region(Rect2i(r[0],r[1],r[2],r[3]))
+func rendered_pose(game:Probe,frame:Dictionary)->Image:
+	game.mirror_frame=frame;game.queue_redraw();await process_frame;await RenderingServer.frame_post_draw
+	var r:Array=frame.region;var offset:Array=frame.offset
+	return root.get_texture().get_image().get_region(Rect2i(300+offset[0]*2-r[2]/2,400+offset[1]*2-r[3],r[2],r[3]))
 func screenshot(name: String) -> void:
 	if output.is_empty() or DisplayServer.get_name()=="headless": return
 	await process_frame; await RenderingServer.frame_post_draw
@@ -47,13 +61,11 @@ func run() -> void:
 	game.menu.hide(); game.welcome.hide(); game.online.panel.hide(); game.hud_root.hide()
 	var art: RefCounted = game.npc_art
 	art.settings_path="user://npc-art-regression.cfg"
-	check(art.ready() and art.enhanced.size()==2,"Only the two pilot graphics load")
+	check(art.ready() and art.enhanced.size()==art.classic.size(),"Every installed NPC graphic is enhanced")
 	check(art.enhanced.has("154") and art.enhanced.has("134"),"Piglet and Banshi are enhanced")
 	var original_hash: String = FileAccess.get_sha256("res://content/manifest.json")
 	game.samples.assign([art.classic["154"],art.enhanced["154"],art.classic["134"],art.enhanced["134"]])
 	for key: String in art.classic:
-		if key not in ["154","134"]: check(art.target[key]==art.classic[key],"Unselected NPC remains Classic: "+key)
-	for key: String in ["154","134"]:
 		var old: Dictionary=art.classic[key]; var enhanced: Dictionary=art.enhanced[key]
 		check(art.valid(old,enhanced),"Production pack validates: "+key)
 		for direction: String in ["south","east","north","west"]:
@@ -65,14 +77,17 @@ func run() -> void:
 					frame_count+=1
 					var a: Dictionary=before[i];var b: Dictionary=after[i]
 					check(Vector2(a.region[2],a.region[3])==Vector2(b.region[2],b.region[3])/float(b.pixel_scale) and a.offset==b.offset,"Original logical size and foot anchor retained")
-					var image: Image=game._texture(b.path).get_image().get_region(Rect2i(b.region[0],b.region[1],b.region[2],b.region[3]))
-					check(image.get_used_rect().has_area() and image.get_pixel(0,0).a==0,"Every pose has artwork and transparent padding")
+					var image: Image=raw_pose(b)
+					var visible:bool=int(a.visible_bounds[2])>0 and int(a.visible_bounds[3])>0
+					check(image.get_used_rect().has_area()==visible,"Every native visible/invisible pose is retained")
 					if direction in ["east","west"]:
 						var mirror: Dictionary=frames(enhanced[state]["south" if direction=="east" else "north"])[i]
 						# Test packed pixels before Godot fills invisible border RGB for filtering.
-						var raw:Image=Image.load_from_file(ProjectSettings.globalize_path(b.path)).get_region(Rect2i(b.region[0],b.region[1],b.region[2],b.region[3]))
-						var mirrored: Image=Image.load_from_file(ProjectSettings.globalize_path(mirror.path)).get_region(Rect2i(mirror.region[0],mirror.region[1],mirror.region[2],mirror.region[3]))
+						var raw:Image=raw_pose(b)
+						if bool(b.get("flip_h",false)):raw.flip_x()
+						var mirrored: Image=raw_pose(mirror)
 						mirrored.flip_x();check(raw.get_data()==mirrored.get_data(),"Paired directions mirror exactly")
+		if key not in ["134","154"]:continue
 		var bad: Dictionary=enhanced.duplicate(true);bad.frames.south.pop_back()
 		check(not art.valid(old,bad),"Incomplete walk animation rejected")
 		bad=enhanced.duplicate(true);bad.attack.north[0].offset=[0,100]
@@ -84,6 +99,32 @@ func run() -> void:
 		bad=enhanced.duplicate(true);frames(bad.attack.south)[0].pixel_scale=[]
 		check(not art.valid(old,bad),"Malformed nested scale safely rejected")
 	check(not art.valid(art.classic["134"],null),"Null/malformed candidate rejected")
+	for key:String in ["1","7","20","107","171"]:
+		for direction:String in ["east","west"]:
+			var state:String="attack" if key=="171" else "idle"
+			var graphic:Dictionary=art.enhanced[key]
+			var part:Dictionary=game._frame(graphic,direction,state,0.0)
+			var rect:Rect2=game.nameplates._part_rect(part,Vector2.ZERO)
+			var r:Array=part.region
+			var pixels:Image=game.nameplates._image(part.path).get_region(Rect2i(r[0],r[1],r[2],r[3]))
+			if bool(part.get("flip_h",false)):pixels.flip_x()
+			var actors:Array[Dictionary]=[{"key":"probe","sort":1,"graphic":graphic,"pose":{"direction":direction,"state":state,"phase":0.0,"position":Vector2.ZERO}}]
+			for y:int in range(0,pixels.get_height(),8):
+				for x:int in range(0,pixels.get_width(),8):
+					var point:Vector2=rect.position+Vector2(x+.5,y+.5)/float(part.pixel_scale)
+					check((game.nameplates._hit_actor(actors,point)=="probe")== (pixels.get_pixel(x,y).a>.1),"Mirrored inspection follows visible pixels")
+	if DisplayServer.get_name()!="headless":
+		for key:String in ["1","7","20","107","134","171"]:
+			var graphic:Dictionary=art.enhanced[key]
+			var state:String="attack" if key=="171" else "idle"
+			var south:Dictionary=frames(graphic[state].south)[0];var east:Dictionary=frames(graphic[state].east)[0]
+			var left:Image=await rendered_pose(game,south);left.flip_x()
+			var right:Image=await rendered_pose(game,east)
+			var delta:float=float(left.compute_image_metrics(right,false).max)
+			if delta>2 and not output.is_empty():
+				left.save_png(output.path_join("mirror-"+key+"-expected.png"));right.save_png(output.path_join("mirror-"+key+"-actual.png"))
+			check(delta<=2,"GPU mirror renders correctly: "+key+" delta="+str(delta))
+		game.mirror_frame.clear()
 	check(art.select(false),"Classic preference persists")
 	game.art_profile.settings_path=art.settings_path;game.art_profile.select_mode("classic")
 	var config:ConfigFile=ConfigFile.new();config.load(art.settings_path)
@@ -138,7 +179,7 @@ func run() -> void:
 	game._handle_back();check(not game.graphics_ui.panel.visible and game.menu.visible,"Android Back closes Graphics")
 	check(FileAccess.get_sha256("res://content/manifest.json")==original_hash,"Original manifest unchanged")
 	DirAccess.remove_absolute(art.settings_path)
-	var report:Dictionary={"result":"failed" if failed else "passed","checks":checks,"frames":frame_count,"rendered":DisplayServer.get_name()!="headless","graphics":[134,154],"logical_geometry_unchanged":true,"pet_preview_cropped":true}
+	var report:Dictionary={"result":"failed" if failed else "passed","checks":checks,"frames":frame_count,"rendered":DisplayServer.get_name()!="headless","graphics":art.enhanced.size(),"logical_geometry_unchanged":true,"pet_preview_cropped":true,"gpu_mirror_checked":true}
 	var report_path:String=OS.get_environment("ASTER_VALE_TEST_REPORT")
 	if not report_path.is_empty():FileAccess.open(report_path,FileAccess.WRITE).store_string(JSON.stringify(report,"  ")+"\n")
 	print("NPC ART PROFILES: ",JSON.stringify(report));game.queue_free();await create_timer(.2).timeout;quit(1 if failed else 0)

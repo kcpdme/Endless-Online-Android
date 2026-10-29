@@ -1,0 +1,11 @@
+{
+  "name": "aster-vale-npc-smoothing",
+  "private": true,
+  "license": "GPL-3.0-only",
+  "type": "module",
+  "description": "Offline NPC asset preparation only; never included in the Android application",
+  "dependencies": {
+    "@kayahr/xbrz": "1.1.2",
+    "pngjs": "7.0.0"
+  }
+}

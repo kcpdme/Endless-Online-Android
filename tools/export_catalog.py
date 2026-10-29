@@ -238,7 +238,9 @@ def export_catalog(runtime:Path,graphics_zip:Path,out:Path,map_id=5):
             if gfx not in containers:containers[gfx]=PEBitmaps(read_member(archive,f'gfx/gfx{gfx:03}.egf'))
             return containers[gfx].image(gid,transparent=False)
         manifest['characters']['equipment_layers']=export_layers(out,image,items,raw_image)
-        npc_graphics={}
+        # Include unplaced catalog species too, so admin summons and future maps
+        # use real artwork without requiring a second partial graphics export.
+        npc_graphics={d['graphic']:d['name'] for d in npcs.values() if d['graphic']>0}
         for map_data in maps.values():
             for spawn in map_data['npc_spawns']:
                 definition=npcs.get(str(spawn['id']))

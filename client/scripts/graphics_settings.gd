@@ -19,7 +19,7 @@ func build(owner_game: Node, parent: Control) -> void:
 	note = game._label(card, "", Vector2(30, 174), 18, game.MUTED)
 	note.size = Vector2(680, 65); note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	npc_choice = CheckButton.new(); npc_choice.position = Vector2(30, 250); npc_choice.size = Vector2(680, 58)
-	npc_choice.text = "Enhanced NPC samples"; npc_choice.add_theme_font_size_override("font_size", 22); card.add_child(npc_choice)
+	npc_choice.text = "Enhanced NPC artwork"; npc_choice.add_theme_font_size_override("font_size", 22); card.add_child(npc_choice)
 	npc_note = game._label(card, "", Vector2(30, 326), 18, game.MUTED)
 	npc_note.size = Vector2(680, 85); npc_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	npc_choice.toggled.connect(func(value: bool) -> void:
@@ -46,7 +46,7 @@ func refresh() -> void:
 	note.text = "Switch back to Classic at any time. Characters without enhanced art use Classic." if game.art_profile.ready() else "Classic artwork is active. Enhanced character art is being prepared."
 	npc_choice.disabled = not game.npc_art.ready()
 	npc_choice.set_pressed_no_signal(game.npc_art.enabled and game.npc_art.ready())
-	npc_note.text = "Piglet and Banshi use smoother artwork. Other NPCs keep their original look. Switch this off to compare with Classic." if game.npc_art.ready() else "Original NPC artwork is active. Enhanced samples are not installed."
+	npc_note.text = "NPCs and pets use smoother artwork. Switch this off at any time to return to Classic." if game.npc_art.ready() else "Original NPC artwork is active. Enhanced NPC artwork is not installed."
 
 func open() -> void:
 	game._cancel_controls(); game.menu.hide(); refresh(); panel.show()

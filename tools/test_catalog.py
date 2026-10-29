@@ -6,6 +6,7 @@ from pathlib import Path
 import unittest
 import zipfile
 from PIL import Image, ImageChops, ImageOps
+from import_eo import parse_emf
 from export_catalog import parse_items, parse_npcs, pub_records, npc_frame_offset, NPC_RENDER_METADATA, WEAPON_APPEARANCE_ITEMS
 
 ROOT=Path(__file__).resolve().parents[1]
@@ -155,11 +156,13 @@ class RuntimeCatalogTests(unittest.TestCase):
     def test_all_map5_spawn_npcs_resolve_to_real_graphics(self):
         selected=self.catalog['maps']['5']
         self.assertEqual((selected['name'],selected['width'],selected['height']),('Aeven',87,87))
-        self.assertEqual(len(selected['npc_spawns']),26)
+        native=parse_emf((RUNTIME/'data/maps/00005.emf').read_bytes(),5)
+        self.assertEqual([s for s in selected['npc_spawns'] if s['id']<=302],native['npcs'])
         for spawn in selected['npc_spawns']:
             definition=self.catalog['npcs'][str(spawn['id'])]
             self.assertIn(str(definition['graphic']),self.manifest['characters']['npcs'])
-        self.assertEqual(len(self.manifest['characters']['npcs']),160)
+        required={str(n['graphic']) for n in self.catalog['npcs'].values() if n['graphic']>0}
+        self.assertEqual(set(self.manifest['characters']['npcs']),required)
     def test_all_world_npc_offsets_match_reference_formulas(self):
         npcs=self.manifest['characters']['npcs']
         self.assertTrue(set(map(int,npcs)).issubset(set(NPC_RENDER_METADATA)))

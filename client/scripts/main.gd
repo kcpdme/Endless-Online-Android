@@ -1097,7 +1097,11 @@ func _paint_character_frame(frame: Dictionary, at: Vector2, tint: Color) -> bool
 	var raw_offset: Array = frame.get("offset", [0, 0]) as Array
 	var offset: Vector2 = Vector2(float(raw_offset[0]), float(raw_offset[1]))
 	var logical_size: Vector2 = region.size / maxf(1.0, float(frame.get("pixel_scale", 1)))
-	draw_texture_rect_region(texture, Rect2(at + offset - Vector2(logical_size.x / 2.0, logical_size.y), logical_size), region, tint)
+	var destination:Rect2=Rect2(at + offset - Vector2(logical_size.x / 2.0, logical_size.y), logical_size)
+	if bool(frame.get("flip_h",false)):
+		# Godot keeps the destination origin and uses a negative width as a UV flip.
+		destination.size.x=-destination.size.x
+	draw_texture_rect_region(texture, destination, region, tint)
 	return true
 
 func _draw_player() -> void:

@@ -1,5 +1,5 @@
 extends RefCounted
-## Small optional NPC atlas pack; the original manifest stays available in memory.
+## Optional NPC atlas pack; the original manifest stays available in memory.
 const PACK_PATH: String = "res://content/characters/npc_enhanced/pack.json"
 const ROOT_PATH: String = "res://content/characters/npc_enhanced/"
 var settings_path: String = "user://graphics.cfg"
@@ -58,8 +58,9 @@ func valid(original: Variant, candidate: Variant) -> bool:
 			for index: int in range(4):
 				if not (after[index] is int or after[index] is float): return false
 				if float(after[index]) != float(before[index])*scale: return false
+			if candidate.has("flip_h") and not candidate.flip_h is bool:return false
 			for key:Variant in candidate:
-				if key not in ["path","region","visible_bounds","pixel_scale"]:
+				if key not in ["path","region","visible_bounds","pixel_scale","flip_h"]:
 					if not original.has(key) or candidate[key]!=original[key]: return false
 			if not ResourceLoader.exists(path): return false
 			if not sizes.has(path):

@@ -42,6 +42,9 @@ func run() -> void:
 	if game.npc_art.ready():
 		for gid:String in ["134","154"]:
 			sources["enhanced_npc_"+gid]=game._frame(game.npc_art.enhanced[gid],"south","idle",0.0)
+		if game.npc_art.enhanced.has("7"):
+			sources["smoothed_goat_mirrored"]=game._frame(game.npc_art.enhanced["7"],"east","idle",0.0)
+			sources["smoothed_townsman"]=game._frame(game.npc_art.enhanced["20"],"south","idle",0.0)
 	var results: Array[Dictionary] = []
 	var reproduced: bool = false
 	for key: String in sources:

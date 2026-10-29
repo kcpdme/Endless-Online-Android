@@ -91,7 +91,9 @@ func _hit_actor(actors: Array[Dictionary], point: Vector2) -> String:
 			if not rect.has_point(point): continue
 			var image: Image = _image(str(part.path))
 			if image == null: continue
-			var pixel: Vector2i = Vector2i((point-rect.position)*maxf(1.0,float(part.get("pixel_scale",1))))+Vector2i(int(part.region[0]),int(part.region[1]))
+			var local:Vector2i=Vector2i((point-rect.position)*maxf(1.0,float(part.get("pixel_scale",1))))
+			if bool(part.get("flip_h",false)):local.x=int(part.region[2])-1-local.x
+			var pixel: Vector2i = local+Vector2i(int(part.region[0]),int(part.region[1]))
 			if image.get_pixelv(pixel).a>.1: key=str(actor.key);front=int(actor.sort);break
 	return key
 
