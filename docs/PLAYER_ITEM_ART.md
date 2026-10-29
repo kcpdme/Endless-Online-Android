@@ -23,12 +23,12 @@ Machine-readable results are in `docs/player-item-art-report.json`:
 - **113,195 player/item checks** pass, including every frame's placement, all 911 images' native display/2× pixel sizes, 4,274 native hat-mask pixels, lazy loading, six class appearances, both genders, four directions, walking/attack/cast/sitting, settings persistence and phone-sized Graphics layout.
 - **20,997 NPC checks**, **697 inspection checks**, **378 illustrated-art checks** and **6,120 camera sampling checks** pass. The camera test includes the enhanced followed player and fractional display scales/zoom, preserving the existing shimmer fix.
 - Godot import/runtime checks, signed Android export, APK v2 signature and 16 KiB ZIP alignment pass.
-- Installed on Samsung SM-S918B with the exact release hash verified and original first-install timestamp preserved. Cold launch succeeds; character-selection previews visibly use the enhanced players, clothing and equipment. No startup script/fatal errors were found. Phone verification stayed in UI; no live gameplay actions were performed.
+- Installed on Samsung SM-S918B with the exact release hash verified and original first-install timestamp preserved. Cold launch and character-selection previews were checked before the final settings-only layout adjustment; the final installed APK hash and running process logs were verified separately. The previews visibly use enhanced players, clothing and equipment. No startup script/fatal errors were found. Phone verification stayed in UI; no live gameplay actions were performed.
 - The old broad `paperdoll_mobile.gd` test still fails its single-tap assertions and then accesses a missing heal label in its outdated class-less fixture. These failures were reproduced against the unchanged `401b753` baseline. They are not counted as passing coverage; the current artwork, preview and inspection checks pass.
 
 APK SHA-256: `dc2d7b0e2a8b1a135cfd7cd5a3f249b867c62a761d8925532280b4e6a65b8ff4`.
 
-Local rendered comparisons are under `work/player-item-smoothing/previews/`, including `idle-south.png`, `attack-east.png`, `sit_floor-north.png` and `items.png`. `phone-startup.png` shows the installed character-selection screen. The comparisons use imported runtime textures, including their final compression.
+Local rendered comparisons are under `work/player-item-smoothing/previews/`, including `idle-south.png`, `attack-east.png`, `sit_floor-north.png` and `items.png`. The comparisons use imported runtime textures, including their final compression.
 
 ## Reproduce locally
 
