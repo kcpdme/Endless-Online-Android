@@ -1,0 +1,37 @@
+{
+  "result": "passed",
+  "native": {
+    "result": "passed",
+    "checks": 7,
+    "assertions": [
+      "Native duplicate names across accounts and letter case return the clear name-taken message",
+      "Native duplicate names across accounts and letter case return the clear name-taken message",
+      "Rejected duplicate never overwrites or copies character ownership",
+      "Invalid native name returns the actual supported name rule",
+      "A fresh name succeeds on the same session after multiple rejections",
+      "Account-slot exhaustion has its own message",
+      "Full-account rejection preserves all three owned characters"
+    ],
+    "isolated_database": true,
+    "production_database_opened": false
+  },
+  "client": {
+    "checks": 154,
+    "four_landscape_sizes": true,
+    "fourth_creation_and_double_submit_prevented": true,
+    "native_body_skin_hair_and_color": true,
+    "result": "passed",
+    "third_native_character_selection": true,
+    "zero_through_three_characters": true
+  },
+  "unit_tests": 15,
+  "deployment": {
+    "result": "passed",
+    "backup": "/opt/aster-vale/backups/creation-message-20261029T155953Z",
+    "adapter_sha256": "cd7bfb0ec983e2c5422c4a8c533ad498ba95d4ec6889225eda9fb4141e038a48",
+    "world_not_restarted": true,
+    "production_database_opened": false,
+    "services_healthy": true,
+    "apk_update_required": false
+  }
+}

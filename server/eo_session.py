@@ -41,6 +41,16 @@ class LoginError(EOError):
         self.code=code
         messages={1:'Account not found',2:'Incorrect account name or password',4:'This account is banned',5:'Account already connected; the previous network session may still be closing',6:'The game server is full',7:'This older account needs an operator password reset. Your character and inventory are preserved.'}
         super().__init__('%s (code %d)' % (messages.get(code,'Login rejected'),code))
+class CharacterCreationError(EOError):
+    def __init__(self,code):
+        self.code=code
+        messages={
+            1:'That character name is already taken. Choose another name.',
+            2:'Your account has no free character slots.',
+            4:'Choose a character name with 4–12 letters (A–Z only).',
+        }
+        super().__init__(messages.get(code,'Character creation was rejected (code %d). Please try again or contact an admin.'%code))
+
 class Session:
     def __init__(self,host='127.0.0.1',port=8078):
         self.sock=socket.create_connection((host,port),timeout=8);self.sock.settimeout(8)
@@ -133,7 +143,7 @@ class Session:
         self.send(3,1,string('NEW'));r=Reader(self.wait(3,3));op_id=r.num(2)
         self.send(3,6,b''.join(number(n,2) for n in [op_id,gender,hairstyle,haircolor,race])+b'\xff'+string(name))
         r=Reader(self.wait(3,3));code=r.num(2)
-        if code!=5:raise EOError(f'Character creation rejected (code {code})')
+        if code!=5:raise CharacterCreationError(code)
         self.characters=self.parse_characters(r);return {'characters':self.characters}
     def enter(self,character_id):
         self.character_id=int(character_id);self.send(5,1,number(self.character_id,4));r=Reader(self.wait(5,3))
