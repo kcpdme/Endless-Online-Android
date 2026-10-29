@@ -21,6 +21,7 @@ func call_op(operation: String,fields: Dictionary={}) -> Dictionary:
 	if not await wait_for(func() -> bool:return replies.has(ident)):check(false,"Timed out: "+operation);return {}
 	return replies[ident] as Dictionary
 func press(title: String) -> void:
+	if title=="Publish post":ui.board_ui.publish_button.pressed.emit();return
 	for node: Node in ui.content.get_children():
 		if node is Button and node.text==title:node.pressed.emit();return
 	check(false,"Missing button "+title)
@@ -81,6 +82,8 @@ func run() -> void:
 	await wait_for(func() -> bool:return int(game.world.id)==5 and c.session.is_idle())
 	c.map_click(Vector2i(46,1),"board")
 	if not check(await wait_for(func() -> bool:return ui.panel.visible and not ui.busy),"Board map object opens UI"):finish();return
+	check(ui.board_ui.tab==0 and not ui.fields.has("subject"),"Board defaults to Read")
+	ui.board_ui.choose(1)
 	ui.fields.subject.text="UI probe";ui.fields.body.text="Disposable\nmultiline post";press("Publish post")
 	check(ui.confirmation.visible,"Posting requires explicit confirmation")
 	ui.confirmation.get_ok_button().pressed.emit();await wait_for(func() -> bool:return not ui.busy)

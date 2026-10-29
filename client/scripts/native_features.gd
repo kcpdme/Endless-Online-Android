@@ -12,6 +12,7 @@ var fields: Dictionary = {}
 var state: Dictionary = {}
 var kind: String = ""
 var busy: bool = false
+var board_ui: RefCounted
 var pending_confirmation: Callable
 var reduced_motion: bool = false
 var quake_until: int = 0
@@ -34,9 +35,11 @@ func build(owner: Node, parent: Control) -> void:
 		if pending_confirmation.is_valid(): pending_confirmation.call()
 		pending_confirmation=Callable()
 	)
+	board_ui=preload("res://scripts/town_board.gd").new();board_ui.build(self)
 	panel.hide()
 
 func close() -> void:
+	board_ui.save_draft()
 	blur();confirmation.hide();pending_confirmation=Callable();panel.hide()
 	for key: String in ["old_password","new_password","repeat_password"]:
 		if fields.has(key) and is_instance_valid(fields[key]): fields[key].text=""
@@ -78,11 +81,17 @@ func layout(keyboard_override: float=-1.0) -> void:
 	var available: Vector2=panel.size-Vector2(0,lift)
 	card.size=Vector2(minf(940,available.x-24),minf(650,available.y-24))
 	card.position=(available-card.size)/2
-	scroll.size=Vector2(card.size.x-56,maxf(40,card.size.y-180))
-	status.position=Vector2(28,card.size.y-82);status.size.x=card.size.x-56
+	var top: float=140.0 if kind=="board" else 82.0
+	var composing: bool=kind=="board" and board_ui.tab==1
+	scroll.position.y=top;scroll.size=Vector2(card.size.x-56,maxf(40,card.size.y-top-(148 if composing else 98)))
+	board_ui.publish_button.position=Vector2(28,card.size.y-78);board_ui.publish_button.size.x=card.size.x-56
+	board_ui.tabs.size.x=card.size.x-56
+	status.position=Vector2(28,card.size.y-(132 if composing else 82));status.size=Vector2(card.size.x-56,42 if composing else 64)
 
 func open(mode: String, request: Dictionary={}) -> void:
 	if busy:return
+	if mode=="board":board_ui.opened(request)
+	board_ui.tabs.visible=mode=="board";board_ui.publish_button.hide()
 	kind=mode;state={"location":request.duplicate()} if mode=="board" else {};game.menu.hide();game._cancel_controls();game.skills_ui.armed=0;panel.get_parent().move_child(panel,-1);panel.show()
 	if mode in ["password","delete"]:render();return
 	clear_content();heading.text=mode.capitalize();status.text="Loading…"
@@ -103,7 +112,7 @@ func selected() -> int:
 	return int(list.get_item_metadata(list.get_selected_items()[0]))
 
 func render() -> void:
-	clear_content();heading.text={"law":"Law Bob","priest":"Wedding ceremony","board":"Town message board","jukebox":"Jukebox","reset":"Reset attributes and skills","password":"Change account password","delete":"Delete selected character","book":"Character book","social":"Social and accessibility"}.get(kind,kind.capitalize())
+	clear_content();board_ui.tabs.hide();board_ui.publish_button.hide();heading.text={"law":"Law Bob","priest":"Wedding ceremony","board":"Town message board","jukebox":"Jukebox","reset":"Reset attributes and skills","password":"Change account password","delete":"Delete selected character","book":"Character book","social":"Social and accessibility"}.get(kind,kind.capitalize())
 	status.text=str(state.get("notice",""))
 	match kind:
 		"social":
@@ -144,14 +153,7 @@ func render() -> void:
 			field("name","Partner’s character name")
 			button("Request wedding",func() -> void:action("request",0,str(fields.name.text)))
 		"board":
-			if state.has("body"):label(str(state.body));button("Back to posts",func() -> void:open("board",state.get("location",{}) as Dictionary));return
-			var list: ItemList=ItemList.new();list.custom_minimum_size.y=154;list.add_theme_font_size_override("font_size",21);content.add_child(list);fields.list=list
-			for post: Dictionary in state.get("posts",[]):
-				var row: int=list.add_item(str(post.subject)+" · "+str(post.author));list.set_item_metadata(row,int(post.id))
-			button("Read selected post",func() -> void:action("read",selected()))
-			if int((game.online.player.get("stats",{}) as Dictionary).get("admin",0))>0:button("Remove selected post",func() -> void:ask("Remove this post?",func() -> void:action("remove",selected())))
-			field("subject","Post subject (up to 64 characters)");field("body","Post message (up to 256 characters)",false,true)
-			button("Publish post",func() -> void:ask("Publish this message on the town board?",func() -> void:action("post",0,str(fields.subject.text),str(fields.body.text))))
+			board_ui.render()
 		"jukebox":
 			label("Cost: %s Gold · Current DJ: %s"%[state.get("price",0),state.get("owner","")])
 			for index: int in range(int(state.get("songs",0))+1):
@@ -195,6 +197,7 @@ func response(message: Dictionary) -> void:
 	if not panel.visible:return
 	if str(reply.kind)!=kind:return
 	if operation=="feature_open" or reply.has("posts") or reply.has("body"):
+		if kind=="board":board_ui.receive(reply,operation)
 		var previous_location: Dictionary=state.get("location",{}) as Dictionary
 		state=reply.duplicate(true)
 		if kind=="board":state.location=previous_location
@@ -219,4 +222,4 @@ func tick() -> void:
 		var t: float=float(Time.get_ticks_msec())/55.0;game.camera.offset=Vector2(sin(t*1.9),cos(t*2.3))*quake_strength
 
 func disconnected() -> void:
-	close();clear_content();state.clear();busy=false;quake_until=0;game.camera.offset=Vector2.ZERO
+	close();board_ui.draft_subject="";board_ui.draft_body="";board_ui.board_key="";clear_content();state.clear();busy=false;quake_until=0;game.camera.offset=Vector2.ZERO

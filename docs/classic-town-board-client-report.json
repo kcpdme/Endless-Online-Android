@@ -1,0 +1,11 @@
+{
+  "centred_multiline_overhead": true,
+  "checks": 27,
+  "draft_preserved_across_tabs": true,
+  "isolated_database": true,
+  "native_board_publish_and_read": true,
+  "phone_viewports": 2,
+  "production_board_posts_written": false,
+  "read_default_post_tab": true,
+  "result": "passed"
+}

@@ -1,0 +1,38 @@
+{
+  "result": "passed",
+  "date": "2026-10-29",
+  "version": "0.50.1",
+  "version_code": 93,
+  "balance_profile": 13,
+  "unit_tests": 251,
+  "native_pet_reward_checks": 230,
+  "pet_client_checks": 143,
+  "town_board_client_checks": 27,
+  "public_onboarding_client_checks": 8,
+  "classic_onboarding_native_checks": 50,
+  "natural_unarmed_farming_kills_for_two_horns": 19,
+  "original_classic_drop_tables_verified": 159,
+  "original_classic_drop_entries_verified": 262,
+  "original_npc_exp_verified": 305,
+  "native_patch_stack_reproducible": true,
+  "native_public_https_wss_verified": true,
+  "phone_layouts_verified": [
+    [
+      1544,
+      720
+    ],
+    [
+      960,
+      540
+    ]
+  ],
+  "apk_signature_verified": true,
+  "apk_16kb_alignment_verified": true,
+  "apk_catalog_and_board_module_verified": true,
+  "apk_sha256": "fd2caaf7f1a7ac1b86965ee98a684eb90814f6355201e6bb34630e74e3e5f79e",
+  "phone_installation": "installed and verified",
+  "real_players_used_for_gameplay_qa": false,
+  "live_board_posts_published_for_testing": false,
+  "installed_apk_bytes_verified": true,
+  "original_first_install_time_preserved": true
+}

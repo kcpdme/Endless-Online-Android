@@ -75,7 +75,7 @@ def main():
     deps = state / 'deps'; deps.mkdir(exist_ok=True)
     source = state / 'source'; build = state / 'build'; build.mkdir(exist_ok=True)
     checkout('etheos', source)
-    patches = [ROOT / 'patches' / name for name in ('etheos-password-v3.patch', 'etheos-redeem.patch', 'etheos-character-hp.patch', 'etheos-spikes.patch', 'etheos-mobile-spells.patch', 'etheos-mobile-feedback.patch', 'etheos-skill-training.patch', 'etheos-drop-rate.patch', 'etheos-protect-service-npcs.patch', 'etheos-starter-kit.patch', 'etheos-ice-blast-area.patch', 'etheos-npc-chat.patch', 'etheos-pk-feedback.patch', 'etheos-classic-gold.patch', 'etheos-balance-v1.patch', 'etheos-class-identity.patch', 'etheos-class-signatures.patch', 'etheos-mortal-spirit-eggs.patch', 'etheos-pet-tiers.patch', 'etheos-combat-progression.patch', 'etheos-owner-scaled-pets.patch', 'etheos-class-mobility.patch', 'etheos-capacity-class-balance.patch', 'etheos-pet-collection.patch')]
+    patches = [ROOT / 'patches' / name for name in ('etheos-password-v3.patch', 'etheos-redeem.patch', 'etheos-character-hp.patch', 'etheos-spikes.patch', 'etheos-mobile-spells.patch', 'etheos-mobile-feedback.patch', 'etheos-skill-training.patch', 'etheos-drop-rate.patch', 'etheos-protect-service-npcs.patch', 'etheos-starter-kit.patch', 'etheos-ice-blast-area.patch', 'etheos-npc-chat.patch', 'etheos-pk-feedback.patch', 'etheos-classic-gold.patch', 'etheos-balance-v1.patch', 'etheos-class-identity.patch', 'etheos-class-signatures.patch', 'etheos-mortal-spirit-eggs.patch', 'etheos-pet-tiers.patch', 'etheos-combat-progression.patch', 'etheos-owner-scaled-pets.patch', 'etheos-class-mobility.patch', 'etheos-capacity-class-balance.patch', 'etheos-pet-collection.patch', 'etheos-classic-bonus-eggs.patch')]
     apply_patches(source, patches)
     (source / 'json').mkdir(exist_ok=True)
     shutil.copy2(download(*JSON, deps / 'json.hpp'), source / 'json/json.hpp')
@@ -136,13 +136,13 @@ AllowMovingSpells = yes
 MobileFastPotions = yes
 IPReconnectLimit = 0
 MaxConnectionsPerIP = 12
-StartMap = 5
-StartX = 40
-StartY = 40
-StartItems = 1,1000;144,1;21,1;453,1
-StartItemsMale = 1,1000;144,1;21,1;453,1
-StartItemsFemale = 1,1000;151,1;21,1;453,1
-StartSpells = 1,0
+StartMap = 192
+StartX = 7
+StartY = 6
+StartItems =
+StartItemsMale =
+StartItemsFemale =
+StartSpells =
 DBType = sqlite
 DBHost = database.sdb
 DBUser =
@@ -199,13 +199,15 @@ WorldDumpFile = ./world.bak.json
     shutil.copy2(build / 'native-auth', runtime / 'native-auth')
     from configure_balance import configure as configure_balance
     balance = configure_balance(runtime)
+    from configure_onboarding import configure as configure_onboarding
+    onboarding = configure_onboarding(runtime)
     report = {'source_pins':{k:{'url':v[0],'commit':v[1]} for k,v in PINS.items()},
               'local_source_patches':[{'path':str(patch.relative_to(ROOT.parent)),'sha256':hashlib.sha256(patch.read_bytes()).hexdigest()} for patch in patches],
               'sample':{'url':SAMPLE[0],'sha256':SAMPLE[1]}, 'sqlite':{'url':SQLITE[0],'sha256':SQLITE[1]}, 'nlohmann_json':{'url':JSON[0],'sha256':JSON[1]},
               'numbered_maps':len(maps),'highest_map_id':max(int(x.stem) for x in maps),
               'quest_conversion':'Generated .eqf copies with logged conservative legacy-syntax fixes. Original .txt bytes preserved. Real parser validation recorded separately.',
               'quests':quests,'feature_content':feature_content,'classic_economy':classic_economy,'travel':travel,'sky_wonder':sky_wonder,'pet_shop':pet_shop,'runtime':str(runtime),'binding':'127.0.0.1:8078','database':'SQLite',
-              'original_npc_combat':npc_combat,'balance':balance,
+              'original_npc_combat':npc_combat,'balance':balance,'onboarding':onboarding,
               'rights':'Reference content only; redistribution/publication permissions unresolved.'}
     (state / 'content-report.json').write_text(json.dumps(report, indent=2)+'\n')
     (ROOT / '.state-path').write_text(str(state)+'\n')

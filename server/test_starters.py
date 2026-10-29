@@ -20,9 +20,12 @@ class StarterTests(unittest.TestCase):
             configure(td); before = p.read_bytes(); configure(td)
             self.assertEqual(p.read_bytes(), before)
             self.assertIn('PasswordSalt = keep-private\nExpRate = 1000%', p.read_text())
-            self.assertIn('StartItemsMale = 1,1000;144,1;21,1;453,1', p.read_text())
-            self.assertIn('StartItemsFemale = 1,1000;151,1;21,1;453,1', p.read_text())
-            self.assertIn('StartSpells = 1,0', p.read_text())
+            self.assertRegex(p.read_text(),r'(?m)^StartItemsMale =$')
+            self.assertRegex(p.read_text(),r'(?m)^StartItemsFemale =$')
+            self.assertRegex(p.read_text(),r'(?m)^StartSpells =$')
+            self.assertIn('StartMap = 192',p.read_text())
+            self.assertIn('StartX = 7',p.read_text())
+            self.assertIn('StartY = 6',p.read_text())
 
     def test_grant_adds_missing_spells_preserves_levels_all_other_fields_and_is_idempotent(self):
         with tempfile.TemporaryDirectory() as td:

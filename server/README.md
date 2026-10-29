@@ -176,16 +176,21 @@ world. It must not be used during normal player sessions. GUI coverage is in
 `client/tests/rewards_live.gd` and `client/tests/shop_close_regression.gd`.
 
 
-### Native starter inventory and operator spells (v0.31)
+### Classic new-player journey and operator spells
 
-New characters receive 1,000 Gold, matching Peasant Suit/Peasant Clothes,
-Dagger, Oak Shield and learned Heal Self. The native character-creation patch
-uses `StartItemsMale` / `StartItemsFemale`, with `StartItems` as fallback, and
-`StartSpells`. `setup.py` configures this for fresh runtimes. For an existing
-runtime, stop the world and take a consistent private database/config/binary
-backup, install the patched native binary, then run
-`python3 server/configure_starters.py --runtime /path/to/runtime` and restart.
-Existing characters are unaffected by the starter policy.
+New characters start at level 0 on Tutorial Island, map 192 at 7,6, with an
+empty inventory, no equipped gear and no learned spells. The original house chest
+provides the first outfit. Cyndi keeps her original Dagger recipe (2 Goat Horns).
+The boat requires level 4 and lands outside Aeven; Aeven’s entrance requires
+level 5. The native creation patch still supports gender-specific overrides,
+with all starter item/spell overrides now empty.
+
+`setup.py` installs the complete journey. For an existing runtime, stop the world,
+back up its runtime/database, then run
+`python3 server/configure_onboarding.py --runtime /path/to/runtime --world-stopped`
+and restart. The guarded tool preserves original maps, shops, EXP and existing
+characters; its reward-free native quest sets new-player death homes as the
+journey progresses. See [classic onboarding](../docs/CLASSIC_ONBOARDING.md).
 
 `grant_spells.py` is an operator-only additive grant utility. With the native
 world stopped and backed up, pass `--database`, `--esf`, `--characters` and

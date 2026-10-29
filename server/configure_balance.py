@@ -342,7 +342,7 @@ def build_quest(original):
 def configure(runtime):
     runtime=Path(runtime)
     if any((runtime/r).is_symlink() for r in ('data','data/pub')):raise ValueError('Materialize runtime data directories first')
-    if any(marker not in (runtime/'etheos').read_bytes() for marker in (b'PetEggTiers',b'CombatProgression',b'OwnerScaledPets',b'ClassMobility',b'CarryCapacityRules',b'PermanentPetCollection')):raise ValueError('Install the pet-collection-capable native binary first')
+    if any(marker not in (runtime/'etheos').read_bytes() for marker in (b'PetEggTiers',b'CombatProgression',b'OwnerScaledPets',b'ClassMobility',b'CarryCapacityRules',b'PermanentPetCollection',b'BonusSpiritEggDrops')):raise ValueError('Install the pet-collection-capable native binary first')
     baseline=runtime/'data/balance-v1-baseline';manifest_path=runtime/'data/balance-v1-manifest.json'
     old_manifest=json.loads(manifest_path.read_text()) if manifest_path.exists() else None
     if old_manifest:
@@ -359,10 +359,10 @@ def configure(runtime):
     class_bytes,classes=build_classes(originals['data/pub/dat001.ecf'])
     spell_bytes,spells=build_spells(originals['data/pub/dsl001.esf'])
     proposed={'data/aster-vale-drops.ini':drops,'data/pub/dat001.eif':item_bytes,'data/pub/dat001.ecf':class_bytes,'data/pub/dsl001.esf':spell_bytes,'data/pub/dtn001.enf':npc_bytes,'data/formulas.ini':formulas(originals['data/formulas.ini']),'data/aster-vale-skills.ini':build_skills(),'data/aster-vale-shops.ini':shops,'data/quests/00004.eqf':build_quest(originals['data/quests/00004.eqf'])}
-    profile=dict(version=VERSION,levels=LEVELS,max_skill_level=10,classes=classes,spells=spells,items=items,npcs=npcs,class_identity=True,class_signatures=True,carry_capacity_rules=True,mortal_spirit_bonds=False,pet_collection=True,pet_cooldown_seconds=PET_COOLDOWN_SECONDS,hatched_eggs=HATCHED_EGGS,companions=COMPANIONS,eggs=EGGS,pet_tiers=TIERS,pet_roster=ROSTER,eggkeeper=EGGKEEPER)
+    profile=dict(version=VERSION,levels=LEVELS,max_skill_level=10,classes=classes,spells=spells,items=items,npcs=npcs,class_identity=True,class_signatures=True,carry_capacity_rules=True,mortal_spirit_bonds=False,pet_collection=True,bonus_egg_drops=True,pet_cooldown_seconds=PET_COOLDOWN_SECONDS,hatched_eggs=HATCHED_EGGS,companions=COMPANIONS,eggs=EGGS,pet_tiers=TIERS,pet_roster=ROSTER,eggkeeper=EGGKEEPER)
     proposed['data/balance-profile.json']=(json.dumps(profile,indent=2)+'\n').encode()
     cfg=(runtime/'config.local.ini').read_text()
-    values={'ExpRate':'100%','CarryCapacityRules':'yes','ClassMobility':'yes','OwnerScaledPets':'yes','CombatProgression':'yes','PetEggTiers':'yes','MortalSpiritBonds':'no','PermanentPetCollection':'yes','PetCollectionCooldownSeconds':str(PET_COOLDOWN_SECONDS),'ClassSignatureRules':'yes','PriestRegenRate':'0.02','PriestSittingRegenRate':'0.04','CompanionLifetimeSeconds':'0','ClassIdentityRules':'yes','BalanceRevamp':'yes','UseClassFormulas':'yes','MaxSkillLevel':'10','SkillsFile':'./data/aster-vale-skills.ini'}
+    values={'ExpRate':'100%','DropRate':'100%','GoldDropRate':'100%','DropRateMode':'3','BonusSpiritEggDrops':'yes','CarryCapacityRules':'yes','ClassMobility':'yes','OwnerScaledPets':'yes','CombatProgression':'yes','PetEggTiers':'yes','MortalSpiritBonds':'no','PermanentPetCollection':'yes','PetCollectionCooldownSeconds':str(PET_COOLDOWN_SECONDS),'ClassSignatureRules':'yes','PriestRegenRate':'0.02','PriestSittingRegenRate':'0.04','CompanionLifetimeSeconds':'0','ClassIdentityRules':'yes','BalanceRevamp':'yes','UseClassFormulas':'yes','MaxSkillLevel':'10','SkillsFile':'./data/aster-vale-skills.ini'}
     for ident,rate in TP_RECOVERY.items():
         values[f'Balance.{ident}.tp_regen']=str(rate)
     for ident,traits in BOWS.items():

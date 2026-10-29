@@ -22,6 +22,7 @@ func run() -> void:
 		c.show_speech({"channel":"local","outgoing":true,"message":message})
 		var p: Panel = game.speech_layer.bubbles[100] as Panel
 		var initial: Rect2 = p.get_rect()
+		check((p.get_node("Message") as Label).horizontal_alignment==HORIZONTAL_ALIGNMENT_CENTER and (p.get_node("Haze") as Label).horizontal_alignment==HORIZONTAL_ALIGNMENT_CENTER,"Overhead speech and its haze centre every line")
 		check(p.size.y < 200, "First-frame bubble must not explode to thousands of pixels")
 		for frame: int in range(3):
 			await process_frame

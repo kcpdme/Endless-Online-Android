@@ -8,8 +8,8 @@ This public repository contains source code, content import tools, build scripts
 
 After importing content and building, install `builds/aster-vale-debug.apk` on an Android device (Android 7 / API 24 or later). This development build includes ARM64 and x86_64. Open **Aster Vale**, log in, select your character and join the persistent shared world. The build is signed with a development key, not configured for Google Play release.
 
-The current Android package is **`com.cloudgameboy.astervale`**, version 0.50.0
-(code 92). It installs separately from the earlier `io.astervale.prototype` app;
+The current Android package is **`com.cloudgameboy.astervale`**, version 0.50.1
+(code 93). It installs separately from the earlier `io.astervale.prototype` app;
 online accounts remain on the same server. Release APK and AAB exports use the
 same private release signing key.
 
@@ -52,6 +52,15 @@ APK update (`--no-incremental -r`), verifies installed bytes and version, and
 checks that Android kept the app's original installation timestamp.
 
 ## Play online
+
+Version **0.50.1**, balance profile **13**, centres overhead chat and adds Read
+(default) / Post tabs to the town board, with drafts retained between tabs.
+Classic drop tables, Gold and original monster EXP remain at ×1; Summoner eggs
+now drop as independent bonuses so they cannot replace ordinary loot. New
+characters begin empty-handed on Tutorial Island and take the original level-4
+boat, then reach Aeven at level 5.
+See [classic onboarding](docs/CLASSIC_ONBOARDING.md) and
+[reward audit and town board](docs/CLASSIC_REWARDS_AND_BOARD.md).
 
 Version **0.50.0**, balance profile **12**, adds a permanent Summoner pet
 collection with separate Egg and Hatched Egg icons. The top paw chooses a bound
@@ -228,7 +237,7 @@ After server setup and content import, start both the real server and its local 
 python3 scripts/dev_online.py --device YOUR_ADB_DEVICE_SERIAL
 ```
 
-The launcher reuses running local services or starts them, and adds `adb reverse tcp:8079 tcp:8079` for the selected phone. For the local server, change the hosted address to `127.0.0.1` and use port `8079`. Create your own account, create a character, select it and enter Aeven. Passwords are not stored on the device. New characters receive 1,000 Gold, a Dagger, an Oak Shield, matching peasant clothes in their bag, and learned Heal Self; equip them from the bag and remove them through the paperdoll. Accounts, inventory and online position belong to the real server database. Offline progress stays in a separate device save.
+The launcher reuses running local services or starts them, and adds `adb reverse tcp:8079 tcp:8079` for the selected phone. For the local server, change the hosted address to `127.0.0.1` and use port `8079`. Create your own account, create a character, select it and begin on Tutorial Island. New characters start at level 0 in the original house with an empty inventory, empty equipment and no spells. Collect the first outfit from the house chest, farm two Goat Horns to craft a Dagger at Cyndi’s, and train to level 4 to take the boat to the mainland. The northern Aeven entrance requires level 5. See [classic onboarding](docs/CLASSIC_ONBOARDING.md). Accounts, inventory and online position belong to the real server database. Offline progress stays in a separate device save.
 
 The adapter translates newline-delimited JSON into genuine encrypted EO v28 sessions; each client owns an independent native session. Movement animates immediately, with native Walk replies confirming inputs in the background. Nearby players, NPCs and ground items arrive as compact streamed changes; full refreshes are reserved for explicit actions and genuine corrections. This local development route needs the computer, server, adapter and ADB connection to remain available. The optional WebSocket bridge also permits `ws://` and `wss://` addresses. Browser exports require WebSocket transport; raw TCP is unavailable in a browser.
 

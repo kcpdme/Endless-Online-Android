@@ -1,4 +1,4 @@
-"""Configure the native, once-at-creation inventory and learned Heal Self.
+"""Configure the classic empty-inventory Tutorial Island birth.
 
 Apply with the world stopped and a private config/database backup. Requires
 etheos-starter-kit.patch for gender-specific bag outfits. Existing players are
@@ -10,23 +10,25 @@ from pathlib import Path
 import re
 
 STARTERS = {
-    'StartItems': '1,1000;144,1;21,1;453,1',
-    'StartItemsMale': '1,1000;144,1;21,1;453,1',
-    'StartItemsFemale': '1,1000;151,1;21,1;453,1',
-    'StartSpells': '1,0',
+    'StartMap': '192', 'StartX': '7', 'StartY': '6',
+    'StartItems': '', 'StartItemsMale': '', 'StartItemsFemale': '',
+    'StartSpells': '',
+    'StartEquipMale': ','.join(['0']*15),
+    'StartEquipFemale': ','.join(['0']*15),
 }
+
+def patched_config(text):
+    for key,value in STARTERS.items():
+        pattern=r'^'+key+r'\s*=.*$';line=f'{key} = {value}'.rstrip()
+        text=re.sub(pattern,line,text,flags=re.MULTILINE) if re.search(pattern,text,re.MULTILINE) else text.rstrip()+'\n'+line+'\n'
+    return text
 
 
 def configure(runtime):
     path = Path(runtime) / 'config.local.ini'
     if path.is_symlink() or path.parent.is_symlink():
         raise ValueError('Materialize private config before writing starter rules')
-    text = path.read_text()
-    for key, value in STARTERS.items():
-        pattern = r'^' + key + r'\s*=.*$'
-        line = f'{key} = {value}'
-        text = re.sub(pattern, line, text, flags=re.MULTILINE) if re.search(pattern, text, re.MULTILINE) else text.rstrip() + '\n' + line + '\n'
-    path.write_text(text)
+    path.write_text(patched_config(path.read_text()))
     return dict(starters=STARTERS, existing_characters_changed=False, restart_required=True)
 
 

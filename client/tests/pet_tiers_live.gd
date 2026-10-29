@@ -28,7 +28,7 @@ func run() -> void:
 	if failed: game.queue_free(); await process_frame; quit(1); return
 	c.character_list.select(0); c._enter_selected()
 	check(await wait_for(func() -> bool: return c.active and c.streaming and c.session.is_idle()), "Regular Summoner enters native world")
-	check(int(c.player.stats.admin) == 0 and int(c.catalog.balance_version) == 12, "Tier catalog reaches a regular character")
+	check(int(c.player.stats.admin) == 0 and int(c.catalog.balance_version) == 13, "Tier catalog reaches a regular character")
 	game.pet_ui.tick()
 	check(game.pet_ui.button.visible, "Summoner has a dedicated pet control")
 	check(game.bag_button.get_global_rect().position.y > 500, "Inventory restored to the bottom-right row")

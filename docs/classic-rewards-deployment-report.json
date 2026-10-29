@@ -1,0 +1,27 @@
+{
+  "result": "passed",
+  "profile": 13,
+  "backup": "/opt/aster-vale/backups/classic-rewards-v13-20261029T035027Z",
+  "database_bytes_unchanged": true,
+  "existing_character_items_homes_levels_pets_unchanged": true,
+  "all_maps_pub_stats_spells_original_quests_unchanged": true,
+  "bonus_egg_drops": true,
+  "classic_reward_audit": {
+    "result": "passed",
+    "classic_npc_drop_tables": 159,
+    "classic_drop_entries": 262,
+    "original_npc_exp_definitions": 305,
+    "exp_multiplier": 1.0,
+    "item_drop_multiplier": 1.0,
+    "gold_drop_multiplier": 1.0,
+    "goat_horn_chance_percent": 10,
+    "goat_exp": 8,
+    "eggs_are_separate_bonus": true,
+    "issues": [],
+    "database_opened": false,
+    "files_modified": false
+  },
+  "services_healthy": true,
+  "native_sha256": "93bb4eebeb67ef4dacc35f0d53ede66fd5481976104422c358c80e8b4ded695f",
+  "profile_sha256": "cfe4a5ddacfc3aea9fde74f7132c21f7eb7e7fd8af1e8042238a4ac2777b1956"
+}

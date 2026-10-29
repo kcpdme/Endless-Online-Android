@@ -1,0 +1,51 @@
+{
+  "result": "passed",
+  "profile": 13,
+  "public_https_wss_verified": true,
+  "all_sixteen_native_offers_verified": true,
+  "all_sixteen_live_native_drop_configurations_verified": true,
+  "tier_transactions": [
+    {
+      "tier": "normal",
+      "buy": 100,
+      "sell": 40,
+      "drop_chance": 5.0,
+      "quantity": 2
+    },
+    {
+      "tier": "rare",
+      "buy": 6000,
+      "sell": 2400,
+      "drop_chance": 2.0,
+      "quantity": 2
+    },
+    {
+      "tier": "epic",
+      "buy": 20000,
+      "sell": 8000,
+      "drop_chance": 1.0,
+      "quantity": 2
+    },
+    {
+      "tier": "legend",
+      "buy": 60000,
+      "sell": 24000,
+      "drop_chance": 0.5,
+      "quantity": 2
+    },
+    {
+      "tier": "mythic",
+      "buy": 100000,
+      "sell": 40000,
+      "drop_chance": 0.1,
+      "quantity": 2
+    }
+  ],
+  "stack_sale_quantity": 2,
+  "reconnect_gold_and_inventory_persisted": true,
+  "permanent_multi_pet_collection": true,
+  "native_bind_summon_dismiss": true,
+  "shared_five_minute_recovery_survives_reconnect": true,
+  "fresh_regular_fixture_only": true,
+  "existing_players_modified": false
+}

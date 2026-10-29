@@ -1,5 +1,5 @@
 {
-  "version": 12,
+  "version": 13,
   "equipment": [
     {
       "id": 20,
@@ -26784,7 +26784,7 @@
     }
   ],
   "full_kit_audit": {
-    "version": 12,
+    "version": 13,
     "result": "passed",
     "issues": [],
     "builds": [

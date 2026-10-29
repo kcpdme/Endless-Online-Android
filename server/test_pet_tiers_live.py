@@ -24,6 +24,8 @@ def main():
         original_wolf_exp=num(rows[73]['fields'],36,3)
         for off,val,size in [(11,1,3),(16,0,2),(18,0,2),(22,0,2),(24,0,2)]:put(rows[73]['fields'],off,val,size)
         path.write_bytes(encode_pub(raw,rows))
+        drops=r/'data/aster-vale-drops.ini';import re
+        drops.write_text(re.sub(r'^74\s*=.*$', '74 = 1,1,1,100, 609,1,1,100',drops.read_text(),flags=re.M))
         from configure_sky_wonder import parse,grid
         path=r/'data/maps/00021.emf';raw=path.read_bytes();prefix,g,signs=parse(raw);prefix=bytearray(prefix);prefix[43:45]=number(0,1)*2;g['specs'][11,9]=number(35,1)
         assert not signs
@@ -243,14 +245,18 @@ def main():
                         break
                     kill=next(e for e in s.events if e.get('kind')=='npc_killed')
                     check(s.stats['experience']-before==original_wolf_exp,'Native kill EXP equals original monster PUB reward exactly')
-                    check((kill['drop']['id']==609)==(clas==7),'Only Summoner receives even a fixture-guaranteed egg drop')
+                    check(kill['drop']['id']==1 and kill['drop']['amount']==1,'A guaranteed classic Gold drop is preserved even when the bonus egg succeeds')
+                    if clas==7:until(s,lambda:any(i['id']==609 for i in s.state['items']))
+                    eggs=[i for i in s.state['items'] if i['id']==609]
+                    check(bool(eggs)==(clas==7),'Only Summoner receives even a fixture-guaranteed bonus egg drop')
                     if clas==7:
+                        bonus_uid=eggs[0]['uid']
                         stage(op,clas=7,location=(22,5,8));thief=login(op)
                         try:
-                            thief.send(14,27,number(kill['drop']['uid'],2));time.sleep(.2);thief.refresh()
+                            thief.send(14,27,number(bonus_uid,2));time.sleep(.2);thief.refresh()
                             check(thief.item_amount(609)==0,'Another Summoner cannot pick up an egg after ordinary protection expires')
                         finally:thief.close()
-                        s.send(14,27,number(kill['drop']['uid'],2));until(s,lambda:s.item_amount(609)==1)
+                        s.send(14,27,number(bonus_uid,2));until(s,lambda:s.item_amount(609)==1)
                         check(True,'The Summoner kill owner can collect their egg')
                 finally:s.close()
             if a.godot:
@@ -260,7 +266,7 @@ def main():
                 env=dict(os.environ,ASTER_VALE_PET_FIXTURE=str(fixture),ASTER_VALE_TEST_HOST='ws://127.0.0.1:18932/ws',ASTER_VALE_TEST_REPORT=str(ROOT/'work/pet-collection-v12/client-report.json'),XDG_DATA_HOME=str(b/'godot-data'),XDG_CONFIG_HOME=str(b/'godot-config'))
                 result=subprocess.run([str(a.godot.resolve()),'--headless','--path',str(ROOT/'client'),'--script','res://tests/pet_tiers_live.gd'],env=env,capture_output=True,text=True,timeout=120)
                 (ROOT/'work/pet-collection-v12/client-live.log').write_text(result.stdout+result.stderr);check(result.returncode==0 and 'SCRIPT ERROR' not in result.stderr,'Real Godot Eggkeeper UI and live hatching/summoning pass')
-            report=dict(result='passed',checks=len(checks),native_pet_choices=pets,tiers=len(seen),native_purchase_hatch_summon_upkeep_dismiss_death=True,permanent_multi_species_collection=True,shared_cooldown_raw_bypass_denied=True,pk_and_arena_death_keep_pets=True,travel_and_logout_start_no_cooldown=True,original_monster_and_literal_quest_exp=True,summoner_only_owner_bound_drops=True,isolated_database=True,production_database_opened=False)
+            report=dict(result='passed',checks=len(checks),native_pet_choices=pets,tiers=len(seen),native_purchase_hatch_summon_upkeep_dismiss_death=True,permanent_multi_species_collection=True,shared_cooldown_raw_bypass_denied=True,pk_and_arena_death_keep_pets=True,travel_and_logout_start_no_cooldown=True,original_monster_and_literal_quest_exp=True,summoner_only_owner_bound_drops=True,bonus_eggs_preserve_guaranteed_classic_loot=True,isolated_database=True,production_database_opened=False)
             (ROOT/'work/pet-collection-v12/native-report.json').write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report,indent=2))
         finally:
             for proc in reversed(processes):

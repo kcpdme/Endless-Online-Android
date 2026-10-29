@@ -1,6 +1,6 @@
 """Versioned, shared design inputs for the native level 1–50 balance profile."""
 
-VERSION = 12
+VERSION = 13
 LEVELS = (1, 8, 15, 25, 35, 45)
 ATTRIBUTES = ('strength', 'intelligence', 'wisdom', 'agility', 'constitution', 'charisma')
 CLASSES = {

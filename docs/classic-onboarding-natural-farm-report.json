@@ -1,0 +1,11 @@
+{
+  "result": "passed",
+  "natural_unarmed_goat_kills": 19,
+  "original_goat_spawns_and_drop_rates": true,
+  "resources_earned_without_grants": true,
+  "level_zero_bare_fists": true,
+  "native_dagger_craft_two_horns_no_gold": true,
+  "original_house_chest_outfit": true,
+  "isolated_database": true,
+  "scope": "Natural farming, native crafting and outfit chest; remaining journey gates verified separately"
+}

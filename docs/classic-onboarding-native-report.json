@@ -1,0 +1,17 @@
+{
+  "result": "passed",
+  "checks": 50,
+  "natural_unarmed_goat_kills": 0,
+  "resource_fixture_seeded": true,
+  "source_monster_exp_and_drop_rates_unchanged": true,
+  "original_maps_unchanged": true,
+  "new_regular_creation_cases": 8,
+  "native_chest_outfit": false,
+  "native_two_horn_dagger_craft": true,
+  "boat_required_level": 4,
+  "aeven_required_level": 5,
+  "native_death_home_progression": true,
+  "existing_characters_unchanged": true,
+  "isolated_database": true,
+  "production_database_opened": false
+}

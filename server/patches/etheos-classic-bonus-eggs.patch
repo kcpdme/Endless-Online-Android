@@ -1,0 +1,54 @@
+--- a/src/eoserv_config.cpp
++++ b/src/eoserv_config.cpp
+@@ -65,6 +65,7 @@
+     eoserv_config_default(config, "PriestRegenSeconds", 2.0);
+     eoserv_config_default(config, "MortalSpiritBonds", false);
+     eoserv_config_default(config, "PermanentPetCollection", false);
++    eoserv_config_default(config, "BonusSpiritEggDrops", false);
+     eoserv_config_default(config, "PetCollectionCooldownSeconds", 300);
+     eoserv_config_default(config, "PriestRegenRate", 0.02);
+     eoserv_config_default(config, "PriestSittingRegenRate", 0.04);
+--- a/src/npc.cpp
++++ b/src/npc.cpp
+@@ -564,6 +564,7 @@
+ 	int most_damage_counter = 0;
+ 	Character *most_damage = nullptr;
+ 	NPC_Drop *drop = nullptr;
++    NPC_Drop *bonus_egg = nullptr;
+ 
+ 	this->alive = false;
+ 
+@@ -656,7 +657,12 @@
+         for (auto *egg : eligible_eggs)
+         {
+             double chance = util::clamp<double>(this->map->world->config["BalanceEgg."+util::to_string(egg->id)+".chance"],0.0,100.0);
+-            if (roll >= offset && roll < offset+chance) { drop = egg; break; }
++            if (roll >= offset && roll < offset+chance)
++            {
++                if (this->map->world->config["BonusSpiritEggDrops"]) bonus_egg = egg;
++                else drop = egg;
++                break;
++            }
+             offset += chance;
+         }
+     }
+@@ -954,6 +960,19 @@
+ 			character->Send(builder);
+ 		}
+ 	}
++
++    // Eggs are an independent bound bonus. The ordinary classic roll and its
++    // death-packet loot stay intact, even when the egg succeeds on the same kill.
++    if (bonus_egg && drop_winner && drop_winner->clas == 7)
++    {
++        auto item = this->map->AddItem(bonus_egg->id, 1, this->x, this->y);
++        if (item && item->uid)
++        {
++            item->owner = drop_winner->PlayerID();
++            item->unprotecttime = Timer::GetTime() + int(this->map->world->config["ProtectNPCDrop"]);
++            item->companion_egg_owner = drop_winner->real_name;
++        }
++    }
+ 
+ 	UTIL_FOREACH(parties, party)
+ 	{

@@ -1,0 +1,48 @@
+{
+  "result": "passed",
+  "backup": "/opt/aster-vale/backups/classic-onboarding-20261029T033809Z",
+  "database_bytes_unchanged": true,
+  "existing_characters_accounts_items_homes_levels_unchanged": true,
+  "all_original_maps_pubs_shops_quests_unchanged": true,
+  "native_binary_and_balance_unchanged": true,
+  "repeat_identical": true,
+  "services_healthy": true,
+  "onboarding": {
+    "start": [
+      192,
+      7,
+      6
+    ],
+    "initial_inventory": [],
+    "initial_equipment": [],
+    "initial_spells": [],
+    "outfit_source": "Original house chest",
+    "dagger_recipe": {
+      "shop": "Cyndi",
+      "item_id": 21,
+      "goat_horns": 2
+    },
+    "boat": {
+      "map_id": 195,
+      "tile": [
+        21,
+        6
+      ],
+      "required_level": 4,
+      "arrival": [
+        1,
+        7,
+        21
+      ]
+    },
+    "aeven_required_level": 5,
+    "death_home_progression": [
+      "Tutorial Island until departure",
+      "Mainland arrival until entering Aeven",
+      "Aeven"
+    ],
+    "map_bytes_changed": false,
+    "database_modified": false,
+    "restart_required": true
+  }
+}
