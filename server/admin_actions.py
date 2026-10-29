@@ -22,6 +22,9 @@ DESTINATIONS = (
     # Direct landing inside the King Wurm chamber, and Sky Wonder's arrival.
     dict(key='kingworms_room', name='Kingworms Room', map_id=229, x=20, y=20),
     dict(key='sky_haven', name='Sky Haven', map_id=71, x=34, y=14),
+    # Dragon Cave's original arrival, and the open centre of Aeven town.
+    dict(key='dragon_cave', name='Dragon Cave', map_id=270, x=8, y=14),
+    dict(key='aeven', name='Aeven', map_id=5, x=40, y=40),
 )
 
 def command_settings():

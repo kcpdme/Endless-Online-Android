@@ -1,0 +1,27 @@
+{
+  "result": "passed",
+  "backup": "/opt/aster-vale/backups/admin-dragon-aeven-20261029T133759Z",
+  "source_sha256": "86f3f751f439dc3a007c04ac8519457f3881ab77d34615c9e23f0fdbfd1ce96f",
+  "gateway_healthy": true,
+  "native_world_not_restarted": true,
+  "database_not_opened": true,
+  "total_destinations": 14,
+  "new_destinations": [
+    {
+      "key": "dragon_cave",
+      "name": "Dragon Cave",
+      "map_id": 270,
+      "x": 8,
+      "y": 14
+    },
+    {
+      "key": "aeven",
+      "name": "Aeven",
+      "map_id": 5,
+      "x": 40,
+      "y": 40
+    }
+  ],
+  "native_maps_matched_tested_geometry": true,
+  "public_https_health_verified": true
+}

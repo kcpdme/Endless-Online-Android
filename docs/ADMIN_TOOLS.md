@@ -21,6 +21,8 @@ Teleport is the first tab. Its server-owned presets are:
 | Atlantis | 255 | 12 | 19 |
 | Kingworms Room | 229 | 20 | 20 |
 | Sky Haven | 71 | 34 | 14 |
+| Dragon Cave | 270 | 8 | 14 |
+| Aeven | 5 | 40 | 40 |
 
 Anundo uses the town landing outside its inn. Atlantis uses the original
 arrival from Atlantis Pathway, on the first Atlantis map. Reopen the Admin
@@ -28,6 +30,8 @@ menu to fetch these server-supplied entries; no APK update is required.
 Kingworms Room lands directly inside the pyramid's King Wurm chamber, separate
 from the existing Pyramid entrance preset. Sky Haven uses the Sky Wonder map's
 original arrival from Phoenix Field.
+Dragon Cave uses its original entrance from map 269; its native map title is
+Atlantis Pathway. Aeven lands in the open town centre.
 
 These tiles are walkable, outside portal tiles and fixed monster spawn centers.
 Monsters can still attack an admin at these destinations. Add future destinations
@@ -61,7 +65,7 @@ python3 server/test_inn_citizenship_ui.py --scenario admin \
   --report work/admin-live-report.json --screenshots work/admin-screenshots
 ```
 
-The 64 integration checks cover all twelve native teleports, one acknowledged item,
+The integration checks cover all fourteen native teleports, one acknowledged item,
 NPC spawning, invalid IDs, touch ownership with an armed heal, dialog bounds at
 1280×720 and 1544×720, Back/logout, and a separate regular account attempting all
 four operations with a forged admin field. All fixtures use disposable accounts
@@ -74,3 +78,8 @@ source hash, backup, health check and unchanged native-world identity.
 Kingworms Room and Sky Haven validation reports:
 `admin-twelve-native-ui-report.json` and
 `admin-rooms-deployment-report.json`.
+
+Dragon Cave and Aeven passed 70 isolated native/client checks across all fourteen
+destinations. They are deployed on the hosted gateway; the world process and
+database were left unchanged. See `admin-fourteen-native-ui-report.json` and
+`admin-dragon-aeven-deployment-report.json`.
