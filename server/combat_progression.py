@@ -38,11 +38,13 @@ def mobility_enabled():
     return str(settings({'ClassMobility':'no'})['ClassMobility']).lower() in ('yes','true','1')
 
 def movement_seconds(session):
-    return .21 if mobility_enabled() and int(session.stats.get('class_id',0)) == 4 else .42
+    return round(.42/float(getattr(session,'running_multiplier',1.0)),4) if getattr(session,'running_enabled',False) else .42
 
 def publish_movement(session, data):
     _CONNECTED[session.player_id] = session
     data['player']['combat']['move_seconds'] = movement_seconds(session)
+    from balance_rules import profile
+    data['player']['combat'].update(running=bool(getattr(session,'running_enabled',False)),running_supported=bool(profile().get('running_rules')),run_tp_rate=.015)
     for row in data['players']:
         peer = _CONNECTED.get(row['player_id'])
-        row['move_seconds'] = movement_seconds(peer) if peer and peer.state and (peer.state.get('self') or {}).get('name') == row.get('name') else .42
+        row['move_seconds'] = movement_seconds(peer) if peer and peer.state and (peer.state.get('self') or {}).get('name') == row.get('name') else row.get('move_seconds',.42)

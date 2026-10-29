@@ -313,7 +313,7 @@ func _on_message(message: Dictionary) -> void:
 				else: game._toast("The worn item could not be removed. Your replacement remains in the bag.")
 		"delete_character", "change_password":
 			pass
-		"feature_open", "feature_action":
+		"feature_open", "feature_action", "run_mode":
 			_apply_snapshot(data)
 		"admin_open":
 			pass

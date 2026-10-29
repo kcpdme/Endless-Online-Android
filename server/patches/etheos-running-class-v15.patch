@@ -1,0 +1,199 @@
+--- a/src/character.cpp
++++ b/src/character.cpp
+@@ -1198,6 +1198,7 @@
+ 
+ int Character::BalanceAreaRadius(unsigned short id) const
+ {
++    if (this->world->config["ClassRunRules"] && this->clas != 3) return 0;
+ 	if (!this->world->config["BalanceRevamp"]) return (id == 14 || id == 21) ? 2 : 0;
+ 	return util::clamp<int>(this->world->config["BalanceSpell." + util::to_string(id) + ".radius"], 0, 2);
+ }
+@@ -2192,6 +2193,7 @@
+ 
+ void Character::DeathRespawn()
+ {
++    this->SetRunning(false);
+     this->LoseCompanionBond();
+ 	this->hp = int(this->maxhp * static_cast<double>(this->world->config["DeathRecover"]) / 100.0);
+ 
+@@ -2885,3 +2887,44 @@
+     }
+     if (!lost.empty()) this->StatusMsg("Your spirit died with you. Hatch a new egg to bond another pet. Spare eggs are kept.");
+ }
++
++// Running is an ephemeral native state; only the elapsed enabled time is charged.
++double Character::MovementMultiplier() const
++{
++    if (!this->world->config["ClassRunRules"] || !this->running_mode || this->hp <= 0) return 1.0;
++    return this->clas == 4 ? 1.5 : 1.25;
++}
++void Character::RunStatus()
++{
++    PacketBuilder reply(PACKET_WALK, PACKET_USE, 7);
++    reply.AddShort(this->PlayerID()); reply.AddChar(this->running_mode ? 1 : 0);
++    reply.AddShort(std::max(0,int(this->tp))); reply.AddShort(int(this->MovementMultiplier()*1000));
++    if (this->map) for (Character *other : this->map->characters)
++        if (other == this || this->InRange(other)) other->Send(reply);
++}
++void Character::RunTick()
++{
++    if (!this->running_mode) return;
++    double now = Timer::GetTime();
++    double elapsed = std::max(0.0,now-this->running_charged_at);
++    this->running_charged_at = now;
++    int before = this->tp;
++    if (this->hp <= 0 || !this->map) this->running_mode = false;
++    else
++    {
++        double due = this->running_tp_fraction + elapsed * this->maxtp * 0.015;
++        int cost = int(std::min<double>(std::max(0,int(this->tp)),std::floor(due+1e-9)));
++        this->running_tp_fraction = due-cost;
++        this->tp -= cost;
++        if (this->tp <= 0) { this->running_mode=false; this->running_tp_fraction=0.0; }
++    }
++    if (this->tp != before || !this->running_mode) this->RunStatus();
++}
++void Character::SetRunning(bool enabled)
++{
++    this->RunTick(); // Repeated requests and rapid on/off cannot erase unpaid fractions.
++    bool accepted = enabled && this->world->config["ClassRunRules"] && this->hp > 0 && this->tp > 0 && !this->nowhere;
++    if (accepted && !this->running_mode) this->running_charged_at = Timer::GetTime();
++    this->running_mode = accepted;
++    this->RunStatus();
++}
+--- a/src/character.hpp
++++ b/src/character.hpp
+@@ -337,6 +337,13 @@
+         int companion_target_type = 0;
+         double companion_command_time = 0.0;
+         double next_basic_attack = 0.0;
++        bool running_mode = false;
++        double running_charged_at = 0.0;
++        double running_tp_fraction = 0.0;
++        double MovementMultiplier() const;
++        void RunStatus();
++        void RunTick();
++        void SetRunning(bool enabled);
+         double BasicAttackSeconds(int direction = -1) const;
+         double RangedShotPower() const;
+         int WeaponRange() const;
+--- a/src/eoserv_config.cpp
++++ b/src/eoserv_config.cpp
+@@ -61,6 +61,8 @@
+     eoserv_config_default(config, "CombatProgression", false);
+     eoserv_config_default(config, "OwnerScaledPets", false);
+     eoserv_config_default(config, "ClassMobility", false);
++    eoserv_config_default(config, "ClassRunRules", false);
++    eoserv_config_default(config, "PercentPetUpkeep", false);
+     eoserv_config_default(config, "CarryCapacityRules", false);
+     eoserv_config_default(config, "PriestRegenSeconds", 2.0);
+     eoserv_config_default(config, "MortalSpiritBonds", false);
+--- a/src/eoserver.cpp
++++ b/src/eoserver.cpp
+@@ -179,8 +179,8 @@
+ 			if (!expedited)
+             {
+                 double delay = action->time;
+-                if (!action->auto_queue && action->reader.Family() == PACKET_WALK && server->world->config["ClassMobility"] && client->player && client->player->character)
+-                    delay = double(server->world->config["PacketRateWalk"]) / (client->player->character->clas == 4 ? 2.0 : 1.0);
++                if (!action->auto_queue && action->reader.Family() == PACKET_WALK && server->world->config["ClassMobility"] && action->reader.Action() != PACKET_USE && client->player && client->player->character)
++                    delay = double(server->world->config["PacketRateWalk"]) / client->player->character->MovementMultiplier();
+                 client->queue.next = now + delay;
+             }
+ 		}
+--- a/src/handlers/Walk.cpp
++++ b/src/handlers/Walk.cpp
+@@ -26,7 +26,7 @@
+ 
+ 	if (character->world->config["EnforceTimestamps"])
+ 	{
+-		if (timestamp - character->timestamp < (character->world->config["ClassMobility"] && character->clas == 4 ? 18 : 36))
++		if (timestamp - character->timestamp < int(36 / character->MovementMultiplier()))
+ 		{
+ 			return;
+ 		}
+@@ -70,6 +70,8 @@
+ 		walk_result = (character->*f)(direction);
+ 	}
+ 
++	if (walk_result == Map::WalkOK && character->world->config["ClassRunRules"]) character->RunStatus();
++
+ 	if (walk_result == Map::WalkFail || (walk_result == Map::WalkOK && (character->x != x || character->y != y)))
+ 	{
+ 		character->Refresh();
+@@ -97,7 +99,16 @@
+ 	walk_common(character, reader, &Character::Walk);
+ }*/
+ 
++void Walk_Use(Character *character, PacketReader &reader)
++{
++    if (reader.Remaining() != 1) return;
++    int requested = reader.GetChar();
++    if (requested > 1) return;
++    character->SetRunning(requested == 1);
++}
++
+ PACKET_HANDLER_REGISTER(PACKET_WALK)
++	Register(PACKET_USE, Walk_Use, Playing, 0.0);
+ 	Register(PACKET_ADMIN, Walk_Admin, Playing, 0.4);
+ 	Register(PACKET_PLAYER, Walk_Player, Playing, 0.4);
+ 	Register(PACKET_SPEC, Walk_Player, Playing, 0.4);
+--- a/src/npc.cpp
++++ b/src/npc.cpp
+@@ -1263,8 +1263,17 @@
+     if (now >= this->companion_upkeep)
+     {
+         this->companion_upkeep = now + 2.0;
+-        if (owner->tp < this->companion_cost) { owner->StartCompanionCooldown(); owner->CompanionStatus(nullptr); this->Die(); return; }
+-        owner->tp -= this->companion_cost; owner->CompanionStatus(this);
++        int cost = this->companion_cost;
++        if (this->map->world->config["PercentPetUpkeep"])
++        {
++            double rate = util::clamp<double>(this->map->world->config["BalancePetSpell." + util::to_string(this->companion_spell) + ".upkeep_rate"],0.0,0.025);
++            double due = this->companion_tp_fraction + owner->maxtp * rate;
++            cost = int(std::floor(due+1e-9)); this->companion_tp_fraction = due-cost;
++        }
++        if (owner->tp <= 0 || owner->tp < cost) { owner->StartCompanionCooldown(); owner->CompanionStatus(nullptr); this->Die(); return; }
++        owner->tp -= cost;
++        if (owner->tp <= 0) { owner->StartCompanionCooldown(); owner->CompanionStatus(nullptr); this->Die(); return; }
++        owner->CompanionStatus(this);
+     }
+     NPC *target = nullptr;
+     if (owner->companion_target >= 0 && now - owner->companion_command_time <= 5.0)
+--- a/src/npc.hpp
++++ b/src/npc.hpp
+@@ -41,6 +41,7 @@
+         unsigned short companion_spell = 0;
+         double companion_expires = 0.0;
+         double companion_upkeep = 0.0;
++        double companion_tp_fraction = 0.0;
+         double companion_last_attack = 0.0;
+         int companion_cost = 0;
+         double companion_power = 1.0;
+--- a/src/world.cpp
++++ b/src/world.cpp
+@@ -149,6 +149,13 @@
+ }
+ 
+ // Priest renewal runs independently of the world's slow ordinary recovery tick.
++void world_running(void *world_void)
++{
++    World *world(static_cast<World*>(world_void));
++    if (!world->config["ClassRunRules"]) return;
++    for (Character *character : world->characters) character->RunTick();
++}
++
+ void world_priest_renewal(void *world_void)
+ {
+     World *world(static_cast<World*>(world_void));
+@@ -511,7 +518,9 @@
+ 
+ 	event = new TimeEvent(world_class_tp_recovery, this, 2.0, Timer::FOREVER);
+ 	this->timer.Register(event);
+-	event = new TimeEvent(world_priest_renewal, this, util::clamp<double>(this->config["PriestRegenSeconds"],1.0,2.0), Timer::FOREVER);
++	event = new TimeEvent(world_running, this, 1.0, Timer::FOREVER);
++    this->timer.Register(event);
++    event = new TimeEvent(world_priest_renewal, this, util::clamp<double>(this->config["PriestRegenSeconds"],1.0,2.0), Timer::FOREVER);
+ 	this->timer.Register(event);
+ 
+ 	event = new TimeEvent(world_talk_npcs, this, 1.0, Timer::FOREVER);

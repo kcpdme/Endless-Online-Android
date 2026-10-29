@@ -1,0 +1,10 @@
+{
+  "attack_preference_persists": true,
+  "checks": 483,
+  "network_requests": 0,
+  "original_eo_frames": 6,
+  "rendered": true,
+  "result": "passed",
+  "viewports": 3,
+  "world_undimmed": true
+}

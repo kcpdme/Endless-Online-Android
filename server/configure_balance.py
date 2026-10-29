@@ -158,14 +158,14 @@ def build_items(original, shops=""):
         if ident!=len(rows):raise ValueError('Egg definition ID collision')
         f=bytearray(rows[egg['template_id']-1]['fields'])
         for key,(offset,size) in STAT_FIELDS.items():put(f,offset,0,size)
-        put(f,2,23);put(f,3,0);put(f,4,4);put(f,5,0,2);put(f,37,egg['level'],2);put(f,39,7,2);put(f,55,1)
+        put(f,2,23);put(f,3,0);put(f,4,4);put(f,5,0,2);put(f,37,egg['level'],2);put(f,39,7,2);put(f,55,1);put(f,57,0)
         rows.insert(-1,dict(id=ident,names=[egg['name']],fields=f))
         metadata[str(ident)]=dict(template_id=egg['template_id'],hatch_spell=egg['spell_id'],allowed_classes=[7],bound=True,egg_state='unhatched',hatched_id=egg['hatched_id'],egg_sell_value=egg['sell_price'],drop_class=7,bond_lost_on_death=False,pet_tier=egg['tier'],tier_name=egg['tier_name'],tier_color=egg['tier_color'],icon=egg['icon'],ground=egg['icon'],acquisition=sources.get(ident,{}))
     for ident,egg in HATCHED_EGGS.items():
         if ident!=len(rows):raise ValueError('Hatched egg definition ID collision')
         f=bytearray(rows[10]['fields'])
         for key,(offset,size) in STAT_FIELDS.items():put(f,offset,0,size)
-        put(f,2,23);put(f,3,0);put(f,4,4);put(f,5,0,2);put(f,37,egg['level'],2);put(f,39,7,2);put(f,55,0)
+        put(f,2,23);put(f,3,0);put(f,4,4);put(f,5,0,2);put(f,37,egg['level'],2);put(f,39,7,2);put(f,55,0);put(f,57,0)
         rows.insert(-1,dict(id=ident,names=[egg['name']],fields=f))
         egg_source=EGGS[egg['egg_id']]
         metadata[str(ident)]=dict(template_id=11,hatch_spell=egg['spell_id'],allowed_classes=[7],bound=True,egg_state='hatched',egg_id=egg['egg_id'],egg_sell_value=0,no_sell=True,bond_lost_on_death=False,pet_tier=egg['tier'],tier_name=egg_source['tier_name'],tier_color=egg_source['tier_color'],icon=egg['icon'],ground=egg['icon'],acquisition={})
@@ -209,7 +209,7 @@ def build_spells(original):
         result[str(ident)]=dict(id=ident,name=name,shout=name.lower(),tp=tp,cast_time=chant,type=num(f,11),restrict=restrict,target=target,min_damage=low,max_damage=high,hp=hp,level_requirement=level,allowed_classes=list(classes),area_radius=radius,area_targets=cap,area_scale=((.8 if radius==1 else .6)*CLASSES[3]['area_multiplier'] if classes==(3,) else .8 if radius==1 else .6) if radius else 1,max_level=10,training_bonus=2)
         if classes in ((4,),(6,)) and not radius:result[str(ident)]['range']=1
         if classes==(5,):result[str(ident)].update(requires_bow=True,range=10,weapon_range=True)
-        if ident in {e['spell_id'] for e in EGGS.values()}:result[str(ident)].update(learn_source='Hatch an egg to unlock this pet permanently; bind one through the top pet icon',max_level=0,bond_lost_on_death=False,permanent_pet=True)
+        if ident in {e['spell_id'] for e in EGGS.values()}:result[str(ident)].update(learn_source='Hatch an egg to unlock this pet permanently; bind one through the top egg icon',max_level=0,bond_lost_on_death=False,permanent_pet=True)
         if ident>=32:result[str(ident)]['template_id']=16
         if ident in COMPANIONS:result[str(ident)].update(effect_kind='companion',companion=COMPANIONS[ident],duration=0,upkeep_seconds=2)
     return encode_pub(original,rows),result
@@ -357,7 +357,7 @@ def build_quest(original):
 def configure(runtime):
     runtime=Path(runtime)
     if any((runtime/r).is_symlink() for r in ('data','data/pub')):raise ValueError('Materialize runtime data directories first')
-    if any(marker not in (runtime/'etheos').read_bytes() for marker in (b'PetEggTiers',b'CombatProgression',b'OwnerScaledPets',b'ClassMobility',b'CarryCapacityRules',b'PermanentPetCollection',b'BonusSpiritEggDrops')):raise ValueError('Install the pet-collection-capable native binary first')
+    if any(marker not in (runtime/'etheos').read_bytes() for marker in (b'PetEggTiers',b'CombatProgression',b'OwnerScaledPets',b'ClassMobility',b'CarryCapacityRules',b'PermanentPetCollection',b'BonusSpiritEggDrops',b'ClassRunRules',b'PercentPetUpkeep')):raise ValueError('Install the pet-collection-capable native binary first')
     baseline=runtime/'data/balance-v1-baseline';manifest_path=runtime/'data/balance-v1-manifest.json'
     old_manifest=json.loads(manifest_path.read_text()) if manifest_path.exists() else None
     if old_manifest:
@@ -374,10 +374,10 @@ def configure(runtime):
     class_bytes,classes=build_classes(originals['data/pub/dat001.ecf'])
     spell_bytes,spells=build_spells(originals['data/pub/dsl001.esf'])
     proposed={'data/aster-vale-drops.ini':drops,'data/pub/dat001.eif':item_bytes,'data/pub/dat001.ecf':class_bytes,'data/pub/dsl001.esf':spell_bytes,'data/pub/dtn001.enf':npc_bytes,'data/formulas.ini':formulas(originals['data/formulas.ini']),'data/aster-vale-skills.ini':build_skills(),'data/aster-vale-shops.ini':shops,'data/quests/00004.eqf':build_quest(originals['data/quests/00004.eqf'])}
-    profile=dict(version=VERSION,levels=LEVELS,max_skill_level=10,classes=classes,spells=spells,items=items,npcs=npcs,classic_peasant=True,monster_tuning=MONSTER_TUNING,class_identity=True,class_signatures=True,carry_capacity_rules=True,mortal_spirit_bonds=False,pet_collection=True,bonus_egg_drops=True,pet_cooldown_seconds=PET_COOLDOWN_SECONDS,hatched_eggs=HATCHED_EGGS,companions=COMPANIONS,eggs=EGGS,pet_tiers=TIERS,pet_roster=ROSTER,eggkeeper=EGGKEEPER)
+    profile=dict(version=VERSION,levels=LEVELS,max_skill_level=10,classes=classes,spells=spells,items=items,npcs=npcs,classic_peasant=True,monster_tuning=MONSTER_TUNING,class_identity=True,class_signatures=True,carry_capacity_rules=True,mortal_spirit_bonds=False,pet_collection=True,bonus_egg_drops=True,running_rules=dict(normal_multiplier=1.25,rogue_multiplier=1.5,tp_rate_per_second=.015,drain_while_idle=True),pet_cooldown_seconds=PET_COOLDOWN_SECONDS,hatched_eggs=HATCHED_EGGS,companions=COMPANIONS,eggs=EGGS,pet_tiers=TIERS,pet_roster=ROSTER,eggkeeper=EGGKEEPER)
     proposed['data/balance-profile.json']=(json.dumps(profile,indent=2)+'\n').encode()
     cfg=(runtime/'config.local.ini').read_text()
-    values={'ExpRate':'100%','DropRate':'100%','GoldDropRate':'100%','DropRateMode':'3','BonusSpiritEggDrops':'yes','CarryCapacityRules':'yes','ClassMobility':'yes','OwnerScaledPets':'yes','CombatProgression':'yes','PetEggTiers':'yes','MortalSpiritBonds':'no','PermanentPetCollection':'yes','PetCollectionCooldownSeconds':str(PET_COOLDOWN_SECONDS),'ClassSignatureRules':'yes','PriestRegenRate':'0.02','PriestSittingRegenRate':'0.04','CompanionLifetimeSeconds':'0','ClassIdentityRules':'yes','BalanceRevamp':'yes','UseClassFormulas':'yes','MaxSkillLevel':'10','SkillsFile':'./data/aster-vale-skills.ini'}
+    values={'ExpRate':'100%','DropRate':'100%','GoldDropRate':'100%','DropRateMode':'3','BonusSpiritEggDrops':'yes','CarryCapacityRules':'yes','ClassMobility':'yes','ClassRunRules':'yes','PercentPetUpkeep':'yes','OwnerScaledPets':'yes','CombatProgression':'yes','PetEggTiers':'yes','MortalSpiritBonds':'no','PermanentPetCollection':'yes','PetCollectionCooldownSeconds':str(PET_COOLDOWN_SECONDS),'ClassSignatureRules':'yes','PriestRegenRate':'0.02','PriestSittingRegenRate':'0.04','CompanionLifetimeSeconds':'0','ClassIdentityRules':'yes','BalanceRevamp':'yes','UseClassFormulas':'yes','MaxSkillLevel':'10','SkillsFile':'./data/aster-vale-skills.ini'}
     for ident,rate in TP_RECOVERY.items():
         values[f'Balance.{ident}.tp_regen']=str(rate)
     for ident,traits in BOWS.items():
@@ -397,7 +397,7 @@ def configure(runtime):
         values[f'BalanceItem.{ident}.backstab']='yes' if item.get('backstab') else 'no'
         values[f'BalanceItem.{ident}.classes']=','.join(map(str,item.get('allowed_classes',[])))
     for ident,pet in COMPANIONS.items():
-        for key in ('npc_id','upkeep','power','accuracy','hit_cap'):values[f'BalancePetSpell.{ident}.{key}']=str(pet[key])
+        for key in ('npc_id','upkeep_rate','power','accuracy','hit_cap'):values[f'BalancePetSpell.{ident}.{key}']=str(pet[key])
     for ident,egg in EGGS.items():
         values[f'BalanceEgg.{ident}.spell']=str(egg['spell_id'])
         values[f'BalanceEgg.{ident}.npc']=str(egg['npc_id'])

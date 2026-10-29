@@ -15,7 +15,7 @@ class PetTierTests(unittest.TestCase):
     def test_requested_owner_damage_and_costs(self):
         from balance_model import pet_expected_damage
         self.assertEqual([t['power'] for t in TIERS.values()],[.45,.7,1,1.2,1.5])
-        self.assertEqual([t['upkeep'] for t in TIERS.values()],[2,5,7,9,12])
+        self.assertEqual([t['upkeep_rate'] for t in TIERS.values()],[.005,.01,.015,.02,.025])
         self.assertEqual(TIERS['mythic']['price'],100000)
         self.assertEqual([t['price'] for t in TIERS.values()],[100,6000,20000,60000,100000])
         self.assertEqual([t['sell_price'] for t in TIERS.values()],[40,2400,8000,24000,40000])
@@ -83,10 +83,10 @@ class PetTierTests(unittest.TestCase):
             for egg in eggs:
                 pet=COMPANIONS[egg['spell_id']];spell=SUMMON_SPELLS[egg['spell_id']]
                 self.assertEqual((egg['level'],egg['price'],spell[3],spell[4]),(t['level'],t['price'],t['tp'],t['chant']))
-                self.assertEqual(tuple(pet[k] for k in ('power','accuracy','hit_cap','upkeep')),tuple(t[k] for k in ('power','accuracy','hit_cap','upkeep')))
+                self.assertEqual(tuple(pet[k] for k in ('power','accuracy','hit_cap','upkeep_rate')),tuple(t[k] for k in ('power','accuracy','hit_cap','upkeep_rate')))
                 self.assertTrue((ROOT/'client'/egg['icon'].removeprefix('res://')).is_file())
             if previous:
-                for key in ('level','price','power','accuracy','hit_cap','tp','upkeep'):self.assertGreater(t[key],previous[key],key)
+                for key in ('level','price','power','accuracy','hit_cap','tp','upkeep_rate'):self.assertGreater(t[key],previous[key],key)
             previous=t
     def test_legacy_bonds_keep_identity_and_new_ids_are_consecutive(self):
         self.assertEqual([(i,EGGS[i]['spell_id'],COMPANIONS[EGGS[i]['spell_id']]['npc_id']) for i in (609,610,611)],[(609,28,306),(610,33,307),(611,34,308)])

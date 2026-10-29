@@ -53,6 +53,7 @@ var character_button: HudIconButton
 var zoom_button:HudIconButton
 var stats_button:HudIconButton
 var auto_attack_button:HudIconButton
+var run_ui:RefCounted
 var auto_attack_enabled:bool=true
 var combat_settings_path:String="user://combat.cfg"
 var modal_cards:Array[Control]=[]
@@ -330,6 +331,7 @@ func _process(delta: float) -> void:
 	if feature_ui != null: feature_ui.tick()
 	if admin_ui != null: admin_ui.tick()
 	if party_ui != null: party_ui.tick()
+	if run_ui!=null:run_ui.tick()
 	_layout_dialogs()
 	if stats_button!=null:stats_button.visible=started and not _modal_open() and not welcome.visible
 	if auto_attack_button!=null:auto_attack_button.visible=started and not _modal_open() and not welcome.visible
@@ -579,7 +581,7 @@ func _open_stats()->void:
 	_layout_dialogs()
 
 func _extra_hud_at(point:Vector2)->HudIconButton:
-	for button:HudIconButton in [stats_button,auto_attack_button]:
+	for button:HudIconButton in [stats_button,auto_attack_button,run_ui.button if run_ui!=null else null]:
 		if button!=null and button.is_visible_in_tree() and button.contains_point(point):return button
 	return null
 
@@ -706,6 +708,7 @@ func _input(event: InputEvent) -> void:
 		if extra_button!=null:
 			owned_touches[event.index]=true
 			if extra_button==stats_button:_open_stats()
+			elif run_ui!=null and extra_button==run_ui.button:run_ui.press()
 			else:_toggle_auto_attack_mode()
 			get_viewport().set_input_as_handled();return
 		if zoom_button.visible and zoom_button.contains_point(event.position):
@@ -1331,7 +1334,7 @@ func _build_ui() -> void:
 	stats_button.position=Vector2(-266,24);stats_button.size=Vector2(68,68)
 	stats_button.pressed.connect(_open_stats);root.add_child(stats_button)
 	stats_button.set_anchors_preset(Control.PRESET_TOP_RIGHT,true);stats_button.hide()
-	zoom_button=HudIconButton.new();zoom_button.kind="zoom";zoom_button.position=Vector2(-716,24);zoom_button.size=Vector2(68,68)
+	zoom_button=HudIconButton.new();zoom_button.kind="zoom";zoom_button.position=Vector2(-626,24);zoom_button.size=Vector2(68,68)
 	zoom_button.toggle_mode=true;zoom_button.set_pressed_no_signal(camera.zoomed);zoom_button.pressed.connect(_toggle_camera_view)
 	root.add_child(zoom_button);zoom_button.set_anchors_preset(Control.PRESET_TOP_RIGHT,true)
 	zoom_button.tooltip_text="125% view · tap for Normal" if camera.zoomed else "Normal view · tap for 125%"
@@ -1425,11 +1428,12 @@ func _build_ui() -> void:
 	emote_ui = preload("res://scripts/emote_control.gd").new()
 	emote_ui.build(self, chat_ui.quick_root)
 	auto_attack_button=HudIconButton.new();auto_attack_button.kind="auto_attack"
-	auto_attack_button.size=Vector2(32,32)
+	auto_attack_button.size=Vector2(68,68)
 	auto_attack_button.position=emote_ui.button.position+Vector2(emote_ui.button.size.x+8,(emote_ui.button.size.y-auto_attack_button.size.y)/2)
 	auto_attack_button.toggle_mode=true;auto_attack_button.pressed.connect(_toggle_auto_attack_mode)
 	chat_ui.quick_root.add_child(auto_attack_button)
 	_refresh_auto_attack_mode();auto_attack_button.hide()
+	run_ui=preload("res://scripts/run_control.gd").new();run_ui.build(self,root)
 	quest_journal = preload("res://scripts/quest_journal.gd").new()
 	quest_journal.build(self, root)
 	speech_layer = preload("res://scripts/speech_bubbles.gd").new()
@@ -1993,4 +1997,19 @@ func _layout_safe_area() -> void:
 			hud_root.offset_right = -maxf(0.0, float(pixels.x - safe.end.x)) * ratio.x
 			hud_root.offset_bottom = -maxf(0.0, float(pixels.y - safe.end.y)) * ratio.y
 	if joystick != null and not joystick.active: joystick.reset()
+	_layout_combat_controls()
 	_layout_dialogs()
+
+func _layout_combat_controls()->void:
+	# Make room for the larger footer toggle on narrower landscape displays.
+	var controls:Array[Control]=[attack_button,bag_button,sit_button]
+	if pet_ui!=null:controls.append(pet_ui.button)
+	if skills_ui!=null:controls.append_array(skills_ui.buttons.slice(0,2))
+	if quick_items!=null:controls.append_array(quick_items.buttons)
+	var lift:float=48.0 if hud_root.size.x<1400 else 0.0
+	for control:Control in controls:
+		if control==null:continue
+		if not control.has_meta("combat_base_top"):control.set_meta("combat_base_top",control.offset_top)
+		var height:float=control.size.y
+		control.offset_top=float(control.get_meta("combat_base_top"))-lift
+		control.offset_bottom=control.offset_top+height

@@ -106,7 +106,7 @@ def benchmarks(profile):
                 area.append((per_target*a['area_targets'],a['id'],a['area_targets']))
             area_dps,area_id,area_targets=max(area) if area else (0,0,0)
             close_basic=basic*weapon.get('close_attack_speed',speed)/speed
-            walking_multiplier=2 if clas==4 else 1
+            walking_multiplier=1
             eligible=[pet for spell_id,pet in profile['companions'].items() if pet['npc_id']>0 and profile['spells'][str(spell_id)]['level_requirement']<=level]
             pet=max(eligible,key=lambda p:(p['power'],p.get('accuracy',0)),default=dict(power=0))
             pet_power=pet['power']
@@ -117,6 +117,6 @@ def benchmarks(profile):
             from combat_progression import TP_RECOVERY
             regen=max(1,int(s['max_tp']*TP_RECOVERY[clas]))/2 if clas in TP_RECOVERY else s['max_tp']*.1/90
             call=profile['pet_tiers'][pet['tier']]['tp'] if clas==7 and pet_power else 0
-            sustained=sustained_damage(basic,spell_dps,spell['tp'],max(.96,spell.get('cast_time',1)*.48+.48),s['max_tp'],regen,pet_dps,call,pet.get('upkeep',0) if pet_dps else 0)
+            sustained=sustained_damage(basic,spell_dps,spell['tp'],max(.96,spell.get('cast_time',1)*.48+.48),s['max_tp'],regen,pet_dps,call,s['max_tp']*pet.get('upkeep_rate',0) if pet_dps else 0)
             rows.append(dict(**sustained,class_id=clas,role=CLASSES[clas]['name'],level=level,weapon_id=weapon['id'],body_id=body['id'],equipment_ids=[i['id'] for i in gear],**s,basic_dps=round(basic,2),spell_dps=round(spell_dps,2),burst_dps=round(burst,2),backstab_dps=round(burst*1.75,2) if clas==4 else 0,passive_hp_per_second=max(1,int(s['max_hp']*.02)) if clas==2 else 0,companion_dps=round(pet_dps,2),spell_id=ident,spell_tp=spell['tp'],spell_casts_from_full=s['max_tp']//spell['tp'] if spell['tp'] else 0,heal_self=heal,heal_other=party_heal,heal_other_spell_id=heal_id,heal_other_tp=heal_tp,close_basic_dps=round(close_basic,2),area_total_dps=round(area_dps,2),area_spell_id=area_id,area_targets=area_targets,walking_multiplier=walking_multiplier,model='Weapon/body, head, boots, gloves and two rings, plus basic Archer arrows; 60/25/15 allocation. Target armour 0.4xlevel and evade 0.6xlevel. Front-facing single-target expectations, no criticals or kiting; Summoner has an adjacent commanded spirit. Backstab is separate and conditional. Burst assumes TP available; it is not sustained farming DPS.'))
     return rows

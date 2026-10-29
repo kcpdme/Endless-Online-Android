@@ -25,13 +25,13 @@ def metrics(profile,clas,level,gear,trained=0,armor=None,evade=None):
     best=max(candidates,key=lambda a:a['dps'],default=dict(id=0,dps=0,cycle=.96,tp=0))
     regen=max(1,int(s['max_tp']*TP_RECOVERY[clas]))/2 if clas in TP_RECOVERY else s['max_tp']*.1/90
     eligible=[(spell_id,pet) for spell_id,pet in profile['companions'].items() if pet['npc_id']>0 and profile['spells'][str(spell_id)]['level_requirement']<=level]
-    spell_id,pet=max(eligible,key=lambda a:a[1]['power'],default=(0,dict(power=0,upkeep=0)))
+    spell_id,pet=max(eligible,key=lambda a:a[1]['power'],default=(0,dict(power=0,upkeep_rate=0)))
     pet_dps=0;call=0;pet_uptime=0
     if clas==7 and pet['power']:
         pet_dps=pet_expected_damage(s['min_damage'],s['max_damage'],pet['power'],armor)*min(pet['hit_cap'],hit_chance(s['accuracy']+pet['accuracy'],evade))
-        call=profile['spells'][str(spell_id)]['tp'];net=pet['upkeep']/2-regen
+        call=profile['spells'][str(spell_id)]['tp'];net=s['max_tp']*pet['upkeep_rate']/2-regen
         pet_uptime=min(60,max(0,(s['max_tp']-call)/net)) if net>0 else 60
-    sustained=sustained_damage(basic,best['dps'],best['tp'],best['cycle'],s['max_tp'],regen,pet_dps,call,pet['upkeep'] if pet_dps else 0)
+    sustained=sustained_damage(basic,best['dps'],best['tp'],best['cycle'],s['max_tp'],regen,pet_dps,call,s['max_tp']*pet['upkeep_rate'] if pet_dps else 0)
     tp_budget=sustained['tp_available_for_offense_in_60'];spell_seconds=sustained['spell_seconds_in_60'];pet_uptime=sustained['pet_uptime_in_60']
     burst=max(basic,best['dps'])+pet_dps
     heal60=max((h['heal']*min(60/h['cycle'],(s['max_tp']+60*regen)/h['tp'])/60 for h in heals if h['tp']),default=0)

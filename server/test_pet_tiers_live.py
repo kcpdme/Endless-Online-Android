@@ -109,16 +109,17 @@ def main():
                     check(s.stats['tp']==before-tier['tp'],'Summon charges its tier initial TP exactly once')
                     check(len([n for n in s.state['npcs'] if n['id'] in {p['npc_id'] for p in COMPANIONS.values()}])==1,'Exactly one visible native companion is present')
                     if egg['tier'] not in seen:
-                        until(s,lambda:s.stats['tp']==before-tier['tp']-tier['upkeep']);check(True,'Native tier upkeep charges the configured TP')
+                        until(s,lambda:s.stats['tp']==before-tier['tp']-int(s.stats['max_tp']*tier['upkeep_rate']+1e-9));check(True,'Native tier upkeep charges the configured TP')
                         target=next(n for n in s.state['npcs'] if n['id']==1 and (n['x'],n['y'])==(36,45));s.events.clear();s.cast_spell(23,'npc',target['index'])
                         deadline=time.monotonic()+12;last_strike=0
                         while time.monotonic()<deadline and not any(e.get('kind')=='companion_attack' and e.get('damage',0)>0 for e in s.events):
-                            if time.monotonic()-last_strike>.8:s.strike(3);last_strike=time.monotonic()
+                            if time.monotonic()-last_strike>1.2 and not s.casting:s.cast_spell(23,'npc',target['index']);last_strike=time.monotonic()
                             s.poll_actions()
                             if select.select([s.sock],[],[],.03)[0]:s.pump()
                         check(any(e.get('kind')=='companion_attack' and e.get('damage',0)>0 for e in s.events),'Actively commanded '+egg['tier']+' pet reaches and damages the target')
                         damage=next(e['damage'] for e in s.events if e.get('kind')=='companion_attack' and e.get('damage',0)>0);low=int(s.stats['min_damage']*tier['power']);high=__import__('math').ceil(s.stats['max_damage']*tier['power'])
                         check(max(1,low)<=damage<=max(1,high),'Native pet damage scales from the current owner attack roll');seen.add(egg['tier'])
+                    until(s,lambda:not s.casting)
                     s.cast_spell(35,'self');until(s,lambda:not getattr(s,'companion',None) and not s.casting)
                     check(any(x['id']==spell for x in s.spells) and s.item_amount(ident)==1,'Dismissal preserves the permanent pet and spare egg')
                     check(295<=s.snapshot()['pet_state']['cooldown_seconds']<=300,'Dismissal starts a real five-minute shared native cooldown')

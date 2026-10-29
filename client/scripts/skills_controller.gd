@@ -1,5 +1,6 @@
 extends RefCounted
 const PET_DETAILS = preload("res://scripts/pet_details.gd")
+const SpellVisuals = preload("res://scripts/spell_visuals.gd")
 ## Native known-spell list, touch shortcuts and original GFX024 effect layers.
 const CAST_POSE_MSEC: int = 480 # Original four120ms frames, after the local chant.
 var game: Node
@@ -122,6 +123,8 @@ func area_skill(ident: int) -> bool:
 func icon(ident: int, highlight: bool = false) -> Texture2D:
 	var key: String = "%d:%s" % [ident, str(highlight)]
 	if icons.has(key): return icons[key] as Texture2D
+	var glyph:Texture2D=SpellVisuals.icon(ident,info(ident),highlight)
+	if glyph!=null:icons[key]=glyph;return glyph
 	var texture: Texture2D = game._texture(str(info(ident).get("icon", "")))
 	if texture == null: return null
 	# Original GFX025 contains normal and hover halves, not one wide icon.
@@ -213,6 +216,7 @@ func target(tile: Vector2i) -> bool:
 
 func class_usable(ident: int) -> bool:
 	var stats: Dictionary = game.online.player.get("stats", {}) as Dictionary
+	if area_skill(ident) and int(stats.get("class_id",0))!=3:return false
 	if int(stats.get("admin", 0)) > 0: return true
 	var allowed: Array = info(ident).get("allowed_classes", []) as Array
 	if allowed.is_empty(): return true
@@ -226,6 +230,7 @@ func class_usable(ident: int) -> bool:
 func usable(ident: int) -> bool:
 	if int(game.online.catalog.get("balance_version", 0)) < 2: return true
 	var stats: Dictionary = game.online.player.get("stats", {}) as Dictionary
+	if area_skill(ident) and int(stats.get("class_id",0))!=3:return false
 	if int(stats.get("admin", 0)) > 0: return true
 	return int(stats.get("level", 0)) >= int(info(ident).get("level_requirement", 1)) and class_usable(ident)
 
@@ -355,8 +360,8 @@ func refresh_detail() -> void:
 		if spell.get("effect_kind", "") == "companion":
 			var pet: Dictionary = spell.get("companion", {}) as Dictionary
 			if pet.has("tier"): lines.append(PET_DETAILS.combat_text(pet))
-			lines.append("Dismiss your pet; starts a shared five-minute recovery. Hatched pets stay permanent." if int(pet.get("npc_id", 0)) < 0 else "One strong spirit while upkeep TP lasts. Your death breaks its bond: hatch another egg afterward. Travel and logout keep the bond. Assists your attacks and retaliates when an aggressive monster hurts you." if bool(spell.get("bond_lost_on_death", false)) else "Permanent hatched pet. One active spirit while upkeep TP lasts. Dismissal, TP exhaustion and death start a five-minute shared recovery. Change the bound pet with the top paw icon afterward.")
-			if int(pet.get("npc_id", 0)) > 0: lines.append("Upkeep: %d TP every 2 seconds. Damage uses your equipped attack roll before target defence." % int(pet.get("upkeep", 0)))
+			lines.append("Dismiss your pet; starts a shared five-minute recovery. Hatched pets stay permanent." if int(pet.get("npc_id", 0)) < 0 else "One strong spirit while upkeep TP lasts. Your death breaks its bond: hatch another egg afterward. Travel and logout keep the bond. Assists your attacks and retaliates when an aggressive monster hurts you." if bool(spell.get("bond_lost_on_death", false)) else "Permanent hatched pet. One active spirit while upkeep TP lasts. Dismissal, TP exhaustion and death start a five-minute shared recovery. Change the bound pet with the top egg icon afterward.")
+			if int(pet.get("npc_id", 0)) > 0: lines.append("Upkeep: %.1f%% max TP every 2 seconds. Damage uses your equipped attack roll before target defence." % (float(pet.get("upkeep_rate", 0))*100))
 		for learned: Dictionary in game.online.player.get("spells", []):
 			if int(learned.id) == selected:
 				var level: int = int(learned.level)
@@ -432,6 +437,13 @@ func event(event_data: Dictionary) -> void:
 		if pid == int(game.online.player.get("player_id",-1)): game.swing_clock = 0.48
 		game.drink_effects.event({"kind":"player_emote","player_id":pid,"emote":15})
 		return
+	if kind == "companion" and int(event_data.get("spell_id",0))>0:
+		var pet_fx:Dictionary=SpellVisuals.effect(int(event_data.spell_id),info(int(event_data.spell_id)))
+		pet_fx.merge({"kind":"player","id":pid,"at":player_position(pid),"start":Time.get_ticks_msec()})
+		effects.append(pet_fx)
+		chants.erase(pid)
+		if pid==int(game.online.player.get("player_id",-1)):casting.clear()
+		return
 	if kind == "spell_group":
 		for member: Dictionary in event_data.get("targets",[]):
 			event({"kind":"spell_heal", "player_id":pid,"target_id":int(member.player_id),"spell_id":int(event_data.spell_id),"hp_gain":int(event_data.get("hp_gain",0))})
@@ -442,7 +454,7 @@ func event(event_data: Dictionary) -> void:
 		area_bursts.append({"tile": Vector2i(int(event_data.x), int(event_data.y)), "start": Time.get_ticks_msec()})
 		if game.sfx != null: game.sfx.effect(int(info(int(event_data.spell_id)).get("graphic", 0)))
 		if int(event_data.get("targets", 0)) == 0:
-			var empty_fx: Dictionary = (info(int(event_data.spell_id)).get("effect", {}) as Dictionary).duplicate(true)
+			var empty_fx: Dictionary = SpellVisuals.effect(int(event_data.spell_id),info(int(event_data.spell_id)))
 			if not empty_fx.is_empty():
 				empty_fx.merge({"kind": "player", "id": pid, "at": player_position(pid), "start": Time.get_ticks_msec()})
 				effects.append(empty_fx)
@@ -454,7 +466,7 @@ func event(event_data: Dictionary) -> void:
 	var ident: int = int(event_data.get("npc_index", 0)) if target_kind == "npc" else int(event_data.get("target_id", pid))
 	var at: Vector2 = game.tile_position(Vector2i(int(event_data.get("x", 0)), int(event_data.get("y", 0)))) if target_kind == "npc" else player_position(ident)
 	if game.sfx != null and not area_skill(int(event_data.spell_id)): game.sfx.effect(int(info(int(event_data.spell_id)).get("graphic", 0)))
-	var fx: Dictionary = (info(int(event_data.spell_id)).get("effect", {}) as Dictionary).duplicate(true)
+	var fx: Dictionary = SpellVisuals.effect(int(event_data.spell_id),info(int(event_data.spell_id)))
 	if not fx.is_empty():
 		fx.merge({"kind": target_kind, "id": ident, "at": at, "start": Time.get_ticks_msec()})
 		effects.append(fx)
@@ -511,6 +523,8 @@ func draw_orphans() -> void:
 			draw_sheet(fx, true)
 
 func draw_sheet(fx: Dictionary, front: bool) -> void:
+	if bool(fx.get("procedural",false)):
+		SpellVisuals.draw(game,fx,front);return
 	var elapsed: int = maxi(0, Time.get_ticks_msec() - int(fx.start)) / 120
 	var frame: int = elapsed % int(fx.frames)
 	if int(fx.get("mode", 0)) == 3 and elapsed >= int(fx.frames): frame = 3 + ((elapsed - int(fx.frames)) % 2)

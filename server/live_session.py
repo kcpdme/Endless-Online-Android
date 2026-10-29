@@ -29,7 +29,9 @@ from native_features import NativeFeaturesMixin
 from native_settings import world_rules
 
 
-class LiveSession(NativeFeaturesMixin, WorldFeedbackMixin, AdminMixin, BarberMixin, PartyMixin, GuildsMixin, RewardsMixin, SkillsMixin, ConsumablesMixin, InnsMixin, QuestsMixin, SeatingMixin, ChestsMixin, ServicesMixin, EconomyMixin, Session):
+from running import RunningMixin
+
+class LiveSession(RunningMixin, NativeFeaturesMixin, WorldFeedbackMixin, AdminMixin, BarberMixin, PartyMixin, GuildsMixin, RewardsMixin, SkillsMixin, ConsumablesMixin, InnsMixin, QuestsMixin, SeatingMixin, ChestsMixin, ServicesMixin, EconomyMixin, Session):
     def __init__(self,*args):
         self.init_services();self.init_skills();self.init_party();self.quest_journal=None
         self.pending_moves=deque();self.position_seq=0;self.last_input_seq=0
@@ -177,6 +179,7 @@ class LiveSession(NativeFeaturesMixin, WorldFeedbackMixin, AdminMixin, BarberMix
         self.dirty=True
 
     def apply_event(self,f,a,p):
+        if self.apply_run_packet(f,a,p):return
         super().apply_event(f,a,p)
         if self.state:self.apply_party_packet(f,a,p)
         self.apply_service_packet(f,a,p)

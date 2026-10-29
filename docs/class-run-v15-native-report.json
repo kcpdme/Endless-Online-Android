@@ -1,0 +1,106 @@
+{
+  "result": "passed",
+  "checks": 32,
+  "profile": 15,
+  "observed": {
+    "idle_run": {
+      "max_tp": 155,
+      "elapsed": 3.487,
+      "spent": 8
+    },
+    "pet_normal": {
+      "max_tp": 361,
+      "rate": 0.005,
+      "two_ticks": [
+        1,
+        2
+      ]
+    },
+    "pet_rare": {
+      "max_tp": 361,
+      "rate": 0.01,
+      "two_ticks": [
+        3,
+        4
+      ]
+    },
+    "pet_epic": {
+      "max_tp": 361,
+      "rate": 0.015,
+      "two_ticks": [
+        5,
+        5
+      ]
+    },
+    "pet_legend": {
+      "max_tp": 361,
+      "rate": 0.02,
+      "two_ticks": [
+        7,
+        7
+      ]
+    },
+    "pet_mythic": {
+      "max_tp": 361,
+      "rate": 0.025,
+      "two_ticks": [
+        9,
+        9
+      ]
+    },
+    "16": {
+      "targets": 1
+    },
+    "46": {
+      "targets": 1
+    },
+    "27": {
+      "targets": 1
+    },
+    "37": {
+      "targets": 1
+    },
+    "39": {
+      "targets": 1
+    },
+    "49": {
+      "targets": 3
+    }
+  },
+  "isolated_database": true,
+  "production_database_opened": false,
+  "assertions": [
+    "All classes including Rogue start at normal walking speed",
+    "Native rejects sub-normal walk timestamp while Run is disabled",
+    "Native accepts normal walk timestamp",
+    "Native Run acknowledges only class-specific x1.25/x1.5",
+    "Native accepts accelerated movement only while Run is enabled",
+    "Disabling Run immediately restores native normal timestamp enforcement",
+    "All classes including Rogue start at normal walking speed",
+    "Native rejects sub-normal walk timestamp while Run is disabled",
+    "Native accepts normal walk timestamp",
+    "Native Run acknowledges only class-specific x1.25/x1.5",
+    "Native accepts accelerated movement only while Run is enabled",
+    "Disabling Run immediately restores native normal timestamp enforcement",
+    "Idle Run charges elapsed max-TP percentage; repeated enable does not reset its clock",
+    "Disabling Run stops its TP drain",
+    "TP exhaustion disables Run and removes its movement bonus",
+    "Native normal pet charges exact maximum-TP percentage every two seconds with fractional carry",
+    "Native rare pet charges exact maximum-TP percentage every two seconds with fractional carry",
+    "Native epic pet charges exact maximum-TP percentage every two seconds with fractional carry",
+    "Native legend pet charges exact maximum-TP percentage every two seconds with fractional carry",
+    "Native mythic pet charges exact maximum-TP percentage every two seconds with fractional carry",
+    "Warrior doubles CON-derived defence: 102 CON gives 122 armour",
+    "Warrior shield retains exactly its existing doubled flat armour",
+    "Three durable neighbouring NPCs are available",
+    "Magician retains area damage; converted class 6 skill 16 has correct native scope",
+    "Magician retains area damage; converted class 6 skill 46 has correct native scope",
+    "Magician retains area damage; converted class 7 skill 27 has correct native scope",
+    "Magician retains area damage; converted class 5 skill 37 has correct native scope",
+    "Magician retains area damage; converted class 4 skill 39 has correct native scope",
+    "Magician retains area damage; converted class 3 skill 49 has correct native scope",
+    "Priest former group heal 3 uses native selected-player packets",
+    "Priest former group heal 18 uses native selected-player packets",
+    "Godot to WebSocket to native Run and idle TP flow passes"
+  ]
+}

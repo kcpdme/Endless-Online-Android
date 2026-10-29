@@ -44,5 +44,11 @@ SPELLS={
 }
 
 from combat_progression import TP_RECOVERY
+SIGNATURES[4].update(walking_multiplier=1,running_multiplier=1.5)
+SIGNATURES[4]['description']='Normal walking speed; Run grants x1.5 movement and consumes 1.5% max TP each second while enabled. A successful adjacent attack directly behind a target deals randomly x1.5 or x2 damage with a Rogue blade; does not stack with critical hits. Skills affect one target.'
+SIGNATURES[6].update(attribute_defence_multiplier=2)
+SIGNATURES[6]['description']='Double defence from attributes; real shields retain double their armour value. Each STR gives 0.65 base attack power. Melee skills affect one target.'
+SIGNATURES[2]['description']='Regenerate 2% max HP each second; 4% sitting, half in PK. All healing spells select one target. Recover 0.3% max TP every 2 seconds; double sitting, half in PK.'
+SIGNATURES[7]['description']=SIGNATURES[7]['description'].replace('higher tiers spend more TP.','tiers spend 0.5/1/1.5/2/2.5% max TP every 2 seconds.').replace('top paw','top egg')
 for clas,rate in TP_RECOVERY.items():
  if clas in SIGNATURES:SIGNATURES[clas].update(tp_regen_rate=rate,tp_regen_seconds=2,tp_regen_sitting_multiplier=2,tp_regen_pk_multiplier=.5)

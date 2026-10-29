@@ -1,0 +1,28 @@
+{
+  "result": "passed",
+  "profile": 15,
+  "backup": "/opt/aster-vale/backups/class-run-v15-20261029T143730Z",
+  "database_bytes_unchanged": true,
+  "existing_equipment_and_items_preserved": true,
+  "original_maps_quests_drops_exp_unchanged": true,
+  "pet_damage_prices_and_drop_rates_unchanged": true,
+  "native_binary_sha256": "2fcd5afe5d11a1b5ad0faf1d23d7f99b07979447b21bd750915078bcdf3f1306",
+  "source_bundle_sha256": "1e7941362739e601503d63ac9489e211f454c7a5d4bb32f449a7ead23d43e8a7",
+  "classic_reward_audit": {
+    "result": "passed",
+    "classic_npc_drop_tables": 159,
+    "classic_drop_entries": 262,
+    "original_npc_exp_definitions": 305,
+    "exp_multiplier": 1.0,
+    "item_drop_multiplier": 1.0,
+    "gold_drop_multiplier": 1.0,
+    "goat_horn_chance_percent": 10,
+    "goat_exp": 8,
+    "eggs_are_separate_bonus": true,
+    "issues": [],
+    "database_opened": false,
+    "files_modified": false
+  },
+  "profile_sha256": "9f2561d27a65f2c9807a6aa15b9ec81dfb274bc175467590e7d2ed76c3484c31",
+  "services_healthy": true
+}

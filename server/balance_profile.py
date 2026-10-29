@@ -1,6 +1,6 @@
 """Versioned, shared design inputs for the native level 1–50 balance profile."""
 
-VERSION = 14
+VERSION = 15
 LEVELS = (1, 8, 15, 25, 35, 45)
 ATTRIBUTES = ('strength', 'intelligence', 'wisdom', 'agility', 'constitution', 'charisma')
 CLASSES = {
@@ -148,3 +148,16 @@ NEW_ITEMS.extend((ident,name,template,clas,role) for ident,name,template,clas,ro
 NEW_ITEM_TIERS.update({ident:tier for ident,name,template,clas,role,tier in SIGNATURE_ITEMS})
 SPELLS.update(SIGNATURE_SPELLS)
 SPELLS.update(SUMMON_SPELLS)
+
+# Attribute defence doubles; shield equipment retains its separate existing bonus.
+CLASSES[6]['defence'] = 'con 1.2 *'
+CLASSES[6]['hint'] = 'STR and CON, with some AGI. Double attribute defence, double real-shield armour, strong STR scaling and single-target melee skills.'
+SPELLS.update({
+    3: ('Renewing Touch',15,(2,),12,1,0,0,42,0,1,0,0),
+    18: ('Restoration',25,(2,),24,1,0,0,85,0,1,0,0),
+    16: ('Sweeping Strike',15,(6,),14,1,30,40,0,0,2,0,0),
+    27: ('Spirit Crush',35,(7,),26,1,48,62,0,0,2,0,0),
+    37: ('Focused Volley',35,(5,),24,1,50,64,0,0,2,0,0),
+    39: ('Dancing Blade',35,(4,),24,1,50,64,0,0,2,0,0),
+    46: ('Crushing Blow',45,(6,),28,1,64,82,0,0,2,0,0),
+})

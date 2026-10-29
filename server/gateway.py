@@ -113,6 +113,7 @@ class Handler(socketserver.StreamRequestHandler):
             data['balance_catalog']=profile()
             return data
         if op=='shortcuts_set':return self.server.shortcuts.write(s,r['kind'],r['first'],r['second'])
+        if op=='run_mode':return s.set_running(r.get('enabled'))
         if op=='move':return s.move(int(r['direction']),int(r['input_seq']),int(r['map_id']),int(r['x']),int(r['y']),bool(r.get('open_door',False)))
         if op=='refresh':s.refresh();return s.snapshot()
         if op=='walk':s.walk(int(r['direction']),bool(r.get('open_door',False)));return s.snapshot()

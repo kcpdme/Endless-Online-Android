@@ -1,11 +1,11 @@
 """Pet appearances share a tier's combat budget, price and TP economy."""
 
 TIERS = {
-    'normal': dict(name='Normal',rank=0,level=5,price=100,tp=10,chant=1,upkeep=2,power=.45,accuracy=0,hit_cap=.82,color='b8c5c9'),
-    'rare': dict(name='Rare',rank=1,level=10,price=6000,tp=18,chant=1,upkeep=5,power=.70,accuracy=3,hit_cap=.86,color='78b9ee'),
-    'epic': dict(name='Epic',rank=2,level=20,price=20000,tp=30,chant=2,upkeep=7,power=1.0,accuracy=6,hit_cap=.90,color='bf94ef'),
-    'legend': dict(name='Legend',rank=3,level=30,price=60000,tp=38,chant=2,upkeep=9,power=1.2,accuracy=9,hit_cap=.93,color='edb75b'),
-    'mythic': dict(name='Mythic',rank=4,level=40,price=100000,tp=45,chant=2,upkeep=12,power=1.5,accuracy=12,hit_cap=.95,color='f08093'),
+    'normal': dict(name='Normal',rank=0,level=5,price=100,tp=10,chant=1,upkeep_rate=.005,power=.45,accuracy=0,hit_cap=.82,color='b8c5c9'),
+    'rare': dict(name='Rare',rank=1,level=10,price=6000,tp=18,chant=1,upkeep_rate=.01,power=.70,accuracy=3,hit_cap=.86,color='78b9ee'),
+    'epic': dict(name='Epic',rank=2,level=20,price=20000,tp=30,chant=2,upkeep_rate=.015,power=1.0,accuracy=6,hit_cap=.90,color='bf94ef'),
+    'legend': dict(name='Legend',rank=3,level=30,price=60000,tp=38,chant=2,upkeep_rate=.02,power=1.2,accuracy=9,hit_cap=.93,color='edb75b'),
+    'mythic': dict(name='Mythic',rank=4,level=40,price=100000,tp=45,chant=2,upkeep_rate=.025,power=1.5,accuracy=12,hit_cap=.95,color='f08093'),
 }
 
 # Appearance IDs and combat stay stable; profile 11 revises the egg economy.
@@ -49,12 +49,12 @@ for egg,spell,npc,template,name,tier in SPECIES:
     chance=DROP_CHANCES[tier]
     icon=f'res://icons/{tier}_egg.svg'
     EGGS[egg]=dict(name=f'{name} Egg',hatched_id=egg+16,species=name,spell_id=spell,level=t['level'],npc_id=template,chance=chance,template_id=11,icon=icon,tier=tier,tier_name=t['name'],tier_color=t['color'],price=t['price'],sell_price=t['sell_price'])
-    COMPANIONS[spell]=dict(npc_id=npc,name=f'Spirit {name}',template_id=template,tier=tier,tier_name=t['name'],tier_color=t['color'],upkeep=t['upkeep'],upkeep_seconds=2,power=t['power'],damage_basis='owner_attack',accuracy=t['accuracy'],hit_cap=t['hit_cap'])
+    COMPANIONS[spell]=dict(npc_id=npc,name=f'Spirit {name}',template_id=template,tier=tier,tier_name=t['name'],tier_color=t['color'],upkeep_rate=t['upkeep_rate'],upkeep_percent=t['upkeep_rate']*100,upkeep_seconds=2,power=t['power'],damage_basis='owner_attack',accuracy=t['accuracy'],hit_cap=t['hit_cap'])
     SUMMON_SPELLS[spell]=(f'Summon Spirit {name}',t['level'],(7,),t['tp'],t['chant'],0,0,0,1,1,0,0)
 HATCHED_EGGS = {ident+16: dict(egg_id=ident,spell_id=egg['spell_id'],name='Hatched '+egg['species']+' Egg',species=egg['species'],tier=egg['tier'],level=egg['level'],icon=f"res://icons/{egg['tier']}_hatched_egg.svg") for ident,egg in EGGS.items()}
 PET_COOLDOWN_SECONDS = 300
 
-COMPANIONS[35]=dict(npc_id=-1,name='Dismiss Companion',template_id=74,upkeep=0,power=0,accuracy=0,hit_cap=.95)
+COMPANIONS[35]=dict(npc_id=-1,name='Dismiss Companion',template_id=74,upkeep_rate=0,upkeep_percent=0,power=0,accuracy=0,hit_cap=.95)
 
 def egg_stock():
     return sorted(EGGS,key=lambda ident:(TIERS[EGGS[ident]['tier']]['rank'],ROSTER[EGGS[ident]['tier']].index(EGGS[ident]['species'])))

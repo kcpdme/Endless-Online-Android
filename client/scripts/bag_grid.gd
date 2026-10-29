@@ -28,6 +28,7 @@ func _notification(what: int) -> void:
 	if what in [NOTIFICATION_APPLICATION_FOCUS_OUT, NOTIFICATION_APPLICATION_PAUSED]: cancel_drag()
 
 func dimensions(id: int) -> Vector2i:
+	if not str(game.online.item_info("item:%d" % id).get("egg_state", "")).is_empty():return Vector2i.ONE
 	var code: int = clampi(int(game.online.item_info("item:%d" % id).get("size", 0)), 0, 7)
 	return Vector2i(1 + code / 4, 1 + code % 4)
 
@@ -123,9 +124,11 @@ func refresh() -> void:
 		button.tooltip_text = str(info.get("name", "Item"))
 		add_child(button)
 		var artwork: TextureRect = TextureRect.new()
+		artwork.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		artwork.texture = button.icon
-		artwork.position = Vector2(5, 5)
-		artwork.size = Vector2(dimensions(id)) * CELL - Vector2(14, 14)
+		var egg:bool=not str(info.get("egg_state", "")).is_empty()
+		artwork.position = Vector2(11, 8) if egg else Vector2(5, 5)
+		artwork.size = CELL-Vector2(26,20) if egg else Vector2(dimensions(id)) * CELL - Vector2(14, 14)
 		artwork.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		artwork.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		artwork.mouse_filter = Control.MOUSE_FILTER_IGNORE

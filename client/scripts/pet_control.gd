@@ -27,8 +27,8 @@ func build(owner_game: Node, parent: Control) -> void:
 	caption.size = Vector2(84, 22);caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER;caption.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	caption.add_theme_color_override("font_color", Color.WHITE);caption.add_theme_color_override("font_outline_color", Color.BLACK);caption.add_theme_constant_override("outline_size", 4)
 	button.hide()
-	collection_button=preload("res://scripts/hud_icon_button.gd").new();collection_button.set("kind","pet")
-	collection_button.position=Vector2(-266,110);collection_button.size=Vector2(68,68);parent.add_child(collection_button)
+	collection_button=preload("res://scripts/hud_icon_button.gd").new();collection_button.set("kind","egg")
+	collection_button.position=Vector2(-536,110);collection_button.size=Vector2(68,68);parent.add_child(collection_button)
 	collection_button.set_anchors_preset(Control.PRESET_TOP_RIGHT,true);collection_button.pressed.connect(open);collection_button.tooltip_text="Hatched pet collection";collection_button.hide()
 	panel=game._modal(parent,Vector2(1000,620));var card: Control=panel.get_child(0);game._wood_card(card)
 	game._label(card,"HATCHED PET COLLECTION",Vector2(30,20),26,game.GOLD)
@@ -93,7 +93,7 @@ func press(point: Vector2=Vector2.INF) -> void:
 	if not button.visible or button.disabled:return
 	var ident: int=35 if not game.online.companion.is_empty() else bond()
 	if ident==0:
-		game._toggle_inventory();game._toast("Use an Egg to hatch a permanent pet, then choose it from the top paw icon.");return
+		game._toggle_inventory();game._toast("Use an Egg to hatch a permanent pet, then choose it from the top egg icon.");return
 	game.skills_ui.cast(ident,"self",0)
 
 func open() -> void:

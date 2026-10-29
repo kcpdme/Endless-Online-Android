@@ -15,7 +15,7 @@ var capabilities: Dictionary = {}
 func build(owner_game: Node, parent: Control) -> void:
 	game = owner_game
 	button = preload("res://scripts/hud_icon_button.gd").new()
-	button.kind = "admin"; button.position = Vector2(-626,24); button.size = Vector2(68,68)
+	button.kind = "admin"; button.position = Vector2(-716,24); button.size = Vector2(68,68)
 	parent.add_child(button); button.set_anchors_preset(Control.PRESET_TOP_RIGHT,true)
 	button.pressed.connect(open); button.hide()
 	panel = game._modal(parent,Vector2(860,620))

@@ -18,7 +18,10 @@ def profile():
 
 def check_spell(session, ident):
     rules=profile()
-    if not rules or int(session.stats.get('admin',0))>0:return
+    if not rules:return
+    spell=rules['spells'].get(str(ident))
+    if spell and spell.get('area_radius') and int(session.stats.get('class_id',0))!=3:raise EOError('Only Magicians can cast area magic')
+    if int(session.stats.get('admin',0))>0:return
     spell=rules['spells'].get(str(ident))
     if not spell or int(session.stats.get('level',0))<spell['level_requirement']:raise EOError('This skill requires a higher level')
     classes=spell.get('allowed_classes',[]);clas=int(session.stats.get('class_id',0))

@@ -74,7 +74,7 @@ def main():
      assert s.stats['admin']==0 and all(abs(s.stats[key]-kit[key]) <= (1 if key=='accuracy' else 0) for key in ('max_hp','max_tp','min_damage','max_damage','accuracy','evade','armor')),(clas,s.stats,kit)
      if clas==7:
       eligible=[(int(i),v) for i,v in profile['companions'].items() if profile['spells'][i]['level_requirement']<=45];ident=max(eligible,key=lambda a:a[1]['power'])[0];s.cast_spell(ident,'self');pump(s,1.6);assert s.companion
-     pet_tp=max(0,profile['companions'][str(ident)]['upkeep']/2-max(1,int(s.stats['max_tp']*TP_RECOVERY[7]))/2) if clas==7 else 0
+     pet_tp=max(0,s.stats['max_tp']*profile['companions'][str(ident)]['upkeep_rate']/2-max(1,int(s.stats['max_tp']*TP_RECOVERY[7]))/2) if clas==7 else 0
      s.events.clear();actors.append(dict(s=s,clas=clas,kit=kit,start=None,next=0,events=[],moves=0,casts=0,done=False,min_hp=s.stats['hp'],initial_tp=s.stats['tp'],initial_hp=s.stats['hp'],sequence=0,potions=0,potion_at=0,pet_tp_per_second=pet_tp,native_stats={key:s.stats[key] for key in ('min_damage','max_damage','accuracy','evade','armor','max_hp','max_tp')}))
     started=time.monotonic()
     while not all(a['done'] for a in actors) and time.monotonic()-started<100:

@@ -44,7 +44,20 @@ func _draw() -> void:
 	var ink: Color = Color("20312e")
 	var light: Color = Color("f2e8c7")
 	var gold: Color = Color("e7bd70")
-	if kind=="stats":
+	if kind=="egg":
+		var shell:PackedVector2Array=PackedVector2Array()
+		for i:int in range(49):
+			var angle:float=TAU*i/48.0
+			shell.append(Vector2(sin(angle)*(16+5*cos(angle)),cos(angle)*25))
+		draw_colored_polygon(shell,gold);draw_polyline(shell,light,2,true)
+		draw_polyline(PackedVector2Array([Vector2(-13,0),Vector2(-6,-6),Vector2(0,3),Vector2(7,-3),Vector2(15,2)]),ink,2.5,true)
+	elif kind=="run":
+		draw_circle(Vector2(10,-21),6,light)
+		draw_polyline(PackedVector2Array([Vector2(3,-11),Vector2(-5,2),Vector2(8,10),Vector2(5,25)]),gold,6,true)
+		draw_polyline(PackedVector2Array([Vector2(-5,2),Vector2(-16,15),Vector2(-24,15)]),light,5,true)
+		draw_polyline(PackedVector2Array([Vector2(1,-9),Vector2(13,-1),Vector2(22,-7)]),light,4,true)
+		draw_polyline(PackedVector2Array([Vector2(0,-9),Vector2(-12,-13),Vector2(-20,-4)]),light,4,true)
+	elif kind=="stats":
 		for index:int in range(3):
 			var height:float=16+index*12
 			draw_rect(Rect2(-20+index*15,22-height,10,height),gold if index==2 else light)

@@ -1,0 +1,18 @@
+{
+  "version_name": "0.56.0",
+  "version_code": 101,
+  "sha256": "ea4dedf0a80e89df6d245485d22ecd1d6a009f76410cfaa193b3eba4d74dcff5",
+  "bytes": 279031317,
+  "signature": "v2 verified",
+  "zip_alignment": "16 KiB verified",
+  "native_profile": 15,
+  "unit_tests": 40,
+  "native_acceptance": 32,
+  "pet_regressions": 229,
+  "rendered_ui": 954,
+  "classic_ui": 483,
+  "phone_install": "passed",
+  "installed_sha256_matches": true,
+  "existing_app_data_preserved": true,
+  "installed_version": "0.56.0 (101)"
+}
