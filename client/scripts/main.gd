@@ -7,7 +7,7 @@ const ShopWindow = preload("res://scripts/shop_window.gd")
 const ClassicPaperdoll = preload("res://scripts/classic_paperdoll.gd")
 const HudIconButton = preload("res://scripts/hud_icon_button.gd")
 const WeaponButton = preload("res://scripts/weapon_button.gd")
-const WoodGrain = preload("res://scripts/wood_grain.gd")
+const ClassicDialogSkin = preload("res://scripts/classic_dialog_skin.gd")
 const CharacterStats = preload("res://scripts/character_stats.gd")
 const ONLINE_ATTACK_COOLDOWN: float = 0.52
 const ATTACK_COOLDOWN: float = 0.90
@@ -51,6 +51,11 @@ var pet_ui: RefCounted
 var bag_button: HudIconButton
 var character_button: HudIconButton
 var zoom_button:HudIconButton
+var stats_button:HudIconButton
+var auto_attack_button:HudIconButton
+var auto_attack_enabled:bool=true
+var combat_settings_path:String="user://combat.cfg"
+var modal_cards:Array[Control]=[]
 const AUTO_ATTACK_HOLD_MSEC: int = 600
 const COMBAT_HUD_SHIFT: Vector2 = Vector2(-72, -36)
 var auto_attack: bool = false
@@ -157,6 +162,7 @@ func _ready() -> void:
 	DisplayServer.window_set_min_size(Vector2i(960, 540))
 	camera = preload("res://scripts/world_camera.gd").new()
 	camera.load_view()
+	_load_combat_settings()
 	camera.position_smoothing_enabled = false
 	camera.position_smoothing_speed = 8.0
 	add_child(camera)
@@ -324,6 +330,9 @@ func _process(delta: float) -> void:
 	if feature_ui != null: feature_ui.tick()
 	if admin_ui != null: admin_ui.tick()
 	if party_ui != null: party_ui.tick()
+	_layout_dialogs()
+	if stats_button!=null:stats_button.visible=started and not _modal_open() and not welcome.visible
+	if auto_attack_button!=null:auto_attack_button.visible=started and not _modal_open() and not welcome.visible
 	time_alive += delta
 	animation_clock += delta
 	var attack_previous: float = attack_clock
@@ -365,7 +374,7 @@ func _process(delta: float) -> void:
 		_advance_walk(delta)
 		if not moving: walk_remainder = maxf(0.0, delta - remaining)
 	if not _modal_open():
-		if attack_touch_id != -1 and attack_hold_can_latch and Time.get_ticks_msec() - attack_held_at >= AUTO_ATTACK_HOLD_MSEC:
+		if auto_attack_enabled and attack_touch_id != -1 and attack_hold_can_latch and Time.get_ticks_msec() - attack_held_at >= AUTO_ATTACK_HOLD_MSEC:
 			auto_attack = true
 			attack_hold_can_latch = false
 			attack_button.automatic = true
@@ -526,7 +535,7 @@ func _modal_open() -> bool:
 func _begin_attack(pointer_id: int) -> void:
 	if online_mode: route.clear()
 	# A press while latched returns to manual and cannot immediately re-latch.
-	attack_hold_can_latch = not auto_attack
+	attack_hold_can_latch = auto_attack_enabled and not auto_attack
 	auto_attack = false
 	attack_button.automatic = false
 	attack_held_at = Time.get_ticks_msec()
@@ -544,6 +553,35 @@ func _release_attack() -> void:
 	auto_attack = false
 	_end_attack_gesture()
 	if attack_button != null: attack_button.automatic = false
+
+func _load_combat_settings()->void:
+	var settings:ConfigFile=ConfigFile.new()
+	if settings.load(combat_settings_path)==OK:auto_attack_enabled=bool(settings.get_value("combat","hold_to_auto",true))
+
+func _toggle_auto_attack_mode()->void:
+	if not started or _modal_open():return
+	# Changing the preference always clears an existing latch and held gesture.
+	_release_attack()
+	auto_attack_enabled=not auto_attack_enabled
+	var settings:ConfigFile=ConfigFile.new();settings.load(combat_settings_path)
+	settings.set_value("combat","hold_to_auto",auto_attack_enabled)
+	if settings.save(combat_settings_path)!=OK:_toast("Attack mode changed, but could not be saved.")
+	else:_toast("Auto attack enabled · hold weapon to latch" if auto_attack_enabled else "Manual attack · keep weapon pressed to attack")
+	_refresh_auto_attack_mode()
+
+func _refresh_auto_attack_mode()->void:
+	auto_attack_button.set_pressed_no_signal(auto_attack_enabled)
+	auto_attack_button.tooltip_text="Auto attack enabled · long press weapon to latch" if auto_attack_enabled else "Auto attack disabled · keep weapon pressed"
+
+func _open_stats()->void:
+	if not started or _modal_open():return
+	stats_ui.show_stats()
+	_layout_dialogs()
+
+func _extra_hud_at(point:Vector2)->HudIconButton:
+	for button:HudIconButton in [stats_button,auto_attack_button]:
+		if button!=null and button.is_visible_in_tree() and button.contains_point(point):return button
+	return null
 
 func _cancel_controls(force_stop: bool = false) -> void:
 	if emote_ui != null: emote_ui.cancel()
@@ -618,6 +656,9 @@ func _input(event: InputEvent) -> void:
 				return
 	# Own native controls suppress their separately generated mouse events, including
 	# HUD presses that open a modal. A release can never become a second action.
+	if event is InputEventMouseButton and not _modal_open() and _extra_hud_at(event.position)!=null:
+		if event.device==InputEvent.DEVICE_ID_EMULATION:get_viewport().set_input_as_handled()
+		return
 	if event is InputEventMouseButton and event.device!=InputEvent.DEVICE_ID_EMULATION and zoom_button.visible and not _modal_open() and zoom_button.contains_point(event.position):return
 	if event is InputEventMouseButton and event.device == InputEvent.DEVICE_ID_EMULATION:
 		if zoom_button!=null and zoom_button.visible and not _modal_open() and zoom_button.contains_point(event.position):
@@ -661,6 +702,12 @@ func _input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		return
 	if event is InputEventScreenTouch and event.pressed:
+		var extra_button:HudIconButton=_extra_hud_at(event.position)
+		if extra_button!=null:
+			owned_touches[event.index]=true
+			if extra_button==stats_button:_open_stats()
+			else:_toggle_auto_attack_mode()
+			get_viewport().set_input_as_handled();return
 		if zoom_button.visible and zoom_button.contains_point(event.position):
 			_toggle_camera_view();owned_touches[event.index]=true
 			get_viewport().set_input_as_handled();return
@@ -1280,6 +1327,10 @@ func _build_ui() -> void:
 	character_button.pressed.connect(_toggle_paperdoll)
 	root.add_child(character_button)
 	character_button.set_anchors_preset(Control.PRESET_TOP_RIGHT, true)
+	stats_button=HudIconButton.new();stats_button.kind="stats"
+	stats_button.position=Vector2(-266,24);stats_button.size=Vector2(68,68)
+	stats_button.pressed.connect(_open_stats);root.add_child(stats_button)
+	stats_button.set_anchors_preset(Control.PRESET_TOP_RIGHT,true);stats_button.hide()
 	zoom_button=HudIconButton.new();zoom_button.kind="zoom";zoom_button.position=Vector2(-716,24);zoom_button.size=Vector2(68,68)
 	zoom_button.toggle_mode=true;zoom_button.set_pressed_no_signal(camera.zoomed);zoom_button.pressed.connect(_toggle_camera_view)
 	root.add_child(zoom_button);zoom_button.set_anchors_preset(Control.PRESET_TOP_RIGHT,true)
@@ -1300,6 +1351,11 @@ func _build_ui() -> void:
 	bag_button.pressed.connect(_toggle_inventory)
 	root.add_child(bag_button)
 	bag_button.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT, true)
+	auto_attack_button=HudIconButton.new();auto_attack_button.kind="auto_attack"
+	auto_attack_button.position=Vector2(-82,-114);auto_attack_button.size=Vector2(48,48)
+	auto_attack_button.toggle_mode=true;auto_attack_button.pressed.connect(_toggle_auto_attack_mode)
+	root.add_child(auto_attack_button);auto_attack_button.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT,true)
+	_refresh_auto_attack_mode();auto_attack_button.hide()
 	sit_button = HudIconButton.new()
 	sit_button.kind = "sit"
 	sit_button.position = Vector2(-174, -88) + COMBAT_HUD_SHIFT
@@ -1394,12 +1450,18 @@ func _modal(parent: Node, size: Vector2) -> Control:
 	curtain.set_meta("game_modal", true)
 	curtain.z_index = 10
 	curtain.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	curtain.color = Color(0.02, 0.055, 0.065, 0.72)
+	curtain.color = Color.TRANSPARENT
+	curtain.mouse_filter=Control.MOUSE_FILTER_STOP
 	parent.add_child(curtain)
 	var panel: Panel = _panel(curtain, -size / 2.0, size, Color("12272a"))
 	panel.set_anchors_preset(Control.PRESET_CENTER, true)
+	_wood_card(panel)
+	modal_cards.append(panel)
 	curtain.visibility_changed.connect(func() -> void:
-		if curtain.visible: _cancel_controls()
+		if curtain.visible:
+			_cancel_controls()
+			if curtain.color.a==0.0:ClassicDialogSkin.finish(panel)
+			_layout_dialogs()
 	)
 	return curtain
 
@@ -1537,21 +1599,30 @@ func refresh_bag_overflow() -> void:
 	for id: int in missing: bag_overflow.add_item(str(online.item_info("item:%d" % id).get("name", "Item")), id)
 	bag_overflow.select(0)
 
-func _wood_card(card: Control) -> void:
-	card.add_theme_stylebox_override("panel", _wood_style(Color("886034"), Color("39230f"), 5))
-	var grain: Control = WoodGrain.new()
-	card.add_child(grain)
-	grain.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+func _wood_card(card: Control, kind:String="shop") -> void:
+	ClassicDialogSkin.apply(card,kind)
+
+func _layout_dialogs()->void:
+	for card:Control in modal_cards:
+		if not is_instance_valid(card) or not card.is_visible_in_tree():continue
+		var curtain:Control=card.get_parent()
+		if not curtain is ColorRect or curtain.color.a>0.0:continue
+		ClassicDialogSkin.finish(card)
+		# Keyboard-aware conversations/town forms own their responsive layout.
+		if card.has_meta("manual_dialog_layout"):continue
+		var available:Vector2=curtain.size-Vector2(32,32)
+		if card.size.x<=0 or card.size.y<=0:continue
+		var factor:float=minf(1.18,minf(available.x/card.size.x,available.y/card.size.y))
+		card.scale=Vector2.ONE*factor
+		card.position=(curtain.size-card.size*factor)/2.0
 
 func _build_paperdoll(parent: Node) -> void:
-	character_panel = _modal(parent, Vector2(840, 680))
+	character_panel = _modal(parent, Vector2(760, 580))
 	var card: Control = character_panel.get_child(0) as Control
-	_wood_card(card)
-	_label(card, "CHARACTER", Vector2(40, 20), 26, GOLD)
-	_button(card, "Stats", Vector2(620, 14), Vector2(180, 48), func() -> void: stats_ui.show_stats())
+	card.add_theme_stylebox_override("panel",StyleBoxEmpty.new())
 	paperdoll = ClassicPaperdoll.new()
 	paperdoll.game = self
-	paperdoll.position = Vector2(40, 80)
+	paperdoll.position = Vector2.ZERO
 	paperdoll.size = Vector2(380, 290)
 	paperdoll.scale = Vector2(2, 2)
 	paperdoll.equipment_selected.connect(func(kind: String) -> void:
@@ -1921,3 +1992,4 @@ func _layout_safe_area() -> void:
 			hud_root.offset_right = -maxf(0.0, float(pixels.x - safe.end.x)) * ratio.x
 			hud_root.offset_bottom = -maxf(0.0, float(pixels.y - safe.end.y)) * ratio.y
 	if joystick != null and not joystick.active: joystick.reset()
+	_layout_dialogs()

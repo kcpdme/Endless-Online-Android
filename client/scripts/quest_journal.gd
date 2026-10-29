@@ -19,7 +19,7 @@ func build(owner_game: Node, parent: Control) -> void:
 	button.position = Vector2(-356,24); button.size = Vector2(68,68)
 	button.pressed.connect(open); parent.add_child(button); button.set_anchors_preset(Control.PRESET_TOP_RIGHT,true)
 	panel = game._modal(parent,Vector2(950,620)); var card: Control = panel.get_child(0)
-	game._wood_card(card)
+	game._wood_card(card,"quests")
 	title = game._label(card,"Ongoing quests",Vector2(30,22),28,game.GOLD)
 	game._button(card,"×",Vector2(866,14),Vector2(54,48),dismiss)
 	for index: int in range(2):

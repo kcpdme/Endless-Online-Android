@@ -248,6 +248,8 @@ def main():
         (out/'ui').mkdir(exist_ok=True)
         paper.crop((0,290,380,580)).save(out/'ui/paperdoll_male.png')
         ui=PEBitmaps(read_member(client,'gfx/gfx002.egf'))
+        from prepare_classic_dialogs import export_dialogs
+        export_dialogs(ui, out/'ui')
         for graphic in (34,52):ui.image(graphic,transparent=False).save(out/f'ui/classic_{graphic}.png')
         paper.crop((14,302,214,568)).save(out/'ui/paperdoll_silhouette.png')
         manifest['paperdoll']={

@@ -47,6 +47,7 @@ func build(owner_game: Node, parent: Control) -> void:
 		values.append(value)
 		var stat_id: int = index + 1
 		var increase: Button = game._button(card, "+", Vector2(256, 133 + index * 36), Vector2(30, 24), func() -> void: pass)
+		increase.set_meta("preserve_button_skin",true)
 		increase.button_down.connect(func() -> void: begin_repeat(stat_id))
 		increase.button_up.connect(stop_repeat)
 		increase.mouse_exited.connect(stop_repeat)

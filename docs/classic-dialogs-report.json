@@ -1,0 +1,115 @@
+{
+  "version": "0.55.0",
+  "version_code": 99,
+  "apk": {
+    "version": "0.55.0",
+    "version_code": 99,
+    "apk_bytes": 279007780,
+    "previous_bytes": 278809310,
+    "growth_bytes": 198470,
+    "sha256": "8220888dc950458eac992cbeaa694e71fbd250ef9688bbf70e44357c70ec500f",
+    "native_libraries_unchanged": true
+  },
+  "focused": {
+    "attack_preference_persists": true,
+    "checks": 480,
+    "network_requests": 0,
+    "original_eo_frames": 6,
+    "rendered": true,
+    "result": "passed",
+    "viewports": 3,
+    "world_undimmed": true
+  },
+  "regressions": {
+    "classic_dialogs_mobile": {
+      "passed": true,
+      "exit": 0,
+      "errors": [],
+      "summary": [
+        "CLASSIC DIALOGS/HUD: {\"attack_preference_persists\":true,\"checks\":480,\"network_requests\":0,\"original_eo_frames\":6,\"rendered\":true,\"result\":\"passed\",\"viewports\":3,\"world_undimmed\":true}"
+      ]
+    },
+    "chat_zoom": {
+      "passed": true,
+      "exit": 0,
+      "errors": [],
+      "summary": [
+        "CHAT/ZOOM: {\"checks\":68,\"feed_timeout_seconds\":8,\"manual_collapse_preserves_history_and_draft\":true,\"network_requests\":0,\"rendered\":true,\"result\":\"passed\",\"touch_and_mouse_verified\":true,\"typing_and_scrolling_protected\":true,\"zoom_modes\":[1,1.25],\"zoom_preference_persists\":true}"
+      ]
+    },
+    "mobile_scroll": {
+      "passed": true,
+      "exit": 0,
+      "errors": [],
+      "summary": [
+        "MOBILE SCROLL: {\"button_swipes_do_not_activate\":true,\"checks\":13,\"item_list_drag\":true,\"quest_card_drag\":true,\"result\":\"passed\",\"text_fields_preserved\":true,\"wide_scrollbars\":true}"
+      ]
+    },
+    "mobile_movement": {
+      "passed": true,
+      "exit": 0,
+      "errors": [],
+      "summary": [
+        "MOBILE MOVEMENT PASS: {\"aeven_full_grid_candidates\":7569,\"bounded_candidates\":2601,\"checks\":38,\"keyboard_turn_ms\":200,\"long_drag_reversal_px\":79,\"result\":\"passed\",\"step_ms\":420,\"touch_turn_ms\":0,\"viewport_cases\":15}"
+      ]
+    },
+    "class_guidance_layout": {
+      "passed": true,
+      "exit": 0,
+      "errors": [],
+      "summary": [
+        "CLASS GUIDANCE LAYOUT: {\"checks\":60,\"classes\":6,\"result\":\"passed\",\"viewports\":2}"
+      ]
+    },
+    "chest_mobile": {
+      "passed": true,
+      "exit": 0,
+      "errors": [],
+      "summary": [
+        "CHEST MOBILE PASS: artwork targeting, adjacent open, native loot rows, whole-stack take, acknowledged bag counts, Gold deposit/close, walk bump, pending movement ACK, locked result and one open per gesture"
+      ]
+    },
+    "quest_journal_mobile": {
+      "passed": true,
+      "exit": 0,
+      "errors": [],
+      "summary": [
+        "QUEST JOURNAL: {\"back_late_reply_logout\":true,\"checks\":46,\"four_landscape_sizes\":true,\"native_progress_and_history\":true,\"no_optimistic_quests\":true,\"quest_icon_beside_stats\":true,\"result\":\"passed\",\"single_touch_no_movement\":true}"
+      ]
+    },
+    "character_flow_mobile": {
+      "passed": true,
+      "exit": 0,
+      "errors": [],
+      "summary": [
+        "CHARACTER FLOW: {\"checks\":153,\"four_landscape_sizes\":true,\"fourth_creation_and_double_submit_prevented\":true,\"native_body_skin_hair_and_color\":true,\"result\":\"passed\",\"third_native_character_selection\":true,\"zero_through_three_characters\":true}"
+      ]
+    }
+  },
+  "source_art": {
+    "six_original_frames_corners_preserved": true,
+    "byte_reproducible": true,
+    "png_total_bytes": 224034
+  },
+  "godot_import": "passed",
+  "android_export": "passed",
+  "apk_signature": "passed (v2)",
+  "zip_alignment_16k": "passed",
+  "android_install": {
+    "result": "passed",
+    "model": "SM-S918B",
+    "version": "0.55.0",
+    "version_code": 99,
+    "installed_sha256_matches": true,
+    "first_install_time_preserved": true,
+    "foreground_app_left_alone": true
+  },
+  "legacy_importer": {
+    "passed": 11,
+    "failed": 1,
+    "test": "test_export_complete_and_frame_dimensions",
+    "baseline_reproduced": true,
+    "cause": "Original NPC graphic 171 (Wraith) has intentionally transparent walking frames; unchanged existing content assertion rejects them."
+  },
+  "live_player_actions_performed": false
+}

@@ -24,6 +24,7 @@ func build(owner: Node, parent: Control) -> void:
 	if cfg.load("user://accessibility.cfg") == OK: reduced_motion = bool(cfg.get_value("motion","reduced",false))
 	panel = game._modal(parent,Vector2(940,650))
 	card = panel.get_child(0); card.set_anchors_preset(Control.PRESET_TOP_LEFT,true); game._wood_card(card)
+	card.set_meta("manual_dialog_layout",true)
 	heading = game._label(card,"Town services",Vector2(28,18),28,game.GOLD)
 	game._button(card,"×",Vector2(858,12),Vector2(54,48),close)
 	scroll = ScrollContainer.new(); scroll.position=Vector2(28,82); scroll.size=Vector2(884,470);scroll.follow_focus=true

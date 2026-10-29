@@ -11,6 +11,15 @@ python3 tools/import_eo.py \
 python3 tools/test_import_eo.py
 ```
 
+The base import also prepares resizable original EO wooden dialog textures.
+To update only these panels in an existing private content pack, run
+`python3 tools/prepare_classic_dialogs.py /path/to/gfx002.egf --output client/content/ui`.
+The importer preserves the original outside bevels from graphics 50 (trade),
+51 (chest), 52 (shop/locker), 53 (bank), 59 (quest journal) and 67 (NPC quest),
+and tiles blank shop timber inside them. Original text and buttons are not baked
+into the resizable panels. `classic_dialogs.json` records source regions and hashes.
+Generated PNGs remain ignored with the other original EO content.
+
 To import elsewhere use `--output /absolute/path/to/client/content`. The `--map` argument selects a numbered map, default 5 (Aeven). For tests, `EO_DATA_DIR` can override the source archive directory. Real-data integration checks skip when the archives are unavailable. Reference archives and generated assets are not included in the public repository. Keep local downloads in the ignored `reference/` directory.
 
 The default export is the complete 87×87 Aeven map, not a synthetic approximation. Spawn `(40,40)` has a clear seven-by-seven neighborhood. The importer preserves 26 map NPC spawn records, chest and warp records, encoded map text, all nine layers, and tile specifications. It exports only the map's referenced graphic IDs, selected item samples, and character frames. NPC records and warps are reference data; their presence does not imply runtime AI, transitions, quests, or network support.

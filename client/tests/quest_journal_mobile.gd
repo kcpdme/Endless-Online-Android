@@ -28,9 +28,9 @@ func run() -> void:
 	check(game._graphic(2,68)!=null,"Original quest icon atlas is imported")
 	for dimensions: Vector2i in [Vector2i(960,540),Vector2i(1280,720),Vector2i(1600,720),Vector2i(1920,1080)]:
 		root.size=dimensions;await process_frame;await process_frame
-		var icons: Array=[game.skills_ui.buttons[2],journal.button,game.chat_button,game.character_button]
+		var icons: Array=[game.skills_ui.buttons[2],journal.button,game.stats_button,game.character_button]
 		for control: Control in icons:check(root.get_visible_rect().encloses(control.get_global_rect()),"Top icons fit landscape safe area")
-		for i: int in range(icons.size()-1):check(icons[i].get_global_rect().end.x < icons[i+1].get_global_rect().position.x,"Quest icon beside chat does not overlap skill or character")
+		for i: int in range(icons.size()-1):check(icons[i].get_global_rect().end.x < icons[i+1].get_global_rect().position.x,"Quests, stats and equipment icons stay separate")
 		journal.panel.show();await process_frame;check(root.get_visible_rect().encloses(journal.panel.get_child(0).get_global_rect()),"Quest journal fits landscape");journal.dismiss()
 	root.size=Vector2i(1600,720);await process_frame;await process_frame;await shot("quests-hud-icon")
 	await tap(journal.button)
@@ -56,7 +56,7 @@ func run() -> void:
 	game._handle_back();check(not journal.panel.visible and not game._modal_open(),"Android Back dismisses quest journal")
 	journal.receive({"quest_journal":{"page":"progress","entries":rows}});check(not journal.panel.visible,"Late quest reply never reopens a dismissed journal")
 	journal.open();c.log_out();check(not journal.panel.visible and journal.state.is_empty(),"Logout clears another character's quest cache")
-	var report: Dictionary={"result":"failed" if failed else "passed","checks":checks,"quest_icon_beside_chat":true,"four_landscape_sizes":true,"native_progress_and_history":true,"single_touch_no_movement":true,"no_optimistic_quests":true,"back_late_reply_logout":true}
+	var report: Dictionary={"result":"failed" if failed else "passed","checks":checks,"quest_icon_beside_stats":true,"four_landscape_sizes":true,"native_progress_and_history":true,"single_touch_no_movement":true,"no_optimistic_quests":true,"back_late_reply_logout":true}
 	var path: String=OS.get_environment("ASTER_VALE_TEST_REPORT")
 	if not path.is_empty():var out: FileAccess=FileAccess.open(path,FileAccess.WRITE);out.store_string(JSON.stringify(report,"  ")+"\n")
 	print("QUEST JOURNAL: ",JSON.stringify(report));game.queue_free();await create_timer(.2).timeout;quit(1 if failed else 0)

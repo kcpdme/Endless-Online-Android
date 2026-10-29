@@ -79,6 +79,7 @@ func _list(card: Control, at: Vector2) -> ItemList:
 func open(kind: String, data: Dictionary) -> void:
 	if mode == "chest" and kind != "chest": close()
 	mode = kind
+	game._wood_card(card,kind if kind in ["trade","bank","chest"] else "shop")
 	state = data.duplicate(true)
 	game.inventory.hide()
 	game.character_panel.hide()

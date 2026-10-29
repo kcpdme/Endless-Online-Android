@@ -57,6 +57,7 @@ func build(owner_game: Node, parent: Control) -> void:
 	list.add_theme_font_size_override("font_size", 21)
 	list.add_theme_constant_override("v_separation", 16)
 	list.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
+	list.set_meta("preserve_panel_skin",true)
 	list.item_selected.connect(func(_index: int) -> void: _selected())
 	card.add_child(list)
 	item_icon = TextureRect.new()

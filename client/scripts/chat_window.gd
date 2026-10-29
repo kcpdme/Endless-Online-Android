@@ -56,7 +56,9 @@ func build(owner_game: Node, parent: Control) -> void:
 	button.tooltip_text = "Conversations and online players"
 	panel = game._modal(parent, Vector2(1000, 620))
 	var card: Control = panel.get_child(0) as Control
-	card.add_theme_stylebox_override("panel", game._style(Color("102126"), Color("64756e"), 16))
+	game._wood_card(card)
+	card.set_meta("manual_dialog_layout",true)
+	card.set_anchors_preset(Control.PRESET_TOP_LEFT,true)
 	heading = game._label(card, "CONVERSATIONS", Vector2(32, 20), 26, game.GOLD)
 	subheading = game._label(card, "Drag history to scroll · Tap a name to whisper", Vector2(32, 55), 16, game.MUTED)
 	game._button(card, "×", Vector2(916, 18), Vector2(54, 48), close)
@@ -437,13 +439,15 @@ func _refresh() -> void:
 
 func _layout(keyboard_lift: float = -1.0) -> void:
 	if keyboard_lift >= 0.0: last_keyboard_lift = keyboard_lift
-	var viewport: Vector2 = game.get_viewport_rect().size
+	var viewport: Vector2 = panel.size
 	var available: float = viewport.y - last_keyboard_lift
-	var height: float = clampf(available - 24, 280, 620)
+	var factor:float=minf(1.18,minf((viewport.x-32)/1000.0,(available-24)/280.0))
+	var height: float = clampf((available - 24)/factor, 280, 620)
 	var compact: bool = height < 560
 	var card: Control = panel.get_child(0) as Control
 	card.size = Vector2(1000, height)
-	card.position = Vector2((viewport.x - 1000) / 2.0, maxf(12.0, (available - height) / 2.0))
+	card.scale=Vector2.ONE*factor
+	card.position = Vector2((viewport.x - 1000*factor) / 2.0, maxf(12.0, (available - height*factor) / 2.0))
 	heading.visible = not compact
 	subheading.visible = not compact
 	for index: int in range(tabs.size()):

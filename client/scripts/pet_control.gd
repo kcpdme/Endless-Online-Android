@@ -28,7 +28,7 @@ func build(owner_game: Node, parent: Control) -> void:
 	caption.add_theme_color_override("font_color", Color.WHITE);caption.add_theme_color_override("font_outline_color", Color.BLACK);caption.add_theme_constant_override("outline_size", 4)
 	button.hide()
 	collection_button=preload("res://scripts/hud_icon_button.gd").new();collection_button.set("kind","pet")
-	collection_button.position=Vector2(-266,24);collection_button.size=Vector2(68,68);parent.add_child(collection_button)
+	collection_button.position=Vector2(-266,110);collection_button.size=Vector2(68,68);parent.add_child(collection_button)
 	collection_button.set_anchors_preset(Control.PRESET_TOP_RIGHT,true);collection_button.pressed.connect(open);collection_button.tooltip_text="Hatched pet collection";collection_button.hide()
 	panel=game._modal(parent,Vector2(1000,620));var card: Control=panel.get_child(0);game._wood_card(card)
 	game._label(card,"HATCHED PET COLLECTION",Vector2(30,20),26,game.GOLD)

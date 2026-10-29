@@ -20,7 +20,7 @@ func _ready() -> void:
 	button_down.connect(queue_redraw)
 	button_up.connect(queue_redraw)
 	resized.connect(queue_redraw)
-	tooltip_text = {"bag": "Inventory bag", "person": "Character equipment", "chat": "Chat", "quests": "Ongoing quests", "party": "Party", "admin": "Admin functions", "skills": "Skills", "sit": "Sit / Stand", "zoom":"Normal / 125% view", "collapse":"Hide messages"}.get(kind, "")
+	tooltip_text = {"bag": "Inventory bag", "person": "Character equipment", "stats":"Character stats and attributes", "auto_attack":"Enable / disable hold-to-auto attack", "chat": "Chat", "quests": "Ongoing quests", "party": "Party", "admin": "Admin functions", "skills": "Skills", "sit": "Sit / Stand", "zoom":"Normal / 125% view", "collapse":"Hide messages"}.get(kind, "")
 
 func _has_point(point: Vector2) -> bool:
 	if kind=="collapse":return Rect2(Vector2.ZERO,size).has_point(point)
@@ -44,7 +44,21 @@ func _draw() -> void:
 	var ink: Color = Color("20312e")
 	var light: Color = Color("f2e8c7")
 	var gold: Color = Color("e7bd70")
-	if kind=="zoom":
+	if kind=="stats":
+		for index:int in range(3):
+			var height:float=16+index*12
+			draw_rect(Rect2(-20+index*15,22-height,10,height),gold if index==2 else light)
+		draw_line(Vector2(-24,24),Vector2(24,24),light,2,true)
+	elif kind=="auto_attack":
+		var color:Color=gold if down else light
+		draw_arc(Vector2.ZERO,23,-PI*.85,-PI*.1,26,color,3.5,true)
+		draw_arc(Vector2.ZERO,23,PI*.15,PI*.9,26,color,3.5,true)
+		draw_colored_polygon(PackedVector2Array([Vector2(25,-12),Vector2(22,0),Vector2(13,-9)]),color)
+		draw_colored_polygon(PackedVector2Array([Vector2(-25,12),Vector2(-22,0),Vector2(-13,9)]),color)
+		draw_line(Vector2(-6,14),Vector2(8,-13),color,4,true)
+		draw_line(Vector2(-12,4),Vector2(4,12),color,3,true)
+		if not down:draw_line(Vector2(-23,24),Vector2(23,-24),Color("eaa69c"),3.5,true)
+	elif kind=="zoom":
 		draw_arc(Vector2(-4,-5),14,0,TAU,48,light,3.0,true)
 		draw_line(Vector2(7,7),Vector2(21,21),gold,5.0,true)
 		draw_line(Vector2(-11,-5),Vector2(3,-5),gold,2.5,true)

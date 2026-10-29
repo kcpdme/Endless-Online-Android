@@ -16,7 +16,7 @@ func build(owner_game: Node, parent: Control) -> void:
 	game = owner_game
 	panel = game._modal(parent, Vector2(850, 610))
 	var card: Control = panel.get_child(0) as Control
-	game._wood_card(card)
+	game._wood_card(card,"quest_dialog")
 	title = game._label(card, "", Vector2(30, 22), 28, game.GOLD)
 	game._button(card, "×", Vector2(766, 16), Vector2(54, 48), close)
 	selector = OptionButton.new()
