@@ -1351,11 +1351,6 @@ func _build_ui() -> void:
 	bag_button.pressed.connect(_toggle_inventory)
 	root.add_child(bag_button)
 	bag_button.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT, true)
-	auto_attack_button=HudIconButton.new();auto_attack_button.kind="auto_attack"
-	auto_attack_button.position=Vector2(-82,-114);auto_attack_button.size=Vector2(48,48)
-	auto_attack_button.toggle_mode=true;auto_attack_button.pressed.connect(_toggle_auto_attack_mode)
-	root.add_child(auto_attack_button);auto_attack_button.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT,true)
-	_refresh_auto_attack_mode();auto_attack_button.hide()
 	sit_button = HudIconButton.new()
 	sit_button.kind = "sit"
 	sit_button.position = Vector2(-174, -88) + COMBAT_HUD_SHIFT
@@ -1429,6 +1424,12 @@ func _build_ui() -> void:
 	chat_ui.build(self, root)
 	emote_ui = preload("res://scripts/emote_control.gd").new()
 	emote_ui.build(self, chat_ui.quick_root)
+	auto_attack_button=HudIconButton.new();auto_attack_button.kind="auto_attack"
+	auto_attack_button.size=Vector2(32,32)
+	auto_attack_button.position=emote_ui.button.position+Vector2(emote_ui.button.size.x+8,(emote_ui.button.size.y-auto_attack_button.size.y)/2)
+	auto_attack_button.toggle_mode=true;auto_attack_button.pressed.connect(_toggle_auto_attack_mode)
+	chat_ui.quick_root.add_child(auto_attack_button)
+	_refresh_auto_attack_mode();auto_attack_button.hide()
 	quest_journal = preload("res://scripts/quest_journal.gd").new()
 	quest_journal.build(self, root)
 	speech_layer = preload("res://scripts/speech_bubbles.gd").new()

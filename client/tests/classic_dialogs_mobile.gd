@@ -50,6 +50,9 @@ func run()->void:
 	var controls:Array[Control]=[game.zoom_button,game.admin_ui.button,game.party_ui.button,game.skills_ui.buttons[2],game.quest_journal.button,game.stats_button,game.character_button,game.menu_button,game.pet_ui.collection_button,game.bag_button,game.auto_attack_button,game.sit_button,game.attack_button,game.pet_ui.button,game.online.loot_button]
 	for dimensions:Vector2i in [Vector2i(960,540),Vector2i(1280,720),Vector2i(1544,720)]:
 		root.size=dimensions;await process_frame;game._layout_safe_area();game._process(0)
+		var emoji:Rect2=game.emote_ui.button.get_global_rect()
+		var auto_icon:Rect2=game.auto_attack_button.get_global_rect()
+		check(game.auto_attack_button.get_parent()==game.chat_ui.quick_root and is_equal_approx(auto_icon.position.x,emoji.end.x+8) and is_equal_approx(auto_icon.get_center().y,emoji.get_center().y),"Auto mode stays beside and vertically aligned with emoji")
 		for index:int in range(controls.size()):
 			var rect:Rect2=controls[index].get_global_rect()
 			check(game.get_viewport_rect().encloses(rect),"HUD control fits "+str(dimensions)+" #"+str(index))

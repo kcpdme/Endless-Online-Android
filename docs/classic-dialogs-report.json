@@ -111,5 +111,31 @@
     "baseline_reproduced": true,
     "cause": "Original NPC graphic 171 (Wraith) has intentionally transparent walking frames; unchanged existing content assertion rejects them."
   },
-  "live_player_actions_performed": false
+  "live_player_actions_performed": false,
+  "patch_0_55_1": {
+    "version": "0.55.1",
+    "version_code": 100,
+    "apk_bytes": 279008012,
+    "sha256": "20f021af1750bae45d2cd643ebdeb30236c3377b543cf9847d17e685fa9dca78",
+    "focused_test": {
+      "attack_preference_persists": true,
+      "checks": 483,
+      "network_requests": 0,
+      "original_eo_frames": 6,
+      "rendered": true,
+      "result": "passed",
+      "viewports": 3,
+      "world_undimmed": true
+    },
+    "position": "8 pixels right of emoji, same vertical centre, shares chat composer parent",
+    "signature": "passed (v2)",
+    "zip_alignment_16k": "passed",
+    "android_install": {
+      "result": "passed",
+      "version": "0.55.1",
+      "version_code": 100,
+      "installed_sha256_matches": true,
+      "first_install_time_preserved": true
+    }
+  }
 }

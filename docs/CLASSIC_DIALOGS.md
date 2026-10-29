@@ -5,8 +5,9 @@ The equipment screen shows the original EO paperdoll, without its former outer
 heading or Stats button. The summoner's pet-collection icon sits directly below
 Stats; its summon/dismiss control remains beside the combat controls.
 
-The small circular sword/arrows button to the right of Inventory enables or
-disables hold-to-auto attack. Gold indicates enabled; a slash indicates manual.
+As of v0.55.1 (100), the small circular sword/arrows button immediately to the
+right of the emoji button enables or disables hold-to-auto attack. It moves with
+the chat composer when the keyboard opens. Gold indicates enabled; a slash indicates manual.
 Enabled preserves the existing behavior: hold the weapon for 600 ms to latch,
 then tap the weapon to return to manual. Disabled repeats attacks only while the
 weapon is held and stops on release. Disabling also clears any active latch.
