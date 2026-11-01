@@ -1,6 +1,26 @@
 """Original quest-NPC dialogue, including Wise Man's native class/karma quest."""
+from functools import lru_cache
+import re
 from eo_session import EOError, Reader, number
+from services import runtime_path
 from skills import npc_types
+
+
+@lru_cache(maxsize=1)
+def quest_npc_names():
+    """Public native metadata only; completion always comes from Quest_List."""
+    runtime=runtime_path();r=Reader((runtime/'data/pub/dtn001.enf').read_bytes())
+    if r.take(3)!=b'ENF':raise EOError('Invalid native NPC definitions')
+    r.take(4);count=r.num(2);r.num();names={}
+    for ident in range(1,count+1):
+        r.take(r.num());fields=r.take(39)
+        if Reader(fields[7:9]).num(2)!=15:continue
+        vendor=Reader(fields[9:11]).num(2)
+        path=runtime/f'data/quests/{vendor:05}.eqf'
+        if not vendor or not path.is_file():continue
+        match=re.search(r'^\s*questname\s+"([^"\r\n]+)"',path.read_text(encoding='latin1'),re.M|re.I)
+        if match:names[ident]=match[1]
+    return names
 
 
 class QuestsMixin:
@@ -32,12 +52,30 @@ class QuestsMixin:
             if not self.quest_dialog:raise EOError('This NPC has no available conversation')
         except EOError as exc:
             self.quest_context=None;self.quest_dialog=None
-            raise EOError('This NPC has no new quest dialogue right now. Finish the current quest objectives or talk to its starting NPC.') from exc
+            raise EOError(self._quest_unavailable_message(npc['id'])) from exc
         except Exception:
             self.quest_context=None;self.quest_dialog=None
             raise
         self.shop=None;self.bank=None;self.locker=None;self.chest=None;self.skillmaster=None
         return self.snapshot()
+
+    def _quest_unavailable_message(self,npc_id):
+        # Native Quest_Use is silent when a completed one-time quest has no
+        # dialogue. Do not misreport this as an unrelated active-quest blocker.
+        previous=self.quest_journal
+        try:
+            self.quest_journal=None
+            self.send(50,18,number(2,1));self._wait_service(50,{18})
+            journal=self.quest_journal
+            if not journal or journal['page']!='history':raise EOError('Missing quest history')
+            name=quest_npc_names().get(npc_id)
+            if name and any(row['name']==name for row in journal['entries']):
+                return f'You have already completed {name}. This NPC has no further quest dialogue. See Quest Book > Completed.'
+            return 'This NPC has no quest dialogue available right now. Check Quest Book for your objectives and completed quests.'
+        except (EOError,OSError,RuntimeError,ValueError):
+            return 'Quest dialogue could not be confirmed. Please try again.'
+        finally:
+            self.quest_journal=previous
 
     def quest_reply(self,action=None):
         self._standing();self._near_service(self.quest_context)

@@ -54,6 +54,38 @@ class QuestsStateTests(unittest.TestCase):
         self.assertEqual(result['quest_dialog']['pages'],['Hello stranger'])
         self.assertEqual(result['quest_dialog']['links'],[dict(id=1,text='Karma menu'),dict(id=2,text='Class menu')])
 
+    def test_completed_piglet_quest_explains_history_without_resetting_progress(self):
+        s=fixture();s.state['npcs']=[dict(id=154,index=7,x=40,y=39)]
+        previous=dict(page='progress',entries=[dict(name='Snake Hunt (rep)',progress=1,target=3)])
+        s.quest_journal=previous
+        def wait(f,actions):
+            if actions=={34}:raise EOError('No native dialogue')
+            s.apply_event(50,18,number(2,1)+number(4,2)+string('Piglet Trouble')+string('Goat Business'))
+        s._wait_service=wait
+        with patch('quests.npc_types',return_value={154:15}),patch('quests.quest_npc_names',return_value={154:'Piglet Trouble'}):
+            with self.assertRaisesRegex(EOError,'already completed Piglet Trouble'):
+                s.quest_open(7)
+        self.assertEqual(s.sent,[(50,10,number(7,2)+number(0,2)),(50,18,number(2,1))])
+        self.assertIs(s.quest_journal,previous);self.assertIsNone(s.quest_context);self.assertIsNone(s.quest_dialog)
+
+    def test_unavailable_dialog_does_not_claim_other_quests_block_it(self):
+        s=fixture();s.state['npcs']=[dict(id=154,index=7,x=40,y=39)]
+        def wait(f,actions):
+            if actions=={34}:raise EOError('No native dialogue')
+            s.apply_event(50,18,number(2,1)+number(1,2)+string('Goat Business'))
+        s._wait_service=wait
+        with patch('quests.npc_types',return_value={154:15}),patch('quests.quest_npc_names',return_value={154:'Piglet Trouble'}):
+            with self.assertRaisesRegex(EOError,'Check Quest Book') as error:s.quest_open(7)
+        self.assertNotIn('already completed',str(error.exception));self.assertNotIn('Finish',str(error.exception))
+        self.assertIsNone(s.quest_journal)
+
+    def test_missing_history_never_asserts_completion_or_masks_connection_failure(self):
+        s=fixture();s.state['npcs']=[dict(id=154,index=7,x=40,y=39)]
+        s._wait_service=lambda f,actions:(_ for _ in ()).throw(EOError('Native connection unavailable'))
+        with patch('quests.npc_types',return_value={154:15}):
+            with self.assertRaisesRegex(EOError,'could not be confirmed'):s.quest_open(7)
+        self.assertIsNone(s.quest_context);self.assertIsNone(s.quest_dialog);self.assertIsNone(s.quest_journal)
+
     def test_links_close_current_dialog_without_faking_class_or_karma(self):
         s=self.opened();s.stats=dict(class_id=0,karma=1000);s.snapshot=lambda:{}
         s.quest_reply(2)
