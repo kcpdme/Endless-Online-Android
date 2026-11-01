@@ -92,6 +92,9 @@ class QuestsMixin:
             self.events[-1].update(kind='quest_hint',message=p.decode('latin1'));self.dirty=True
         elif (f,a) in ((42,18),(42,3)):
             self.dirty=True
+            if (f,a)==(42,3) and self.events[-1].get('level_up'):
+                # GiveEXP contains authoritative points but omits HP/TP maxima.
+                self.send(25,1)
         elif (f,a) in ((14,11),(14,28)):
             r=Reader(p);item_id=r.num(2);remaining=r.num(4);weight=r.num()
             if r.rest():raise EOError('Malformed quest item removal')

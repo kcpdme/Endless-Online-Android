@@ -98,6 +98,19 @@ func run() -> void:
 	online.npcs.clear();online.players.assign([{"player_id":101,"x":40,"y":40,"name":"devpeer","direction":0}]);online.render_pose_cache.clear();game.nameplates.sync()
 	check(game.nameplates.entries.size()==1 and game.nameplates.entries[0].color==Color("b9e2c5"),"Nearby player name keeps its color")
 	check(game.nameplates.mouse_filter==Control.MOUSE_FILTER_IGNORE and game.nameplates.z_index<0,"Names stay below HUD and never consume touches")
+	game.nameplates.inspected_key="";game.nameplates.inspected_until=0;game.nameplates.hovering=false
+	game.nameplates.sync();check(game.nameplates.entries.size()==1,"Nearby player name is visible without a tap or hover")
+	online.chat_bubbles[101]={"text":"Hello","until":Time.get_ticks_msec()+60000}
+	online.spell_labels[101]={"text":"Heal","until":Time.get_ticks_msec()+60000}
+	game.nameplates.sync();check(game.nameplates.entries.size()==1,"Speech and spell text never hide a player's name")
+	online.player["name"]="Self";game.player_world=at
+	online.players.append({"player_id":102,"x":40,"y":40,"name":"Second peer","direction":0})
+	online.render_pose_cache.clear();game.nameplates.sync()
+	check(game.nameplates.entries.size()==3,"Own name and both nearby names survive overlapping characters")
+	online.players[0]["sitting"]=2;online.render_pose_cache.clear();game.nameplates.sync()
+	check(game.nameplates.entries.size()==3,"Sitting peers keep their names")
+	online.player["name"]="";online.players.resize(1);online.render_pose_cache.clear();game.nameplates.sync()
+	check(game.nameplates.entries.size()==1 and game.nameplates.entries[0].key=="player:101","Leaving removes only the departing name")
 	var first: Dictionary=online.entity_render_pose("online_item",{"uid":1,"x":1,"y":2})
 	var second: Dictionary=online.entity_render_pose("online_item",{"uid":2,"x":3,"y":4})
 	check(first.position!=second.position,"Independent ground items retain distinct positions")

@@ -5,7 +5,7 @@ from configure_balance import records,num
 from configure_classic_economy import DATA,ini
 from pet_catalog import EGGS
 
-def audit(runtime):
+def audit(runtime,expected_exp_multiplier=1):
     runtime=Path(runtime);cfg={}
     def read(path,stack=()):
         path=path.resolve()
@@ -33,10 +33,11 @@ def audit(runtime):
     for before,after in zip(old,current):
         if num(before['fields'],36,3)!=num(after['fields'],36,3):issues.append('Original EXP differs: NPC '+str(before['id']))
     for key in ('ExpRate','DropRate','GoldDropRate'):
-        if rate(key)!=1:issues.append(key+' is not x1')
+        expected=expected_exp_multiplier if key=='ExpRate' else 1
+        if rate(key)!=expected:issues.append(key+' is not x'+format(expected,'g'))
     if cfg.get('DropRateMode')!='3':issues.append('Native drop selection mode is not classic mode3')
     if cfg.get('BonusSpiritEggDrops','no').lower() not in ('yes','true','1'):issues.append('Egg rolls can replace classic loot for Summoners')
     return dict(result='passed' if not issues else 'failed',classic_npc_drop_tables=len(facts['npc_drops']),classic_drop_entries=entries,original_npc_exp_definitions=len(old),exp_multiplier=rate('ExpRate'),item_drop_multiplier=rate('DropRate'),gold_drop_multiplier=rate('GoldDropRate'),goat_horn_chance_percent=10,goat_exp=num(current[6]['fields'],36,3),eggs_are_separate_bonus=cfg.get('BonusSpiritEggDrops','no').lower() in ('yes','true','1'),issues=issues,database_opened=False,files_modified=False)
 
 if __name__=='__main__':
-    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--runtime',type=Path,required=True);a=p.parse_args();result=audit(a.runtime);print(json.dumps(result,indent=2));raise SystemExit(0 if result['result']=='passed' else 1)
+    p=argparse.ArgumentParser(description=__doc__);p.add_argument('--runtime',type=Path,required=True);p.add_argument('--expected-exp-multiplier',type=float,default=1);a=p.parse_args();result=audit(a.runtime,a.expected_exp_multiplier);print(json.dumps(result,indent=2));raise SystemExit(0 if result['result']=='passed' else 1)

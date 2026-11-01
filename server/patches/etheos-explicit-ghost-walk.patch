@@ -1,0 +1,81 @@
+--- a/src/map.hpp
++++ b/src/map.hpp
+@@ -273,7 +273,7 @@
+ 
+ 		void Msg(Character *from, std::string message, bool echo = true);
+ 		void Msg(NPC *from, std::string message);
+-		WalkResult Walk(Character *from, Direction direction, bool admin = false);
++		WalkResult Walk(Character *from, Direction direction, bool admin = false, bool ghost = false);
+ 		void Attack(Character *from, Direction direction);
+ 		bool AttackPK(Character *from, Direction direction);
+ 		void Face(Character *from, Direction direction);
+--- a/src/map.cpp
++++ b/src/map.cpp
+@@ -915,7 +915,7 @@
+ 	}
+ }
+ 
+-Map::WalkResult Map::Walk(Character *from, Direction direction, bool admin)
++Map::WalkResult Map::Walk(Character *from, Direction direction, bool admin, bool ghost)
+ {
+ 	int seedistance = this->world->config["SeeDistance"];
+ 
+@@ -973,7 +973,7 @@
+ 		if (!this->Walkable(target_x, target_y))
+ 			return WalkFail;
+ 
+-		if (this->Occupied(target_x, target_y, PlayerOnly) && (from->last_walk + double(this->world->config["GhostTimer"]) > Timer::GetTime()))
++		if (this->Occupied(target_x, target_y, PlayerOnly) && (!ghost || from->last_walk + double(this->world->config["GhostTimer"]) > Timer::GetTime()))
+ 			return WalkFail;
+ 	}
+ 
+--- a/src/character.hpp
++++ b/src/character.hpp
+@@ -313,6 +313,7 @@
+ 		void StatusMsg(std::string message);
+ 		Map::WalkResult Walk(Direction direction);
+ 		Map::WalkResult AdminWalk(Direction direction);
++        Map::WalkResult GhostWalk(Direction direction);
+ 		void Attack(Direction direction);
+ 		void Sit(SitState sit_type);
+ 		void Stand();
+--- a/src/character.cpp
++++ b/src/character.cpp
+@@ -646,6 +646,12 @@
+ {
+     if (this->Overweight()) { this->StatusMsg("Overweight: drop items or deposit them in a locker before walking."); return Map::WalkFail; }
+ 	return this->map->Walk(this, direction);
++}
++
++Map::WalkResult Character::GhostWalk(Direction direction)
++{
++    if (this->Overweight()) return Map::WalkFail;
++    return this->map->Walk(this, direction, false, true);
+ }
+ 
+ Map::WalkResult Character::AdminWalk(Direction direction)
+--- a/src/handlers/Walk.cpp
++++ b/src/handlers/Walk.cpp
+@@ -94,10 +94,10 @@
+ }
+ 
+ // Player walking (ghost)
+-/*void Walk_Spec(Character *character, PacketReader &reader)
++void Walk_Spec(Character *character, PacketReader &reader)
+ {
+-	walk_common(character, reader, &Character::Walk);
+-}*/
++	walk_common(character, reader, &Character::GhostWalk);
++}
+ 
+ void Walk_Use(Character *character, PacketReader &reader)
+ {
+@@ -111,7 +111,7 @@
+ 	Register(PACKET_USE, Walk_Use, Playing, 0.0);
+ 	Register(PACKET_ADMIN, Walk_Admin, Playing, 0.4);
+ 	Register(PACKET_PLAYER, Walk_Player, Playing, 0.4);
+-	Register(PACKET_SPEC, Walk_Player, Playing, 0.4);
++	Register(PACKET_SPEC, Walk_Spec, Playing, 0.4);
+ PACKET_HANDLER_REGISTER_END(PACKET_WALK)
+ 
+ }

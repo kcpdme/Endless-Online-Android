@@ -33,7 +33,7 @@ class PartyMixin:
             if action=='join' and self.party_members:raise EOError('Leave your current party before asking to join another')
             if self.party_members and not next((m['leader'] for m in self.party_members if m['player_id']==self.player_id),False):raise EOError('Ask your party leader to invite players')
             self.send(24,1,number(1 if action=='invite' else 0,1)+number(player_id,2))
-            self.party_notice='Party invitation sent.' if action=='invite' else 'Party join request sent.'
+            self.party_notice='Invitation sent. EXP sharing starts after acceptance.' if action=='invite' else 'Join request sent. EXP sharing starts after acceptance.'
         elif action in ('accept','decline'):
             invitation=self.party_invitation
             if not invitation or invitation['expires']<time.monotonic():raise EOError('This party request has expired')
@@ -85,7 +85,7 @@ class PartyMixin:
             elif a in (6,18):
                 members=[]
                 while r.rest():members.append(self._party_member(r))
-                self.party_members=members;self.party_invitation=None;self.party_notice='Party members updated.'
+                self.party_members=members;self.party_invitation=None;self.party_notice='Party active. Monster EXP is shared by level on the same map (level 0 counts as level 1).'
             elif a==7:
                 member=self._party_member(r,False)
                 self.party_members=[m for m in self.party_members if m['player_id']!=member['player_id']]+[member]

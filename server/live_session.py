@@ -41,7 +41,7 @@ class LiveSession(RunningMixin, NativeFeaturesMixin, WorldFeedbackMixin, AdminMi
         super().__init__(*args)
         self.sock.setsockopt(socket.IPPROTO_TCP,socket.TCP_NODELAY,1)
 
-    def move(self,direction,seq,map_id,x,y,open_door=False):
+    def move(self,direction,seq,map_id,x,y,open_door=False,ghost=False):
         direction=int(direction);seq=int(seq);x=int(x);y=int(y)
         if direction not in range(4) or not self.state or not self.state.get('self'):raise EOError('Enter the world before moving')
         if self.warp:raise EOError('Wait for the map transition')
@@ -66,7 +66,7 @@ class LiveSession(RunningMixin, NativeFeaturesMixin, WorldFeedbackMixin, AdminMi
         move=dict(seq=seq,x=x,y=y,direction=direction)
         from combat_progression import movement_seconds
         self.timestamp+=round(movement_seconds(self)*100)
-        self.send(6,8,number(direction,1)+number(self.timestamp,3)+number(x,1)+number(y,1))
+        self.send(6,16 if ghost else 8,number(direction,1)+number(self.timestamp,3)+number(x,1)+number(y,1))
         self.pending_moves.append(move)
         self.last_walk=now;self.last_input_seq=seq;self.metrics['moves']+=1
         return {'sent':True,'input_seq':seq}

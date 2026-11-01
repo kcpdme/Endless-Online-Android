@@ -100,6 +100,18 @@ class QuestsStateTests(unittest.TestCase):
         self.assertEqual(s.events[-1]['kind'],'quest_stats');self.assertTrue(s.dirty)
         s.apply_event(35,13,b'Class menu opened');self.assertEqual(s.events[-1]['message'],'Class menu opened')
 
+    def test_quest_level_up_reads_actual_points_instead_of_leaving_spent_totals(self):
+        s=fixture();s.stats=dict(level=1,experience=705,stat_points=0,skill_points=3)
+        s.apply_event(42,3,number(1205,4)+number(1000,2)+number(2,1)+number(3,2)+number(6,2))
+        self.assertEqual((s.stats['level'],s.stats['stat_points'],s.stats['skill_points']),(2,3,6))
+        self.assertEqual((s.events[-1]['level_up'],s.events[-1]['exp_gain']),(2,500))
+        self.assertEqual(s.sent[-1][:2],(25,1))
+
+    def test_truncated_quest_points_cannot_partially_change_stats(self):
+        s=fixture();s.stats=dict(level=1,experience=705,stat_points=0,skill_points=3);before=s.stats.copy()
+        with self.assertRaises(RuntimeError):s.apply_event(42,3,number(1205,4)+number(1000,2)+number(2,1)+number(3,2))
+        self.assertEqual(s.stats,before)
+
     def test_truncated_dialog_and_class_stats_are_atomic(self):
         s=self.opened();old=s.quest_dialog.copy();s.stats=dict(class_id=1)
         with self.assertRaises((RuntimeError,ValueError)):s.apply_event(50,34,dialog()[:-1])

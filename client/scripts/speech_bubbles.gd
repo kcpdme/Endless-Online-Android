@@ -70,7 +70,8 @@ func sync() -> void:
 		panel.visible = at.is_finite()
 		if not panel.visible: continue
 		game.camera.force_update_scroll()
-		var screen: Vector2 = game.get_global_transform_with_canvas() * (at + Vector2(0, -72))
+		var headroom:float=20.0 if int(key)>0 else 0.0
+		var screen: Vector2 = game.get_global_transform_with_canvas() * (at + Vector2(0, -72-headroom))
 		var anchor: Vector2 = get_global_transform_with_canvas().affine_inverse() * screen
 		panel.position = anchor - Vector2(panel.size.x / 2, panel.size.y + 9)
 		panel.position.x = clampf(panel.position.x, 8, maxf(8, size.x - panel.size.x - 8))

@@ -33,7 +33,11 @@ def apply_packet(session,f,a,p):
         event.update(kind='class_changed',class_id=values['class_id'])
     elif (f,a)==(42,3):
         values.update(experience=r.num(4),karma=r.num(2));level=r.num()
-        if level:values['level']=level
+        gain=max(0,values['experience']-session.stats.get('experience',values['experience']))
+        if level:
+            values.update(level=level,stat_points=r.num(2),skill_points=r.num(2))
+            event['level_up']=level
+        if gain:event['exp_gain']=gain
         event.update(kind='quest_stats',karma=values['karma'])
     elif f==30 and a in (4,5):
         r.take(16)

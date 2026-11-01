@@ -14,6 +14,7 @@ from balance_profile import VERSION, LEVELS, ATTRIBUTES, CLASSES, SPELLS, WEAPON
 from class_identity import allowed_classes, role_for, vary_stats, recipe_sources, ACCESSORY_STATS
 from class_signatures import SIGNATURES, SUPPORT, EGGS
 from pet_catalog import TIERS, ROSTER, EGGKEEPER, HATCHED_EGGS, PET_COOLDOWN_SECONDS, egg_stock
+from configure_rates import EXP_MULTIPLIER
 
 STAT_FIELDS = {'hp':(5,2),'tp':(7,2),'min_damage':(9,2),'max_damage':(11,2),'accuracy':(13,2),'evade':(15,2),'armor':(17,2),**{k:(20+i,1) for i,k in enumerate(ATTRIBUTES)}}
 INPUTS = ('data/pub/dat001.eif','data/pub/dat001.ecf','data/pub/dsl001.esf','data/pub/dtn001.enf','data/aster-vale-shops.ini','data/quests/00004.eqf','data/aster-vale-drops.ini')
@@ -377,7 +378,7 @@ def configure(runtime):
     profile=dict(version=VERSION,levels=LEVELS,max_skill_level=10,classes=classes,spells=spells,items=items,npcs=npcs,classic_peasant=True,monster_tuning=MONSTER_TUNING,class_identity=True,class_signatures=True,carry_capacity_rules=True,mortal_spirit_bonds=False,pet_collection=True,bonus_egg_drops=True,running_rules=dict(normal_multiplier=1.25,rogue_multiplier=1.5,tp_rate_per_second=.015,drain_while_idle=True),pet_cooldown_seconds=PET_COOLDOWN_SECONDS,hatched_eggs=HATCHED_EGGS,companions=COMPANIONS,eggs=EGGS,pet_tiers=TIERS,pet_roster=ROSTER,eggkeeper=EGGKEEPER)
     proposed['data/balance-profile.json']=(json.dumps(profile,indent=2)+'\n').encode()
     cfg=(runtime/'config.local.ini').read_text()
-    values={'ExpRate':'100%','DropRate':'100%','GoldDropRate':'100%','DropRateMode':'3','BonusSpiritEggDrops':'yes','CarryCapacityRules':'yes','ClassMobility':'yes','ClassRunRules':'yes','PercentPetUpkeep':'yes','OwnerScaledPets':'yes','CombatProgression':'yes','PetEggTiers':'yes','MortalSpiritBonds':'no','PermanentPetCollection':'yes','PetCollectionCooldownSeconds':str(PET_COOLDOWN_SECONDS),'ClassSignatureRules':'yes','PriestRegenRate':'0.02','PriestSittingRegenRate':'0.04','CompanionLifetimeSeconds':'0','ClassIdentityRules':'yes','BalanceRevamp':'yes','UseClassFormulas':'yes','MaxSkillLevel':'10','SkillsFile':'./data/aster-vale-skills.ini'}
+    values={'ExpRate':f'{EXP_MULTIPLIER*100}%','DropRate':'100%','GoldDropRate':'100%','DropRateMode':'3','BonusSpiritEggDrops':'yes','CarryCapacityRules':'yes','ClassMobility':'yes','ClassRunRules':'yes','PercentPetUpkeep':'yes','OwnerScaledPets':'yes','CombatProgression':'yes','PetEggTiers':'yes','MortalSpiritBonds':'no','PermanentPetCollection':'yes','PetCollectionCooldownSeconds':str(PET_COOLDOWN_SECONDS),'ClassSignatureRules':'yes','PriestRegenRate':'0.02','PriestSittingRegenRate':'0.04','CompanionLifetimeSeconds':'0','ClassIdentityRules':'yes','BalanceRevamp':'yes','UseClassFormulas':'yes','MaxSkillLevel':'10','SkillsFile':'./data/aster-vale-skills.ini'}
     for ident,rate in TP_RECOVERY.items():
         values[f'Balance.{ident}.tp_regen']=str(rate)
     for ident,traits in BOWS.items():

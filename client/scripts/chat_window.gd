@@ -1,7 +1,8 @@
 extends RefCounted
 ## Native EO conversations and world-wide presence, with a compact game HUD composer.
 const CHANNELS: Array[String] = ["local", "global", "private"]
-const TITLES: Array[String] = ["Nearby", "Global", "Whispers", "Online"]
+const TITLES: Array[String] = ["Nearby", "Global", "Whispers", "Online", "System"]
+const LOG_CHANNELS:Array[String]=["local","global","private","","system"]
 var game: Node
 var panel: Control
 var heading: Label
@@ -14,7 +15,7 @@ var button: Control
 var tabs: Array[Button] = []
 var messages: Array[Dictionary] = []
 var unread: int = 0
-var unread_channels: Array[int] = [0, 0, 0]
+var unread_channels: Array[int] = [0, 0, 0, 0, 0]
 var contacts: ItemList
 var online_list: ItemList
 var search: LineEdit
@@ -67,7 +68,7 @@ func build(owner_game: Node, parent: Control) -> void:
 	card.add_child(channel)
 	channel.hide() # Tab selection remains a stable API for existing chat callers.
 	channel.item_selected.connect(func(index: int) -> void: select_tab(index))
-	for index: int in range(4):
+	for index: int in range(TITLES.size()):
 		var tab: int = index
 		var control: Button = game._button(card, TITLES[index], Vector2(32 + index * 236, 94), Vector2(228, 44), func() -> void: select_tab(tab))
 		tabs.append(control)
@@ -311,7 +312,7 @@ func open(recipient: String = "") -> void:
 
 func select_tab(index: int) -> void:
 	channel.select(index)
-	if index < 3: unread_channels[index] = 0
+	if index>=0 and index<unread_channels.size():unread_channels[index]=0
 	_refresh()
 	if index == 3: request_roster()
 
@@ -335,7 +336,7 @@ func clear() -> void:
 	reply_to = ""
 	pending_chat.clear()
 	unread = 0
-	unread_channels.assign([0, 0, 0])
+	unread_channels.assign([0, 0, 0, 0, 0])
 	button.unread = false
 	history.clear()
 	feed.clear()
@@ -353,10 +354,10 @@ func receive(event: Dictionary) -> void:
 	var clock: Dictionary = Time.get_time_dict_from_system()
 	row["time"] = "%02d:%02d" % [int(clock.hour), int(clock.minute)]
 	messages.append(row)
-	feed_until=Time.get_ticks_msec()+FEED_VISIBLE_MSEC
+	if not bool(row.get("quiet",false)):feed_until=Time.get_ticks_msec()+FEED_VISIBLE_MSEC
 	while messages.size() > 250: messages.pop_front()
 	var kind: String = str(row.get("channel", "system"))
-	var index: int = CHANNELS.find(kind)
+	var index: int = LOG_CHANNELS.find(kind)
 	if kind == "private" and not bool(row.get("outgoing", false)): reply_to = str(row.get("name", "")).to_lower()
 	if not bool(row.get("outgoing", false)) and (not panel.visible or channel.selected != index):
 		unread += 1
@@ -364,6 +365,9 @@ func receive(event: Dictionary) -> void:
 		button.unread = true
 	_refresh()
 	_render_feed()
+
+func system_notice(message:String)->void:
+	if not message.strip_edges().is_empty():receive({"channel":"system","name":"System","message":message,"quiet":true})
 
 func _append(log: RichTextLabel, row: Dictionary, compact: bool = false) -> void:
 	var kind: String = str(row.get("channel", "system"))
@@ -386,12 +390,14 @@ func _render_feed() -> void:
 	var follow: bool = bar.value >= bar.max_value - bar.page - 4
 	feed.scroll_following = follow
 	feed.clear()
-	for row: Dictionary in messages: _append(feed, row, true)
+	for row: Dictionary in messages:
+		if not bool(row.get("quiet",false)):_append(feed,row,true)
 	if not follow: bar.set_deferred("value", previous)
 
 func _refresh() -> void:
 	var selected: int = channel.selected
 	var online_tab: bool = selected == 3
+	var system_tab:bool=selected==4
 	var private_tab: bool = selected == 2
 	for index: int in range(tabs.size()):
 		tabs[index].text = TITLES[index] + (" · %d" % roster.size() if index == 3 else " · %d" % unread_channels[index] if unread_channels[index] > 0 else "")
@@ -399,8 +405,9 @@ func _refresh() -> void:
 	target.visible = private_tab
 	contacts.visible = private_tab
 	history.visible = not online_tab
-	entry.visible = not online_tab
-	(panel.get_child(0).get_node("ChatSend") as Button).visible = not online_tab
+	entry.visible = not online_tab and not system_tab
+	(panel.get_child(0).get_node("ChatSend") as Button).visible = not online_tab and not system_tab
+	subheading.text="Game notices, loot and EXP · Read only" if system_tab else "Drag history to scroll · Tap a name to whisper"
 	search.visible = online_tab
 	online_list.visible = online_tab
 	refresh_button.visible = online_tab
@@ -415,7 +422,7 @@ func _refresh() -> void:
 	history.clear()
 	for event: Dictionary in messages:
 		var kind: String = str(event.get("channel", "local"))
-		if kind != "system" and (selected >= 3 or kind != CHANNELS[selected]): continue
+		if selected==3 or kind!=LOG_CHANNELS[selected]:continue
 		if private_tab and kind == "private" and not target.text.strip_edges().is_empty():
 			var contact: String = str(event.get("target", "")) if bool(event.get("outgoing", false)) else str(event.get("name", ""))
 			if contact.to_lower() != target.text.strip_edges().to_lower(): continue
@@ -451,10 +458,12 @@ func _layout(keyboard_lift: float = -1.0) -> void:
 	heading.visible = not compact
 	subheading.visible = not compact
 	for index: int in range(tabs.size()):
-		tabs[index].position = Vector2(32 + index * (218 if compact else 236), 16 if compact else 94)
-		tabs[index].size = Vector2(210 if compact else 228, 44)
+		var span:float=864.0 if compact else 936.0
+		var tab_width:float=(span-8*(tabs.size()-1))/tabs.size()
+		tabs[index].position=Vector2(32+index*(tab_width+8),16 if compact else 94)
+		tabs[index].size=Vector2(tab_width,44)
 	var top: float = 74 if compact else 154
-	var bottom: float = height - 106
+	var bottom: float = height - (30 if channel.selected==4 else 106)
 	target.position.y = top
 	contacts.position.y = top
 	contacts.size.y = maxf(40, bottom - top)
@@ -512,6 +521,7 @@ func render_roster() -> void:
 	if not roster_pending: roster_status.text = "%d online across the world · Tap a player to whisper" % roster.size()
 
 func send_message() -> void:
+	if channel.selected>=CHANNELS.size():return
 	_send(entry, CHANNELS[mini(channel.selected, 2)], target.text.strip_edges().to_lower(), false)
 
 func send_quick() -> void:

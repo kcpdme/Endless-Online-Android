@@ -18,6 +18,11 @@ def fixture():
     return s
 
 class StreamStateTests(unittest.TestCase):
+    def test_ghost_movement_uses_the_native_spec_action_only_when_requested(self):
+        s=fixture();s.move(3,1,5,41,40,ghost=True)
+        self.assertEqual(s.sent[-1][:2],(6,16))
+        s=fixture();s.move(3,1,5,41,40)
+        self.assertEqual(s.sent[-1][:2],(6,8))
     def test_timed_spikes_push_without_unrelated_world_activity(self):
         s=fixture()
         s.apply_event(31,21,b'S')

@@ -19,6 +19,10 @@ class RewardAuditTests(unittest.TestCase):
  def test_changed_horn_chance_detected(self):
   p=self.r/'data/aster-vale-drops.ini';p.write_text(p.read_text().replace('258,1,1,10','258,1,1,5'))
   self.assertIn('Classic drop table differs: NPC 7',audit(self.r)['issues'])
+ def test_explicit_double_exp_retains_original_drops_and_definitions(self):
+  p=self.r/'config.local.ini';p.write_text(p.read_text()+'\nExpRate = 200%\n')
+  result=audit(self.r,expected_exp_multiplier=2)
+  self.assertEqual(result['issues'],[]);self.assertEqual(result['exp_multiplier'],2)
  def test_changed_exp_detected(self):
   p=self.r/'data/pub/dtn001.enf';raw=p.read_bytes();rows=records(raw,b'ENF',39);put(rows[6]['fields'],36,9,3);p.write_bytes(encode_pub(raw,rows))
   self.assertIn('Original EXP differs: NPC 7',audit(self.r)['issues'])

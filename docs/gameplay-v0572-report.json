@@ -1,0 +1,160 @@
+{
+  "version": "0.57.2",
+  "version_code": 105,
+  "monster_exp_multiplier": 2,
+  "quest_exp_multiplier": 1,
+  "dagger_damage": [
+    1,
+    2
+  ],
+  "native": {
+    "result": "passed",
+    "checks": 22,
+    "crow_exp_x1": 5,
+    "crow_exp_x2": 10,
+    "dagger_damage": [
+      1,
+      2
+    ],
+    "normal_idle_collision_blocked": true,
+    "early_ghost_rejected": true,
+    "timed_explicit_ghost_accepted": true,
+    "competing_walks_distinct_tiles": true,
+    "config_rehash_preserves_live_session": true,
+    "isolated_database": true,
+    "newbie_party_levels": [
+      0,
+      0
+    ],
+    "newbie_goat_party_exp": [
+      8,
+      8
+    ],
+    "non_attacking_member_rewarded": true,
+    "both_shares_persisted": true
+  },
+  "collision_ui": {
+    "checks": 14,
+    "contested_steps_acknowledged_before_animation": true,
+    "five_second_continuous_hold": true,
+    "moving_origins_reserved": true,
+    "offline": true,
+    "result": "passed"
+  },
+  "nameplates": {
+    "checks": 408,
+    "distinct_glyph_images_by_scale": {
+      "npc:1.0": 1,
+      "npc:1.5": 1,
+      "player:1.0": 1,
+      "player:1.5": 1
+    },
+    "input_and_modals_preserved": true,
+    "max_glyph_channel_delta_by_scale": {
+      "npc:1.0": 0,
+      "npc:1.5": 0,
+      "player:1.0": 0,
+      "player:1.5": 0
+    },
+    "pixel_render_test": true,
+    "result": "passed",
+    "shared_interpolation": true,
+    "wraith_visibility_preserved": true
+  },
+  "name_occlusion": {
+    "checks": 96,
+    "result": "passed",
+    "player_names_persistent": true
+  },
+  "newbie_party_ui": {
+    "actual_godot_exp_bar": true,
+    "actual_player_menu_party_invitation": true,
+    "attacker_exp": 8,
+    "both_level_zero_newborns": true,
+    "goat_exp_multiplier": 2,
+    "map_id": 194,
+    "nearby_name_without_tap": true,
+    "non_attacker_exp": 8,
+    "result": "passed",
+    "transport": "Godot -> WebSocket -> gateway -> native EO"
+  },
+  "quest_levelup_ui": {
+    "actual_character_stats_display": true,
+    "isolated_database": true,
+    "mirrors_spent_level_one_fixture": true,
+    "native_skill_points": 6,
+    "native_stat_points": 3,
+    "new_level": 2,
+    "no_manual_points_added": true,
+    "quest_exp_gain": 500,
+    "result": "passed",
+    "system_history": true
+  },
+  "system_ui": {
+    "checks": 48,
+    "drops_and_pickups": true,
+    "monster_quest_party_exp": true,
+    "quiet_reward_receipts": true,
+    "read_only": true,
+    "result": "passed",
+    "system_tab": true,
+    "viewports": 3
+  },
+  "chat_zoom": {
+    "checks": 75,
+    "feed_timeout_seconds": 8,
+    "manual_collapse_preserves_history_and_draft": true,
+    "network_requests": 0,
+    "rendered": true,
+    "result": "passed",
+    "touch_and_mouse_verified": true,
+    "typing_and_scrolling_protected": true,
+    "zoom_modes": [
+      1,
+      1.25
+    ],
+    "zoom_preference_persists": true
+  },
+  "social_stability": {
+    "checks": 563,
+    "four_player_actions": true,
+    "live_offer_updates": true,
+    "offline": true,
+    "paperdoll_unchanged_frames": 120,
+    "player_menu_unchanged_frames": 180,
+    "result": "passed",
+    "trade_unchanged_frames": 180,
+    "viewports": 3
+  },
+  "python_tests": {
+    "tests": 68,
+    "result": "passed"
+  },
+  "native_patch_stack": "passed",
+  "production": {
+    "result": "passed",
+    "backup": "/opt/aster-vale/backups/gameplay-v0572-20261101T123013Z",
+    "native_sha256": "a0f74d0caf69adbb99a3546566c012f4c7e6b36a1b16ff07601b8baa50826ac7",
+    "exp_multiplier": 2,
+    "dagger_and_original_npc_exp_and_drops_unchanged": true,
+    "quest_points_use_native_totals": true,
+    "database_opened_or_edited_by_deployment": false,
+    "services_healthy": true,
+    "updated_hashes": {
+      "app/server/gateway.py": "4ead2ec6aa7814944d1efdba47432bfa28caa077c5d3f249f72a532acf1e2389",
+      "app/server/live_session.py": "882837f021a5c0a2bfa66c5fc80340c5dce727bc9a92c7bd3fb2ada62d429405",
+      "app/server/party.py": "ccae285dfe97310abe120992802ac90e75f2b60335c92cd29e587816f3c769fa",
+      "app/server/eo_stats.py": "38e89b1c55eb9de04ae9c39d91a997fa0e5d0f4774af7b84cc160c498b3177a5",
+      "app/server/quests.py": "d75a721bbf7e3c426b965115ad5754ee76d207cae0c733d80f642a51ff120ea5",
+      "runtime/etheos": "a0f74d0caf69adbb99a3546566c012f4c7e6b36a1b16ff07601b8baa50826ac7"
+    }
+  },
+  "apk": {
+    "bytes": 279073730,
+    "sha256": "4c7f328761b6ad0306a72296ab63e29b301ab354b822f2abb289e7d7131b4dd6",
+    "v2_signature_verified": true,
+    "zip_alignment_16k_verified": true
+  },
+  "phone_install": "No ADB device connected; APK provided for manual update.",
+  "party_scope": "Native same-map, level-weighted sharing. Level zero has weight one. No manual EXP or point grants to real characters."
+}

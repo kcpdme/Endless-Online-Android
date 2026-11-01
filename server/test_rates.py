@@ -4,11 +4,11 @@ from pathlib import Path
 from configure_rates import configure
 ROOT=Path(__file__).resolve().parents[1]
 class RewardRateTests(unittest.TestCase):
-    def test_exact_original_multipliers_idempotent_and_other_rules_preserved(self):
+    def test_double_monster_exp_and_original_drops_idempotent_and_other_rules_preserved(self):
         with tempfile.TemporaryDirectory() as tmp:
             p=Path(tmp)/'config.local.ini';p.write_text('ExpRate = 500%\nDropRate = 400%\nShareMode = 2\nDropRateMode = 3\nMobRate = 100%\n')
             configure(tmp);first=p.read_bytes();configure(tmp);self.assertEqual(first,p.read_bytes())
-            self.assertEqual(p.read_text(),'ExpRate = 100%\nDropRate = 100%\nShareMode = 2\nDropRateMode = 3\nMobRate = 100%\n')
+            self.assertEqual(p.read_text(),'ExpRate = 200%\nDropRate = 100%\nShareMode = 2\nDropRateMode = 3\nMobRate = 100%\n')
     @unittest.skipUnless(shutil.which('g++') and (ROOT/'work/etheos/src/npc.cpp').exists(),'native source/compiler unavailable')
     def test_compiled_native_drop_mode3_probability_scaling_and_caps(self):
         # Compile the ACTUAL production block, supplying only Data/rand fixtures.

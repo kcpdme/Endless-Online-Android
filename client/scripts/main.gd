@@ -315,9 +315,9 @@ func _world_tile(point: Vector2) -> Vector2i:
 	var p: Vector2 = point - Vector2(0, 16)
 	return Vector2i(roundi(p.x / 64.0 + p.y / 32.0), roundi(p.y / 32.0 - p.x / 64.0))
 
-func _walkable(tile: Vector2i) -> bool:
+func _walkable(tile: Vector2i,ignore_players:bool=false) -> bool:
 	if tile.x < 0 or tile.y < 0 or tile.x >= int(world.get("width", 0)) or tile.y >= int(world.get("height", 0)): return false
-	if online_mode: return not server_blocked.has(tile) and not online.npc_occupies(tile)
+	if online_mode: return not server_blocked.has(tile) and not online.npc_occupies(tile) and (ignore_players or online.player_blocker(tile)==0)
 	return not blocked.has(tile) and int(ground.get(tile, int(world.get("fill_tile", 0)))) > 0
 
 func _process(delta: float) -> void:
@@ -392,8 +392,10 @@ func _process(delta: float) -> void:
 				waypoint = Vector2i(-1, -1)
 				_manual_step(direction, was_walking)
 			elif not route.is_empty() and (not online_mode or online.can_issue_walk()):
-				var next_tile: Vector2i = route.pop_front()
+				var next_tile: Vector2i = route[0]
+				var issued_before:int=online.next_input_seq if online_mode else 0
 				_step(next_tile - player_tile)
+				if player_tile==next_tile or (online_mode and online.next_input_seq>issued_before):route.pop_front()
 	# Chain held/path movement on the same frame, carrying the unused time.
 	# Discarding it inserts a stationary frame at every tile boundary.
 	if moving and walk_remainder >= 0.0:
@@ -445,8 +447,8 @@ func _screen_direction(input: Vector2) -> Vector2i:
 	if absf(input.x) > absf(input.y): return Vector2i.RIGHT if input.x > 0 else Vector2i.LEFT
 	return Vector2i.DOWN if input.y > 0 else Vector2i.UP
 
-func _can_step(origin: Vector2i, direction: Vector2i) -> bool:
-	if not _walkable(origin + direction): return false
+func _can_step(origin: Vector2i, direction: Vector2i,ignore_players:bool=false) -> bool:
+	if not _walkable(origin + direction,ignore_players): return false
 	if direction.x != 0 and direction.y != 0:
 		return _walkable(origin + Vector2i(direction.x, 0)) and _walkable(origin + Vector2i(0, direction.y))
 	return true
@@ -508,6 +510,7 @@ func play_stone_step(from: Vector2i, to: Vector2i) -> void:
 	if sfx!=null and stepping_stones.crosses(tile_specs,from,to):sfx.play_named("JumpStone","step")
 
 func _cancel_movement(force_stop: bool = false) -> void:
+	if online!=null:online.reset_player_block()
 	movement_keys.clear()
 	stick = Vector2.ZERO
 	_reset_turn_input()
@@ -628,6 +631,7 @@ func _input(event: InputEvent) -> void:
 			var gameplay_key: bool = started and not _modal_open() and not _editing_text() and not (chat_ui != null and chat_ui.typing())
 			if not event.pressed:
 				movement_keys.erase(key)
+				if online!=null:online.reset_player_block()
 				if _input_direction() == Vector2i.ZERO: _reset_turn_input()
 			elif not event.echo and gameplay_key:
 				movement_keys.erase(key)
@@ -796,7 +800,9 @@ func _input(event: InputEvent) -> void:
 			if not attack_button.contains_point(event.position): _release_attack()
 		elif event.index == touch_move_id:
 			stick = joystick.update_pointer(event.position)
-			if stick == Vector2.ZERO: _reset_turn_input()
+			if stick == Vector2.ZERO:
+				_reset_turn_input()
+				online.reset_player_block()
 		if owned_touches.has(event.index):
 			get_viewport().set_input_as_handled()
 			return
@@ -838,7 +844,9 @@ func _input(event: InputEvent) -> void:
 		if attack_touch_id == -2 and not attack_button.contains_point(event.position): _release_attack()
 		if touch_move_id == -2:
 			stick = joystick.update_pointer(event.position)
-			if stick == Vector2.ZERO: _reset_turn_input()
+			if stick == Vector2.ZERO:
+				_reset_turn_input()
+				online.reset_player_block()
 			get_viewport().set_input_as_handled()
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -1824,6 +1832,7 @@ func _refresh_ui() -> void:
 		attack_button.queue_redraw()
 
 func _toast(value: String) -> void:
+	if chat_ui!=null and online_mode and started and online!=null and online.active:chat_ui.system_notice(value)
 	if toast_label == null: return
 	toast_label.text = value
 	toast_label.show()

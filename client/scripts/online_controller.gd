@@ -60,6 +60,10 @@ var next_input_seq: int = 0
 var confirmed_input_seq: int = 0
 var pending_inputs: Array[Dictionary] = []
 var remote_motion: Dictionary = {}
+const PLAYER_GHOST_MSEC:int=5000
+var blocked_direction:Vector2i=Vector2i.ZERO
+var blocked_player:int=0
+var blocked_since:int=0
 var refresh_clock: float = 0.0
 var desired_auth: String = "login"
 var player: Dictionary = {}
@@ -507,11 +511,13 @@ func _apply_snapshot(data: Dictionary, entering: bool = false) -> void:
 			game.facing = _facing(player.get("direction", 0))
 		elif bool(data.get("position_update", false)):
 			var confirmed: int = int(data.get("position_seq", 0))
+			var deferred_ack:bool=pending_inputs.any(func(input:Dictionary)->bool:return int(input.seq)<=confirmed and bool(input.get("deferred",false)))
 			confirmed_input_seq = confirmed
 			while not pending_inputs.is_empty() and int(pending_inputs[0].seq) <= confirmed:
 				pending_inputs.pop_front()
 			var correction: bool = bool(data.get("correction", false))
-			if correction:
+			if correction and deferred_ack:game.route.clear()
+			if correction and not deferred_ack:
 				network_metrics.corrections = int(network_metrics.corrections) + 1
 				recovering = true
 			if not recovering and not defeated:
@@ -524,7 +530,7 @@ func _apply_snapshot(data: Dictionary, entering: bool = false) -> void:
 			waiting_for_walk = not pending_inputs.is_empty()
 			if not waiting_for_walk: transition_pending = false
 			if tile != game.player_tile:
-				game.route.clear()
+				if not deferred_ack:game.route.clear()
 				_start_step(tile, _facing(player.get("direction", 0)))
 		_sync_inventory()
 	if data.has("players"): players = _dict_array(data.players)
@@ -591,6 +597,7 @@ func _process(delta: float) -> void:
 		login_retry_at = 0
 		if panel.visible and not active: _authenticate("login", true)
 	if not active: return
+	if game._input_direction()!=blocked_direction or game._modal_open():reset_player_block()
 	for collection: Dictionary in [chat_bubbles, spell_labels]:
 		for key: Variant in collection.keys():
 			if Time.get_ticks_msec() >= int((collection[key] as Dictionary).until): collection.erase(key)
@@ -627,12 +634,25 @@ func request_step(direction: Vector2i) -> void:
 	if direction not in [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]: return
 	var single: Vector2i = direction
 	var target: Vector2i = game.player_tile + single
-	if not game._can_step(game.player_tile, single):
+	if not game._can_step(game.player_tile, single,true):
+		reset_player_block()
 		request_face(game._direction_name(single))
 		if int(game.tile_specs.get(target, -1)) == 9: _open_bumped_chest(target)
 		return
+	var blocker:int=player_blocker(target)
+	var ghost:bool=false
+	if blocker>0:
+		request_face(game._direction_name(single))
+		if game._input_direction()!=single:reset_player_block();return
+		if blocked_player!=blocker or blocked_direction!=single:
+			blocked_player=blocker;blocked_direction=single;blocked_since=Time.get_ticks_msec()
+			game._toast("Keep moving in this direction to pass through the player.")
+		if Time.get_ticks_msec()-blocked_since<PLAYER_GHOST_MSEC:return
+		ghost=true
+	else:reset_player_block()
 	if not can_issue_walk(): return
 	var fields: Dictionary = {"direction": _direction(game._direction_name(single))}
+	if ghost:fields["ghost"]=true
 	var passage: bool = false
 	for warp: Dictionary in game.world.get("warps", []):
 		if Vector2i(int(warp.x), int(warp.y)) != target: continue
@@ -652,12 +672,14 @@ func request_step(direction: Vector2i) -> void:
 	fields.merge({"input_seq": next_input_seq, "map_id": int(game.world.id), "x": target.x, "y": target.y})
 	pending_face = ""
 	if session.request("move", fields) < 0: return
-	pending_inputs.append({"seq": next_input_seq, "direction": single, "sent_at": Time.get_ticks_msec()})
+	var deferred:bool=ghost or player_near_step(target)
+	pending_inputs.append({"seq": next_input_seq, "direction": single, "sent_at": Time.get_ticks_msec(),"deferred":deferred})
 	waiting_for_walk = true
 	transition_pending = passage
 	refresh_clock = 0.0
-	_start_step(target, game._direction_name(single))
-	game.play_stone_step(game.step_origin_tile,target)
+	if not deferred:
+		_start_step(target, game._direction_name(single))
+		game.play_stone_step(game.step_origin_tile,target)
 
 func _open_bumped_chest(tile: Vector2i) -> void:
 	# Original ArrowKeyController dispatches chest interaction on a blocked step.
@@ -679,6 +701,7 @@ func _start_step(tile: Vector2i, direction: String) -> void:
 	game.moving = true
 
 func _reset_movement() -> void:
+	reset_player_block()
 	game.timed_spikes_until = 0
 	pending_item_use = false
 	pending_potion_requests.clear()
@@ -762,6 +785,26 @@ func spend_stat(stat_id: int) -> void:
 func npc_occupies(tile: Vector2i) -> bool:
 	for npc: Dictionary in npcs:
 		if Vector2i(int(npc.get("x", -1)), int(npc.get("y", -1))) == tile: return true
+	return false
+
+func reset_player_block()->void:
+	blocked_direction=Vector2i.ZERO;blocked_player=0;blocked_since=0
+
+func player_blocker(tile:Vector2i)->int:
+	var now:float=Time.get_ticks_msec()/1000.0
+	for peer:Dictionary in players:
+		var pid:int=int(peer.get("player_id",0))
+		if pid==int(player.get("player_id",-1)):continue
+		if Vector2i(int(peer.x),int(peer.y))==tile:return pid
+		# Reserve both ends until the displayed walk finishes, preventing swaps.
+		for step:Dictionary in remote_motion.get("player:%d"%pid,{}).get("steps",[]):
+			if now<float(step.start)+float(step.get("duration",MOVE_SECONDS)) and tile in [game._world_tile(step.from),game._world_tile(step.to)]:return pid
+	return 0
+
+func player_near_step(tile:Vector2i)->bool:
+	for peer:Dictionary in players:
+		if int(peer.get("player_id",0))==int(player.get("player_id",-1)):continue
+		if absi(int(peer.x)-tile.x)+absi(int(peer.y)-tile.y)<=1:return true
 	return false
 
 func _direction(value: String) -> int:
@@ -1039,7 +1082,7 @@ func draw_chat_bubble(pid: int, at: Vector2) -> void:
 	if int((now - int(bubble.get("start", now))) / 250.0) % 2 == 1: return
 	var text: String = str(bubble.text)
 	var font: Font = ThemeDB.fallback_font
-	var origin: Vector2 = at + Vector2(-font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 11).x / 2.0, -82)
+	var origin: Vector2 = at + Vector2(-font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 11).x / 2.0, -102 if pid>0 else -82)
 	game.draw_string_outline(font, origin, text, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, 3, Color.BLACK)
 	game.draw_string(font, origin, text, HORIZONTAL_ALIGNMENT_LEFT, -1, 11, game.TEXT)
 
@@ -1608,6 +1651,7 @@ func _process_events(events: Array) -> void:
 			for peer: Dictionary in players:
 				if int(peer.get("player_id", -2)) == pid: peer.direction = int(event.get("direction", 0))
 		if kind == "party_exp":
+			if int(event.get("exp_gain",0))>0:game.chat_ui.system_notice("Gained %d EXP (party)."%int(event.exp_gain))
 			game.damage_numbers.append({"position":game.player_world+Vector2(0,-106),"value":"+%d EXP" % int(event.get("exp_gain",0)),"time":1.2,"exp_gain":true})
 			if event.has("level_up"): game._toast("Level %d reached!" % int(event.level_up))
 		if kind == "player_damage":
@@ -1622,6 +1666,9 @@ func _process_events(events: Array) -> void:
 				game._toast("You were defeated. Returning to your respawn point…")
 		if kind == "map_transition" and str(event.get("reason", "")) == "death_respawn": game._toast("You have returned to your respawn point.")
 		if kind == "door_locked": game._toast("This door needs a key.")
+		if kind=="quest_stats":
+			if int(event.get("exp_gain",0))>0:game.chat_ui.system_notice("Gained %d EXP (quest)."%int(event.exp_gain))
+			if event.has("level_up"):game._toast("Level %d reached! Stat points are available in Character Stats."%int(event.level_up))
 		if kind in ["npc_damage", "npc_killed"]:
 			var index: int = int(event.get("npc_index", -1))
 			if kind == "npc_damage": npc_health[index] = {"percent": clampi(int(event.get("hp_percent", 100)), 0, 100), "until": Time.get_ticks_msec() + 8000}
@@ -1642,9 +1689,12 @@ func _process_events(events: Array) -> void:
 				game.damage_numbers.append({"position": npc_feedback_anchor(record, tile), "value": str(damage) if damage > 0 else "Miss", "time": 0.8})
 			if kind == "npc_killed":
 				var drop: Dictionary = event.get("drop", {}) as Dictionary
+				if int(drop.get("id",0))>0 and int(drop.get("amount",0))>0 and int(event.get("player_id",0))==int(player.get("player_id",-1)):
+					game.chat_ui.system_notice("Monster dropped %s ×%d."%[str(item_info("item:%d"%int(drop.id)).get("name","Item")),int(drop.amount)])
 				if int(drop.get("uid", 0)) > 0:
 					drop_permissions[int(drop.uid)] = {"owner": int(event.get("player_id", 0)), "until": Time.get_ticks_msec() + 30000}
 				if int(event.get("exp_gain", 0)) > 0:
+					game.chat_ui.system_notice("Gained %d EXP (monster)."%int(event.exp_gain))
 					game.damage_numbers.append({"position": game.player_world + Vector2(0, -106), "value": "+%d EXP" % int(event.exp_gain), "time": 1.2, "exp_gain": true})
 				if event.has("level_up"): game._toast("Level %d reached! Stat points are available in Character Stats." % int(event.level_up))
 		if kind == "quest_item_received":
@@ -1731,7 +1781,7 @@ func _slot_name(kind: String) -> String:
 	return str({"hat": "head", "shield": "offhand"}.get(kind, kind))
 
 func can_issue_walk() -> bool:
-	return active and streaming and not defeated and not recovering and not transition_pending and not game.moving and game.attack_clock <= 0.0 and pending_inputs.size() < MAX_PREDICTIONS and not session.has_blocking_requests()
+	return active and streaming and not defeated and not recovering and not transition_pending and not game.moving and game.attack_clock <= 0.0 and pending_inputs.size() < MAX_PREDICTIONS and not pending_inputs.any(func(input:Dictionary)->bool:return bool(input.get("deferred",false))) and not session.has_blocking_requests()
 
 func _select_character_card(index: int) -> void:
 	if index < 0 or index >= selected_characters.size(): return

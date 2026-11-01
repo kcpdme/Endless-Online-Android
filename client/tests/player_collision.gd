@@ -1,0 +1,63 @@
+extends SceneTree
+class Wire extends "res://scripts/online_session.gd":
+	var calls:Array[Dictionary]=[]
+	func request(op:String,fields:Dictionary={})->int:
+		calls.append({"op":op,"fields":fields.duplicate(true)});return calls.size()
+var game:Node
+var wire:Wire
+var checks:int=0
+var failed:bool=false
+func _initialize()->void:call_deferred("run")
+func check(ok:bool,why:String)->void:
+	checks+=1
+	if not ok:failed=true;push_error(why)
+func moves()->Array:
+	return wire.calls.filter(func(c:Dictionary)->bool:return c.op=="move")
+func reset()->void:
+	game.online.pending_inputs.clear();game.online.players.clear();game.online.remote_motion.clear();game.online.reset_player_block();game.movement_keys.clear();wire.calls.clear()
+	game.moving=false;game.attack_clock=0;game.route.clear();game.player_tile=Vector2i(40,40);game.player_world=game.tile_position(game.player_tile);game.facing="east"
+	game.online.player.x=40;game.online.player.y=40;game.online.player.direction=3
+func ack(x:int,y:int,correction:bool)->void:
+	var p:Dictionary=game.online.player.duplicate(true);p.x=x;p.y=y
+	game.online._apply_snapshot({"player":p,"position_update":true,"position_seq":game.online.next_input_seq,"correction":correction})
+func run()->void:
+	game=load("res://main.tscn").instantiate();root.add_child(game);await process_frame
+	game.set_process(false);game.online.set_process(false);game.online.session.set_process(false);game.music.stop()
+	for card:Control in game.modal_cards:card.get_parent().hide()
+	game.online.session.queue_free();wire=Wire.new();game.online.add_child(wire);wire.set_process(false);game.online.session=wire
+	game.started=true;game.online_mode=true;game.online.active=true;game.online.streaming=true
+	game.online.player={"player_id":100,"name":"Fixture","map_id":int(game.world.id),"x":40,"y":40,"direction":3,"sitting":0,"inventory":[],"equipment":{},"spells":[],"stats":{"class_id":1},"hp":10,"max_hp":10,"tp":10,"max_tp":10}
+	game.server_blocked.clear();game.online.npcs.clear()
+	reset();game.online.players.assign([{"player_id":101,"name":"Peer","x":41,"y":40}]);game.movement_keys.append(KEY_D)
+	game.online.request_step(Vector2i.RIGHT)
+	check(moves().is_empty() and not game.moving and game.player_tile==Vector2i(40,40),"Stationary player blocks before animation or a native refresh")
+	check(not game._walkable(Vector2i(41,40)),"Pathfinding treats occupied player tiles as blocked")
+	game.online.blocked_since=Time.get_ticks_msec()-4999;game.online.request_step(Vector2i.RIGHT)
+	check(moves().is_empty(),"A hold shorter than five seconds cannot ghost")
+	var up:InputEventKey=InputEventKey.new();up.keycode=KEY_D;up.physical_keycode=KEY_D;up.pressed=false;game._input(up)
+	check(game.online.blocked_player==0,"Releasing a held key resets the entire ghost delay")
+	game.movement_keys.append(KEY_D);game.online.request_step(Vector2i.RIGHT);game.online.blocked_since=Time.get_ticks_msec()-5000;game.online.request_step(Vector2i.RIGHT)
+	check(moves().size()==1 and moves()[0].fields.ghost,"Continuous five-second hold sends explicit ghost walk")
+	check(not game.moving and not game.online.can_issue_walk(),"Ghost animation waits for native acceptance; no duplicate queued steps")
+	ack(41,40,false);check(game.moving and game.player_tile==Vector2i(41,40),"Only the native acknowledgement starts a ghost step")
+	reset();game.online.players.assign([{"player_id":101,"name":"Peer","x":42,"y":40}])
+	var now:float=Time.get_ticks_msec()/1000.0
+	game.online.remote_motion["player:101"]={"steps":[{"from":game.tile_position(Vector2i(41,40)),"to":game.tile_position(Vector2i(42,40)),"start":now,"duration":.42}]}
+	game.online.request_step(Vector2i.RIGHT)
+	check(moves().is_empty() and game.online.player_blocker(Vector2i(41,40))==101,"Walking player's origin and destination stay reserved until the sprite clears")
+	reset();game.online.players.assign([{"player_id":101,"name":"Peer","x":42,"y":40}]);game.movement_keys.append(KEY_D);game.online.request_step(Vector2i.RIGHT)
+	check(moves().size()==1 and not game.moving and not moves()[0].fields.get("ghost",false),"Potential head-on shared tile waits for server without premature overlap")
+	ack(40,40,true);check(not game.moving and game.player_tile==Vector2i(40,40) and game.movement_keys==[KEY_D] and not game.online.recovering,"Rejected contested step stays still and retains held direction")
+	game.online.request_step(Vector2i.RIGHT);ack(41,40,false)
+	check(game.moving and game.player_tile==Vector2i(41,40),"An accepted contested step begins normally")
+	reset();game.online.request_step(Vector2i.RIGHT)
+	check(game.moving and moves().size()==1,"Empty-area walking retains immediate prediction")
+	reset();game.online.players.assign([{"player_id":101,"name":"Peer","x":41,"y":40}]);game.movement_keys.append(KEY_D);game.online.request_step(Vector2i.RIGHT);game.online.blocked_since=Time.get_ticks_msec()-6000
+	game.server_blocked[Vector2i(41,40)]=true;game.online.request_step(Vector2i.RIGHT)
+	check(moves().is_empty() and game.online.blocked_player==0,"Ghost never bypasses solid terrain")
+	game.server_blocked.clear();game.online.request_step(Vector2i.RIGHT);game.online.blocked_since=Time.get_ticks_msec()-6000;game.movement_keys.clear();game.online.request_step(Vector2i.RIGHT)
+	check(moves().is_empty() and game.online.blocked_player==0,"Automatic routes cannot accumulate a held-input ghost")
+	var report:Dictionary={"result":"failed" if failed else "passed","checks":checks,"five_second_continuous_hold":true,"moving_origins_reserved":true,"contested_steps_acknowledged_before_animation":true,"offline":true}
+	var path:String=OS.get_environment("ASTER_VALE_TEST_REPORT")
+	if not path.is_empty():FileAccess.open(path,FileAccess.WRITE).store_string(JSON.stringify(report,"  ")+"\n")
+	print("PLAYER COLLISION: ",JSON.stringify(report));game.queue_free();await process_frame;quit(1 if failed else 0)

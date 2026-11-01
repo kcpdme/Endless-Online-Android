@@ -68,7 +68,7 @@ func run()->void:
 	touch(close_at,true,53);game._notification(Node.NOTIFICATION_APPLICATION_FOCUS_OUT)
 	check(ui.feed_pointer==-1 and ui.scroll_fingers.is_empty(),"Focus loss releases the disappearing chat button's touch ownership")
 	touch(close_at,false,53)
-	ui.open();check(ui.panel.visible and ui.history.get_parsed_text().contains("Temporary information"),"Full conversations retain hidden feed history")
+	ui.open();ui.select_tab(4);check(ui.panel.visible and ui.history.get_parsed_text().contains("Temporary information"),"System conversations retain hidden feed history")
 	ui.feed_until=Time.get_ticks_msec()-1;ui.tick();check(ui.panel.visible,"Manually opened conversations do not auto-close")
 	ui.close();ui.tick()
 	var config_path:String="user://chat-zoom-fixture.cfg";game.camera.settings_path=config_path

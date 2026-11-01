@@ -83,6 +83,8 @@ func receive(data: Dictionary) -> void:
 	refresh()
 func event(data: Dictionary) -> void:
 	if data.get("kind") == "chat" and data.get("channel") == "party": history.append_text(str(data.get("name","Party"))+": "+str(data.get("message",""))+"\n")
+	elif data.get("kind")=="party_exp" and int(data.get("exp_gain",0))>0:
+		history.append_text("Shared monster EXP: +%d\n"%int(data.exp_gain))
 func refresh() -> void:
 	accept_button.visible = not invitation.is_empty(); decline_button.visible = accept_button.visible
 	leave_button.disabled = party.is_empty(); chat.editable = not party.is_empty()

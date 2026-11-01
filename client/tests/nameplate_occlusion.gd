@@ -28,7 +28,7 @@ func run() -> void:
 		if child is Control and child!=game.nameplates:child.hide();child.set_process(false)
 	game.nameplates.set_process(false);game.nameplates.set_process_input(false);game.world={};game.decorations.clear();game.ground.clear()
 	var online: Node=game.online;online.active=true
-	online.player={"player_id":100,"name":"Self","gender":1,"race":0,"hairstyle":1,"haircolor":0,"equipment_graphics":[1,0,0,0,1,0,0,0,0]}
+	online.player={"player_id":100,"name":"","gender":1,"race":0,"hairstyle":1,"haircolor":0,"equipment_graphics":[1,0,0,0,1,0,0,0,0]}
 	var record: Dictionary={"id":1,"index":1,"x":40,"y":40,"direction":0}
 	var peer: Dictionary=online.player.duplicate();peer.merge({"player_id":101,"x":40,"y":40,"direction":0,"name":"Nearby player"},true)
 	var results: Array[Dictionary]=[]
@@ -70,12 +70,12 @@ func run() -> void:
 				game.player_world=game.tile_position(Vector2i(40,40) if kind=="crow" else Vector2i(39,39))
 				var combined: Image=await capture(view,game)
 				if kind=="guild_bob" and scale_factor==1.5 and zoom==1.65:combined.save_png("res://../work/classic-guild-name-blocked.png")
-				check(labels.entries.is_empty(),"Name disappears completely when it overlaps a character")
+				check(labels.entries.size()==(1 if kind=="player" else 0),"Player name persists; inspected NPC labels retain whole-label occlusion")
 				var actors: Image=await capture(view,game,false)
-				check(combined.get_data()==actors.get_data(),"Rendered collision leaves no floating name fragments")
+				check((combined.get_data()!=actors.get_data()) if kind=="player" else (combined.get_data()==actors.get_data()),"Persistent player label renders in full; blocked NPC leaves no fragments")
 				# A one-pixel clearance does not immediately re-enable a hidden name.
 				game.player_world+=Vector2(.1,.1);await capture(view,game)
-				check(labels.entries.is_empty(),"Subpixel movement does not flicker the blocked name")
+				check(labels.entries.size()==(1 if kind=="player" else 0),"Subpixel movement does not toggle the name")
 				game.player_world=game.tile_position(Vector2i(20,20));await capture(view,game)
 				check(labels.entries.size()==1,"Whole name returns after the other character clears it")
 				results.append({"kind":kind,"display_scale":scale_factor,"zoom":zoom,"no_fragments":true,"clearance_hysteresis":true})

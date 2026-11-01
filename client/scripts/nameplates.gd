@@ -149,11 +149,14 @@ func sync() -> void:
 		var shout: Dictionary = game.online.spell_labels.get(int(actor.id),{})
 		var speech_visible: bool = Time.get_ticks_msec()<maxi(int(speaking.get("until",0)),int(shout.get("until",0)))
 		var health: float = float(actor.health)
-		var text: String = str(actor.text) if str(actor.key)==selected and health<0.0 and not speech_visible else ""
+		var player_label:bool=str(actor.key).begins_with("player:")
+		var text: String = str(actor.text) if player_label or (str(actor.key)==selected and health<0.0 and not speech_visible) else ""
 		if text.is_empty() and health<0.0: continue
 		var top: Vector2 = world_to_local*((actor.pose.get("ground_position",actor.pose.position) as Vector2)+(actor.top as Vector2))
 		var count: int = entries.size()
 		_append(str(actor.key),text,top,int(actor.font),actor.color,health,40.0*game.camera.zoom.x)
+		# Player identities stay readable through speech, hover changes and crowding.
+		if player_label:continue
 		if text.is_empty() or entries.size()==count: continue
 		var entry: Dictionary = entries.back()
 		var label_rect: Rect2 = Rect2((entry.baseline as Vector2)-Vector2(2,ThemeDB.fallback_font.get_ascent(int(actor.font))+2),Vector2(float(entry.width)+4,ThemeDB.fallback_font.get_height(int(actor.font))+4))
