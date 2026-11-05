@@ -26,6 +26,7 @@ DESTINATIONS = (
     dict(key='dragon_cave', name='Dragon Cave', map_id=270, x=8, y=14),
     dict(key='aeven', name='Aeven', map_id=5, x=40, y=40),
     dict(key='mushroom_area', name='Mushroom Area (Centaur Approach)', map_id=146, x=10, y=8),
+    dict(key='bone_spider', name='Bone Spider', map_id=102, x=40, y=35),
 )
 
 def command_settings():
