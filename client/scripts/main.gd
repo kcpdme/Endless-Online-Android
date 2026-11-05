@@ -315,9 +315,9 @@ func _world_tile(point: Vector2) -> Vector2i:
 	var p: Vector2 = point - Vector2(0, 16)
 	return Vector2i(roundi(p.x / 64.0 + p.y / 32.0), roundi(p.y / 32.0 - p.x / 64.0))
 
-func _walkable(tile: Vector2i,ignore_players:bool=false) -> bool:
+func _walkable(tile: Vector2i,ignore_players:bool=false,include_npc_motion:bool=true) -> bool:
 	if tile.x < 0 or tile.y < 0 or tile.x >= int(world.get("width", 0)) or tile.y >= int(world.get("height", 0)): return false
-	if online_mode: return not server_blocked.has(tile) and not online.npc_occupies(tile) and (ignore_players or online.player_blocker(tile)==0)
+	if online_mode: return not server_blocked.has(tile) and not online.npc_occupies(tile,include_npc_motion) and (ignore_players or online.player_blocker(tile)==0)
 	return not blocked.has(tile) and int(ground.get(tile, int(world.get("fill_tile", 0)))) > 0
 
 func _process(delta: float) -> void:
@@ -414,6 +414,10 @@ func _process(delta: float) -> void:
 	queue_redraw()
 
 func _advance_walk(delta: float) -> void:
+	if online_mode and online.waiting_for_npc_clear:
+		if online.npc_occupies(player_tile): return
+		online.waiting_for_npc_clear = false
+		animation_clock = 0.0
 	step_progress = minf(1.0, step_progress + delta / step_duration)
 	if step_progress >= 1.0 - 0.000001: step_progress = 1.0
 	player_world = step_from.lerp(step_to, step_progress)
@@ -447,8 +451,8 @@ func _screen_direction(input: Vector2) -> Vector2i:
 	if absf(input.x) > absf(input.y): return Vector2i.RIGHT if input.x > 0 else Vector2i.LEFT
 	return Vector2i.DOWN if input.y > 0 else Vector2i.UP
 
-func _can_step(origin: Vector2i, direction: Vector2i,ignore_players:bool=false) -> bool:
-	if not _walkable(origin + direction,ignore_players): return false
+func _can_step(origin: Vector2i, direction: Vector2i,ignore_players:bool=false,include_npc_motion:bool=true) -> bool:
+	if not _walkable(origin + direction,ignore_players,include_npc_motion): return false
 	if direction.x != 0 and direction.y != 0:
 		return _walkable(origin + Vector2i(direction.x, 0)) and _walkable(origin + Vector2i(0, direction.y))
 	return true
@@ -496,6 +500,7 @@ func _step(direction: Vector2i) -> void:
 
 func local_render_pose() -> Dictionary:
 	var state: String = "frames" if moving else "cast" if online_mode and skills_ui.is_chanting(int(online.player.get("player_id",0))) else "attack" if swing_clock>0.0 else "idle"
+	if online_mode and online.waiting_for_npc_clear: state = "idle"
 	if online_mode and online.seated(): state="sit_chair" if int(online.player.sitting)==1 else "sit_floor"
 	var base: Dictionary = {"position":player_world,"direction":facing,"state":state,"phase":animation_clock * (online.MOVE_SECONDS / step_duration if online_mode else 1.0) if moving else -1.0}
 	return stepping_stones.pose(base,tile_specs,step_origin_tile,player_tile,step_progress)
@@ -512,6 +517,7 @@ func _cancel_movement(force_stop: bool = false) -> void:
 	route.clear()
 	waypoint = Vector2i(-1, -1)
 	if moving and (not online_mode or force_stop):
+		if online != null: online.waiting_for_npc_clear = false
 		# Stop at the exact rendered point. Only the logical/save tile selects the nearest endpoint.
 		if step_progress < 0.5 and not online_mode: player_tile = step_origin_tile
 		moving = false

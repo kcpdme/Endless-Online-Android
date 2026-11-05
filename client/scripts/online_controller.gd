@@ -38,6 +38,7 @@ var character_box: Control
 var selected_characters: Array[Dictionary] = []
 var active: bool = false
 var waiting_for_walk: bool = false
+var waiting_for_npc_clear: bool = false
 var carry_notice_at: int = 0
 const NPC_SERVICE_DISTANCE: int = 11
 # Native Walk is 400 ms plus a 20 ms auto-queue dispatch stage.
@@ -500,6 +501,7 @@ func _apply_snapshot(data: Dictionary, entering: bool = false) -> void:
 			game.player_tile = tile
 			game.player_world = game.tile_position(tile)
 			game.moving = false
+			waiting_for_npc_clear = false
 			game.camera.position = game.player_world
 			game.camera.reset_smoothing()
 		elif previous_sitting != int(player.get("sitting", 0)):
@@ -521,7 +523,11 @@ func _apply_snapshot(data: Dictionary, entering: bool = false) -> void:
 				network_metrics.corrections = int(network_metrics.corrections) + 1
 				recovering = true
 			if not recovering and not defeated:
-				for input: Dictionary in pending_inputs: tile += input.direction as Vector2i
+				for input: Dictionary in pending_inputs:
+					# An earlier ACK may arrive after a contested step was sent.
+					# Replay predictions only; that step still needs its own ACK.
+					if bool(input.get("deferred", false)): break
+					tile += input.direction as Vector2i
 			else:
 				game._cancel_controls(true)
 				game.player_tile = tile
@@ -531,7 +537,7 @@ func _apply_snapshot(data: Dictionary, entering: bool = false) -> void:
 			if not waiting_for_walk: transition_pending = false
 			if tile != game.player_tile:
 				if not deferred_ack:game.route.clear()
-				_start_step(tile, _facing(player.get("direction", 0)))
+				_start_step(tile, _facing(player.get("direction", 0)), deferred_ack)
 		_sync_inventory()
 	if data.has("players"): players = _dict_array(data.players)
 	else: players = _merge_updates(players, data.get("players_upsert", []), data.get("players_remove", []), "player_id")
@@ -634,7 +640,9 @@ func request_step(direction: Vector2i) -> void:
 	if direction not in [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]: return
 	var single: Vector2i = direction
 	var target: Vector2i = game.player_tile + single
-	if not game._can_step(game.player_tile, single,true):
+	# Request permission as soon as native coordinates clear. Overlap the round
+	# trip with the departing sprite's animation, then wait visually if needed.
+	if not game._can_step(game.player_tile, single,true,false):
 		reset_player_block()
 		request_face(game._direction_name(single))
 		if int(game.tile_specs.get(target, -1)) == 9: _open_bumped_chest(target)
@@ -672,7 +680,7 @@ func request_step(direction: Vector2i) -> void:
 	fields.merge({"input_seq": next_input_seq, "map_id": int(game.world.id), "x": target.x, "y": target.y})
 	pending_face = ""
 	if session.request("move", fields) < 0: return
-	var deferred:bool=ghost or player_near_step(target) or npc_near_step(target)
+	var deferred:bool=ghost or player_near_step(target) or npc_near_step(target) or npc_occupies(target)
 	pending_inputs.append({"seq": next_input_seq, "direction": single, "sent_at": Time.get_ticks_msec(),"deferred":deferred})
 	waiting_for_walk = true
 	transition_pending = passage
@@ -689,7 +697,8 @@ func _open_bumped_chest(tile: Vector2i) -> void:
 	interaction.clear()
 	game._cancel_controls()
 
-func _start_step(tile: Vector2i, direction: String) -> void:
+func _start_step(tile: Vector2i, direction: String, wait_for_npc: bool = false) -> void:
+	waiting_for_npc_clear = wait_for_npc and npc_occupies(tile)
 	game.step_origin_tile = game.player_tile
 	game.step_from = game.player_world
 	game.step_to = game.tile_position(tile)
@@ -721,6 +730,7 @@ func _reset_movement() -> void:
 	npc_attack_until.clear()
 	peer_attacks.clear()
 	waiting_for_walk = false
+	waiting_for_npc_clear = false
 	transition_pending = false
 	next_input_seq = 0
 	confirmed_input_seq = 0
@@ -782,10 +792,11 @@ func spend_stat(stat_id: int) -> void:
 		session.request("spend_stat", {"stat_id": stat_id})
 		game.stats_ui.refresh()
 
-func npc_occupies(tile: Vector2i) -> bool:
+func npc_occupies(tile: Vector2i, include_motion: bool = true) -> bool:
 	var now:float=Time.get_ticks_msec()/1000.0
 	for npc: Dictionary in npcs:
 		if Vector2i(int(npc.get("x", -1)), int(npc.get("y", -1))) == tile: return true
+		if not include_motion: continue
 		for step:Dictionary in remote_motion.get("npc:%d"%int(npc.index),{}).get("steps",[]):
 			if now<float(step.start)+float(step.get("duration",MOVE_SECONDS)) and tile in [game._world_tile(step.from),game._world_tile(step.to)]:return true
 	return false

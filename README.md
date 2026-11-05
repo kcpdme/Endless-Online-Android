@@ -53,6 +53,12 @@ checks that Android kept the app's original installation timestamp.
 
 ## Play online
 
+Version **0.58.3** overlaps held-walk confirmation with an NPC's departing
+animation, so clearing the road no longer starts another network wait. Native
+acceptance and sprite clearance still prevent crossing through NPCs. Bone Spider
+spawn, combat and respawn were also verified against a private copy of the live
+world. See [movement fix and spawn audit](docs/NPC_WALK_RESUME_V583.md).
+
 Version **0.58.2** restores the full classic basic-attack cadence for every class
 and removes Archer bow and close-range speed bonuses. Native cooldowns prevent
 rapid taps or forged timestamps from bypassing the rate. See [comparison and tests](docs/ATTACK_CADENCE_V582.md).
