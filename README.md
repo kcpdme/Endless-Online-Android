@@ -53,6 +53,10 @@ checks that Android kept the app's original installation timestamp.
 
 ## Play online
 
+Version **0.58.2** restores the full classic basic-attack cadence for every class
+and removes Archer bow and close-range speed bonuses. Native cooldowns prevent
+rapid taps or forged timestamps from bypassing the rate. See [comparison and tests](docs/ATTACK_CADENCE_V582.md).
+
 Version **0.58.1** repairs pet facing and crowd-aware targeting, NPC/player
 collisions, and the native action backlog after repeated turning. Joystick input
 now turns first and walks on a continued hold or same-facing input. Admin teleport

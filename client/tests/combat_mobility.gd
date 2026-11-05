@@ -13,22 +13,22 @@ func run() -> void:
  c.player={"player_id":1,"combat":{"attack_seconds":.3467,"close_attack_seconds":.26,"close_range":2,"move_seconds":.21}}
  c.catalog={"npcs":{"1":{"type":1},"321":{"type":6},"306":{"type":0}}}
  c.npcs.assign([{"index":1,"id":1,"x":38,"y":45}])
- check(is_equal_approx(game._online_attack_seconds(),.3467),"Scav retains its far cadence at three tiles")
+ check(is_equal_approx(game._online_attack_seconds(),.62),"Stale fast-bow metadata cannot accelerate distant attacks")
  c.npcs[0].x=37
- check(is_equal_approx(game._online_attack_seconds(),.26),"Scav gets close cadence at two tiles")
+ check(is_equal_approx(game._online_attack_seconds(),.62),"Adjacent enemies cannot accelerate attacks")
  game.facing="west"
- check(is_equal_approx(game._online_attack_seconds(),.3467),"Side and rear targets do not grant close firing")
+ check(is_equal_approx(game._online_attack_seconds(),.62),"Facing does not change the classic attack cadence")
  game.facing="east";c.npcs[0].id=321
- check(is_equal_approx(game._online_attack_seconds(),.3467),"Merchant cannot grant close firing")
+ check(is_equal_approx(game._online_attack_seconds(),.62),"Merchants cannot change attack cadence")
  c.npcs[0].id=306
- check(is_equal_approx(game._online_attack_seconds(),.3467),"Untargetable pet cannot grant close firing")
+ check(is_equal_approx(game._online_attack_seconds(),.62),"Pets cannot change attack cadence")
  c.npcs[0].id=1;game.server_blocked[Vector2i(36,45)]=true
- check(is_equal_approx(game._online_attack_seconds(),.3467),"Wall prevents close firing bonus through the intermediate tile")
+ check(is_equal_approx(game._online_attack_seconds(),.62),"Walls cannot change attack cadence")
  game.server_blocked.clear();c.npcs.clear()
  c.players.assign([{"player_id":2,"x":37,"y":45}]);c.world_rules={"pk":true}
- check(is_equal_approx(game._online_attack_seconds(),.26),"PK target directly ahead gets close cadence")
+ check(is_equal_approx(game._online_attack_seconds(),.62),"PK attacks obey the same classic attack cadence")
  c.world_rules={"pk":false}
- check(is_equal_approx(game._online_attack_seconds(),.3467),"Peaceful nearby player cannot grant close cadence")
+ check(is_equal_approx(game._online_attack_seconds(),.62),"Peaceful players cannot change attack cadence")
  c._start_step(Vector2i(36,45),"east")
  check(is_equal_approx(game.step_duration,.21),"Rogue prediction uses server movement metadata")
  game.animation_clock=.105

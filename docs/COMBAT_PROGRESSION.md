@@ -1,5 +1,9 @@
 # Class combat and mobile controls — profile 8, Android 0.46.0
 
+The firing-rate table below records the historical profile. Version 0.58.2
+restores one classic basic-attack cadence for all bows and classes; see
+[the correction and native timing tests](ATTACK_CADENCE_V582.md).
+
 ## Summoner controls
 
 Summoners have a paw button in the former bottom Inventory position. It reads

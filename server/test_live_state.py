@@ -107,7 +107,7 @@ class StreamStateTests(unittest.TestCase):
     def test_first_attack_timestamp_honors_requested_facing_without_face_wait(self):
         s=fixture();s.timestamp=0;s.strike(2)
         self.assertEqual(len(s.sent),1)
-        r=Reader(s.sent[0][2]);self.assertEqual(r.num(),2);self.assertEqual(r.num(3),50)
+        r=Reader(s.sent[0][2]);self.assertEqual(r.num(),2);self.assertEqual(r.num(3),62)
     def test_peer_equipment_push_uses_bahws_order_without_refresh(self):
         s=fixture();s.state['characters']=[dict(player_id=200,equipment_graphics=[0]*9,direction=0)]
         s.apply_event(23,5,number(200,2)+number(1,1)+number(0,1)+b''.join(number(i,2) for i in [1,1,0,33,0]))

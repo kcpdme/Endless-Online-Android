@@ -87,7 +87,7 @@ func _run() -> void:
 	for request: Dictionary in wire.calls:
 		if request.op=="strike": attacks.append(float(request.at))
 	var mean: float=(attacks.back()-attacks[0])/(attacks.size()-1)
-	check(attacks.size()==12 and absf(mean-.52)<.005,"Held attack timer must match native520ms pace instead of accumulating frame gaps: "+str(mean))
+	check(attacks.size()==10 and absf(mean-.62)<.005,"Held attack timer must match classic620ms client pace instead of accumulating frame gaps: "+str(mean))
 	var art: Dictionary={"attack":{"south":[{"pose":0},{"pose":1},{"pose":2},{"pose":3}]}}
 	check(game._frame(art,"south","attack",.12).pose==1 and game._frame(art,"south","attack",.40).pose==3,"Online swing must follow original120ms attack poses through480ms")
 	game._release_attack()

@@ -79,6 +79,7 @@ def main():
     patches.append(ROOT / 'patches/etheos-running-class-v15.patch')
     patches.append(ROOT / 'patches/etheos-explicit-ghost-walk.patch')
     patches.append(ROOT / 'patches/etheos-pet-response.patch')
+    patches.append(ROOT / 'patches/etheos-classic-attack-cadence.patch')
     apply_patches(source, patches)
     (source / 'json').mkdir(exist_ok=True)
     shutil.copy2(download(*JSON, deps / 'json.hpp'), source / 'json/json.hpp')

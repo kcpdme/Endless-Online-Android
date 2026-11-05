@@ -9,7 +9,7 @@ const HudIconButton = preload("res://scripts/hud_icon_button.gd")
 const WeaponButton = preload("res://scripts/weapon_button.gd")
 const ClassicDialogSkin = preload("res://scripts/classic_dialog_skin.gd")
 const CharacterStats = preload("res://scripts/character_stats.gd")
-const ONLINE_ATTACK_COOLDOWN: float = 0.52
+const ONLINE_ATTACK_COOLDOWN: float = 0.62 # Full classic cycle plus scheduling allowance.
 const ATTACK_COOLDOWN: float = 0.90
 const ATTACK_SWING_DURATION: float = 0.26
 const ONLINE_ATTACK_SWING_DURATION: float = 0.48
@@ -917,19 +917,7 @@ func _place_enemy() -> void:
 func _online_attack_seconds() -> float:
 	var combat: Dictionary = online.player.get("combat", {}) as Dictionary
 	var seconds: float = float(combat.get("attack_seconds", ONLINE_ATTACK_COOLDOWN))
-	var offset: Vector2i = {"north":Vector2i.UP,"east":Vector2i.RIGHT,"south":Vector2i.DOWN,"west":Vector2i.LEFT}.get(facing, Vector2i.DOWN)
-	var tile: Vector2i = player_tile
-	for distance: int in range(int(combat.get("close_range", 0))):
-		tile += offset
-		for npc: Dictionary in online.npcs:
-			if Vector2i(int(npc.x), int(npc.y)) == tile and online.is_combat_npc(npc):
-				return float(combat.get("close_attack_seconds", seconds))
-		if bool(online.world_rules.get("pk", false)):
-			for peer: Dictionary in online.players:
-				if int(peer.get("player_id", 0)) != int(online.player.get("player_id", 0)) and Vector2i(int(peer.x), int(peer.y)) == tile:
-					return float(combat.get("close_attack_seconds", seconds))
-		if server_blocked.has(tile): break
-	return clampf(seconds, 0.26, ONLINE_ATTACK_COOLDOWN)
+	return maxf(seconds, ONLINE_ATTACK_COOLDOWN)
 
 func _attack() -> void:
 	if online_mode:

@@ -85,8 +85,9 @@ def benchmarks(profile):
             if any(i['level_requirement']>level or (i.get('allowed_classes') and clas not in i['allowed_classes']) for i in gear):raise ValueError(f'Invalid benchmark loadout {clas}/{level}')
             s=stats(clas,level,allocation(clas,level),gear)
             target_armor=level*.4;target_evade=level*.6
-            shot=weapon.get('shot_power',1);speed=weapon.get('attack_speed',1)
-            basic=expected_hit(max(0,int(s['min_damage']*shot)),max(1,int(s['max_damage']*shot)),target_armor)*hit_chance(s['accuracy'],target_evade)/(.5/speed)
+            from combat_progression import BASIC_ATTACK_SECONDS
+            shot=weapon.get('shot_power',1)
+            basic=expected_hit(max(0,int(s['min_damage']*shot)),max(1,int(s['max_damage']*shot)),target_armor)*hit_chance(s['accuracy'],target_evade)/BASIC_ATTACK_SECONDS
             candidates=[]
             for spell in spells.values():
                 if spell['type']!=1 or spell.get('effect_kind')=='companion' or spell.get('area_radius') or clas not in spell.get('allowed_classes',[]) or spell['level_requirement']>level:continue
@@ -105,7 +106,7 @@ def benchmarks(profile):
                 per_target=expected_hit(power['min_damage'],power['max_damage'],target_armor)*hit_chance(s['accuracy'],target_evade)/max(.96,a['cast_time']*.48+.48)
                 area.append((per_target*a['area_targets'],a['id'],a['area_targets']))
             area_dps,area_id,area_targets=max(area) if area else (0,0,0)
-            close_basic=basic*weapon.get('close_attack_speed',speed)/speed
+            close_basic=basic
             walking_multiplier=1
             eligible=[pet for spell_id,pet in profile['companions'].items() if pet['npc_id']>0 and profile['spells'][str(spell_id)]['level_requirement']<=level]
             pet=max(eligible,key=lambda p:(p['power'],p.get('accuracy',0)),default=dict(power=0))

@@ -114,12 +114,12 @@ class LiveSession(RunningMixin, NativeFeaturesMixin, WorldFeedbackMixin, AdminMi
         if self.warp or self.stats.get('dead'):return {'sent':False,'dead':True}
         # Native TCP/action queue preserves Walk -> Attack order; a delayed walk
         # acknowledgement must not add another round trip before an attack.
-        # Original Attack_Use accepts 48+ timestamp ticks; >=60 forces old facing.
-        # Send the desired direction directly, avoiding Face's additional 120 ms queue slot.
+        # Send the desired direction directly; the native wall-clock cooldown
+        # controls cadence independently of these protocol timestamp ticks.
         self.cancel_spell()
-        from combat_progression import equipped_combat, mobility_enabled
+        from combat_progression import equipped_combat
         combat=equipped_combat(self)
-        self.timestamp+=50 if mobility_enabled() else max(1,round(combat['attack_seconds']/.52*50))
+        self.timestamp+=max(1,round(combat['attack_seconds']*100))
         self.send(11,10,number(direction,1)+number(self.timestamp,3))
         self.state['self']['direction']=direction
         return dict(sent=True,**combat)
