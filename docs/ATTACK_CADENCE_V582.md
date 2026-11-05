@@ -1,5 +1,8 @@
 # Classic basic attack cadence — Android 0.58.2
 
+The later [Dragon Warrior / Archer server update](DRAGON_WARRIOR_AND_ARCHER.md)
+also restores full bow impact. This document records the earlier cadence-only change.
+
 The November 5, 2026 correction removes bow-specific and target-distance speed
 bonuses, and slows ordinary basic attacks to the full classic reference cycle.
 The native world enforces a 600 ms minimum between basic attacks for every class.

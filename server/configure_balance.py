@@ -15,6 +15,7 @@ from class_identity import allowed_classes, role_for, vary_stats, recipe_sources
 from class_signatures import SIGNATURES, SUPPORT, EGGS
 from pet_catalog import TIERS, ROSTER, EGGKEEPER, HATCHED_EGGS, PET_COOLDOWN_SECONDS, egg_stock
 from configure_rates import EXP_MULTIPLIER
+from dragon_warrior import ARMOR_RECIPES, add_recipes as add_dragon_recipes
 
 STAT_FIELDS = {'hp':(5,2),'tp':(7,2),'min_damage':(9,2),'max_damage':(11,2),'accuracy':(13,2),'evade':(15,2),'armor':(17,2),**{k:(20+i,1) for i,k in enumerate(ATTRIBUTES)}}
 INPUTS = ('data/pub/dat001.eif','data/pub/dat001.ecf','data/pub/dsl001.esf','data/pub/dtn001.enf','data/aster-vale-shops.ini','data/quests/00004.eqf','data/aster-vale-drops.ini')
@@ -104,7 +105,8 @@ def build_items(original, shops=""):
         if ident in (430,431):stats.update(hp=110,min_damage=2,max_damage=2,accuracy=11,evade=12,armor=24,strength=4,agility=11)
         if ident in (458,459):stats.update(hp=85,armor=20,evade=5,strength=6)
         if ident in (387,388):stats.update(hp=80,armor=18,evade=6,strength=6,accuracy=5,min_damage=2,max_damage=2)
-        crafted=bool(sources.get(ident,{}).get('craft')) and not sources.get(ident,{}).get('buy')
+        # Alternate Dragon recipes award the original drops without a stat bonus.
+        crafted=bool(sources.get(ident,{}).get('craft')) and not sources.get(ident,{}).get('buy') and ident not in ARMOR_RECIPES
         if ident in SHIELDS:stats["armor"]=SHIELDS[ident]
         stats,style=vary_stats(i,stats,tier,crafted)
         if ident in ACCESSORY_STATS:
@@ -324,7 +326,7 @@ def build_shops(original):
         if len(parts)%9:raise ValueError('Invalid crafting recipe width')
         if any(not 0<=parts[j]<=252 for start in range(0,len(parts),9) for j in range(start+2,start+9,2)):
             raise ValueError('Craft ingredient count exceeds native wire capacity')
-    return text.encode('latin1')
+    return add_dragon_recipes(text).encode('latin1')
 
 def build_drops(original):
     text=original.decode('latin1')

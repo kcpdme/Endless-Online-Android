@@ -53,6 +53,11 @@ checks that Android kept the app's original installation timestamp.
 
 ## Play online
 
+Dragon Warrior now crafts **Draco (M)** and **Dracota (F)** for 10 Dragon Claws,
+10 Dragon Wings and 200 Gold each. Classic Dragon equipment drops remain at their
+original chances. Archer bows now deal full shot damage at the classic attack
+cadence, fixing the late-game damage benchmark. See [recipes, drops and balancing checks](docs/DRAGON_WARRIOR_AND_ARCHER.md).
+
 Version **0.58.3** overlaps held-walk confirmation with an NPC's departing
 animation, so clearing the road no longer starts another network wait. Native
 acceptance and sprite clearance still prevent crossing through NPCs. Bone Spider

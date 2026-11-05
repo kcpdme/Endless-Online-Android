@@ -4,15 +4,15 @@ RECOVERY_SECONDS = 2
 # Five 120ms EO attack phases; the client keeps 20ms of scheduling allowance.
 BASIC_ATTACK_SECONDS = .6
 CLIENT_ATTACK_SECONDS = .62
-# Bow progression changes reach and impact, never the basic attack cadence.
+# Bow progression extends reach; all bows keep full impact and classic cadence.
 BOWS = {
     297: dict(range_tiles=3, attack_speed=1.0, shot_power=1.0),
     511: dict(range_tiles=3, attack_speed=1.0, shot_power=1.0),
-    543: dict(range_tiles=4, attack_speed=1.0, shot_power=.95),
-    512: dict(range_tiles=4, attack_speed=1.0, shot_power=.95),
-    316: dict(range_tiles=5, attack_speed=1.0, shot_power=.85),
-    457: dict(range_tiles=7, attack_speed=1.0, shot_power=.70),
-    496: dict(range_tiles=8, attack_speed=1.0, shot_power=.70),
+    543: dict(range_tiles=4, attack_speed=1.0, shot_power=1.0),
+    512: dict(range_tiles=4, attack_speed=1.0, shot_power=1.0),
+    316: dict(range_tiles=5, attack_speed=1.0, shot_power=1.0),
+    457: dict(range_tiles=7, attack_speed=1.0, shot_power=1.0),
+    496: dict(range_tiles=8, attack_speed=1.0, shot_power=1.0),
 }
 ARROWS = {423: 0, 424: 2, 425: 2}
 SHIELDS = {52: 4, 53: 5, 55: 4, 56: 3, 57: 6, 209: 5,

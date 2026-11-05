@@ -1,4 +1,4 @@
-"""Remove obsolete bow-speed metadata from a stopped, backed-up v15 runtime."""
+"""Restore classic cadence and full bow impact in a backed-up v15 runtime."""
 import argparse,hashlib,json,os,re
 from pathlib import Path
 from combat_progression import BOWS,BASIC_ATTACK_SECONDS,CLIENT_ATTACK_SECONDS
@@ -15,16 +15,17 @@ def configure(runtime):
         item=profile['items'][str(ident)]
         if item.get('type')!=10 or item.get('subtype')!=1:raise ValueError('Expected a known bow definition')
         item['attack_speed']=1.0
+        item['shot_power']=1.0
         item.pop('close_attack_speed',None);item.pop('close_range',None)
     profile['attack_timing']=dict(server_seconds=BASIC_ATTACK_SECONDS,client_seconds=CLIENT_ATTACK_SECONDS,bow_speed_bonus=False)
     if '5' in profile.get('classes',{}):profile['classes']['5']['signature']=SIGNATURES[5]
     config=before[paths[1]].decode()
     for ident in BOWS:
         # Remove obsolete keys, including their duplicate overrides, then write
-        # one normal-rate value. All reach/impact and unrelated options survive.
-        pattern=r'^BalanceItem\.'+str(ident)+r'\.(?:attack_speed|close_attack_speed|close_range)\s*=.*(?:\n|$)'
+        # one normal-rate/full-impact value. Reach and unrelated options survive.
+        pattern=r'^BalanceItem\.'+str(ident)+r'\.(?:attack_speed|close_attack_speed|close_range|shot_power)\s*=.*(?:\n|$)'
         config=re.sub(pattern,'',config,flags=re.M)
-        config=config.rstrip()+f'\nBalanceItem.{ident}.attack_speed = 1.0\n'
+        config=config.rstrip()+f'\nBalanceItem.{ident}.attack_speed = 1.0\nBalanceItem.{ident}.shot_power = 1.0\n'
     proposed={paths[0]:(json.dumps(profile,indent=2)+'\n').encode(),paths[1]:config.encode()}
     manifest=json.loads(before[paths[2]])
     for rel,data in proposed.items():
@@ -42,7 +43,7 @@ def configure(runtime):
     except BaseException:
         for rel in changed:(runtime/rel).write_bytes(before[rel])
         raise
-    return dict(files_changed=changed,server_attack_seconds=BASIC_ATTACK_SECONDS,client_attack_seconds=CLIENT_ATTACK_SECONDS,database_opened=False,pub_files_changed=False)
+    return dict(files_changed=changed,server_attack_seconds=BASIC_ATTACK_SECONDS,client_attack_seconds=CLIENT_ATTACK_SECONDS,bow_shot_power=1.0,database_opened=False,pub_files_changed=False)
 
 if __name__=='__main__':
     parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--runtime',type=Path,required=True)

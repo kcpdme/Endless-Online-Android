@@ -3,6 +3,8 @@
 The firing-rate table below records the historical profile. Version 0.58.2
 restores one classic basic-attack cadence for all bows and classes; see
 [the correction and native timing tests](ATTACK_CADENCE_V582.md).
+The later server update also removes the old rapid-fire damage penalties, so
+every bow now deals full basic-shot damage; see [the Archer correction](DRAGON_WARRIOR_AND_ARCHER.md).
 
 ## Summoner controls
 

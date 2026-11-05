@@ -36,6 +36,15 @@ class BalanceTests(unittest.TestCase):
             self.assertGreater(items[str(ident)][attribute],items['430'][attribute])
         self.assertGreater(items['509']['armor'],items['430']['armor']);self.assertGreater(items['505']['evade'],items['430']['evade'])
 
+    def test_dragon_armor_alternate_recipes_keep_the_dropped_item_stats(self):
+        _,p=self.install()
+        for ident in ('458','459'):
+            item=p['items'][ident]
+            self.assertEqual(item['acquisition']['craft'],[253])
+            self.assertEqual(item['acquisition']['drop'],[225])
+            self.assertEqual((item['hp'],item['armor']),(101,20))
+            self.assertFalse(item['crafted'])
+
     def test_class_ownership_and_real_companion_definitions(self):
         _,p=self.install();items=p['items'];spells=p['spells']
         for spell in spells.values():

@@ -3,6 +3,7 @@ from pathlib import Path
 from class_balance_audit import metrics
 from balance_profile import CLASSES
 from class_identity import ACCESSORY_STATS
+from balance_model import benchmarks,loadout
 ROOT=Path(__file__).resolve().parents[1]
 class ClassBalanceV10Tests(unittest.TestCase):
  def test_exact_requested_mage_and_priest_metadata(self):
@@ -13,6 +14,13 @@ class ClassBalanceV10Tests(unittest.TestCase):
   self.assertEqual(len({tuple(sorted(s.items())) for s in ACCESSORY_STATS.values()}),len(ACCESSORY_STATS))
   for entry in ACCESSORY_STATS.values():
    for k,v in entry.items():self.assertLessEqual(v,10 if k in ('hp','tp') else 2)
+ @unittest.skipUnless((ROOT/'work/class-run-v15/runtime/data/balance-profile.json').exists(),'native profile unavailable')
+ def test_full_slot_metrics_use_the_same_classic_cadence_as_the_milestone_model(self):
+  p=json.loads((ROOT/'work/class-run-v15/runtime/data/balance-profile.json').read_text())
+  for row in benchmarks(p):
+   measured=metrics(p,row['class_id'],row['level'],loadout(p,row['class_id'],row['level']))
+   self.assertEqual(measured['basic_dps'],row['basic_dps'])
+   self.assertEqual(measured['close_basic_dps'],row['basic_dps'])
  @unittest.skipUnless((ROOT/'work/class-balance-v10/full-equipment-audit.json').exists(),'native profile unavailable')
  def test_full_slot_equipment_audit_and_late_progression(self):
   r=json.loads((ROOT/'work/class-balance-v10/full-equipment-audit.json').read_text());p=json.loads((ROOT/'work/class-balance-v10/runtime/data/balance-profile.json').read_text())

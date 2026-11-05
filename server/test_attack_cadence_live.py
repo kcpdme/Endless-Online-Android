@@ -18,8 +18,10 @@ def main():
         r=Path(temp)/'runtime';shutil.copytree(a.runtime,r,ignore=shutil.ignore_patterns('database.sdb*','*.log','etheos*'));shutil.copy2(a.binary,r/'etheos')
         os.environ['ASTER_VALE_RUNTIME']=str(r)
         if not a.baseline:configure(r)
-        cfg=r/'config.local.ini';cfg.write_text(cfg.read_text()+f'\nPort = {a.port}\nIPReconnectLimit = 0\nRecoverSpeed = 1h\nNPCRecoverSpeed = 1h\n')
-        pub=r/'data/pub/dtn001.enf';raw=pub.read_bytes();rows=records(raw,b'ENF',39);put(rows[0]['fields'],11,500000,3);pub.write_bytes(encode_pub(raw,rows))
+        cfg=r/'config.local.ini';cfg.write_text(cfg.read_text()+f'\nPort = {a.port}\nIPReconnectLimit = 0\nRecoverSpeed = 1h\nNPCRecoverSpeed = 1h\nCriticalFirstHit = no\nCriticalRate = 0\n')
+        pub=r/'data/pub/dtn001.enf';raw=pub.read_bytes();rows=records(raw,b'ENF',39)
+        for offset,value,size in ((11,500000,3),(22,0,2),(24,0,2)):put(rows[0]['fields'],offset,value,size)
+        pub.write_bytes(encode_pub(raw,rows))
         prefix,g,_=parse((r/'data/maps/00021.emf').read_bytes());prefix=bytearray(prefix[:46]);prefix[43:45]=number(0,1)*2
         for x in range(2,18):
             for y in range(2,12):g['specs'].pop((x,y),None);g['warps'].pop((x,y),None)
@@ -50,6 +52,12 @@ def main():
                 while len(times)<len(hits):times.append(time.monotonic()-start)
             gaps=[round(b-a,4) for a,b in zip(times,times[1:])]
             result=dict(class_id=clas,bow=bow,distance=distance,hits=len(times),intervals=gaps,passed=len(times)>=3 and bool(gaps) and min(gaps)>=.585)
+            if clas==5:
+                damage=[e['damage'] for e in s.events if e.get('kind')=='npc_damage' and e.get('damage',0)>0]
+                bounds=[s.stats['min_damage'],s.stats['max_damage']]
+                full_impact=bool(damage) and all(bounds[0]<=amount<=bounds[1] for amount in damage)
+                result.update(damage=damage,full_impact_bounds=bounds,full_impact=full_impact)
+                result['passed']=result['passed'] and full_impact
             results.append(result);print(json.dumps(result),flush=True);s.close();sessions.remove(s)
             if not a.baseline and not result['passed']:raise AssertionError('Native attack cadence exceeded: '+json.dumps(result))
         try:

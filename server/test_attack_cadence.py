@@ -20,10 +20,10 @@ class AttackCadenceTests(unittest.TestCase):
     def test_targeted_migration_preserves_stats_rewards_and_is_idempotent(self):
         with tempfile.TemporaryDirectory() as tmp:
             r=Path(tmp);(r/'data').mkdir()
-            items={str(i):dict(type=10,subtype=1,attack_speed=2,close_attack_speed=2,close_range=2,min_damage=i,range_tiles=v['range_tiles'],shot_power=v['shot_power']) for i,v in BOWS.items()}
+            items={str(i):dict(type=10,subtype=1,attack_speed=2,close_attack_speed=2,close_range=2,min_damage=i,range_tiles=v['range_tiles'],shot_power=.7) for i,v in BOWS.items()}
             profile=dict(version=15,items=items,classes={'5':{'signature':{'description':'Old x2 bow speed'}},'6':{'signature':{'name':'Might'}}},spells={'1':{'tp':7}},npcs={'1':{'exp':5}},companions={'61':{'power':1.5}})
             (r/'data/balance-profile.json').write_text(json.dumps(profile))
-            (r/'config.local.ini').write_text('PrivateSetting = preserved\nBalanceItem.457.attack_speed = 2\nBalanceItem.457.close_attack_speed = 2\nBalanceItem.457.range_tiles = 7\nExpRate = 200%\n')
+            (r/'config.local.ini').write_text('PrivateSetting = preserved\nBalanceItem.457.attack_speed = 2\nBalanceItem.457.close_attack_speed = 2\nBalanceItem.457.shot_power = .7\nBalanceItem.457.range_tiles = 7\nExpRate = 200%\n')
             (r/'data/balance-v1-manifest.json').write_text(json.dumps(dict(installed={'config.local.ini':'before','data/balance-profile.json':'before'})))
             (r/'config.local.ini').chmod(0o600)
             original_stat=Path.stat
@@ -44,9 +44,12 @@ class AttackCadenceTests(unittest.TestCase):
             self.assertEqual(after['classes']['6'],profile['classes']['6'])
             for ident,item in after['items'].items():
                 self.assertEqual(item['attack_speed'],1);self.assertNotIn('close_attack_speed',item);self.assertNotIn('close_range',item)
-                for key in ('range_tiles','shot_power','min_damage'):self.assertEqual(item[key],items[ident][key])
+                self.assertEqual(item['shot_power'],1)
+                for key in ('range_tiles','min_damage'):self.assertEqual(item[key],items[ident][key])
             config=(r/'config.local.ini').read_text()
             self.assertIn('PrivateSetting = preserved\n',config);self.assertIn('ExpRate = 200%\n',config);self.assertIn('BalanceItem.457.range_tiles = 7\n',config)
+            self.assertIn('BalanceItem.457.shot_power = 1.0\n',config)
+            self.assertNotIn('shot_power = .7',config)
             manifest=json.loads((r/'data/balance-v1-manifest.json').read_text())
             for rel,h in manifest['installed'].items():self.assertEqual(hashlib.sha256((r/rel).read_bytes()).hexdigest(),h)
             self.assertEqual(configure(r)['files_changed'],[])
