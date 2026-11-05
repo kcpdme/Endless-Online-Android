@@ -60,9 +60,8 @@ class LiveSession(RunningMixin, NativeFeaturesMixin, WorldFeedbackMixin, AdminMi
         self.quest_dialog=None;self.quest_context=None;self.inn=None;self.guild=None;self.barber=None
         now=time.monotonic();self.shop=None;self.bank=None;self.locker=None;self.chest=None
         if open_door:self.send(34,13,number(x,1)+number(y,1))
-        # Match original etheos: NPC occupancy is checked by the client before
-        # prediction. Rechecking a moving NPC here rejects an already-predicted
-        # step using a newer world state, creating an extra rollback absent in EO.
+        # The native world resolves moving-NPC races in packet order and sends
+        # Refresh on collision. Adapter snapshots can already be stale here.
         move=dict(seq=seq,x=x,y=y,direction=direction)
         from combat_progression import movement_seconds
         self.timestamp+=round(movement_seconds(self)*100)

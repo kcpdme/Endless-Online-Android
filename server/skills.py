@@ -168,18 +168,31 @@ class SkillsMixin:
         r=Reader(p);event=self.events[-1];values={}
         if (f,a)==(232,3):
             pid=r.num(2);index=r.num();npc_id=r.num(2);tp=r.num(2);remaining=r.num(2);ident=r.num(2);target=r.num();damage=r.num(3)
-            if len(r.rest())==4:
+            if len(r.rest()) in (4,5,6):
                 selected=r.num(2);cooldown=r.num(2)
                 if cooldown>300:raise EOError('Invalid native pet cooldown')
                 if pid==self.player_id:
                     self.pet_selected_spell=selected;self.pet_ready_at=time.monotonic()+cooldown
-            if r.rest() or remaining>90:raise EOError('Invalid native companion update')
+            direction=r.num() if len(r.rest()) in (1,2) else None
+            attacking=r.num() if len(r.rest())==1 else int(bool(target or damage))
+            if r.rest() or remaining>90 or attacking not in (0,1) or direction is not None and direction not in range(4):raise EOError('Invalid native companion update')
             event.update(kind='companion',player_id=pid,npc_index=index,npc_id=npc_id,remaining=remaining,spell_id=ident)
             if pid==self.player_id:
                 values['tp']=tp
                 if ident:self.casting=None
                 self.companion=dict(index=index,npc_id=npc_id,remaining=remaining) if index else None
-            if target:self.events.append(dict(kind='companion_attack',player_id=pid,npc_index=index,target_index=target,damage=damage))
+            if attacking:
+                pet=next((n for n in self.state['npcs'] if n['index']==index),None)
+                enemy=next((n for n in self.state['npcs'] if n['index']==target),None)
+                # Also support native binaries predating the direction extension.
+                if direction is None and pet and enemy:
+                    dx,dy=enemy['x']-pet['x'],enemy['y']-pet['y']
+                    direction=(3 if dx>0 else 1) if abs(dx)>abs(dy) else (0 if dy>0 else 2)
+                attack=dict(kind='companion_attack',player_id=pid,npc_index=index,target_index=target,damage=damage)
+                if direction is not None:
+                    attack['direction']=direction
+                    if pet:pet['direction']=direction
+                self.events.append(attack)
         elif (f,a)==(AREA_FAMILY,3):
             pid=r.num(2);ident=r.num(2);x=r.num();y=r.num();tp=r.num(2);hits=r.num()
             from balance_rules import profile, area_spell

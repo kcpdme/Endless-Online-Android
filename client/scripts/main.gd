@@ -461,12 +461,6 @@ func _manual_step(direction: Vector2i, continuing_walk: bool) -> void:
 	if online_mode and online.seated():
 		online.toggle_sit()
 		return
-	# Drag intent should issue its step on this frame. A separate desktop Face
-	# would add both a client hold and another action to the native queue.
-	if movement_keys.is_empty() and touch_move_id != -1:
-		_reset_turn_input()
-		_step(direction)
-		return
 	var desired: String = _direction_name(direction)
 	# Original ArrowKeyController.FaceOrAttemptWalk: a stationary character
 	# turns first. Changes at a walking tile boundary continue without a pause.

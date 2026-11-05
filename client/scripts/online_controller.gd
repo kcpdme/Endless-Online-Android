@@ -672,7 +672,7 @@ func request_step(direction: Vector2i) -> void:
 	fields.merge({"input_seq": next_input_seq, "map_id": int(game.world.id), "x": target.x, "y": target.y})
 	pending_face = ""
 	if session.request("move", fields) < 0: return
-	var deferred:bool=ghost or player_near_step(target)
+	var deferred:bool=ghost or player_near_step(target) or npc_near_step(target)
 	pending_inputs.append({"seq": next_input_seq, "direction": single, "sent_at": Time.get_ticks_msec(),"deferred":deferred})
 	waiting_for_walk = true
 	transition_pending = passage
@@ -783,8 +783,11 @@ func spend_stat(stat_id: int) -> void:
 		game.stats_ui.refresh()
 
 func npc_occupies(tile: Vector2i) -> bool:
+	var now:float=Time.get_ticks_msec()/1000.0
 	for npc: Dictionary in npcs:
 		if Vector2i(int(npc.get("x", -1)), int(npc.get("y", -1))) == tile: return true
+		for step:Dictionary in remote_motion.get("npc:%d"%int(npc.index),{}).get("steps",[]):
+			if now<float(step.start)+float(step.get("duration",MOVE_SECONDS)) and tile in [game._world_tile(step.from),game._world_tile(step.to)]:return true
 	return false
 
 func reset_player_block()->void:
@@ -805,6 +808,11 @@ func player_near_step(tile:Vector2i)->bool:
 	for peer:Dictionary in players:
 		if int(peer.get("player_id",0))==int(player.get("player_id",-1)):continue
 		if absi(int(peer.x)-tile.x)+absi(int(peer.y)-tile.y)<=1:return true
+	return false
+
+func npc_near_step(tile:Vector2i)->bool:
+	for npc:Dictionary in npcs:
+		if absi(int(npc.x)-tile.x)+absi(int(npc.y)-tile.y)<=1:return true
 	return false
 
 func _direction(value: String) -> int:
@@ -950,6 +958,7 @@ func entity_animation(kind: String, record: Dictionary) -> Dictionary:
 	var direction: String = str(sample.get("direction", _facing(record.get("direction", 0)))) if state == "frames" else _facing(record.get("direction", 0))
 	if kind == "online_npc" and float(npc_attack_until.get(int(record.get("index", -1)), 0.0)) > now:
 		state = "attack"
+		direction = _facing(record.get("direction", 0))
 		phase = (0.36 - (float(npc_attack_until[int(record.index)]) - now)) * game.ONLINE_ATTACK_SWING_DURATION / 0.36
 	var attack: Dictionary = peer_attacks.get(int(record.get("player_id", -1)), {}) as Dictionary
 	if kind == "online_player" and float(attack.get("until", 0.0)) > now:
@@ -1635,7 +1644,7 @@ func _process_events(events: Array) -> void:
 		if kind in ["player_damage", "npc_attack", "companion_attack"] and event.get("source", "") not in ["spike","drain","pk"]:
 			npc_attack_until[int(event.get("npc_index", -1))] = Time.get_ticks_msec() / 1000.0 + 0.36
 			for npc: Dictionary in npcs:
-				if int(npc.index) == int(event.get("npc_index", -1)): npc.direction = int(event.get("direction", 0))
+				if int(npc.index) == int(event.get("npc_index", -1)) and event.has("direction"): npc.direction = int(event.direction)
 			if kind != "companion_attack" and int(event.get("player_id", -1)) == int(player.get("player_id", -2)):
 				var index: int = int(event.get("npc_index", -1))
 				var health: Dictionary = npc_health.get(index, {"percent": 100}) as Dictionary

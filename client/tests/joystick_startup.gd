@@ -30,35 +30,42 @@ func run() -> void:
 	game.world = {"id":40,"width":250,"height":250,"warps":[]}; game.server_blocked.clear()
 	var traces: Array[Dictionary] = []
 	var early_steps: int = 0
-	var wrong_directions: int = 0
-	var delayed_starts: int = 0
-	var face_requests: int = 0
-	var first_frame_motion: int = 0
+	var failed_turns: int = 0
+	var failed_holds: int = 0
+	var failed_same_facing: int = 0
 	for fixed: bool in [false,true]:
 		for isometric: bool in [false,true]:
 			for fps: int in [30,60,120]:
 				for landing: Vector2 in [Vector2(224,566),Vector2(84,566),Vector2(152,638),Vector2(24,402),Vector2(340,680)]:
 					for horizontal_jitter: float in [-3.0,0.0,3.0]:
-						game._cancel_controls(true); online.pending_inputs.clear(); wire.calls.clear()
+						game._cancel_controls(true); online.pending_inputs.clear(); wire.calls.clear();online.last_face_at=-125
 						game.joystick.fixed_base = fixed; game.joystick.isometric = isometric; game.joystick.reset()
 						game.player_tile = Vector2i(40,40); game.player_world = game.tile_position(game.player_tile); game.facing = "east"
 						var start: Vector2 = game.player_world
 						await touch(landing,true)
 						game._process(1.0/fps)
-						var premature: bool = game.moving
-						if premature: early_steps += 1
+						if game.moving: early_steps += 1
 						await drag(landing + Vector2(horizontal_jitter,-48))
 						game._process(1.0/fps)
 						var moves: Array = wire.calls.filter(func(row: Dictionary) -> bool: return row.op == "move")
 						var faces: Array = wire.calls.filter(func(row: Dictionary) -> bool: return row.op == "face")
-						var correct: bool = moves.size() == 1 and int(moves[0].fields.direction) == 2
-						if not moves.is_empty() and not correct: wrong_directions += 1
-						if moves.is_empty(): delayed_starts += 1
-						face_requests += faces.size()
-						if not premature and correct and game.player_world.distance_to(start) > .01: first_frame_motion += 1
-						traces.append({"fixed":fixed,"isometric":isometric,"fps":fps,"landing":[landing.x,landing.y],"jitter":horizontal_jitter,"premature":premature,"correct":correct,"moves":moves.size()})
+						var correct: bool = moves.is_empty() and faces.size()==1 and int(faces[0].fields.direction)==2 and game.facing=="north" and game.player_world==start
+						if not correct:failed_turns+=1
+						game._process(.199)
+						if game.moving:failed_holds+=1
+						game._process(.002)
+						moves=wire.calls.filter(func(row: Dictionary) -> bool: return row.op == "move")
+						if moves.size()!=1 or int(moves[0].fields.direction)!=2 or not game.moving:failed_holds+=1
 						await touch(landing + Vector2(horizontal_jitter,-48),false)
-	var report: Dictionary = {"result":"passed" if early_steps == 0 and wrong_directions == 0 and delayed_starts == 0 and first_frame_motion == traces.size() and face_requests == 0 else "failed","traces":traces.size(),"steps_before_drag":early_steps,"wrong_first_directions":wrong_directions,"delayed_first_steps":delayed_starts,"first_frame_motion":first_frame_motion,"extra_face_requests":face_requests,"fps":[30,60,120],"landing_points":5,"modes":4}
+						game._cancel_controls(true);online.pending_inputs.clear();wire.calls.clear()
+						await touch(landing,true);await drag(landing + Vector2(horizontal_jitter,-48))
+						game._process(1.0/fps)
+						moves=wire.calls.filter(func(row: Dictionary) -> bool: return row.op == "move")
+						faces=wire.calls.filter(func(row: Dictionary) -> bool: return row.op == "face")
+						if moves.size()!=1 or int(moves[0].fields.direction)!=2 or not faces.is_empty():failed_same_facing+=1
+						traces.append({"fixed":fixed,"isometric":isometric,"fps":fps,"landing":[landing.x,landing.y],"jitter":horizontal_jitter})
+						await touch(landing + Vector2(horizontal_jitter,-48),false)
+	var report: Dictionary = {"result":"passed" if early_steps==0 and failed_turns==0 and failed_holds==0 and failed_same_facing==0 else "failed","traces":traces.size(),"steps_before_drag":early_steps,"failed_turn_only_inputs":failed_turns,"failed_held_turns":failed_holds,"failed_same_facing_steps":failed_same_facing,"turn_hold_seconds":.20,"fps":[30,60,120],"landing_points":5,"modes":4}
 	var path: String = OS.get_environment("EO_STARTUP_REPORT")
 	if not path.is_empty():
 		var file: FileAccess = FileAccess.open(path,FileAccess.WRITE)

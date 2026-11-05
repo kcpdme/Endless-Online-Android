@@ -121,12 +121,14 @@ class StreamStateTests(unittest.TestCase):
         self.assertEqual(s.state['characters'][0]['direction'],2)
         self.assertEqual(s.events[-1]['kind'],'peer_attack');self.assertEqual(s.events[-1]['direction'],2)
         self.assertTrue(s.dirty)
-    def test_moving_npc_race_uses_original_native_walk_instead_of_synthetic_rejection(self):
+    def test_moving_npc_race_waits_for_authoritative_collision_correction(self):
         s=fixture();s.state['npcs']=[dict(index=1,id=2,x=41,y=40)]
         result=s.move(3,1,5,41,40)
         self.assertTrue(result['sent']);self.assertEqual(s.sent[0][:2],(6,8));self.assertFalse(s.correction)
-        s.apply_event(6,3,b'\xff\xff')
-        self.assertEqual((s.state['self']['x'],s.position_seq),(41,1))
+        s.parse_snapshot=lambda r:deepcopy(s.state)
+        s.apply_event(25,3,b'')
+        self.assertEqual((s.state['self']['x'],s.position_seq),(40,1))
+        self.assertTrue(s.correction);self.assertFalse(s.pending_moves)
     def test_attack_queues_after_walk_without_waiting_another_round_trip(self):
         s=fixture();s.move(3,1,5,41,40)
         self.assertTrue(s.strike(3)['sent'])

@@ -14,6 +14,28 @@ def setup():
 def payload(*fields):return b''.join(number(value,size) for value,size in fields)
 
 class SkillsStateTests(unittest.TestCase):
+    def test_pet_attack_direction_and_legacy_geometry_fallback(self):
+        base=payload((100,2),(8,1),(319,2),(18,2),(0,2),(0,2),(2,1),(7,3))
+        for extension in (False,True):
+            for direction,(x,y) in enumerate(((40,41),(39,40),(40,39),(41,40))):
+                s=setup();s.state['npcs']=[dict(id=319,index=8,x=40,y=40,direction=0),dict(id=74,index=2,x=x,y=y)]
+                packet=base+payload((61,2),(0,2))+(number(direction,1) if extension else b'')
+                s.apply_event(232,3,packet)
+                self.assertEqual(s.events[-1]['direction'],direction)
+                self.assertEqual(s.state['npcs'][0]['direction'],direction)
+        with self.assertRaisesRegex(EOError,'Invalid native companion'):
+            setup().apply_event(232,3,base+payload((61,2),(0,2),(4,1)))
+
+    def test_pet_can_attack_npc_index_zero_even_when_the_hit_misses(self):
+        s=setup();s.state['npcs']=[dict(id=319,index=8,x=40,y=40),dict(id=74,index=0,x=40,y=39)]
+        packet=payload((100,2),(8,1),(319,2),(18,2),(0,2),(0,2),(0,1),(0,3),(61,2),(0,2),(2,1),(1,1))
+        s.apply_event(232,3,packet)
+        self.assertEqual(s.events[-1]['kind'],'companion_attack')
+        self.assertEqual(s.events[-1]['target_index'],0)
+        self.assertEqual(s.events[-1]['direction'],2)
+        s.events.clear();s.apply_event(232,3,packet[:-1]+number(0,1))
+        self.assertEqual(s.events[-1]['kind'],'companion')
+
     def test_companion_changes_survive_compact_stream_updates(self):
         s=setup()
         before=dict(map_id=5,position_update=False,position_seq=0,correction=False,events=[],player={},players=[],npcs=[],items=[],companion=None)

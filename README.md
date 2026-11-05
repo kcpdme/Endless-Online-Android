@@ -53,6 +53,11 @@ checks that Android kept the app's original installation timestamp.
 
 ## Play online
 
+Version **0.58.1** repairs pet facing and crowd-aware targeting, NPC/player
+collisions, and the native action backlog after repeated turning. Joystick input
+now turns first and walks on a continued hold or same-facing input. Admin teleport
+adds the mushroom area before Centaur. See [behavior and verification](docs/PET_RESPONSE_V58.md).
+
 Server balance profile **14** restores exact classic newborn/Peasant stats and
 the original earned Dagger/outfits. Selected level-8+ encounters gain 15% HP and
 approximately 10% damage, with no attack-speed, EXP or drop increase. Existing

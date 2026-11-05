@@ -14,7 +14,7 @@ func check(ok:bool,why:String)->void:
 func moves()->Array:
 	return wire.calls.filter(func(c:Dictionary)->bool:return c.op=="move")
 func reset()->void:
-	game.online.pending_inputs.clear();game.online.players.clear();game.online.remote_motion.clear();game.online.reset_player_block();game.movement_keys.clear();wire.calls.clear()
+	game.online.pending_inputs.clear();game.online.players.clear();game.online.npcs.clear();game.online.remote_motion.clear();game.online.reset_player_block();game.movement_keys.clear();wire.calls.clear()
 	game.moving=false;game.attack_clock=0;game.route.clear();game.player_tile=Vector2i(40,40);game.player_world=game.tile_position(game.player_tile);game.facing="east"
 	game.online.player.x=40;game.online.player.y=40;game.online.player.direction=3
 func ack(x:int,y:int,correction:bool)->void:
@@ -57,6 +57,17 @@ func run()->void:
 	check(moves().is_empty() and game.online.blocked_player==0,"Ghost never bypasses solid terrain")
 	game.server_blocked.clear();game.online.request_step(Vector2i.RIGHT);game.online.blocked_since=Time.get_ticks_msec()-6000;game.movement_keys.clear();game.online.request_step(Vector2i.RIGHT)
 	check(moves().is_empty() and game.online.blocked_player==0,"Automatic routes cannot accumulate a held-input ghost")
+	reset();game.online.npcs.assign([{"index":8,"id":101,"x":42,"y":40,"direction":3}])
+	game.online.remote_motion["npc:8"]={"steps":[{"from":game.tile_position(Vector2i(41,40)),"to":game.tile_position(Vector2i(42,40)),"start":now,"duration":20.0}]}
+	game.online.request_step(Vector2i.RIGHT)
+	check(moves().is_empty() and game.online.npc_occupies(Vector2i(41,40)),"NPC origin remains blocked until its displayed step finishes")
+	reset();game.online.npcs.assign([{"index":8,"id":101,"x":42,"y":40,"direction":3}]);game.online.request_step(Vector2i.RIGHT)
+	check(moves().size()==1 and not game.moving,"Potential NPC crossing waits for the native movement result")
+	ack(40,40,true);check(not game.moving and game.player_tile==Vector2i(40,40),"NPC collision rejection never animates through its occupied tile")
+	reset();game.online.npcs.assign([{"index":8,"id":319,"x":40,"y":40,"direction":2}])
+	game.online._process_events([{"kind":"companion_attack","npc_index":8,"target_index":9,"direction":2,"damage":0}])
+	var animation:Dictionary=game.online.entity_animation("online_npc",game.online.npcs[0])
+	check(animation.state=="attack" and animation.direction=="north","Banshi attack animation uses the server's target facing")
 	var report:Dictionary={"result":"failed" if failed else "passed","checks":checks,"five_second_continuous_hold":true,"moving_origins_reserved":true,"contested_steps_acknowledged_before_animation":true,"offline":true}
 	var path:String=OS.get_environment("ASTER_VALE_TEST_REPORT")
 	if not path.is_empty():FileAccess.open(path,FileAccess.WRITE).store_string(JSON.stringify(report,"  ")+"\n")

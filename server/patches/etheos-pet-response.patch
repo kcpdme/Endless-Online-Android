@@ -1,0 +1,277 @@
+--- a/src/npc.cpp
++++ b/src/npc.cpp
+@@ -1139,10 +1139,10 @@
+ 	}
+ 
+ 	target->hp -= limitamount;
+-    // Defensive assistance requires a real aggressive-monster hit on a living
+-    // owner. Misses, player attacks and the pet's own damage cannot renew it.
+-    if (this->map->world->config["OwnerScaledPets"] && limitamount > 0 && target->hp > 0
+-      && this->ENF().type == ENF::Aggressive) target->CommandCompanion(this);
++    // Defend against any combat NPC attempting to hit the living owner,
++    // including misses and provoked passive monsters. Pet damage never renews it.
++    if (this->map->world->config["OwnerScaledPets"] && target->hp > 0)
++        target->CommandCompanion(this);
+ 	if (target->party)
+ 	{
+ 		target->party->UpdateHP(target);
+@@ -1275,19 +1275,88 @@
+         if (owner->tp <= 0) { owner->StartCompanionCooldown(); owner->CompanionStatus(nullptr); this->Die(); return; }
+         owner->CompanionStatus(this);
+     }
++    // One bounded flood fill finds reachable attack positions for every nearby
++    // enemy. Occupied enemy tiles are goals' neighbours, never path tiles.
++    // This also permits a detour away from the target around a crowd or wall.
++    constexpr int side = 25, radius = side / 2;
++    const int left = int(owner->x) - radius, top = int(owner->y) - radius;
++    const int dx[] = {0,-1,0,1}, dy[] = {1,0,-1,0};
++    auto cell = [left,top](int x, int y) -> int {
++        x -= left; y -= top;
++        return x >= 0 && y >= 0 && x < side && y < side ? y * side + x : -1;
++    };
++    std::array<bool,side*side> occupied{};
++    for (Character *character : this->map->characters)
++    {
++        int c = cell(character->x,character->y);
++        if (c >= 0 && !character->nowhere) occupied[c] = true;
++    }
++    for (NPC *npc : this->map->npcs)
++    {
++        int c = cell(npc->x,npc->y);
++        if (c >= 0 && npc != this && npc->alive) occupied[c] = true;
++    }
++    std::array<int,side*side> length, first;
++    length.fill(-1); first.fill(-1);
++    std::vector<int> frontier;
++    int origin = cell(this->x,this->y);
++    if (origin < 0) return;
++    length[origin] = 0; frontier.push_back(origin);
++    for (std::size_t at = 0; at < frontier.size(); ++at)
++    {
++        int c = frontier[at], x = left + c % side, y = top + c / side;
++        for (int d = 0; d < 4; ++d)
++        {
++            int nx = x+dx[d], ny = y+dy[d], next = cell(nx,ny);
++            if (next < 0 || length[next] >= 0 || occupied[next]
++              || nx < 0 || ny < 0 || nx > 252 || ny > 252
++              || !this->map->Walkable(nx,ny,true)) continue;
++            length[next] = length[c]+1;
++            first[next] = c == origin ? d : first[c];
++            frontier.push_back(next);
++        }
++    }
++    auto approach = [&](int x, int y) -> int {
++        int best = -1;
++        for (int d = 0; d < 4; ++d)
++        {
++            int c = cell(x+dx[d],y+dy[d]);
++            if (c >= 0 && length[c] >= 0 && (best < 0 || length[c] < length[best])) best = c;
++        }
++        return best;
++    };
++    NPC *command = owner->companion_target >= 0 ? this->map->GetNPCIndex(owner->companion_target) : nullptr;
++    bool blocked_command = command && command->alive && command->id == owner->companion_target_type
++      && !command->companion_owner && now-owner->companion_command_time <= 5.0
++      && (command->ENF().type == ENF::Passive || command->ENF().type == ENF::Aggressive)
++      && util::path_length(command->x,command->y,owner->x,owner->y) <= 7
++      && approach(command->x,command->y) < 0;
+     NPC *target = nullptr;
+-    if (owner->companion_target >= 0 && now - owner->companion_command_time <= 5.0)
++    int destination = -1, best_priority = 3;
++    for (NPC *candidate : this->map->npcs)
+     {
+-        NPC *candidate = this->map->GetNPCIndex(owner->companion_target);
+-        if (candidate && candidate->alive && candidate->id == owner->companion_target_type
+-          && (candidate->ENF().type == ENF::Passive || candidate->ENF().type == ENF::Aggressive)
+-          && util::path_length(candidate->x,candidate->y,owner->x,owner->y) <= 7) target = candidate;
++        if (candidate == this || !candidate->alive || candidate->companion_owner
++          || (candidate->ENF().type != ENF::Passive && candidate->ENF().type != ENF::Aggressive)
++          || util::path_length(candidate->x,candidate->y,owner->x,owner->y) > 7) continue;
++        bool commanded = candidate->index == owner->companion_target
++          && candidate->id == owner->companion_target_type && now-owner->companion_command_time <= 5.0;
++        bool fighting_owner = false;
++        for (const auto& opponent : candidate->damagelist)
++            if (opponent->attacker == owner) { fighting_owner = true; break; }
++        if (!commanded && !fighting_owner && !blocked_command && candidate->ENF().type != ENF::Aggressive) continue;
++        int goal = approach(candidate->x,candidate->y);
++        if (goal < 0) continue; // Try another enemy instead of hovering at a blocked one.
++        int priority = commanded ? 0 : fighting_owner ? 1 : 2;
++        if (!target || priority < best_priority
++          || (priority == best_priority && length[goal] < length[destination]))
++        { target = candidate; destination = goal; best_priority = priority; }
+     }
+-    int tx = target ? target->x : owner->x, ty = target ? target->y : owner->y;
+-    int distance = util::path_length(this->x,this->y,tx,ty);
++    int distance = target ? util::path_length(this->x,this->y,target->x,target->y) : 0;
+     if (target && distance <= 1 && now - this->companion_last_attack >= 1.0)
+     {
+         this->companion_last_attack = now;
++        if (target->x != this->x) this->direction = target->x > this->x ? DIRECTION_RIGHT : DIRECTION_LEFT;
++        else this->direction = target->y > this->y ? DIRECTION_DOWN : DIRECTION_UP;
+         int base = int((10.0 + owner->level * 0.5 + owner->adj_cha * 0.55 + owner->adj_intl * 0.2) * this->companion_power);
+         std::unordered_map<std::string,double> vars;
+         owner->FormulaVars(vars); target->FormulaVars(vars,"target_");
+@@ -1318,11 +1387,9 @@
+         target->Damage(owner,amount);
+         return;
+     }
+-    if (distance > 1)
+-    {
+-        Direction horizontal = tx > this->x ? DIRECTION_RIGHT : DIRECTION_LEFT;
+-        Direction vertical = ty > this->y ? DIRECTION_DOWN : DIRECTION_UP;
+-        bool x_first = std::abs(tx-int(this->x)) >= std::abs(ty-int(this->y));
+-        if (!this->Walk(x_first ? horizontal : vertical)) this->Walk(x_first ? vertical : horizontal);
+-    }
+-}
++    // Stay beside the chosen enemy while its attack cooldown runs.
++    if (target && distance <= 1) return;
++    if (!target) destination = approach(owner->x,owner->y);
++    if (destination >= 0 && first[destination] >= 0)
++        this->Walk(static_cast<Direction>(first[destination]));
++}
+--- a/src/map.cpp
++++ b/src/map.cpp
+@@ -791,6 +791,7 @@
+ 	this->characters.push_back(character);
+ 	character->map = this;
+ 	character->last_walk = Timer::GetTime();
++    character->npc_walk_until = 0.0;
+ 	character->attacks = 0;
+ 	character->CancelSpell();
+ 
+@@ -973,6 +974,9 @@
+ 		if (!this->Walkable(target_x, target_y))
+ 			return WalkFail;
+ 
++        // The client may have predicted before a moving NPC reached this tile.
++        // Resolve that race authoritatively; ordinary and ghost walks both stop.
++        if (this->Occupied(target_x, target_y, NPCOnly)) return WalkFail;
+ 		if (this->Occupied(target_x, target_y, PlayerOnly) && (!ghost || from->last_walk + double(this->world->config["GhostTimer"]) > Timer::GetTime()))
+ 			return WalkFail;
+ 	}
+@@ -1001,6 +1005,8 @@
+ 			return WalkFail;
+ 	}
+ 
++    from->walk_origin_x = from->x; from->walk_origin_y = from->y;
++    from->npc_walk_until = Timer::GetTime() + double(this->world->config["PacketRateWalk"]) / from->MovementMultiplier() + 0.02;
+     from->last_walk = Timer::GetTime();
+     from->attacks = 0;
+     if (!this->world->config["AllowMovingSpells"]) from->CancelSpell();
+@@ -1330,6 +1336,13 @@
+ 	}
+ 
+ 	bool adminghost = (from->ENF().type == ENF::Aggressive || from->parent);
++    // Coordinates commit at step start. Keep a walking player's origin occupied
++    // for the displayed step too, preventing NPCs crossing through their sprite.
++    for (Character *character : this->characters)
++        if (character->npc_walk_until > Timer::GetTime() && character->walk_origin_x == target_x
++          && character->walk_origin_y == target_y
++          && !(adminghost && (!character->CanInteractCombat() || character->IsHideNpc()))) return WalkFail;
++
+ 
+ 	if (!this->Walkable(target_x, target_y, true) || this->Occupied(target_x, target_y, Map::PlayerAndNPC, adminghost))
+ 	{
+--- a/src/character.cpp
++++ b/src/character.cpp
+@@ -2630,16 +2630,18 @@
+ }
+ 
+ // Native owned spirits. These are session companions, never tradable NPC items.
+-void Character::CompanionStatus(NPC *pet, unsigned short spell, unsigned char target, int damage)
++void Character::CompanionStatus(NPC *pet, unsigned short spell, int target, int damage)
+ {
+     if (!this->map) return;
+     PacketBuilder reply(static_cast<PacketFamily>(232), PACKET_REPLY, 15);
+     reply.AddShort(this->PlayerID()); reply.AddChar(pet ? pet->index : 0);
+     reply.AddShort(pet ? pet->id : 0); reply.AddShort(this->tp);
+     reply.AddShort(pet ? util::clamp<int>(int(pet->companion_expires - Timer::GetTime()), 0, 90) : 0);
+-    reply.AddShort(spell); reply.AddChar(target); reply.AddThree(std::max(0, damage));
++    reply.AddShort(spell); reply.AddChar(std::max(0,target)); reply.AddThree(std::max(0, damage));
+     if (this->world->config["PermanentPetCollection"])
+     { reply.AddShort(this->selected_companion); reply.AddShort(this->CompanionCooldown()); }
++    reply.AddChar(pet ? pet->direction : DIRECTION_DOWN);
++    reply.AddChar(target >= 0); // NPC index zero is a valid attack target too.
+     for (auto *other : this->map->characters)
+         if (other == this || this->InRange(other)) other->Send(reply);
+ }
+--- a/src/character.hpp
++++ b/src/character.hpp
+@@ -254,6 +254,8 @@
+ 		double spell_fired_time;
+ 
+ 		double last_walk;
++        unsigned char walk_origin_x = 0, walk_origin_y = 0;
++        double npc_walk_until = 0.0;
+ 		int attacks;
+ 
+ 		WarpAnimation warp_anim;
+@@ -362,7 +364,7 @@
+         NPC *GetCompanion() const;
+         void DismissCompanion(bool cooldown = false);
+         void CommandCompanion(NPC *target);
+-        void CompanionStatus(NPC *pet, unsigned short spell = 0, unsigned char target = 0, int damage = 0);
++        void CompanionStatus(NPC *pet, unsigned short spell = 0, int target = -1, int damage = 0);
+ 		bool BalanceCanEquip(const EIF_Data& item) const;
+ 		bool BalanceCanCast(unsigned short spell_id) const;
+ 		int BalanceAreaRadius(unsigned short spell_id) const;
+--- a/src/eoclient.cpp
++++ b/src/eoclient.cpp
+@@ -5,6 +5,7 @@
+  */
+ 
+ #include "eoclient.hpp"
++#include "handlers/handlers.hpp"
+ 
+ #include "character.hpp"
+ #include "config.hpp"
+@@ -330,7 +331,11 @@
+ 		this->GenSequence();
+ 	}
+ 
+-	queue.AddAction(reader, 0.02, true);
++	// Queue once with the registered gameplay delay. The old staging action
++    // appended a second queue entry and added 20ms on every request. Rapid
++    // facing then outpaced the queue and stalled later attacks/pickups.
++    // State is still checked at execution.
++    queue.AddAction(reader, Handlers::Delay(reader.Family(), reader.Action()));
+ }
+ 
+ bool EOClient::Upload(FileType type, int id, InitReply init_reply)
+--- a/src/handlers/handlers.cpp
++++ b/src/handlers/handlers.cpp
+@@ -129,6 +129,12 @@
+ 	}
+ }
+ 
++double packet_handler_register::Delay(PacketFamily family, PacketAction action) const
++{
++    const auto& handler = handlers[(unsigned char)family][(unsigned char)action];
++    return handler && (handler.allow_states & Playing) && !(handler.allow_states & OutOfBand) ? handler.delay : 0.0;
++}
++
+ void packet_handler_register::SetDelay(PacketFamily family, PacketAction action, double delay)
+ {
+ 	if (handlers[(unsigned char)family][(unsigned char)action])
+--- a/src/handlers/handlers.hpp
++++ b/src/handlers/handlers.hpp
+@@ -98,6 +98,7 @@
+ 
+ 		void Handle(PacketFamily family, PacketAction action, EOClient *client, PacketReader &reader, bool from_queue = false) const;
+ 
++		double Delay(PacketFamily family, PacketAction action) const;
+ 		void SetDelay(PacketFamily family, PacketAction action, double delay);
+ };
+ 
+@@ -150,6 +151,11 @@
+ 	packet_handler_register_instance->Handle(family, action, client, reader, from_queue);
+ }
+ 
++inline double Delay(PacketFamily family, PacketAction action)
++{
++    return packet_handler_register_instance->Delay(family, action);
++}
++
+ inline void SetDelay(PacketFamily family, PacketAction action, double delay)
+ {
+ 	packet_handler_register_instance->SetDelay(family, action, delay);
