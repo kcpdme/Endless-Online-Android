@@ -17,8 +17,8 @@ def main():
     with tempfile.TemporaryDirectory(prefix='aster-attack-cadence-') as temp:
         r=Path(temp)/'runtime';shutil.copytree(a.runtime,r,ignore=shutil.ignore_patterns('database.sdb*','*.log','etheos*'));shutil.copy2(a.binary,r/'etheos')
         os.environ['ASTER_VALE_RUNTIME']=str(r)
-        if not a.baseline:configure(r)
-        cfg=r/'config.local.ini';cfg.write_text(cfg.read_text()+f'\nPort = {a.port}\nIPReconnectLimit = 0\nRecoverSpeed = 1h\nNPCRecoverSpeed = 1h\nCriticalFirstHit = no\nCriticalRate = 0\n')
+        configure(r) # Hold metadata constant when comparing old/new native binaries.
+        cfg=r/'config.local.ini';cfg.write_text(cfg.read_text()+f'\nPort = {a.port}\nIPReconnectLimit = 0\nRecoverSpeed = 1h\nNPCRecoverSpeed = 1h\nCriticalFirstHit = no\nCriticalRate = 0\nPKRate = 100%\n')
         pub=r/'data/pub/dtn001.enf';raw=pub.read_bytes();rows=records(raw,b'ENF',39)
         for offset,value,size in ((11,500000,3),(22,0,2),(24,0,2)):put(rows[0]['fields'],offset,value,size)
         pub.write_bytes(encode_pub(raw,rows))
@@ -27,19 +27,21 @@ def main():
             for y in range(2,12):g['specs'].pop((x,y),None);g['warps'].pop((x,y),None)
         spawn=number(12,1)+number(8,1)+number(1,2)+number(7,1)+number(0,2)+number(1,1)
         (r/'data/maps/00021.emf').write_bytes(prefix+number(1,1)+spawn+number(0,1)*2+b''.join(grid(c) for c in g.values())+number(0,1))
+        pk=bytearray(prefix);pk[31:32]=number(3,1)
+        (r/'data/maps/00022.emf').write_bytes(pk+number(0,1)*3+b''.join(grid(c) for c in g.values())+number(0,1))
         a.report.parent.mkdir(parents=True,exist_ok=True);log=a.report.with_suffix('.log').open('w');proc=subprocess.Popen([str(r/'etheos')],cwd=r,stdout=log,stderr=subprocess.STDOUT)
         def pump(s,seconds=.01):
             end=time.monotonic()+seconds
             while time.monotonic()<end:
                 if select.select([s.sock],[],[],min(.005,max(0,end-time.monotonic())))[0]:s.pump()
-        def stage(clas,bow,distance):
+        def stage(clas,bow,distance,map_id=21,con=100):
             name,user,password=dev_name(),dev_name(),secrets.token_urlsafe(18);base=Session('127.0.0.1',a.port)
             base.register(user,password);base.login(user,password);base.create_character(name);base.close();time.sleep(.12)
             gear=[0]*15;gear[8]=bow;gear[7]=423 if clas==5 else 0
             with sqlite3.connect(r/'database.sdb') as db:
-                db.execute('UPDATE characters SET map=21,x=?,y=8,direction=3,class=?,level=50,hp=10000,tp=10000,"str"=50,"int"=50,wis=50,agi=100,"con"=100,cha=50,paperdoll=? WHERE name=?',(12-distance,clas,','.join(map(str,gear)),name))
+                db.execute('UPDATE characters SET map=?,x=?,y=8,direction=3,class=?,level=50,hp=10000,tp=10000,"str"=50,"int"=50,wis=50,agi=100,"con"=?,cha=50,paperdoll=? WHERE name=?',(map_id,12-distance,clas,con,','.join(map(str,gear)),name))
             s=LiveSession('127.0.0.1',a.port);sessions.append(s);chars=s.login(user,password)['characters'];s.enter(chars[0]['id']);s.snapshot();pump(s,.1);s.events.clear();return s
-        def sample(clas,bow,distance,send_seconds=.04,duration=1.95):
+        def sample(clas,bow,distance,send_seconds=.04,duration=1.95,progression=True):
             s=stage(clas,bow,distance);times=[];start=time.monotonic();next_send=start
             while time.monotonic()-start<duration:
                 now=time.monotonic()
@@ -55,11 +57,26 @@ def main():
             if clas==5:
                 damage=[e['damage'] for e in s.events if e.get('kind')=='npc_damage' and e.get('damage',0)>0]
                 bounds=[s.stats['min_damage'],s.stats['max_damage']]
+                adjacent_bonus=progression and bow in BOWS and distance==1
+                if adjacent_bonus:bounds=[n*6//5 for n in bounds]
                 full_impact=bool(damage) and all(bounds[0]<=amount<=bounds[1] for amount in damage)
-                result.update(damage=damage,full_impact_bounds=bounds,full_impact=full_impact)
+                result.update(damage=damage,full_impact_bounds=bounds,full_impact=full_impact,adjacent_npc_bonus=adjacent_bonus)
                 result['passed']=result['passed'] and full_impact
             results.append(result);print(json.dumps(result),flush=True);s.close();sessions.remove(s)
-            if not a.baseline and not result['passed']:raise AssertionError('Native attack cadence exceeded: '+json.dumps(result))
+            if not a.baseline and not result['passed']:raise AssertionError('Native attack cadence/damage mismatch: '+json.dumps(result))
+        def sample_pvp():
+            target=stage(7,0,0,map_id=22,con=1000);s=stage(5,457,1,map_id=22)
+            start=time.monotonic();next_send=start
+            while time.monotonic()-start<2.7:
+                if time.monotonic()>=next_send:
+                    s.strike(3);next_send=time.monotonic()+.64
+                pump(s);pump(target)
+            damage=[e['damage'] for e in s.events if e.get('kind')=='peer_damage' and e.get('source')=='pk' and e.get('damage',0)>0]
+            armor=target.stats['armor'];bounds=[max(1,int(n*100/(100+2*armor))) for n in (s.stats['min_damage'],s.stats['max_damage'])]
+            result=dict(class_id=5,bow=457,distance=1,target='player',damage=damage,normal_damage_bounds=bounds,passed=len(damage)>=3 and all(bounds[0]<=n<=bounds[1] for n in damage))
+            results.append(result);print(json.dumps(result),flush=True)
+            for actor in (s,target):actor.close();sessions.remove(actor)
+            if not a.baseline and not result['passed']:raise AssertionError('NPC bonus affected PvP: '+json.dumps(result))
         try:
             for _ in range(100):
                 try:
@@ -71,10 +88,13 @@ def main():
                 sample(5,bow,1);sample(5,bow,min(4,traits['range_tiles']))
             # Existing special close range was two tiles, as well as adjacency.
             for bow in (457,496):sample(5,bow,2)
+            sample(5,0,1) # The Archer class alone must not boost unarmed/melee hits.
+            sample_pvp()
             # Disable the optional progression feature and attempt the same exploit.
             proc.terminate();proc.wait(timeout=15);cfg.write_text(cfg.read_text()+'\nCombatProgression = no\n')
             proc=subprocess.Popen([str(r/'etheos')],cwd=r,stdout=log,stderr=subprocess.STDOUT);time.sleep(.8)
             sample(6,0,1,send_seconds=.15,duration=3.2)
+            sample(5,457,1,send_seconds=.15,duration=3.2,progression=False)
         finally:
             for s in sessions:s.close()
             proc.terminate();proc.wait(timeout=15);log.close()

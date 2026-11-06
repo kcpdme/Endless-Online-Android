@@ -529,7 +529,14 @@ func _apply_snapshot(data: Dictionary, entering: bool = false) -> void:
 					if bool(input.get("deferred", false)): break
 					tile += input.direction as Vector2i
 			else:
-				game._cancel_controls(true)
+				if defeated: game._cancel_controls(true)
+				else:
+					# A moving NPC can win the destination after prediction. Correct
+					# the walk without releasing the user's held key or joystick.
+					game.route.clear()
+					game.moving = false
+					game.step_progress = 0.0
+					waiting_for_npc_clear = false
 				game.player_tile = tile
 				game.player_world = game.tile_position(tile)
 			if pending_inputs.is_empty(): recovering = false
@@ -680,7 +687,7 @@ func request_step(direction: Vector2i) -> void:
 	fields.merge({"input_seq": next_input_seq, "map_id": int(game.world.id), "x": target.x, "y": target.y})
 	pending_face = ""
 	if session.request("move", fields) < 0: return
-	var deferred:bool=ghost or player_near_step(target) or npc_near_step(target) or npc_occupies(target)
+	var deferred:bool=ghost or player_near_step(target) or npc_occupies(target)
 	pending_inputs.append({"seq": next_input_seq, "direction": single, "sent_at": Time.get_ticks_msec(),"deferred":deferred})
 	waiting_for_walk = true
 	transition_pending = passage
@@ -819,11 +826,6 @@ func player_near_step(tile:Vector2i)->bool:
 	for peer:Dictionary in players:
 		if int(peer.get("player_id",0))==int(player.get("player_id",-1)):continue
 		if absi(int(peer.x)-tile.x)+absi(int(peer.y)-tile.y)<=1:return true
-	return false
-
-func npc_near_step(tile:Vector2i)->bool:
-	for npc:Dictionary in npcs:
-		if absi(int(npc.x)-tile.x)+absi(int(npc.y)-tile.y)<=1:return true
 	return false
 
 func _direction(value: String) -> int:

@@ -80,6 +80,7 @@ def main():
     patches.append(ROOT / 'patches/etheos-explicit-ghost-walk.patch')
     patches.append(ROOT / 'patches/etheos-pet-response.patch')
     patches.append(ROOT / 'patches/etheos-classic-attack-cadence.patch')
+    patches.append(ROOT / 'patches/etheos-adjacent-archer-npc.patch')
     apply_patches(source, patches)
     (source / 'json').mkdir(exist_ok=True)
     shutil.copy2(download(*JSON, deps / 'json.hpp'), source / 'json/json.hpp')

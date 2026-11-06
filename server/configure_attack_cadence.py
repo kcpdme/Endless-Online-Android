@@ -1,7 +1,7 @@
 """Restore classic cadence and full bow impact in a backed-up v15 runtime."""
 import argparse,hashlib,json,os,re
 from pathlib import Path
-from combat_progression import BOWS,BASIC_ATTACK_SECONDS,CLIENT_ATTACK_SECONDS
+from combat_progression import BOWS,BASIC_ATTACK_SECONDS,CLIENT_ATTACK_SECONDS,ARCHER_ADJACENT_NPC_MULTIPLIER
 from class_signatures import SIGNATURES
 
 
@@ -17,7 +17,7 @@ def configure(runtime):
         item['attack_speed']=1.0
         item['shot_power']=1.0
         item.pop('close_attack_speed',None);item.pop('close_range',None)
-    profile['attack_timing']=dict(server_seconds=BASIC_ATTACK_SECONDS,client_seconds=CLIENT_ATTACK_SECONDS,bow_speed_bonus=False)
+    profile['attack_timing']=dict(server_seconds=BASIC_ATTACK_SECONDS,client_seconds=CLIENT_ATTACK_SECONDS,bow_speed_bonus=False,archer_adjacent_npc_damage_multiplier=ARCHER_ADJACENT_NPC_MULTIPLIER)
     if '5' in profile.get('classes',{}):profile['classes']['5']['signature']=SIGNATURES[5]
     config=before[paths[1]].decode()
     for ident in BOWS:

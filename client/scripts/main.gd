@@ -414,6 +414,9 @@ func _process(delta: float) -> void:
 	queue_redraw()
 
 func _advance_walk(delta: float) -> void:
+	# Nearby NPCs do not stop prediction. A newly occupied destination does:
+	# hold the sprite until the NPC clears or native collision correction arrives.
+	if online_mode and online.npc_occupies(player_tile): online.waiting_for_npc_clear = true
 	if online_mode and online.waiting_for_npc_clear:
 		if online.npc_occupies(player_tile): return
 		online.waiting_for_npc_clear = false

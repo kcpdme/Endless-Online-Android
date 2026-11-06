@@ -1,5 +1,9 @@
 # Dragon Warrior recipes and full Archer shot damage
 
+The subsequent [Android 0.58.4 update](SIDE_NPC_V584.md) adds a separate 20%
+bonus to Archer basic bow hits against adjacent NPCs. Farther shots retain the
+full normal impact described here; cadence and Dragon recipes are unchanged.
+
 This server content update works with Android 0.58.3. Reopen Dragon Warrior's
 shop and choose **Craft** after reconnecting.
 

@@ -53,6 +53,11 @@ checks that Android kept the app's original installation timestamp.
 
 ## Play online
 
+Version **0.58.4** keeps walking past NPCs approaching from the side, while actual
+destination collisions still stop the player and preserve held input for retry.
+Archer basic bow hits against adjacent NPCs gain **20% damage**; farther hits,
+PvP, spells and attack speed keep their current rules. See [movement and combat verification](docs/SIDE_NPC_V584.md).
+
 Dragon Warrior now crafts **Draco (M)** and **Dracota (F)** for 10 Dragon Claws,
 10 Dragon Wings and 200 Gold each. Classic Dragon equipment drops remain at their
 original chances. Archer bows now deal full shot damage at the classic attack

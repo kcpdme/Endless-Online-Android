@@ -1,6 +1,6 @@
 """Full-slot, weight-valid class comparisons. Estimates, not simulated player skill."""
 import math
-from balance_model import stats,allocation,spell_preview,hit_chance,expected_hit,pet_expected_damage,loadout,sustained_damage
+from balance_model import stats,allocation,spell_preview,hit_chance,expected_hit,expected_basic_hit,pet_expected_damage,loadout,sustained_damage
 from balance_audit import legal,obtainable,audit
 from combat_progression import TP_RECOVERY,BASIC_ATTACK_SECONDS
 from balance_profile import CLASSES,ENCOUNTERS,LEVELS
@@ -10,7 +10,8 @@ def metrics(profile,clas,level,gear,trained=0,armor=None,evade=None):
     s=stats(clas,level,allocation(clas,level),gear);weapon=next((i for i in gear if i['type']==10),{})
     armor=level*.4 if armor is None else armor;evade=level*.6 if evade is None else evade
     hit=hit_chance(s['accuracy'],evade);shot=weapon.get('shot_power',1)
-    basic=expected_hit(max(0,int(s['min_damage']*shot)),max(1,int(s['max_damage']*shot)),armor)*hit/BASIC_ATTACK_SECONDS
+    basic=expected_basic_hit(s['min_damage'],s['max_damage'],armor,shot)*hit/BASIC_ATTACK_SECONDS
+    close_basic=expected_basic_hit(s['min_damage'],s['max_damage'],armor,shot,clas==5 and weapon.get('subtype')==1)*hit/BASIC_ATTACK_SECONDS
     candidates=[];areas=[];heals=[]
     for spell in profile['spells'].values():
         if clas not in spell.get('allowed_classes',[]) or spell['level_requirement']>level or spell.get('effect_kind')=='companion':continue
@@ -39,7 +40,7 @@ def metrics(profile,clas,level,gear,trained=0,armor=None,evade=None):
     incoming=expected_hit(enemy_low,enemy_high,s['armor'])*hit_chance(enemy_acc,s['evade'])
     hp_regen=max(1,int(s['max_hp']*.02)) if clas==2 else 0
     ehp=s['max_hp']/max(.01,incoming)
-    return dict(**s,burst_dps=round(burst,2),basic_dps=round(basic,2),sustained_60_dps=sustained['sustained_60_dps'],conditional_rear_dps=round(burst*1.75,2) if clas==4 and weapon.get('backstab') else 0,close_basic_dps=round(basic,2),area_total_dps=round(max((a['total'] for a in areas),default=0),2),area_targets=max((a['targets'] for a in areas),default=0),passive_hp_per_second=hp_regen,healing_60_hps=round(heal60,2),incoming_hit_damage=round(expected_hit(enemy_low,enemy_high,s['armor']),2),incoming_hit_chance=round(hit_chance(enemy_acc,s['evade']),4),incoming_dps_one_attack_per_second=round(incoming,2),survival_seconds_without_healing=round(ehp,2),model_enemy_id=enemy_id,spell_id=best['id'],spell_dps=round(best['dps'],2),spell_seconds_in_60=round(spell_seconds,2),tp_available_for_offense_in_60=round(tp_budget,2),pet_dps=round(pet_dps,2),pet_uptime_in_60=round(pet_uptime,2),tp_regen_per_second=regen,weight=sum(i['weight'] for i in gear),capacity=min(250,70+allocation(clas,level)['strength']))
+    return dict(**s,burst_dps=round(burst,2),basic_dps=round(basic,2),sustained_60_dps=sustained['sustained_60_dps'],conditional_rear_dps=round(burst*1.75,2) if clas==4 and weapon.get('backstab') else 0,close_basic_dps=round(close_basic,2),area_total_dps=round(max((a['total'] for a in areas),default=0),2),area_targets=max((a['targets'] for a in areas),default=0),passive_hp_per_second=hp_regen,healing_60_hps=round(heal60,2),incoming_hit_damage=round(expected_hit(enemy_low,enemy_high,s['armor']),2),incoming_hit_chance=round(hit_chance(enemy_acc,s['evade']),4),incoming_dps_one_attack_per_second=round(incoming,2),survival_seconds_without_healing=round(ehp,2),model_enemy_id=enemy_id,spell_id=best['id'],spell_dps=round(best['dps'],2),spell_seconds_in_60=round(spell_seconds,2),tp_available_for_offense_in_60=round(tp_budget,2),pet_dps=round(pet_dps,2),pet_uptime_in_60=round(pet_uptime,2),tp_regen_per_second=regen,weight=sum(i['weight'] for i in gear),capacity=min(250,70+allocation(clas,level)['strength']))
 
 def compatible(rows):
     weapon=rows.get('weapon',{});offhand=rows.get('offhand',{})

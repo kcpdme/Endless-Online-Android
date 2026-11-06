@@ -1,0 +1,14 @@
+--- a/src/map.cpp
++++ b/src/map.cpp
+@@ -1572,6 +1572,11 @@
+ 			 && npc->alive && npc->x == target_x && npc->y == target_y)
+ 			{
+ 				int amount = int(util::rand(from->mindam, from->maxdam) * from->RangedShotPower());
++                // Point-blank bow hits gain 20% against this adjacent NPC only.
++                // Cadence, farther targets, spells and the PvP branch are unchanged.
++                if (this->world->config["CombatProgression"] && from->clas == 5
++                  && wepdata.subtype == EIF::Ranged && i == 0)
++                    amount = amount * 6 / 5;
+ 				double rand = util::rand(0.0, 1.0);
+ 				// Checks if target is facing you
+ 				double backstab = from->BackstabMultiplier(npc->x,npc->y,npc->direction);

@@ -43,6 +43,14 @@ def spell_preview(clas,spell,s,trained=0):
 def hit_chance(accuracy,evade):return min(.95,max(.35,accuracy/(10+accuracy*.5+evade)))
 def expected_hit(low,high,armor):return sum(max(1,int(n*100/(100+2*armor))) for n in range(low,high+1))/(high-low+1)
 
+def expected_basic_hit(low,high,armor,shot_power=1.0,adjacent_archer_npc=False):
+    values=[]
+    for n in range(low,high+1):
+        damage=int(n*shot_power)
+        if adjacent_archer_npc:damage=damage*6//5
+        values.append(expected_hit(damage,damage,armor))
+    return sum(values)/len(values)
+
 def pet_expected_damage(low,high,power,armor):
     values=[]
     for roll in range(low,high+1):
@@ -87,7 +95,7 @@ def benchmarks(profile):
             target_armor=level*.4;target_evade=level*.6
             from combat_progression import BASIC_ATTACK_SECONDS
             shot=weapon.get('shot_power',1)
-            basic=expected_hit(max(0,int(s['min_damage']*shot)),max(1,int(s['max_damage']*shot)),target_armor)*hit_chance(s['accuracy'],target_evade)/BASIC_ATTACK_SECONDS
+            basic=expected_basic_hit(s['min_damage'],s['max_damage'],target_armor,shot)*hit_chance(s['accuracy'],target_evade)/BASIC_ATTACK_SECONDS
             candidates=[]
             for spell in spells.values():
                 if spell['type']!=1 or spell.get('effect_kind')=='companion' or spell.get('area_radius') or clas not in spell.get('allowed_classes',[]) or spell['level_requirement']>level:continue
@@ -107,6 +115,8 @@ def benchmarks(profile):
                 area.append((per_target*a['area_targets'],a['id'],a['area_targets']))
             area_dps,area_id,area_targets=max(area) if area else (0,0,0)
             close_basic=basic
+            if clas==5 and weapon.get('subtype')==1:
+                close_basic=expected_basic_hit(s['min_damage'],s['max_damage'],target_armor,shot,True)*hit_chance(s['accuracy'],target_evade)/BASIC_ATTACK_SECONDS
             walking_multiplier=1
             eligible=[pet for spell_id,pet in profile['companions'].items() if pet['npc_id']>0 and profile['spells'][str(spell_id)]['level_requirement']<=level]
             pet=max(eligible,key=lambda p:(p['power'],p.get('accuracy',0)),default=dict(power=0))

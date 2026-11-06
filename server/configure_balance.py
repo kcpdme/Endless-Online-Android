@@ -9,7 +9,7 @@ import sqlite3
 from contextlib import closing
 
 from eo_session import Reader, number
-from combat_progression import TP_RECOVERY, BOWS, ARROWS, SHIELDS, item_traits
+from combat_progression import TP_RECOVERY, BOWS, ARROWS, SHIELDS, item_traits, ARCHER_ADJACENT_NPC_MULTIPLIER
 from balance_profile import VERSION, LEVELS, ATTRIBUTES, CLASSES, SPELLS, WEAPON_TIERS, BODY_TIERS, NEW_ITEMS, NEW_ITEM_TIERS, ENCOUNTERS, COMPANIONS, MONSTER_TUNING
 from class_identity import allowed_classes, role_for, vary_stats, recipe_sources, ACCESSORY_STATS
 from class_signatures import SIGNATURES, SUPPORT, EGGS
@@ -377,7 +377,7 @@ def configure(runtime):
     class_bytes,classes=build_classes(originals['data/pub/dat001.ecf'])
     spell_bytes,spells=build_spells(originals['data/pub/dsl001.esf'])
     proposed={'data/aster-vale-drops.ini':drops,'data/pub/dat001.eif':item_bytes,'data/pub/dat001.ecf':class_bytes,'data/pub/dsl001.esf':spell_bytes,'data/pub/dtn001.enf':npc_bytes,'data/formulas.ini':formulas(originals['data/formulas.ini']),'data/aster-vale-skills.ini':build_skills(),'data/aster-vale-shops.ini':shops,'data/quests/00004.eqf':build_quest(originals['data/quests/00004.eqf'])}
-    profile=dict(version=VERSION,levels=LEVELS,max_skill_level=10,classes=classes,spells=spells,items=items,npcs=npcs,classic_peasant=True,monster_tuning=MONSTER_TUNING,class_identity=True,class_signatures=True,carry_capacity_rules=True,mortal_spirit_bonds=False,pet_collection=True,bonus_egg_drops=True,running_rules=dict(normal_multiplier=1.25,rogue_multiplier=1.5,tp_rate_per_second=.015,drain_while_idle=True),pet_cooldown_seconds=PET_COOLDOWN_SECONDS,hatched_eggs=HATCHED_EGGS,companions=COMPANIONS,eggs=EGGS,pet_tiers=TIERS,pet_roster=ROSTER,eggkeeper=EGGKEEPER,attack_timing=dict(server_seconds=.6,client_seconds=.62,bow_speed_bonus=False))
+    profile=dict(version=VERSION,levels=LEVELS,max_skill_level=10,classes=classes,spells=spells,items=items,npcs=npcs,classic_peasant=True,monster_tuning=MONSTER_TUNING,class_identity=True,class_signatures=True,carry_capacity_rules=True,mortal_spirit_bonds=False,pet_collection=True,bonus_egg_drops=True,running_rules=dict(normal_multiplier=1.25,rogue_multiplier=1.5,tp_rate_per_second=.015,drain_while_idle=True),pet_cooldown_seconds=PET_COOLDOWN_SECONDS,hatched_eggs=HATCHED_EGGS,companions=COMPANIONS,eggs=EGGS,pet_tiers=TIERS,pet_roster=ROSTER,eggkeeper=EGGKEEPER,attack_timing=dict(server_seconds=.6,client_seconds=.62,bow_speed_bonus=False,archer_adjacent_npc_damage_multiplier=ARCHER_ADJACENT_NPC_MULTIPLIER))
     proposed['data/balance-profile.json']=(json.dumps(profile,indent=2)+'\n').encode()
     cfg=(runtime/'config.local.ini').read_text()
     values={'ExpRate':f'{EXP_MULTIPLIER*100}%','DropRate':'100%','GoldDropRate':'100%','DropRateMode':'3','BonusSpiritEggDrops':'yes','CarryCapacityRules':'yes','ClassMobility':'yes','ClassRunRules':'yes','PercentPetUpkeep':'yes','OwnerScaledPets':'yes','CombatProgression':'yes','PetEggTiers':'yes','MortalSpiritBonds':'no','PermanentPetCollection':'yes','PetCollectionCooldownSeconds':str(PET_COOLDOWN_SECONDS),'ClassSignatureRules':'yes','PriestRegenRate':'0.02','PriestSittingRegenRate':'0.04','CompanionLifetimeSeconds':'0','ClassIdentityRules':'yes','BalanceRevamp':'yes','UseClassFormulas':'yes','MaxSkillLevel':'10','SkillsFile':'./data/aster-vale-skills.ini'}

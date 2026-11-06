@@ -4,6 +4,7 @@ RECOVERY_SECONDS = 2
 # Five 120ms EO attack phases; the client keeps 20ms of scheduling allowance.
 BASIC_ATTACK_SECONDS = .6
 CLIENT_ATTACK_SECONDS = .62
+ARCHER_ADJACENT_NPC_MULTIPLIER = 1.2
 # Bow progression extends reach; all bows keep full impact and classic cadence.
 BOWS = {
     297: dict(range_tiles=3, attack_speed=1.0, shot_power=1.0),
@@ -29,7 +30,7 @@ def equipped_combat(session):
     items=profile().get('items',{});weapon=items.get(str(session.equipment.get('weapon',0)),{});arrows=items.get(str(session.equipment.get('offhand',0)),{})
     valid=session.stats.get('class_id')==5 and weapon.get('subtype')==1 and arrows.get('subtype')==2 and all(i.get('level_requirement',0)<=session.stats.get('level',0) for i in (weapon,arrows))
     # Do not trust stale profiles that still advertise faster or close-range bows.
-    return dict(attack_seconds=CLIENT_ATTACK_SECONDS,close_attack_seconds=CLIENT_ATTACK_SECONDS,close_range=0,range_tiles=int(weapon.get('range_tiles',3))+int(arrows.get('range_bonus',0)) if valid else 1,shot_power=float(weapon.get('shot_power',1)) if valid else 1.0)
+    return dict(attack_seconds=CLIENT_ATTACK_SECONDS,close_attack_seconds=CLIENT_ATTACK_SECONDS,close_range=0,range_tiles=int(weapon.get('range_tiles',3))+int(arrows.get('range_bonus',0)) if valid else 1,shot_power=float(weapon.get('shot_power',1)) if valid else 1.0,adjacent_npc_damage_multiplier=ARCHER_ADJACENT_NPC_MULTIPLIER if valid else 1.0)
 
 # Native queue enforces this cadence; metadata only drives prediction/rendering.
 # Weak entries disappear with disconnected sessions and never expose account data.

@@ -63,8 +63,9 @@ func run()->void:
 	game.online.request_step(Vector2i.RIGHT)
 	check(moves().size()==1 and not game.moving and game.online.npc_occupies(Vector2i(41,40)),"Departing NPC origin permits a deferred request without animating through its sprite")
 	reset();game.online.npcs.assign([{"index":8,"id":101,"x":42,"y":40,"direction":3}]);game.online.request_step(Vector2i.RIGHT)
-	check(moves().size()==1 and not game.moving,"Potential NPC crossing waits for the native movement result")
-	ack(40,40,true);check(not game.moving and game.player_tile==Vector2i(40,40),"NPC collision rejection never animates through its occupied tile")
+	check(moves().size()==1 and game.moving,"A nearby NPC outside the destination does not pause clear-road prediction")
+	game.movement_keys.append(KEY_D)
+	ack(40,40,true);check(not game.moving and game.player_tile==Vector2i(40,40) and game.movement_keys==[KEY_D],"NPC race correction restores position while preserving held movement")
 	reset();game.online.request_step(Vector2i.RIGHT)
 	var first_seq:int=game.online.next_input_seq
 	game._advance_walk(game.step_duration)
@@ -83,8 +84,11 @@ func run()->void:
 	departure.start=Time.get_ticks_msec()/1000.0-21.0;game._advance_walk(.01)
 	check(game.step_progress>0.0 and not game.online.waiting_for_npc_clear,"Contested step starts as soon as its native ACK and visual clearance both exist")
 	reset();game.online.npcs.assign([{"index":8,"id":101,"x":42,"y":40,"direction":3}]);game.movement_keys.append(KEY_D)
+	var late:Dictionary={"from":game.tile_position(Vector2i(41,40)),"to":game.tile_position(Vector2i(42,40)),"start":Time.get_ticks_msec()/1000.0,"duration":.42,"direction":"east"}
+	game.online.remote_motion["npc:8"]={"to":late.to,"tile":Vector2i(42,40),"steps":[late],"walk_start":late.start}
 	game.online.request_step(Vector2i.RIGHT)
 	check(not game.moving,"A late native ACK keeps a clear road stationary until accepted")
+	late.start=Time.get_ticks_msec()/1000.0-1.0
 	ack(41,40,false);game._advance_walk(.01)
 	check(game.step_progress>0.0 and not game.online.waiting_for_npc_clear,"Late native acceptance begins immediately when the road is already clear")
 	reset();game.online.npcs.assign([{"index":8,"id":319,"x":40,"y":40,"direction":2}])

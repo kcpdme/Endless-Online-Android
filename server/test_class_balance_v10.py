@@ -20,7 +20,9 @@ class ClassBalanceV10Tests(unittest.TestCase):
   for row in benchmarks(p):
    measured=metrics(p,row['class_id'],row['level'],loadout(p,row['class_id'],row['level']))
    self.assertEqual(measured['basic_dps'],row['basic_dps'])
-   self.assertEqual(measured['close_basic_dps'],row['basic_dps'])
+   self.assertEqual(measured['close_basic_dps'],row['close_basic_dps'])
+   if row['class_id']==5:self.assertGreater(measured['close_basic_dps'],row['basic_dps'])
+   else:self.assertEqual(measured['close_basic_dps'],row['basic_dps'])
  @unittest.skipUnless((ROOT/'work/class-balance-v10/full-equipment-audit.json').exists(),'native profile unavailable')
  def test_full_slot_equipment_audit_and_late_progression(self):
   r=json.loads((ROOT/'work/class-balance-v10/full-equipment-audit.json').read_text());p=json.loads((ROOT/'work/class-balance-v10/runtime/data/balance-profile.json').read_text())

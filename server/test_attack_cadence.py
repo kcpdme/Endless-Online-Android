@@ -17,6 +17,7 @@ class AttackCadenceTests(unittest.TestCase):
                 self.assertEqual(combat['close_range'],0)
                 self.assertEqual(combat['range_tiles'],9 if clas==5 else 1)
                 self.assertEqual(combat['shot_power'],.7 if clas==5 else 1)
+                self.assertEqual(combat['adjacent_npc_damage_multiplier'],1.2 if clas==5 else 1)
     def test_targeted_migration_preserves_stats_rewards_and_is_idempotent(self):
         with tempfile.TemporaryDirectory() as tmp:
             r=Path(tmp);(r/'data').mkdir()
@@ -42,6 +43,7 @@ class AttackCadenceTests(unittest.TestCase):
             for key in ('spells','npcs','companions'):self.assertEqual(after[key],profile[key])
             self.assertIn('classic',after['classes']['5']['signature']['description'])
             self.assertEqual(after['classes']['6'],profile['classes']['6'])
+            self.assertEqual(after['attack_timing']['archer_adjacent_npc_damage_multiplier'],1.2)
             for ident,item in after['items'].items():
                 self.assertEqual(item['attack_speed'],1);self.assertNotIn('close_attack_speed',item);self.assertNotIn('close_range',item)
                 self.assertEqual(item['shot_power'],1)
